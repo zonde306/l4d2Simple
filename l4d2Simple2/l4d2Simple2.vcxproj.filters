@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{7152ac17-9ede-48e1-8ec9-de10645fa807}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\directx9">
+      <UniqueIdentifier>{8289a9be-3965-4fe3-a3de-bad06165c5b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="detours">
+      <UniqueIdentifier>{f51f216b-fafd-4855-8255-8efb72b5f97c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cd3dfont">
+      <UniqueIdentifier>{2393e188-f86f-48ba-b5d1-2bd44266e2d6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\examples\directx9_example\imgui_impl_dx9.cpp">
+      <Filter>ImGui\directx9</Filter>
+    </ClCompile>
+    <ClCompile Include="dx9hook.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="peb.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vmt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\detourxs.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\detours\splice.cpp">
+      <Filter>detours</Filter>
+    </ClCompile>
+    <ClCompile Include="drawing.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vector.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\d3dfont\D3DFont.cpp">
+      <Filter>cd3dfont</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\examples\directx9_example\imgui_impl_dx9.h">
+      <Filter>ImGui\directx9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\l4d2Simple\imgui\stb_rect_pack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\l4d2Simple\imgui\stb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\l4d2Simple\imgui\stb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="dx9hook.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="peb.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="xorstr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vmt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\detours\splice.h">
+      <Filter>detours</Filter>
+    </ClInclude>
+    <ClInclude Include="..\detours\detourxs.h">
+      <Filter>detours</Filter>
+    </ClInclude>
+    <ClInclude Include="..\detours\opcodes.h">
+      <Filter>detours</Filter>
+    </ClInclude>
+    <ClInclude Include="drawing.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vector.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\d3dfont\D3DFont.h">
+      <Filter>cd3dfont</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\detours\hook.def">
+      <Filter>detours</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\detours\LDE64.asm">
+      <Filter>detours</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\detours\LDE64x64.asm">
+      <Filter>源文件</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

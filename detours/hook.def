@@ -1,0 +1,6 @@
+EXPORTS
+	HookProc  	@1
+	InstallHook @2
+	ReleaseHook @3
+SECTIONS
+	.shared SHARED
