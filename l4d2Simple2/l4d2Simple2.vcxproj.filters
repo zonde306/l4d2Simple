@@ -136,7 +136,7 @@
       <Filter>detours</Filter>
     </CustomBuild>
     <CustomBuild Include="..\detours\LDE64x64.asm">
-      <Filter>源文件</Filter>
+      <Filter>detours</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>
