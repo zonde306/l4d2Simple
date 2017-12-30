@@ -43,13 +43,42 @@ void CreateDebugConsole()
 	freopen(XorStr("CONOUT$"), XorStr("w"), stdout);
 }
 
+HWND CheckTopWindow()
+{
+	static DWORD curPid = GetCurrentProcessId();
+	HWND topWindow = GetForegroundWindow();
+	if (topWindow == NULL)
+		return NULL;
+
+	DWORD pid = 0;
+	GetWindowThreadProcessId(topWindow, &pid);
+	if (pid != curPid)
+		return NULL;
+
+	char classname[64];
+	RealGetWindowClassA(topWindow, classname, 64);
+	if (!_stricmp(classname, XorStr("ConsoleWindowClass")))
+		return NULL;
+
+	char title[255];
+	GetWindowTextA(topWindow, title, 255);
+
+	std::cout << XorStr("Found: ") << title << ' ' << '(' << classname << ')' << std::endl;
+	return topWindow;
+}
+
 DWORD WINAPI StartCheats(LPVOID module)
 {
 	CreateDebugConsole();
 	
-	Utils::FindWindowByProccess();
+	// Utils::FindWindowByProccess();
 	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), XorStr("Left 4 Dead 2"))) == NULL)
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	{
+		Utils::log(XorStr("Please switch to the target window."));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		if ((g_hGameWindow = CheckTopWindow()) != NULL)
+			break;
+	}
 
 	Utils::g_hCurrentWindow = g_hGameWindow;
 

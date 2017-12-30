@@ -182,7 +182,7 @@ void CDrawing::CreateObjects()
 	}
 
 	// 这个不支持中文，但是效率更高
-	m_pFont = new CD3DFont(XorStr("Tahoma"), m_iFontSize);
+	m_pFont = new CD3DFont(XorStr("Tahoma"), m_iFontSize / 2);
 	m_pFont->InitializeDeviceObjects(m_pDevice);
 	m_pFont->RestoreDeviceObjects();
 

@@ -77,6 +77,17 @@ HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIV
 	static IDirect3DVertexBuffer9* stream = nullptr;
 	device->GetStreamSource(0, &stream, &offsetByte, &stride);
 
+	if (stride == 32)
+	{
+		static DWORD oldZEnable;
+		device->GetRenderState(D3DRS_ZENABLE, &oldZEnable);
+		device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_NEVER);
+		g_pDirextXHook->m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
+		device->SetRenderState(D3DRS_ZENABLE, oldZEnable);
+		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+	}
+
 	// 在这里使用 stride, numVertices, primitiveCount 检查是否为有用的模型
 	// 然后通过修改 D3DRS_ZENABLE 和 D3DRS_ZFUNC 实现透视
 	for (auto& func : g_pDirextXHook->m_vfnDrawIndexedPrimitive)
@@ -84,6 +95,15 @@ HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIV
 		func(device, type, baseIndex, minIndex,
 			numVertices, startIndex, primitiveCount);
 	}
+
+#ifdef _DEBUG
+	static bool bHasFirst = true;
+	if (bHasFirst)
+	{
+		bHasFirst = false;
+		Utils::log(XorStr("Hook DrawIndexedPrimitive Success."));
+	}
+#endif
 
 	return g_pDirextXHook->m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex,
 		numVertices, startIndex, primitiveCount);
@@ -105,6 +125,15 @@ HRESULT WINAPI Hooked_EndScene(IDirect3DDevice9* device)
 	g_pDrawing->OnFinishEndScene();
 	g_pDrawing->OnGameFrame();
 
+#ifdef _DEBUG
+	static bool bHasFirst = true;
+	if (bHasFirst)
+	{
+		bHasFirst = false;
+		Utils::log(XorStr("Hook EndScene Success."));
+	}
+#endif
+
 	return g_pDirextXHook->m_pfnEndScene(device);
 }
 
@@ -123,6 +152,15 @@ HRESULT WINAPI Hooked_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type, I
 	if (type == D3DQUERYTYPE_OCCLUSION)
 		type = D3DQUERYTYPE_TIMESTAMP;
 	*/
+
+#ifdef _DEBUG
+	static bool bHasFirst = true;
+	if (bHasFirst)
+	{
+		bHasFirst = false;
+		Utils::log(XorStr("Hook CreateQuery Success."));
+	}
+#endif
 
 	return g_pDirextXHook->m_pfnCreateQuery(device, type, query);
 }
@@ -143,6 +181,15 @@ HRESULT WINAPI Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
 
 	g_pDrawing->OnResetDevice();
 
+#ifdef _DEBUG
+	static bool bHasFirst = true;
+	if (bHasFirst)
+	{
+		bHasFirst = false;
+		Utils::log(XorStr("Hook Reset Success."));
+	}
+#endif
+
 	return hr;
 }
 
@@ -161,6 +208,15 @@ HRESULT WINAPI Hooked_Present(IDirect3DDevice9* device, const RECT* source,
 	}
 
 	g_pDrawing->OnFinishPresent();
+
+#ifdef _DEBUG
+	static bool bHasFirst = true;
+	if (bHasFirst)
+	{
+		bHasFirst = false;
+		Utils::log(XorStr("Hook Present Success."));
+	}
+#endif
 
 	return g_pDirextXHook->m_pfnPresent(device, source, dest, window, region);
 }
