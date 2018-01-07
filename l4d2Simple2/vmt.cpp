@@ -141,7 +141,8 @@ LPVOID CVmtHook::CheckHookFunction(DWORD index, LPVOID function, bool update, st
 template<typename Fn>
 Fn* CVmtHook::HookFunctionEx(DWORD index, Fn* function, bool update)
 {
-	return reinterpret_cast<Fn>(CheckHookFunction(index, function, update, std::is_function<Fn>::value));
+	return reinterpret_cast<Fn>(CheckHookFunction(index, reinterpret_cast<LPVOID>(function), update, std::is_function<Fn>::value));
+	// return reinterpret_cast<Fn*>(HookFunction(index, reinterpret_cast<LPVOID>(function), update));
 }
 
 template<typename R, typename ...Arg>

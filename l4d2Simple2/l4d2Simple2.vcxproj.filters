@@ -69,6 +69,9 @@
     <ClCompile Include="..\d3dfont\D3DFont.cpp">
       <Filter>cd3dfont</Filter>
     </ClCompile>
+    <ClCompile Include="menu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -124,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="..\d3dfont\D3DFont.h">
       <Filter>cd3dfont</Filter>
+    </ClInclude>
+    <ClInclude Include="menu.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,9 @@
-﻿#include "drawing.h"
+﻿#include <sstream>
+#include "drawing.h"
 #include "dx9hook.h"
 #include "utils.h"
 #include "xorstr.h"
+#include "menu.h"
 #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 // 将 D3DCOLOR 转换为 ImGui 的颜色
@@ -138,6 +140,7 @@ void CDrawing::ReleaseObjects()
 	}
 
 	m_imFonts.Clear();
+	ImGui::GetIO().Fonts->Clear();
 
 	UNLOCK_PRESENT();
 
@@ -146,8 +149,13 @@ void CDrawing::ReleaseObjects()
 
 void CDrawing::CreateObjects()
 {
+#ifdef _DEBUG
 	if (m_bIsReady)
 		ReleaseObjects();
+#else
+	if (m_bIsReady)
+		return;
+#endif
 	
 	if (m_iFontSize <= 0)
 		m_iFontSize = 16;
@@ -182,7 +190,7 @@ void CDrawing::CreateObjects()
 	}
 
 	// 这个不支持中文，但是效率更高
-	m_pFont = new CD3DFont(XorStr("Tahoma"), m_iFontSize / 2);
+	m_pFont = new CD3DFont(XorStr("Tahoma"), m_iFontSize);
 	m_pFont->InitializeDeviceObjects(m_pDevice);
 	m_pFont->RestoreDeviceObjects();
 
@@ -207,8 +215,8 @@ void CDrawing::CreateObjects()
 	fontPath += XorStr("\\Fonts\\msyhl.ttc");
 
 	// Utils::log("font %s loading...", fontPath.c_str());
-	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), m_iFontSize * 1.0f, nullptr, m_imFonts.GetGlyphRangesChinese());
-	// ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), m_iFontSize, nullptr, m_imFonts.GetGlyphRangesChinese());
+	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), m_iFontSize, nullptr, m_imFonts.GetGlyphRangesChinese());
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), m_iFontSize, nullptr, m_imFonts.GetGlyphRangesChinese());
 
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
@@ -240,7 +248,10 @@ void CDrawing::CreateObjects()
 	UNLOCK_PRESENT();
 
 	m_bIsReady = true;
-	Utils::log(XorStr("Screen - Width: %d, Height: %d"), m_iScreenWidth, m_iScreenHeight);
+
+	std::stringstream ss;
+	ss << XorStr("Screen - Width: ") << m_iScreenWidth << XorStr(", Height: ") << m_iScreenHeight;
+	Utils::log(ss.str().c_str());
 }
 
 void CDrawing::DrawQueueObject()
@@ -447,6 +458,7 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 	m_iFontSize = fontSize;
 	CreateObjects();
 	ImGui_ImplDX9_Init(g_hGameWindow, device);
+	ImGui::StyleColorsDark();
 	g_pfnOldWndProcHandler = (WNDPROC)SetWindowLongPtrA(g_hGameWindow, GWL_WNDPROC, (LONG_PTR)ImGui_ImplWin32_WndProcHandler);
 
 	Utils::log(XorStr("CDrawing Initialization..."));
@@ -550,6 +562,8 @@ void CDrawing::OnBeginPresent()
 	DrawText(200, 200, YELLOW, false, u8"这是一些文本2");
 	DrawRect(400, 400, 50, 60, BLUE);
 #endif
+
+	g_pBaseMenu->OnPresent();
 }
 
 void CDrawing::OnFinishPresent()
@@ -570,6 +584,7 @@ void CDrawing::OnFinishPresent()
 		m_imDrawData.Valid = false;
 	}
 
+	// ImGui::EndFrame();
 	ImGui_ImplDX9_RenderDrawLists(&m_imDrawData);
 	ImGui::Render();
 
@@ -635,6 +650,23 @@ CDrawing::DelayStringList::DelayStringList(float _x, float _y, const std::string
 CDrawing::DelayStringListWide::DelayStringListWide(float _x, float _y, const std::wstring & _text, D3DCOLOR _color, DWORD _flags, D3DCOLOR bgcolor) :
 	x(_x), y(_y), text(_text), color(_color), flags(_flags), background(bgcolor)
 {
+}
+
+void CDrawing::PrintInfo(D3DCOLOR color, const char* text, ...)
+{
+	va_list ap;
+	va_start(ap, text);
+
+	char buffer[1024];
+	vsprintf_s(buffer, text, ap);
+
+	va_end(ap);
+	
+	LOCK_ENDSCENE();
+
+	m_vTopStringList.emplace_back(color, buffer);
+
+	UNLOCK_ENDSCENE();
 }
 
 void CDrawing::RenderPoint(int x, int y, D3DCOLOR color)

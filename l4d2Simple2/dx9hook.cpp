@@ -67,12 +67,13 @@ IDirect3DDevice9 * CDirectX9Hook::GetDevice()
 	return m_pOriginDevice;
 }
 
-HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
+HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
 	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_DrawIndexedPrimitive"));
 
+#ifdef _DEBUG
 	UINT offsetByte, stride;
 	static IDirect3DVertexBuffer9* stream = nullptr;
 	device->GetStreamSource(0, &stream, &offsetByte, &stride);
@@ -87,6 +88,7 @@ HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIV
 		device->SetRenderState(D3DRS_ZENABLE, oldZEnable);
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 	}
+#endif
 
 	// 在这里使用 stride, numVertices, primitiveCount 检查是否为有用的模型
 	// 然后通过修改 D3DRS_ZENABLE 和 D3DRS_ZFUNC 实现透视
@@ -109,7 +111,7 @@ HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIV
 		numVertices, startIndex, primitiveCount);
 }
 
-HRESULT WINAPI Hooked_EndScene(IDirect3DDevice9* device)
+HRESULT WINAPI CDirectX9Hook::Hooked_EndScene(IDirect3DDevice9* device)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_EndScene"));
@@ -137,7 +139,8 @@ HRESULT WINAPI Hooked_EndScene(IDirect3DDevice9* device)
 	return g_pDirextXHook->m_pfnEndScene(device);
 }
 
-HRESULT WINAPI Hooked_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type, IDirect3DQuery9** query)
+HRESULT WINAPI CDirectX9Hook::Hooked_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type,
+	IDirect3DQuery9** query)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_CreateQuery"));
@@ -165,7 +168,7 @@ HRESULT WINAPI Hooked_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type, I
 	return g_pDirextXHook->m_pfnCreateQuery(device, type, query);
 }
 
-HRESULT WINAPI Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
+HRESULT WINAPI CDirectX9Hook::Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_Reset"));
@@ -193,7 +196,7 @@ HRESULT WINAPI Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
 	return hr;
 }
 
-HRESULT WINAPI Hooked_Present(IDirect3DDevice9* device, const RECT* source,
+HRESULT WINAPI CDirectX9Hook::Hooked_Present(IDirect3DDevice9* device, const RECT* source,
 	const RECT* dest, HWND window, const RGNDATA* region)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
@@ -431,11 +434,150 @@ std::vector<FnPresent>& CDirectX9Hook::GetHookList(FnPresent)
 	return m_vfnPresent;
 }
 
+HRESULT CDirectX9Hook::CallOriginalFunction(FnDrawIndexedPrimitive, IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
+	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
+{
+	return m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
+}
+
+HRESULT CDirectX9Hook::CallOriginalFunction(FnEndScene, IDirect3DDevice9* device)
+{
+	return m_pfnEndScene(device);
+}
+
+HRESULT CDirectX9Hook::CallOriginalFunction(FnCreateQuery, IDirect3DDevice9* device, D3DQUERYTYPE type,
+	IDirect3DQuery9** query)
+{
+	return m_pfnCreateQuery(device, type, query);
+}
+
+HRESULT CDirectX9Hook::CallOriginalFunction(FnReset, IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
+{
+	return m_pfnReset(device, pp);
+}
+
+HRESULT CDirectX9Hook::CallOriginalFunction(FnPresent, IDirect3DDevice9* device, const RECT* source,
+	const RECT* dest, HWND window, const RGNDATA* region)
+{
+	return m_pfnPresent(device, source, dest, window, region);
+}
+
+bool CDirectX9Hook::AddHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function)
+{
+	return _FunctionHook(m_vfnDrawIndexedPrimitive, function);
+}
+
+bool CDirectX9Hook::AddHook_EndScene(FnEndScene function)
+{
+	return _FunctionHook(m_vfnEndScene, function);
+}
+
+bool CDirectX9Hook::AddHook_CreateQuery(FnCreateQuery function)
+{
+	return _FunctionHook(m_vfnCreateQuery, function);
+}
+
+bool CDirectX9Hook::AddHook_Reset(FnReset function)
+{
+	return _FunctionHook(m_vfnReset, function);
+}
+
+bool CDirectX9Hook::AddHook_Present(FnPresent function)
+{
+	return _FunctionHook(m_vfnPresent, function);
+}
+
+bool CDirectX9Hook::RemoveHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function)
+{
+	return _FunctionUnhook(m_vfnDrawIndexedPrimitive, function);
+}
+
+bool CDirectX9Hook::RemoveHook_EndScene(FnEndScene function)
+{
+	return _FunctionUnhook(m_vfnEndScene, function);
+}
+
+bool CDirectX9Hook::RemoveHook_CreateQuery(FnCreateQuery function)
+{
+	return _FunctionUnhook(m_vfnCreateQuery, function);
+}
+
+bool CDirectX9Hook::RemoveHook_Reset(FnReset function)
+{
+	return _FunctionUnhook(m_vfnReset, function);
+}
+
+bool CDirectX9Hook::RemoveHook_Present(FnPresent function)
+{
+	return _FunctionUnhook(m_vfnPresent, function);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_DrawIndexedPrimitive(D3DPRIMITIVETYPE type,
+	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
+{
+	return m_pfnDrawIndexedPrimitive(m_pOriginDevice, type, baseIndex, minIndex, numVertices,
+		startIndex, primitiveCount);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_EndScene()
+{
+	return m_pfnEndScene(m_pOriginDevice);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_CreateQuery(D3DQUERYTYPE type, IDirect3DQuery9** query)
+{
+	return m_pfnCreateQuery(m_pOriginDevice, type, query);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_Reset(D3DPRESENT_PARAMETERS *pp)
+{
+	return m_pfnReset(m_pOriginDevice, pp);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_Present(const RECT* source, const RECT* dest,
+	HWND window, const RGNDATA* region)
+{
+	return m_pfnPresent(m_pOriginDevice, source, dest, window, region);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_DrawIndexedPrimitive(IDirect3DDevice9* device,
+	D3DPRIMITIVETYPE type, INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
+{
+	return m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices,
+		startIndex, primitiveCount);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_EndScene(IDirect3DDevice9* device)
+{
+	return m_pfnEndScene(device);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type,
+	IDirect3DQuery9** query)
+{
+	return m_pfnCreateQuery(device, type, query);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS *pp)
+{
+	return m_pfnReset(device, pp);
+}
+
+HRESULT CDirectX9Hook::CallOriginal_Present(IDirect3DDevice9* device, const RECT* source,
+	const RECT* dest, HWND window, const RGNDATA* region)
+{
+	return m_pfnPresent(device, source, dest, window, region);
+}
+
 template<typename Fn>
 bool CDirectX9Hook::HookFunction(Fn function)
 {
-	const std::vector<Fn>& list = GetHookList(function);
-	for (std::find(list.cbegin(), list.cend(), function) != list.cend())
+#ifdef _DEBUG
+	static_assert(_DeclTypeCall<Fn>::GetHookList() == nullptr);
+#endif
+	
+	const std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();;
+	if (std::find(list.cbegin(), list.cend(), function) != list.cend())
 		return false;
 
 	list.push_back(function);
@@ -445,7 +587,11 @@ bool CDirectX9Hook::HookFunction(Fn function)
 template<typename Fn>
 bool CDirectX9Hook::UnhookFunction(Fn function)
 {
-	std::vector<Fn>& list = GetHookList(function);
+#ifdef _DEBUG
+	static_assert(_DeclTypeCall<Fn>::GetHookList() == nullptr);
+#endif
+	
+	std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();
 	std::vector<Fn>::iterator iter = std::find(list.begin(), list.end(), function);
 	if (iter != list.end())
 	{
@@ -454,4 +600,157 @@ bool CDirectX9Hook::UnhookFunction(Fn function)
 	}
 
 	return false;
+}
+
+template<typename Fn, typename ...Arg>
+HRESULT CDirectX9Hook::InvokeOriginal(Fn, Arg ...arg)
+{
+#ifdef _DEBUG
+	static_assert(_DeclTypeCall<Fn>::GetFunction() == nullptr);
+#endif
+
+	return _DeclTypeCall<Fn>::Invoke(std::forward<Arg>(arg)...);
+}
+
+template<typename Fn>
+bool CDirectX9Hook::_FunctionHook(std::vector<Fn>& list, Fn function)
+{
+#ifdef _DEBUG
+	static_assert(function == nullptr);
+#endif
+
+	if (std::find(list.cbegin(), list.cend(), function) != list.cend())
+		return false;
+
+	list.emplace_back(function);
+	return true;
+}
+
+template<typename Fn>
+bool CDirectX9Hook::_FunctionUnhook(std::vector<Fn>& list, Fn function)
+{
+#ifdef _DEBUG
+	static_assert(function == nullptr);
+#endif
+
+	auto it = std::find(list.begin(), list.end(), function);
+	if (it == list.end())
+		return false;
+
+	list.erase(it);
+	return true;
+}
+
+template<typename Fn>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<Fn>::Invoke(Arg ...arg)
+{
+	return E_NOTIMPL;
+}
+
+template<typename Fn>
+Fn _DeclTypeCall<Fn>::GetFunction()
+{
+	return Fn();
+}
+
+template<typename Fn>
+std::vector<Fn>* _DeclTypeCall<Fn>::GetHookList()
+{
+	return nullptr;
+}
+
+template<>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<FnEndScene>::Invoke(Arg ...arg)
+{
+	return g_pDirextXHook->m_pfnEndScene(std::forward<Arg>(arg)...);
+}
+
+template<>
+FnEndScene _DeclTypeCall<FnEndScene>::GetFunction()
+{
+	return g_pDirextXHook->m_pfnEndScene;
+}
+
+template<>
+std::vector<FnEndScene>* _DeclTypeCall<FnEndScene>::GetHookList()
+{
+	return &g_pDirextXHook->m_vfnEndScene;
+}
+
+template<>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<FnPresent>::Invoke(Arg ...arg)
+{
+	return g_pDirextXHook->m_pfnPresent(std::forward<Arg>(arg)...);
+}
+
+template<>
+FnPresent _DeclTypeCall<FnPresent>::GetFunction()
+{
+	return g_pDirextXHook->m_pfnPresent;
+}
+
+template<>
+std::vector<FnPresent>* _DeclTypeCall<FnPresent>::GetHookList()
+{
+	return &g_pDirextXHook->m_vfnPresent;
+}
+
+template<>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<FnCreateQuery>::Invoke(Arg ...arg)
+{
+	return g_pDirextXHook->m_pfnCreateQuery(std::forward<Arg>(arg)...);
+}
+
+template<>
+FnCreateQuery _DeclTypeCall<FnCreateQuery>::GetFunction()
+{
+	return g_pDirextXHook->m_pfnCreateQuery;
+}
+
+template<>
+std::vector<FnCreateQuery>* _DeclTypeCall<FnCreateQuery>::GetHookList()
+{
+	return &g_pDirextXHook->m_vfnCreateQuery;
+}
+
+template<>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<FnReset>::Invoke(Arg ...arg)
+{
+	return g_pDirextXHook->m_pfnReset(std::forward<Arg>(arg)...);
+}
+
+template<>
+FnReset _DeclTypeCall<FnReset>::GetFunction()
+{
+	return g_pDirextXHook->m_pfnReset;
+}
+
+template<>
+std::vector<FnReset>* _DeclTypeCall<FnReset>::GetHookList()
+{
+	return &g_pDirextXHook->m_vfnReset;
+}
+
+template<>
+template<typename ...Arg>
+HRESULT _DeclTypeCall<FnDrawIndexedPrimitive>::Invoke(Arg ...arg)
+{
+	return g_pDirextXHook->m_pfnDrawIndexedPrimitive(std::forward<Arg>(arg)...);
+}
+
+template<>
+FnDrawIndexedPrimitive _DeclTypeCall<FnDrawIndexedPrimitive>::GetFunction()
+{
+	return g_pDirextXHook->m_pfnDrawIndexedPrimitive;
+}
+
+template<>
+std::vector<FnDrawIndexedPrimitive>* _DeclTypeCall<FnDrawIndexedPrimitive>::GetHookList()
+{
+	return &g_pDirextXHook->m_vfnDrawIndexedPrimitive;
 }

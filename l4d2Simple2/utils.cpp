@@ -6,6 +6,7 @@
 #include <thread>
 #include <TlHelp32.h>
 #include "xorstr.h"
+#include "drawing.h"
 
 HINSTANCE Utils::g_hInstance = NULL;
 std::string Utils::g_sModulePath = "";
@@ -60,6 +61,24 @@ void Utils::logError(const char * text, ...)
 
 	std::cout << '[' << getDateTime() << ']' << text << std::endl;
 	OutputDebugStringA(text);
+}
+
+void Utils::log2()
+{
+	std::cout << std::endl;
+}
+
+void Utils::printInfo(const char * text, ...)
+{
+	va_list ap;
+	va_start(ap, text);
+
+	char buffer[1024];
+	vsprintf_s(buffer, text, ap);
+
+	va_end(ap);
+
+	g_pDrawing->PrintInfo(CDrawing::WHITE, text);
 }
 
 std::string Utils::getTime()
@@ -477,6 +496,13 @@ void Utils::FindWindowByProccess(DWORD ProcessID)
 	
 	g_hCurrentWindow = NULL;
 	EnumWindows(__EnumWindowsCallback, ProcessID);
+}
+
+template<typename T, typename ...Arg>
+void Utils::log2(const T & value, Arg ...arg)
+{
+	std::cout << value;
+	return log2(std::forward<Arg>(arg)...);
 }
 
 template<typename T, typename ...Arg>

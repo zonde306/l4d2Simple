@@ -18,6 +18,13 @@ namespace Utils
 	void logToFile(const char* text, ...);
 	void logError(const char* text, ...);
 
+	template<typename T, typename ...Arg>
+	void log2(const T& value, Arg ...arg);
+	void log2();
+
+	// 在左上角提示信息
+	void printInfo(const char* text, ...);
+
 	// 获取系统时间
 	std::string getTime();
 	std::string getDate();

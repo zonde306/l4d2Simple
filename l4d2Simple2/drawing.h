@@ -56,6 +56,10 @@ public:	// 常用的颜色
 		DARKERGRAY = D3DCOLOR_ARGB(255, 31, 31, 31)		// 浅灰色
 	};
 
+public:	// 其他功能
+	// 在左上角打印信息
+	void PrintInfo(D3DCOLOR color, const char* text, ...);
+
 public:	// 使用 DirectX 自带的绘制函数
 	// 绘制一个像素
 	void RenderPoint(int x, int y, D3DCOLOR color = D3DColor::WHITE);
@@ -177,9 +181,11 @@ private:
 	bool m_bInEndScene, m_bInPresent;
 	std::mutex m_hLockEndScene;
 	std::mutex m_hLockPresent;
-	int m_iFontSize, m_iScreenWidth, m_iScreenHeight;
 	IDirect3DDevice9* m_pDevice;
 	bool m_bIsReady;
+
+public:
+	int m_iFontSize, m_iScreenWidth, m_iScreenHeight;
 
 private:
 	int m_iFramePerSecond;
@@ -196,6 +202,8 @@ private:
 private:
 	ImDrawData m_imDrawData;
 	ImDrawList* m_imDrawList;
+
+public:
 	IDirect3DTexture9* m_imFontTexture;
 	ImFontAtlas m_imFonts;
 };

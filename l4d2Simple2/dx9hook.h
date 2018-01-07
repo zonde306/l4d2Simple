@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <memory>
 #include <d3d9.h>
@@ -25,11 +25,15 @@ public:
 	void Init();
 	IDirect3DDevice9* GetDevice();
 
+protected:
 	template<typename Fn>
 	bool HookFunction(Fn function);
 
 	template<typename Fn>
 	bool UnhookFunction(Fn function);
+
+	template<typename Fn, typename ...Arg>
+	HRESULT InvokeOriginal(Fn, Arg ...arg);
 
 protected:
 	bool CreateDevice();
@@ -37,7 +41,13 @@ protected:
 	bool SetupFirstHook();
 	bool SetupSecondHook(IDirect3DDevice9* device);
 
-public:
+	static HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9*, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
+	static HRESULT WINAPI Hooked_EndScene(IDirect3DDevice9*);
+	static HRESULT WINAPI Hooked_CreateQuery(IDirect3DDevice9*, D3DQUERYTYPE, IDirect3DQuery9**);
+	static HRESULT WINAPI Hooked_Reset(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
+	static HRESULT WINAPI Hooked_Present(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
+
+private:
 	bool CheckHookStatus(IDirect3DDevice9* device);
 
 	std::vector<FnDrawIndexedPrimitive>& GetHookList(FnDrawIndexedPrimitive);
@@ -46,6 +56,44 @@ public:
 	std::vector<FnReset>& GetHookList(FnReset);
 	std::vector<FnPresent>& GetHookList(FnPresent);
 
+	HRESULT CallOriginalFunction(FnDrawIndexedPrimitive, IDirect3DDevice9*, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
+	HRESULT CallOriginalFunction(FnEndScene, IDirect3DDevice9*);
+	HRESULT CallOriginalFunction(FnCreateQuery, IDirect3DDevice9*, D3DQUERYTYPE, IDirect3DQuery9**);
+	HRESULT CallOriginalFunction(FnReset, IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
+	HRESULT CallOriginalFunction(FnPresent, IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
+
+	template<typename Fn>
+	bool _FunctionHook(std::vector<Fn>& list, Fn function);
+
+	template<typename Fn>
+	bool _FunctionUnhook(std::vector<Fn>& list, Fn function);
+
+public:
+	bool AddHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function);
+	bool AddHook_EndScene(FnEndScene function);
+	bool AddHook_CreateQuery(FnCreateQuery function);
+	bool AddHook_Reset(FnReset function);
+	bool AddHook_Present(FnPresent function);
+
+	bool RemoveHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function);
+	bool RemoveHook_EndScene(FnEndScene function);
+	bool RemoveHook_CreateQuery(FnCreateQuery function);
+	bool RemoveHook_Reset(FnReset function);
+	bool RemoveHook_Present(FnPresent function);
+
+	HRESULT CallOriginal_DrawIndexedPrimitive(D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
+	HRESULT CallOriginal_EndScene();
+	HRESULT CallOriginal_CreateQuery(D3DQUERYTYPE, IDirect3DQuery9**);
+	HRESULT CallOriginal_Reset(D3DPRESENT_PARAMETERS*);
+	HRESULT CallOriginal_Present(const RECT*, const RECT*, HWND, const RGNDATA*);
+
+	HRESULT CallOriginal_DrawIndexedPrimitive(IDirect3DDevice9*, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
+	HRESULT CallOriginal_EndScene(IDirect3DDevice9*);
+	HRESULT CallOriginal_CreateQuery(IDirect3DDevice9*, D3DQUERYTYPE, IDirect3DQuery9**);
+	HRESULT CallOriginal_Reset(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
+	HRESULT CallOriginal_Present(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
+	
+// private:
 	FnDrawIndexedPrimitive m_pfnDrawIndexedPrimitive;
 	FnEndScene m_pfnEndScene;
 	FnCreateQuery m_pfnCreateQuery;
@@ -70,6 +118,22 @@ private:
 	bool m_bSuccessCreated;
 	bool m_bIsFirstHooked;
 	bool m_bIsSecondHooked;
+};
+
+template<typename Fn>
+class _DeclTypeCall
+{
+	friend CDirectX9Hook;
+
+	// 直接调用原函数
+	template<typename ...Arg>
+	static HRESULT Invoke(Arg... arg);
+
+	// 获取原函数或蹦床
+	static Fn GetFunction();
+
+	// 获取 Hook 表
+	static std::vector<Fn>* GetHookList();
 };
 
 extern std::unique_ptr<CDirectX9Hook> g_pDirextXHook;
