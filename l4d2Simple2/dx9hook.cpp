@@ -619,7 +619,7 @@ bool CDirectX9Hook::_FunctionHook(std::vector<Fn>& list, Fn function)
 	static_assert(function == nullptr);
 #endif
 
-	if (std::find(list.cbegin(), list.cend(), function) != list.cend())
+	if (!list.empty() && std::find(list.cbegin(), list.cend(), function) != list.cend())
 		return false;
 
 	list.emplace_back(function);
@@ -632,6 +632,8 @@ bool CDirectX9Hook::_FunctionUnhook(std::vector<Fn>& list, Fn function)
 #ifdef _DEBUG
 	static_assert(function == nullptr);
 #endif
+	if (list.empty())
+		return false;
 
 	auto it = std::find(list.begin(), list.end(), function);
 	if (it == list.end())
