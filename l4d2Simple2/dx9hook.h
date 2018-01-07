@@ -25,7 +25,6 @@ public:
 	void Init();
 	IDirect3DDevice9* GetDevice();
 
-protected:
 	template<typename Fn>
 	bool HookFunction(Fn function);
 

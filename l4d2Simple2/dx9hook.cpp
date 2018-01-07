@@ -651,7 +651,7 @@ HRESULT _DeclTypeCall<Fn>::Invoke(Arg ...arg)
 template<typename Fn>
 Fn _DeclTypeCall<Fn>::GetFunction()
 {
-	return Fn();
+	return NULL;
 }
 
 template<typename Fn>

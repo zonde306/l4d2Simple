@@ -9,7 +9,6 @@ std::unique_ptr<CBaseMenu> g_pBaseMenu;
 
 void CBaseMenu::Init()
 {
-	// g_pDirextXHook->HookFunction<FnDrawIndexedPrimitive>(Hooked_DrawIndexedPrimitive);
 	// g_pDirextXHook->m_vfnDrawIndexedPrimitive.emplace_back(Hooked_DrawIndexedPrimitive);
 	g_pDirextXHook->AddHook_DrawIndexedPrimitive(Hooked_DrawIndexedPrimitive);
 }
