@@ -14,7 +14,10 @@
 #define DegreesToRadians DEG2RAD
 #endif
 
+#ifndef Assert
 #define Assert(_v)			
+#endif
+
 #define CHECK_VALID(_v)		Assert((_v).IsValid())
 #define FLOAT32_NAN_BITS	(unsigned long)0x7FC00000
 #define FLOAT32_NAN			BitsToFloat(FLOAT32_NAN_BITS)
@@ -86,6 +89,18 @@ bool Vector::IsValid() const
 bool Vector::IsZero(float tolerance) const
 {
 	return (x > -tolerance && x < tolerance && y > -tolerance && y < tolerance && z > -tolerance && z < tolerance);
+}
+
+void Vector::Init(vec_t x, vec_t y, vec_t z)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+}
+
+void Vector::SetZero()
+{
+	x = y = z = 0.0f;
 }
 
 vec_t Vector::Dot(const Vector & v) const
@@ -517,4 +532,12 @@ QAngle & QAngle::operator/=(const vec_t & f)
 	y /= f;
 	z /= f;
 	return *this;
+}
+
+Vector2D::Vector2D(vec_t x, vec_t y) : x(x), y(y)
+{
+}
+
+Vector4D::Vector4D(vec_t x, vec_t y, vec_t z, vec_t w) : x(x), y(y), z(z), w(w)
+{
 }

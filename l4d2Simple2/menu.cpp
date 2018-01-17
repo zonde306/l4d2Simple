@@ -212,7 +212,7 @@ void CBaseMenu::DrawStrideMenu()
 	}
 	ImGui::Separator();
 
-	int i = 0, state = 0;
+	int state = 0;
 	static StrideObject clipboard("");
 
 	for(auto i = m_vStride.begin(); i != m_vStride.end(); )

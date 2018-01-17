@@ -16,6 +16,8 @@ public:
 	void Invalidate();
 	bool IsValid() const;
 	bool IsZero(float tolerance = 1e-6f) const;
+	void Init(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f);
+	void SetZero();
 
 	// 点乘，返回两个向量之间的角度(相似度)
 	vec_t Dot(const Vector& v) const;
@@ -134,3 +136,31 @@ public:
 #endif
 	vec_t x, y, z;
 };
+
+
+class Vector2D
+{
+public:
+	Vector2D(vec_t x = 0.0f, vec_t y = 0.0f);
+
+#ifdef PRIVATE_VECTOR_TYPE
+private:
+#else
+public:
+#endif
+	vec_t x, y;
+};
+
+class Vector4D
+{
+public:
+	Vector4D(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f, vec_t w = 0.0f);
+
+#ifdef PRIVATE_VECTOR_TYPE
+private:
+#else
+public:
+#endif
+	vec_t x, y, z, w;
+};
+

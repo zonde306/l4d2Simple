@@ -25,6 +25,18 @@
     <Filter Include="cd3dfont">
       <UniqueIdentifier>{2393e188-f86f-48ba-b5d1-2bd44266e2d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hl2sdk">
+      <UniqueIdentifier>{73581203-57e5-43fc-afb7-70cb058cfbd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hl2sdk\Interfaces">
+      <UniqueIdentifier>{2bb37bbe-b793-4a14-9033-af4313c2b2db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hl2sdk\Utils">
+      <UniqueIdentifier>{22e91b8e-c7b1-4ebd-937c-9d25d7e8e07a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hl2sdk\Structs">
+      <UniqueIdentifier>{d54b2607-934a-4dcb-8349-90c07a7af91c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,6 +83,75 @@
     </ClCompile>
     <ClCompile Include="menu.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IInputSystem.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IMaterialSystem.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IPhysicsSurfaceProps.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\ISurface.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IVModelRender.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IVPanel.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IBaseClientDLL.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\recvprop.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\bitbuffer.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\handle.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\trace.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\matrix.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\color.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\utlvector.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\utlmemory.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\utlblockmemory.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\checksum_md5.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\strtools.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\strtools_unicode.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\checksum_crc.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\usercmd.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\checksum_sha1.cpp">
+      <Filter>hl2sdk\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,6 +211,144 @@
     </ClInclude>
     <ClInclude Include="menu.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IGameMovement.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IGlobalVarsBase.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IInputSystem.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IMaterial.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IMaterialSystem.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IMoveHelper.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IPrediction.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IRenderView.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IStudioRender.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\ISurface.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IVDebugOverlay.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IVModelInfo.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IVModelRender.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IVPanel.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientDLL.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientEntityList.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientModeShared.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\ICvar.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineClient.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineTrace.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\indexes.h">
+      <Filter>hl2sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\definitions.h">
+      <Filter>hl2sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\clientclass.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\recvprop.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\baseentity.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientUnknown.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientNetworkable.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientEntity.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\bitbuffer.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\handle.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientThinkable.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientRenderable.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\ICollideable.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\trace.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\playerinfo.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\matrix.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\color.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlmemory.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlvector.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlblockmemory.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\usercmd.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\checksum_md5.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\strtools.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\checksum_crc.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\keyvalues.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h">
+      <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

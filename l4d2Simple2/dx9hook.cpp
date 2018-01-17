@@ -8,6 +8,8 @@
 #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 std::unique_ptr<CDirectX9Hook> g_pDirextXHook;
+#pragma comment(lib, "d3d9")
+#pragma comment(lib, "d3dx9")
 
 CDirectX9Hook::CDirectX9Hook() : m_pVmtHook(nullptr), m_pVMT(nullptr), m_pD3D(nullptr), m_pDevice(nullptr),
 	m_pOriginDevice(nullptr), m_bSuccessCreated(false), m_bIsFirstHooked(false), m_bIsSecondHooked(false)
@@ -60,6 +62,11 @@ void CDirectX9Hook::Init()
 
 	SetupFirstHook();
 	Utils::log(XorStr("CDirectX9Hook Initialization..."));
+}
+
+void CDirectX9Hook::Shutdown()
+{
+	ImGui_ImplDX9_Shutdown();
 }
 
 IDirect3DDevice9 * CDirectX9Hook::GetDevice()

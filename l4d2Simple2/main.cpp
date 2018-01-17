@@ -7,12 +7,15 @@
 #include "utils.h"
 #include "xorstr.h"
 #include "menu.h"
-#include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+// #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 // 需要在 StartCheats 里把它设置成游戏窗口
 // 例如：g_hGameWindow = FindWindowA("Valve001", "Left 4 Dead 2");
 HWND g_hGameWindow = nullptr;
+
 DWORD WINAPI StartCheats(LPVOID);
+void CreateDebugConsole();
+HWND CheckTopWindow();
 
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 {
@@ -26,10 +29,36 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 	else if (reason == DLL_PROCESS_DETACH)
 	{
 		FreeConsole();
-		ImGui_ImplDX9_Shutdown();
+		g_pDirextXHook->Shutdown();
 	}
 
 	return TRUE;
+}
+
+DWORD WINAPI StartCheats(LPVOID module)
+{
+	CreateDebugConsole();
+	
+	// Utils::FindWindowByProccess();
+	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), XorStr("Left 4 Dead 2"))) == NULL)
+	{
+		Utils::log(XorStr("Please switch to the target window."));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		if ((g_hGameWindow = CheckTopWindow()) != NULL)
+			break;
+	}
+
+	Utils::g_hCurrentWindow = g_hGameWindow;
+
+	Utils::init(reinterpret_cast<HINSTANCE>(module));
+	
+	g_pDirextXHook = std::make_unique<CDirectX9Hook>();
+	g_pDirextXHook->Init();
+
+	g_pBaseMenu = std::make_unique<CBaseMenu>();
+	g_pBaseMenu->Init();
+
+	return EXIT_SUCCESS;
 }
 
 void CreateDebugConsole()
@@ -66,30 +95,4 @@ HWND CheckTopWindow()
 
 	std::cout << XorStr("Found: ") << title << ' ' << '(' << classname << ')' << std::endl;
 	return topWindow;
-}
-
-DWORD WINAPI StartCheats(LPVOID module)
-{
-	CreateDebugConsole();
-	
-	// Utils::FindWindowByProccess();
-	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), XorStr("Left 4 Dead 2"))) == NULL)
-	{
-		Utils::log(XorStr("Please switch to the target window."));
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		if ((g_hGameWindow = CheckTopWindow()) != NULL)
-			break;
-	}
-
-	Utils::g_hCurrentWindow = g_hGameWindow;
-
-	Utils::init(reinterpret_cast<HINSTANCE>(module));
-	
-	g_pDirextXHook = std::make_unique<CDirectX9Hook>();
-	g_pDirextXHook->Init();
-
-	g_pBaseMenu = std::make_unique<CBaseMenu>();
-	g_pBaseMenu->Init();
-
-	return EXIT_SUCCESS;
 }

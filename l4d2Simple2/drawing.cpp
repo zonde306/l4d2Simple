@@ -160,33 +160,78 @@ void CDrawing::CreateObjects()
 	if (m_iFontSize <= 0)
 		m_iFontSize = 16;
 
+	std::stringstream ss;
+
 	LOCK_ENDSCENE();
 	
-	if (FAILED(m_pDevice->CreateStateBlock(D3DSBT_ALL, &m_pStateBlock)))
+	HRESULT hr = D3D_OK;
+	if (FAILED(hr = m_pDevice->CreateStateBlock(D3DSBT_ALL, &m_pStateBlock)))
 	{
-		Utils::logError(XorStr("CreateStateBlock Failed."));
-		throw std::runtime_error(XorStr("Failed to create the state block"));
+		ss << XorStr("CreateStateBlock Failed: ");
+		
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else if (hr == D3DERR_OUTOFVIDEOMEMORY)
+			ss << XorStr("Direct3D does not have enough display memory to perform the operation");
+		else if (hr == E_OUTOFMEMORY)
+			ss << XorStr("Direct3D could not allocate sufficient memory to complete the call");
+		else
+			ss << XorStr("Unknown Error");
+		
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	// 没有的话就用 Microsoft YaHei & Microsoft YaHei UI
-	if (FAILED(D3DXCreateFontA(m_pDevice, m_iFontSize, 0, FW_BOLD, 1, FALSE, DEFAULT_CHARSET,
+	if (FAILED(hr = D3DXCreateFontA(m_pDevice, m_iFontSize, 0, FW_BOLD, 1, FALSE, DEFAULT_CHARSET,
 		OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
 		XorStr("Microsoft YaHei Light & Microsoft YaHei UI Light"), &m_pDefaultFont)))
 	{
-		Utils::logError(XorStr("D3DXCreateFontA Failed."));
-		throw std::runtime_error(XorStr("Failed to create the default font"));
+		ss << XorStr("D3DXCreateFont Failed: ");
+
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else if (hr == E_OUTOFMEMORY)
+			ss << XorStr("Direct3D could not allocate sufficient memory to complete the call");
+		else if(hr == D3DXERR_INVALIDDATA)
+			ss << XorStr("The data is invalid");
+		else
+			ss << XorStr("Unknown Error");
+
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
-	if (FAILED(D3DXCreateLine(m_pDevice, &m_pLine)))
+	if (FAILED(hr = D3DXCreateLine(m_pDevice, &m_pLine)))
 	{
-		Utils::logError(XorStr("D3DXCreateLine Failed."));
-		throw std::runtime_error(XorStr("Failed to create the line"));
+		ss << XorStr("D3DXCreateLine Failed: ");
+
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else if (hr == E_OUTOFMEMORY)
+			ss << XorStr("Direct3D could not allocate sufficient memory to complete the call");
+		else if (hr == D3DXERR_INVALIDDATA)
+			ss << XorStr("The data is invalid");
+		else
+			ss << XorStr("Unknown Error");
+
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	if (FAILED(D3DXCreateSprite(m_pDevice, &m_pTextSprite)))
 	{
-		Utils::logError(XorStr("D3DXCreateSprite Failed."));
-		throw std::runtime_error(XorStr("Failed to create the sprite"));
+		ss << XorStr("D3DXCreateLine Failed: ");
+
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else if (hr == D3DXERR_INVALIDDATA)
+			ss << XorStr("The data is invalid");
+		else
+			ss << XorStr("Unknown Error");
+
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	// 这个不支持中文，但是效率更高
@@ -222,18 +267,36 @@ void CDrawing::CreateObjects()
 	int width, height, bytes_per_pixel;
 	m_imFonts.GetTexDataAsRGBA32(&pixel_data, &width, &height, &bytes_per_pixel);
 
-	if (FAILED(m_pDevice->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
+	if (FAILED(hr = m_pDevice->CreateTexture(width, height, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8,
 		D3DPOOL_DEFAULT, &m_imFontTexture, nullptr)))
 	{
-		Utils::logError(XorStr("CreateTexture Failed."));
-		throw std::runtime_error(XorStr("Failed to create the texture"));
+		ss << XorStr("IDirect3DDevice9::CreateTexture Failed: ");
+
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else if (hr == D3DERR_OUTOFVIDEOMEMORY)
+			ss << XorStr("Direct3D does not have enough display memory to perform the operation");
+		else if (hr == E_OUTOFMEMORY)
+			ss << XorStr("Direct3D could not allocate sufficient memory to complete the call");
+		else
+			ss << XorStr("Unknown Error");
+
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	D3DLOCKED_RECT textureLock;
-	if (FAILED(m_imFontTexture->LockRect(0, &textureLock, nullptr, 0)))
+	if (FAILED(hr = m_imFontTexture->LockRect(0, &textureLock, nullptr, 0)))
 	{
-		Utils::logError(XorStr("LockRect Failed."));
-		throw std::runtime_error(XorStr("Failed to lock the texture"));
+		ss << XorStr("IDirect3DTexture9::LockRect Failed: ");
+
+		if (hr == D3DERR_INVALIDCALL)
+			ss << XorStr("The method call is invalid");
+		else
+			ss << XorStr("Unknown Error");
+
+		Utils::logError(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	for (int y = 0; y < height; y++)
@@ -249,7 +312,6 @@ void CDrawing::CreateObjects()
 
 	m_bIsReady = true;
 
-	std::stringstream ss;
 	ss << XorStr("Screen - Width: ") << m_iScreenWidth << XorStr(", Height: ") << m_iScreenHeight;
 	Utils::log(ss.str().c_str());
 }
@@ -466,14 +528,14 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 
 void CDrawing::OnLostDevice()
 {
-	ImGui_ImplDX9_InvalidateDeviceObjects();
 	ReleaseObjects();
+	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
 void CDrawing::OnResetDevice()
 {
-	CreateObjects();
 	ImGui_ImplDX9_CreateDeviceObjects();
+	CreateObjects();
 }
 
 void CDrawing::OnBeginEndScene()
