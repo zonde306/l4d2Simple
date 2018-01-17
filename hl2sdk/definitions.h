@@ -38,6 +38,12 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define AssertValidStringPtr AssertValidReadPtr
 #define AssertValidThis() AssertValidReadWritePtr(this,sizeof(*this))
 
+#define COLORCODE(r, g, b, a) ((DWORD)((((r)&0xff) << 24) | (((g)&0xff) << 16) | (((b)&0xff) << 8) | ((a)&0xff)))
+#define RED(COLORCODE) ((int)(COLORCODE >> 24))
+#define BLUE(COLORCODE) ((int)(COLORCODE >> 8) & 0xFF)
+#define GREEN(COLORCODE) ((int)(COLORCODE >> 16) & 0xFF)
+#define ALPHA(COLORCODE) ((int)COLORCODE & 0xFF)
+
 // These defines are for client button presses
 // CUserCommand::buttons
 #define IN_ATTACK					(1 << 0)
