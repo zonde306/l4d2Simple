@@ -640,7 +640,7 @@ int V_snwprintf(wchar_t *pDest, int maxLen, const wchar_t *pFormat, ...)
 
 	va_start(marker, pFormat);
 #ifdef _WIN32
-	int len = _snwprintf(pDest, maxLen, pFormat, marker);
+	int len = _vsnwprintf(pDest, maxLen, pFormat, marker);
 #elif defined _LINUX || defined __APPLE__
 	int len = swprintf(pDest, maxLen, pFormat, marker);
 #else
