@@ -131,6 +131,7 @@
     <ClCompile Include="..\d3dfont\D3DFont.cpp" />
     <ClCompile Include="..\detours\detourxs.cpp" />
     <ClCompile Include="..\detours\splice.cpp" />
+    <ClCompile Include="..\hl2sdk\interfaces.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h" />
     <ClCompile Include="..\hl2sdk\Interfaces\IBaseClientDLL.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\ICvar.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="..\hl2sdk\Structs\recvprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\trace.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\usercmd.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\vplane.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\checksum_crc.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\checksum_md5.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\checksum_sha1.cpp" />
@@ -181,6 +183,7 @@
     <ClInclude Include="..\detours\splice.h" />
     <ClInclude Include="..\hl2sdk\definitions.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
+    <ClInclude Include="..\hl2sdk\interfaces.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientDLL.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseFileSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientEntity.h" />
@@ -195,6 +198,7 @@
     <ClInclude Include="..\hl2sdk\Interfaces\ICvar.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineClient.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineTrace.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineVGui.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGameEvent.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGameMovement.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGlobalVarsBase.h" />
@@ -203,6 +207,7 @@
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterial.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterialSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMoveHelper.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\INetChannelInfo.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IPrediction.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IRenderView.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IStudioRender.h" />
@@ -224,6 +229,7 @@
     <ClInclude Include="..\hl2sdk\Structs\recvprop.h" />
     <ClInclude Include="..\hl2sdk\Structs\trace.h" />
     <ClInclude Include="..\hl2sdk\Structs\usercmd.h" />
+    <ClInclude Include="..\hl2sdk\Structs\vplane.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_crc.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_md5.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h" />

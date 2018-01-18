@@ -2,6 +2,7 @@
 #include "IMaterial.h"
 #include "IClientRenderable.h"
 #include "../Structs/baseentity.h"
+#include "../Structs/vplane.h"
 #include "../../l4d2Simple2/vector.h"
 #include <Windows.h>
 
@@ -10,7 +11,7 @@
 #define VENGINE_RENDERVIEW_INTERFACE_VERSION	"VEngineRenderView014"
 
 //typedef VPlane Frustum[ FRUSTUM_NUMPLANES ];
-class model_t;
+struct model_t;
 
 class IRefCounted
 {
@@ -99,6 +100,46 @@ public:
 struct colorVec
 {
 	unsigned r, g, b, a;
+};
+
+//-----------------------------------------------------------------------------
+// Frustum plane indices.
+// WARNING: there is code that depends on these values
+//-----------------------------------------------------------------------------
+
+enum
+{
+	FRUSTUM_RIGHT = 0,
+	FRUSTUM_LEFT = 1,
+	FRUSTUM_TOP = 2,
+	FRUSTUM_BOTTOM = 3,
+	FRUSTUM_NEARZ = 4,
+	FRUSTUM_FARZ = 5,
+	FRUSTUM_NUMPLANES = 6
+};
+
+typedef VPlane Frustum[FRUSTUM_NUMPLANES];
+
+enum ERenderDepthMode
+{
+	DEPTH_MODE_NORMAL = 0,
+	DEPTH_MODE_SHADOW = 1,
+	DEPTH_MODE_SSA0 = 2,
+	DEPTH_MODE_OVERRIDE = 3,
+
+	DEPTH_MODE_MAX
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: Interface to client .dll to set up a rendering pass over world
+//  The client .dll can call Render multiple times to overlay one or more world
+//  views on top of one another
+//-----------------------------------------------------------------------------
+enum DrawBrushModelMode_t
+{
+	DBM_DRAW_ALL = 0,
+	DBM_DRAW_OPAQUE_ONLY,
+	DBM_DRAW_TRANSLUCENT_ONLY,
 };
 
 class IVRenderView

@@ -165,6 +165,12 @@
     <ClCompile Include="..\hl2sdk\Utils\utlbuffer.cpp">
       <Filter>hl2sdk\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\interfaces.cpp">
+      <Filter>hl2sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\vplane.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -385,6 +391,18 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Utils\utlbuffer.h">
       <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\interfaces.h">
+      <Filter>hl2sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\vplane.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineVGui.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\INetChannelInfo.h">
+      <Filter>hl2sdk\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

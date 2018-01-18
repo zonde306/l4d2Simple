@@ -3,7 +3,7 @@
 #include "../Structs/trace.h"
 
 struct model_t;
-class matrix3x4_t;
+struct matrix3x4_t;
 class IClientUnknown;
 
 class ICollideable

@@ -63,7 +63,6 @@ class Vector;
 class QAngle;
 class CGameTrace;
 struct cplane_t;
-typedef CGameTrace trace_t;
 struct studiohdr_t;
 struct virtualmodel_t;
 typedef unsigned char byte;

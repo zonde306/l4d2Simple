@@ -103,7 +103,7 @@ private:
 	int				nTimestampRandomizeWindow;
 };
 
-class CPlayerInfoManager
+class IPlayerInfoManager
 {
 public:
 	virtual void* GetPlayerInfo(void* pEdict) = 0;

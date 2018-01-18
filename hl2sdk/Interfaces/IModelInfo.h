@@ -4,7 +4,7 @@
 class IModelInfo
 {
 public:
-	virtual							~IVModelInfo( void ) { }
+	virtual							~IModelInfo( void ) { }
 
 	// Returns model_t* pointer for a model given a precached or dynamic model index.
 	virtual const model_t			*GetModel( int modelindex ) = 0;
@@ -71,13 +71,13 @@ public:
 	virtual bool					IsUsingFBTexture( const model_t *model, int nSkin, int nBody, void /*IClientRenderable*/ *pClientRenderable ) const = 0;
 
 	// Obsolete methods. These are left in to maintain binary compatibility with clients using the IVModelInfo old version.
-	virtual const model_t			*FindOrLoadModel( const char *name ) { Warning( "IVModelInfo::FindOrLoadModel is now obsolte.\n" ); return NULL; }
-	virtual void					InitDynamicModels( ) { Warning( "IVModelInfo::InitDynamicModels is now obsolte.\n" ); }
-	virtual void					ShutdownDynamicModels( ) { Warning( "IVModelInfo::ShutdownDynamicModels is now obsolte.\n" ); }
-	virtual void					AddDynamicModel( const char *name, int nModelIndex = -1 ) { Warning( "IVModelInfo::AddDynamicModel is now obsolte.\n" ); }
-	virtual void					ReferenceModel( int modelindex ) { Warning( "IVModelInfo::ReferenceModel is now obsolte.\n" ); }
-	virtual void					UnreferenceModel( int modelindex ) { Warning( "IVModelInfo::UnreferenceModel is now obsolte.\n" ); }
-	virtual void					CleanupDynamicModels( bool bForce = false ) { Warning( "IVModelInfo::CleanupDynamicModels is now obsolte.\n" ); }
+	virtual const model_t			*FindOrLoadModel( const char *name ) { return NULL; }
+	virtual void					InitDynamicModels( ) { }
+	virtual void					ShutdownDynamicModels( ) { }
+	virtual void					AddDynamicModel( const char *name, int nModelIndex = -1 ) { }
+	virtual void					ReferenceModel( int modelindex ) { }
+	virtual void					UnreferenceModel( int modelindex ) { }
+	virtual void					CleanupDynamicModels( bool bForce = false ) { }
 
 	virtual MDLHandle_t				GetCacheHandle( const model_t *model ) const = 0;
 

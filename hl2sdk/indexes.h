@@ -3,8 +3,8 @@
 namespace indexes
 {
 	// Client
-	const int GetAllClasses = 7;
-	const int CreateMove = 20;
+	const int GetAllClasses = 8;
+	const int CreateMove = 21;
 	const int FrameStageNotify = 34;
 	const int DispatchUserMessage = 35;
 	const int InKeyEvent = -1;
