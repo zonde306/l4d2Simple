@@ -1,11 +1,12 @@
 #pragma once
-#include "IClientNetworkable.h"
-#include "IClientThinkable.h"
-#include "IClientEntity.h"
-#include "IClientRenderable.h"
-#include "ICollideable.h"
-#include "../Structs/baseentity.h"
 #include "../Structs/handle.h"
+
+class ICollideable;
+class IClientNetworkable;
+class IClientRenderable;
+class IClientEntity;
+class CBaseEntity;
+class IClientThinkable;
 
 class IClientUnknown : public IHandleEntity
 {

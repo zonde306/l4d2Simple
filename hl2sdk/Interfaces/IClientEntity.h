@@ -1,9 +1,8 @@
 #pragma once
 #include "IClientUnknown.h"
 #include "IClientRenderable.h"
-#include "IClientNetworkable.h"
-#include "IClientRenderable.h"
 #include "IClientThinkable.h"
+#include "IClientNetworkable.h"
 
 class CMouthInfo;
 struct SpatializationInfo_t;

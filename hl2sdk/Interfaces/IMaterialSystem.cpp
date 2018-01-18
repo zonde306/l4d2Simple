@@ -5,8 +5,8 @@
 #include "../../l4d2Simple2/utils.h"
 #include <string>
 
-int created = 0;
-
+/*
+int created = 0
 IMaterial* IMaterialSystem::CreateMaterial( bool flat, bool ignorez, bool wireframed )
 {
 	std::string type = ( flat ) ? XorStr( "UnlitGeneric" ) : XorStr( "VertexLitGeneric" );
@@ -33,3 +33,4 @@ IMaterial* IMaterialSystem::FindMaterial( char const* pMaterialName, const char 
 	typedef IMaterial*( __thiscall* OriginalFn )( void*, char const* pMaterialName, const char *pTextureGroupName, bool complain, const char *pComplainPrefix );
 	return Utils::GetVTableFunction<OriginalFn>( this, 84 )( this, pMaterialName, pTextureGroupName, complain, pComplainPrefix );
 }
+*/

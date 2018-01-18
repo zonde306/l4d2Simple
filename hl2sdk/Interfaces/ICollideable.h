@@ -1,7 +1,10 @@
 #pragma once
-#include "IClientUnknown.h"
 #include "../definitions.h"
 #include "../Structs/trace.h"
+
+struct model_t;
+class matrix3x4_t;
+class IClientUnknown;
 
 class ICollideable
 {

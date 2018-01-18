@@ -7,6 +7,8 @@ class ConCommand;
 class IConVar;
 class Color;
 
+#define CVAR_INTERFACE_VERSION "VEngineCvar004"
+
 // Called when a ConVar changes value
 // NOTE: For FCVAR_NEVER_AS_STRING ConVars, pOldValue == NULL
 typedef void(*FnChangeCallback_t)(IConVar *var, const char *pOldValue, float flOldValue);

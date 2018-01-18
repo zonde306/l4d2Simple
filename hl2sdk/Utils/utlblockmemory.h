@@ -1,5 +1,5 @@
 #pragma once
-
+#include "../definitions.h"
 
 //-----------------------------------------------------------------------------
 // The CUtlBlockMemory class:

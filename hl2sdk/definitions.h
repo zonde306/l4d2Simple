@@ -44,6 +44,13 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define GREEN(COLORCODE) ((int)(COLORCODE >> 16) & 0xFF)
 #define ALPHA(COLORCODE) ((int)COLORCODE & 0xFF)
 
+// NOTE: This macro is the same as windows uses; so don't change the guts of it
+#define DECLARE_HANDLE_16BIT(name)	typedef CIntHandle16< struct name##__handle * > name;
+#define DECLARE_HANDLE_32BIT(name)	typedef CIntHandle32< struct name##__handle * > name;
+
+#define DECLARE_POINTER_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
+#define FORWARD_DECLARE_HANDLE(name) typedef struct name##__ *name
+
 // These defines are for client button presses
 // CUserCommand::buttons
 #define IN_ATTACK					(1 << 0)

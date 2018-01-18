@@ -1,6 +1,6 @@
 #pragma once
-#include "IClientUnknown.h"
 
+class IClientUnknown;
 class CClientThinkHandlePtr;
 typedef CClientThinkHandlePtr* ClientThinkHandle_t;
 

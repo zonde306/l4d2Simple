@@ -1,5 +1,4 @@
 #pragma once
-#include "imaterialsystem.h"
 #include "../definitions.h"
 #include <cstdint>
 

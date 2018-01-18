@@ -146,13 +146,13 @@ void CUtlBlockMemory<T, I>::ChangeSize(int nBlocks)
 			free((void*)m_pMemory[i]);
 		}
 
-		// MEM_ALLOC_CREDIT_CLASS();
+		// // MEM_ALLOC_CREDIT_CLASS();
 		m_pMemory = (T**)realloc(m_pMemory, m_nBlocks * sizeof(T*));
 		Assert(m_pMemory);
 	}
 	else
 	{
-		// MEM_ALLOC_CREDIT_CLASS();
+		// // MEM_ALLOC_CREDIT_CLASS();
 		m_pMemory = (T**)malloc(m_nBlocks * sizeof(T*));
 		Assert(m_pMemory);
 	}
@@ -166,7 +166,7 @@ void CUtlBlockMemory<T, I>::ChangeSize(int nBlocks)
 	int nBlockSize = NumElementsInBlock();
 	for (int i = nBlocksOld; i < m_nBlocks; ++i)
 	{
-		// MEM_ALLOC_CREDIT_CLASS();
+		// // MEM_ALLOC_CREDIT_CLASS();
 		m_pMemory[i] = (T*)malloc(nBlockSize * sizeof(T));
 		Assert(m_pMemory[i]);
 	}

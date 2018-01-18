@@ -154,6 +154,7 @@
     <ClCompile Include="..\hl2sdk\Utils\strtools.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\strtools_unicode.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlblockmemory.cpp" />
+    <ClCompile Include="..\hl2sdk\Utils\utlbuffer.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlmemory.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlstring.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlvector.cpp" />
@@ -181,8 +182,10 @@
     <ClInclude Include="..\hl2sdk\definitions.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientDLL.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IBaseFileSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientEntity.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientEntityList.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientMode.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientModeShared.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientNetworkable.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientRenderable.h" />
@@ -192,9 +195,11 @@
     <ClInclude Include="..\hl2sdk\Interfaces\ICvar.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineClient.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineTrace.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IGameEvent.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGameMovement.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGlobalVarsBase.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IInputSystem.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IKeyValuesSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterial.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterialSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMoveHelper.h" />
@@ -202,6 +207,7 @@
     <ClInclude Include="..\hl2sdk\Interfaces\IRenderView.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IStudioRender.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\ISurface.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IUniformRandomStream.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IVDebugOverlay.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IVModelInfo.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IVModelRender.h" />
@@ -223,6 +229,7 @@
     <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h" />
     <ClInclude Include="..\hl2sdk\Utils\strtools.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlblockmemory.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utlbuffer.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlmemory.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlstring.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlvector.h" />

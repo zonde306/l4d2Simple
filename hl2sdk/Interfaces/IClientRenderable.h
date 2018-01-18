@@ -1,4 +1,5 @@
 #pragma once
+#include "IClientUnknown.h"
 
 class Vector;
 class QAngle;

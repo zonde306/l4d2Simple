@@ -55,8 +55,8 @@ namespace Utils
 	std::string Trim(const std::string& s, const std::string& delim);
 
 	// 虚函数相关
-	LPVOID GetVirtualFunction(LPVOID inst, DWORD index);
-	template<typename Fn> Fn GetVTableFunction(LPVOID inst, DWORD index);
+	PVOID GetVirtualFunction(PVOID inst, DWORD index);
+	template<typename Fn> Fn GetVTableFunction(PVOID inst, DWORD index);
 
 	// 进程相关
 	void FindWindowByProccess(DWORD ProcessID = 0);

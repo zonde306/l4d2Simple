@@ -99,6 +99,7 @@ public:
 	virtual bool IsFlagSet(int nFlag) const = 0;
 };
 
+class ConCommandBase;
 class IConCommandBaseAccessor
 {
 public:

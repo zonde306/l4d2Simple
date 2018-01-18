@@ -1,6 +1,7 @@
 #include "IInputSystem.h"
 #include "../../l4d2Simple2/utils.h"
 
+/*
 void IInputSystem::EnableInput( bool bEnable )
 {
 	typedef void( __thiscall* OriginalFn )( void*, bool );
@@ -13,7 +14,6 @@ void IInputSystem::ResetInputState()
 	return Utils::GetVTableFunction<OriginalFn>( this, 39 )( this );
 }
 
-/*
 bool IInputSystem::IsButtonDown( ButtonCode_t code )
 {
 	typedef bool( __thiscall* OriginalFn )( void*, ButtonCode_t );

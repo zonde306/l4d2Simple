@@ -1,4 +1,5 @@
 #pragma once
+#include "strtools.h"
 #include <Windows.h>
 #include <cstdint>
 
@@ -9,29 +10,6 @@
 
 #define COPY_ALL_CHARACTERS -1
 #define __tolower(c)    ((('A' <= (c))&&((c) <= 'Z')) ? ((c) | 0x20) : (c))
-
-int strcasecmp(const char *s1, const char *s2)
-{
-	const unsigned char *p1 = (const unsigned char *)s1;
-	const unsigned char *p2 = (const unsigned char *)s2;
-	int result = 0;
-
-	if (p1 == p2)
-	{
-		return 0;
-	}
-
-	while ((result = __tolower(*p1) - __tolower(*p2)) == 0)
-	{
-		if (*p1++ == '\0')
-		{
-			break;
-		}
-		p2++;
-	}
-
-	return result;
-}
 
 inline wchar_t *wcsdup(const wchar_t *pString)
 {
@@ -360,7 +338,7 @@ public:
 	// Note that this function takes a character count, and does not guarantee null-termination.
 	static void		   Copy(char *out_pOut, const char *pIn, int iLengthInChars) { strncpy(out_pOut, pIn, iLengthInChars); }
 	static int		   Compare(const char *pLhs, const char *pRhs) { return strcmp(pLhs, pRhs); }
-	static int		   CaselessCompare(const char *pLhs, const char *pRhs) { return strcasecmp(pLhs, pRhs); }
+	static int		   CaselessCompare(const char *pLhs, const char *pRhs) { return V_strcasecmp(pLhs, pRhs); }
 	static int		   Length(const char *pValue) { return (int)strlen(pValue); }
 	static const char *FindChar(const char *pStr, const char cSearch) { return strchr(pStr, cSearch); }
 	static const char *EmptyString() { return ""; }

@@ -432,7 +432,7 @@ std::string Utils::Trim(const std::string & s, const std::string & delim)
 	return result;
 }
 
-LPVOID Utils::GetVirtualFunction(LPVOID inst, DWORD index)
+inline PVOID Utils::GetVirtualFunction(PVOID inst, DWORD index)
 {
 	if (inst == nullptr)
 		return nullptr;
@@ -441,7 +441,7 @@ LPVOID Utils::GetVirtualFunction(LPVOID inst, DWORD index)
 	if (table == nullptr)
 		return nullptr;
 
-	return reinterpret_cast<LPVOID>(table[index]);
+	return reinterpret_cast<PVOID>(table[index]);
 }
 
 HWND Utils::g_hCurrentWindow = NULL;
@@ -625,7 +625,7 @@ T Utils::WriteMemory(T value, Arg ...offset)
 }
 
 template<typename Fn>
-Fn Utils::GetVTableFunction(LPVOID inst, DWORD index)
+inline Fn Utils::GetVTableFunction(PVOID inst, DWORD index)
 {
 	if (inst == nullptr)
 		return nullptr;

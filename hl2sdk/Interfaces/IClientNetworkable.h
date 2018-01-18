@@ -1,4 +1,5 @@
 #pragma once
+#include "IClientUnknown.h"
 #include "../Structs/clientclass.h"
 #include "../Structs/bitbuffer.h"
 

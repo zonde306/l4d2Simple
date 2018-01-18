@@ -1,6 +1,7 @@
 #pragma once
+#include "IClientMode.h"
 
-class IClientModeShared
+class IClientModeShared : public IClientMode
 {
 public:
 

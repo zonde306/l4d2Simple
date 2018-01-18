@@ -10,6 +10,7 @@ IConCommandBaseAccessor	*ConCommandBase::s_pAccessor = &s_DefaultAccessor;
 
 void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 {
+	/*
 	if (!g_interface.Cvar || s_bRegistered)
 		return;
 
@@ -30,6 +31,7 @@ void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 	}
 
 	ConCommandBase::s_pConCommandBases = NULL;
+	*/
 }
 
 

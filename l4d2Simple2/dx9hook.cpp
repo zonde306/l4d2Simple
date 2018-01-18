@@ -579,10 +579,6 @@ HRESULT CDirectX9Hook::CallOriginal_Present(IDirect3DDevice9* device, const RECT
 template<typename Fn>
 bool CDirectX9Hook::HookFunction(Fn function)
 {
-#ifdef _DEBUG
-	static_assert(_DeclTypeCall<Fn>::GetHookList() == nullptr);
-#endif
-	
 	const std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();;
 	if (std::find(list.cbegin(), list.cend(), function) != list.cend())
 		return false;
@@ -594,10 +590,6 @@ bool CDirectX9Hook::HookFunction(Fn function)
 template<typename Fn>
 bool CDirectX9Hook::UnhookFunction(Fn function)
 {
-#ifdef _DEBUG
-	static_assert(_DeclTypeCall<Fn>::GetHookList() == nullptr);
-#endif
-	
 	std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();
 	std::vector<Fn>::iterator iter = std::find(list.begin(), list.end(), function);
 	if (iter != list.end())
@@ -612,20 +604,12 @@ bool CDirectX9Hook::UnhookFunction(Fn function)
 template<typename Fn, typename ...Arg>
 HRESULT CDirectX9Hook::InvokeOriginal(Fn, Arg ...arg)
 {
-#ifdef _DEBUG
-	static_assert(_DeclTypeCall<Fn>::GetFunction() == nullptr);
-#endif
-
 	return _DeclTypeCall<Fn>::Invoke(std::forward<Arg>(arg)...);
 }
 
 template<typename Fn>
 bool CDirectX9Hook::_FunctionHook(std::vector<Fn>& list, Fn function)
 {
-#ifdef _DEBUG
-	static_assert(function == nullptr);
-#endif
-
 	if (!list.empty() && std::find(list.cbegin(), list.cend(), function) != list.cend())
 		return false;
 
@@ -636,9 +620,6 @@ bool CDirectX9Hook::_FunctionHook(std::vector<Fn>& list, Fn function)
 template<typename Fn>
 bool CDirectX9Hook::_FunctionUnhook(std::vector<Fn>& list, Fn function)
 {
-#ifdef _DEBUG
-	static_assert(function == nullptr);
-#endif
 	if (list.empty())
 		return false;
 

@@ -162,6 +162,9 @@
     <ClCompile Include="..\hl2sdk\Interfaces\ICvar.cpp">
       <Filter>hl2sdk\Interfaces</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\utlbuffer.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -363,6 +366,24 @@
       <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Utils\utlstring.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IClientMode.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IGameEvent.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IUniformRandomStream.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IKeyValuesSystem.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IBaseFileSystem.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlbuffer.h">
       <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
   </ItemGroup>

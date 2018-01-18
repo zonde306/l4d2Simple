@@ -2,6 +2,7 @@
 #include "../indexes.h"
 #include "../../l4d2Simple2/utils.h"
 
+#ifdef _CSGO
 void ISurface::DrawSetColor(int r, int g, int b, int a)
 {
 	typedef void(__thiscall* OriginalFn)(void*, int, int, int, int);
@@ -115,3 +116,4 @@ void ISurface::DrawTexturedPolygon(int n, Vertex_t *pVertice, bool bClipVertices
 	typedef void(__thiscall* OriginalFn)(void*, int, Vertex_t*, bool);
 	return Utils::GetVTableFunction<OriginalFn>(this, 106)(this, n, pVertice, bClipVertices);
 }
+#endif
