@@ -86,7 +86,12 @@ public:
 	}
 };
 
+#ifdef _DEBUG
+#define XorStr(s)	s
+#define xs(_s)		_s
+#else
 #define XorStr(s)	(XorCompileTime::XorString<sizeof(s) - 1, __COUNTER__>(s, std::make_index_sequence<sizeof(s) - 1>()).decrypt())
 #define xs(_s)		XorStr(_s)
+#endif
 
 END_NAMESPACE

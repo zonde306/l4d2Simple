@@ -146,41 +146,41 @@ public:
 		NA_IP,
 	} netadrtype_t;
 
-	netadr_s()
+	inline netadr_s()
 	{
 		SetIP(0);
 		SetPort(0);
 		SetType(NA_IP);
 	}
-	netadr_s(unsigned int unIP, uint16_t usPort)
+	inline netadr_s(unsigned int unIP, uint16_t usPort)
 	{
 		SetIP(unIP);
 		SetPort(usPort);
 		SetType(NA_IP);
 	}
-	netadr_s(const char *pch) { SetFromString(pch); }
-	void Clear() { memset(ip, 0, 4); }; // invalids Address
+	inline netadr_s(const char *pch) { SetFromString(pch); }
+	inline void Clear() { memset(ip, 0, 4); }; // invalids Address
 
-	void SetType(netadrtype_t type) { this->type = type; };
-	void SetPort(unsigned short port) { this->port = port; };
-	bool SetFromSockadr(const struct sockaddr *s);
-	void SetIP(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4)
+	inline void SetType(netadrtype_t type) { this->type = type; };
+	inline void SetPort(unsigned short port) { this->port = port; };
+	inline bool SetFromSockadr(const struct sockaddr *s);
+	inline void SetIP(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4)
 	{
 		ip[0] = b1; ip[1] = b2; ip[2] = b3; ip[3] = b4;
 	};
-	void SetIP(unsigned int unIP) // Sets IP.  unIP is in host order (little-endian)
+	inline void SetIP(unsigned int unIP) // Sets IP.  unIP is in host order (little-endian)
 	{
 		ip[0] = ((unIP & 0xFF000000) >> 24);
 		ip[1] = ((unIP & 0xFF0000) >> 16);
 		ip[2] = ((unIP & 0xFF00) >> 8);
 		ip[3] = (unIP & 0xFF);
 	};
-	void SetIPAndPort(unsigned int unIP, unsigned short usPort)
+	inline void SetIPAndPort(unsigned int unIP, unsigned short usPort)
 	{
 		SetIP(unIP);
 		SetPort(usPort);
 	}
-	void SetFromString(const char *pch, bool bUseDNS = false) // if bUseDNS is true then do a DNS lookup if needed
+	inline void SetFromString(const char *pch, bool bUseDNS = false) // if bUseDNS is true then do a DNS lookup if needed
 	{
 		std::vector<std::string> addr = Utils::Split(pch, ".");
 		if (addr.size() < 4)
@@ -199,33 +199,33 @@ public:
 		ip[3] = atoi(addr[3].c_str());
 	};
 
-	bool CompareAdr(const netadr_s &a, bool onlyBase = false) const
+	inline bool CompareAdr(const netadr_s &a, bool onlyBase = false) const
 	{
 		return (memcmp(ip, a.ip, 4) == 0 && port == a.port && type == a.type);
 	};
 	bool CompareClassBAdr(const netadr_s &a) const;
 	bool CompareClassCAdr(const netadr_s &a) const;
 
-	netadrtype_t GetType() const { return type; };
-	unsigned short GetPort() const { return port; };
-	const char *ToString(bool onlyBase = false) const // returns xxx.xxx.xxx.xxx:ppppp
+	inline netadrtype_t GetType() const { return type; };
+	inline unsigned short GetPort() const { return port; };
+	inline const char *ToString(bool onlyBase = false) const // returns xxx.xxx.xxx.xxx:ppppp
 	{
 		std::stringstream ss;
 		ss << ip[0] << "." << ip[1] << "." << ip[2] << "." << ip[3] << ":" << port;
 		return ss.str().c_str();
 	};
 	void ToSockadr(struct sockaddr *s) const;
-	unsigned int GetIP() const { return ((ip[0] << 24) | (ip[1] << 16) | (ip[2] << 8) | (ip[3])); };
+	inline unsigned int GetIP() const { return ((ip[0] << 24) | (ip[1] << 16) | (ip[2] << 8) | (ip[3])); };
 
-	bool IsLocalhost() const { return (ip[0] == 127 && ip[1] == 0 && ip[2] == 0 && ip[3] == 1); };   // true, if this is the localhost IP
-	bool IsLoopback() const { return (type == NA_LOOPBACK); };	// true if engine loopback buffers are used
-	bool IsReservedAdr() const { return (ip[0] == 192 && ip[1] == 168); }; // true, if this is a private LAN IP
-	bool IsValid() const { return (GetIP() > 0 && port > 0); };		// ip & port != 0
+	inline bool IsLocalhost() const { return (ip[0] == 127 && ip[1] == 0 && ip[2] == 0 && ip[3] == 1); };   // true, if this is the localhost IP
+	inline bool IsLoopback() const { return (type == NA_LOOPBACK); };	// true if engine loopback buffers are used
+	inline bool IsReservedAdr() const { return (ip[0] == 192 && ip[1] == 168); }; // true, if this is a private LAN IP
+	inline bool IsValid() const { return (GetIP() > 0 && port > 0); };		// ip & port != 0
 	void SetFromSocket(int hSocket);
 	// These function names are decorated because the Xbox360 defines macros for ntohl and htonl
 	unsigned long addr_ntohl() const;
 	unsigned long addr_htonl() const;
-	bool operator==(const netadr_s &netadr) const { return (CompareAdr(netadr)); }
+	inline bool operator==(const netadr_s &netadr) const { return (CompareAdr(netadr)); }
 	bool operator<(const netadr_s &netadr) const;
 
 public: // members are public to avoid to much changes

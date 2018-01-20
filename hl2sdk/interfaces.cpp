@@ -25,6 +25,7 @@ namespace interfaces
 	IVModelRender* ModelRender = nullptr;
 	INetChannelInfo* NetChannel = nullptr;
 	IBaseFileSystem* FileSystem = nullptr;
+	std::unique_ptr<CNetVars> NetProp = nullptr;
 
 	template<typename T>
 	T* GetPointer(const std::string& modules, const std::string& factory);
@@ -85,6 +86,12 @@ void interfaces::InitAllInterfaces()
 		ss.clear();
 		ss << XorStr("IInput Got: 0x");
 		ss << std::hex << std::uppercase << Input;
+		Utils::log(ss.str().c_str());
+
+		NetProp = std::make_unique<CNetVars>();
+
+		ss.clear();
+		ss << XorStr("NetPropTable Got: ") << NetProp->GetCount();
 		Utils::log(ss.str().c_str());
 	}
 

@@ -22,9 +22,11 @@
 #include "./Interfaces/IVModelRender.h"
 #include "./Interfaces/INetChannelInfo.h"
 #include "./Interfaces/IBaseFileSystem.h"
+#include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
 #include <sstream>
+#include <memory>
 
 namespace interfaces
 {
@@ -49,6 +51,7 @@ namespace interfaces
 	extern IVModelRender* ModelRender;
 	extern INetChannelInfo* NetChannel;
 	extern IBaseFileSystem* FileSystem;
+	extern std::unique_ptr<CNetVars> NetProp;
 
 	// 初始化
 	void InitAllInterfaces();

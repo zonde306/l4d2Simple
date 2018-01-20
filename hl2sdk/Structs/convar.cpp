@@ -1,27 +1,41 @@
 #include "convar.h"
 #include "../definitions.h"
+#include "../Interfaces/ICvar.h"
+#include "../../l4d2Simple2/utils.h"
 
-ConCommandBase*		ConCommandBase::s_pConCommandBases = NULL;
+namespace interfaces
+{
+	extern ICvar* Cvar;
+}
+
+ConCommandBase*		ConCommandBase::s_pConCommandBases = nullptr;
 static int			s_nCVarFlag = 0;
 static int			s_nDLLIdentifier = -1;
 static bool			s_bRegistered = false;
 static CDefaultAccessor s_DefaultAccessor;
 IConCommandBaseAccessor	*ConCommandBase::s_pAccessor = &s_DefaultAccessor;
 
+bool CDefaultAccessor::RegisterConCommandBase(ConCommandBase * pVar)
+{
+#ifdef _DEBUG
+	Utils::log("Register ConVar: %s", pVar->GetName());
+#endif
+	interfaces::Cvar->RegisterConCommand(pVar);
+	return true;
+}
+
 void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 {
-	/*
-	if (!g_interface.Cvar || s_bRegistered)
+	if (!interfaces::Cvar || s_bRegistered)
 		return;
 
 	s_bRegistered = true;
 	s_nCVarFlag = nCVarFlag;
-	s_nDLLIdentifier = g_interface.Cvar->AllocateDLLIdentifier();
+	s_nDLLIdentifier = interfaces::Cvar->AllocateDLLIdentifier();
 
-	ConCommandBase *pCur, *pNext;
-
+	ConCommandBase *pCur = ConCommandBase::s_pConCommandBases, *pNext = nullptr;
 	ConCommandBase::s_pAccessor = pAccessor ? pAccessor : &s_DefaultAccessor;
-	pCur = ConCommandBase::s_pConCommandBases;
+
 	while (pCur)
 	{
 		pNext = pCur->m_pNext;
@@ -30,8 +44,7 @@ void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 		pCur = pNext;
 	}
 
-	ConCommandBase::s_pConCommandBases = NULL;
-	*/
+	ConCommandBase::s_pConCommandBases = nullptr;
 }
 
 
@@ -521,3 +534,111 @@ bool ConCommand::CanAutoComplete(void)
 	return m_bHasCompletionCallback;
 }
 
+
+SpoofedConvar::SpoofedConvar()
+{}
+
+SpoofedConvar::SpoofedConvar(const char* szCVar)
+{
+	m_pOriginalCVar = interfaces::Cvar->FindVar(szCVar);
+	Spoof();
+}
+SpoofedConvar::SpoofedConvar(ConVar* pCVar)
+{
+	m_pOriginalCVar = pCVar;
+	Spoof();
+}
+SpoofedConvar::~SpoofedConvar()
+{
+	if (IsSpoofed())
+	{
+		DWORD dwOld;
+
+		SetFlags(m_iOriginalFlags);
+		SetString(m_szOriginalValue);
+
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
+		strcpy((char*)m_pOriginalCVar->m_pszName, m_szOriginalName);
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
+
+		//Unregister dummy cvar
+		interfaces::Cvar->UnregisterConCommand(m_pDummyCVar);
+		free(m_pDummyCVar);
+		m_pDummyCVar = nullptr;
+	}
+}
+bool SpoofedConvar::IsSpoofed()
+{
+	return m_pDummyCVar != nullptr;
+}
+void SpoofedConvar::Spoof()
+{
+	if (!IsSpoofed() && m_pOriginalCVar)
+	{
+		//Save old name value and flags so we can restore the cvar lates if needed
+		m_iOriginalFlags = m_pOriginalCVar->m_nFlags;
+		strcpy(m_szOriginalName, m_pOriginalCVar->m_pszName);
+		strcpy(m_szOriginalValue, m_pOriginalCVar->m_pszDefaultValue);
+
+		sprintf_s(m_szDummyName, 128, "d_%s", m_szOriginalName);
+
+		//Create the dummy cvar
+		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
+		if (!m_pDummyCVar) return;
+		memcpy(m_pDummyCVar, m_pOriginalCVar, sizeof(ConVar));
+
+		m_pDummyCVar->m_pNext = nullptr;
+		//Register it
+		interfaces::Cvar->RegisterConCommand(m_pDummyCVar);
+
+		//Fix "write access violation" bullshit
+		DWORD dwOld;
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
+
+		//Rename the cvar
+		strcpy((char*)m_pOriginalCVar->m_pszName, m_szDummyName);
+
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
+
+		SetFlags(FCVAR_NONE);
+	}
+}
+void SpoofedConvar::SetFlags(int flags)
+{
+	if (IsSpoofed())
+	{
+		m_pOriginalCVar->m_nFlags = flags;
+	}
+}
+int SpoofedConvar::GetFlags()
+{
+	return m_pOriginalCVar->m_nFlags;
+}
+void SpoofedConvar::SetInt(int iValue)
+{
+	if (IsSpoofed())
+	{
+		m_pOriginalCVar->SetValue(iValue);
+	}
+}
+void SpoofedConvar::SetBool(bool bValue)
+{
+	if (IsSpoofed())
+	{
+		m_pOriginalCVar->SetValue(bValue);
+	}
+}
+void SpoofedConvar::SetFloat(float flValue)
+{
+	if (IsSpoofed())
+	{
+		m_pOriginalCVar->SetValue(flValue);
+	}
+}
+void SpoofedConvar::SetString(const char* szValue)
+{
+	if (IsSpoofed())
+	{
+		m_pOriginalCVar->SetValue(szValue);
+	}
+}

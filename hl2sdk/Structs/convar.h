@@ -76,13 +76,6 @@ typedef void(*FnCommandCallback_t)(const CCommand &command);
 //-----------------------------------------------------------------------------
 typedef int(*FnCommandCompletionCallback)(const char *partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH]);
 
-class ICvarQuery : public IAppSystem
-{
-public:
-	// Can these two convars be aliased?
-	virtual bool AreConVarsLinkable(const ConVar *child, const ConVar *parent) = 0;
-};
-
 class IConVar
 {
 public:
@@ -104,6 +97,12 @@ class IConCommandBaseAccessor
 {
 public:
 	virtual bool RegisterConCommandBase(ConCommandBase *pVar) = 0;
+};
+
+class CDefaultAccessor : public IConCommandBaseAccessor
+{
+public:
+	virtual bool RegisterConCommandBase(ConCommandBase *pVar) override;
 };
 
 void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor = NULL);
@@ -312,13 +311,33 @@ public:
 	FnChangeCallback_t		m_fnChangeCallback;
 };
 
-class CDefaultAccessor : public IConCommandBaseAccessor
+class SpoofedConvar
 {
 public:
-	virtual bool RegisterConCommandBase(ConCommandBase *pVar)
-	{
-		// Utils::log("%s (%d) 注册了一个 ConVar %s", __FILE__, __LINE__, pVar->GetName());
-		// g_interface.Cvar->RegisterConCommand(pVar);
-		return true;
-	}
+	SpoofedConvar();
+	SpoofedConvar(const char* szCVar);
+	SpoofedConvar(ConVar* pCVar);
+
+	~SpoofedConvar();
+
+	bool           IsSpoofed();
+	void           Spoof();
+
+	void           SetFlags(int flags);
+	int            GetFlags();
+
+	void           SetBool(bool bValue);
+	void           SetInt(int iValue);
+	void           SetFloat(float flValue);
+	void           SetString(const char* szValue);
+
+private:
+	ConVar * m_pOriginalCVar = nullptr;
+	ConVar* m_pDummyCVar = nullptr;
+
+	char m_szDummyName[128];
+	char m_szDummyValue[128];
+	char m_szOriginalName[128];
+	char m_szOriginalValue[128];
+	int m_iOriginalFlags;
 };

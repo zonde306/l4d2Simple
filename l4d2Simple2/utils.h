@@ -47,6 +47,8 @@ namespace Utils
 	HMODULE GetModuleHandleSafe(const std::string& pszModuleName);
 	DWORD GetModuleBase(const std::string& ModuleName, DWORD ProcessID = 0);
 	DWORD GetModuleBase(const std::string& ModuleName, DWORD* ModuleSize, DWORD ProcessID = 0);
+	DWORD FindPattern(const std::string& szModules, const std::string& szPattern);
+	DWORD FindPattern(const std::string & szModules, const std::string & szPattern, std::string szMask);
 	template<typename T, typename ...Arg> T ReadMemory(Arg... offset);
 	template<typename T, typename ...Arg> T WriteMemory(T value, Arg... offset);
 

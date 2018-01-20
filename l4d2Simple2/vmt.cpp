@@ -133,6 +133,16 @@ bool CVmtHook::CanReadPointer(LPVOID pointer)
 		PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_WRITECOPY));
 }
 
+LPVOID CVmtHook::GetOriginalTable()
+{
+	return m_pOriginTable;
+}
+
+LPVOID CVmtHook::GetHookedTable()
+{
+	return m_pCopyTable;
+}
+
 LPVOID CVmtHook::CheckHookFunction(DWORD index, LPVOID function, bool update, std::true_type)
 {
 	return HookFunction(index, function, update);

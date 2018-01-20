@@ -131,6 +131,7 @@
     <ClCompile Include="..\d3dfont\D3DFont.cpp" />
     <ClCompile Include="..\detours\detourxs.cpp" />
     <ClCompile Include="..\detours\splice.cpp" />
+    <ClCompile Include="..\hl2sdk\hook.cpp" />
     <ClCompile Include="..\hl2sdk\interfaces.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h" />
     <ClCompile Include="..\hl2sdk\Interfaces\IBaseClientDLL.cpp" />
@@ -141,11 +142,13 @@
     <ClCompile Include="..\hl2sdk\Interfaces\ISurface.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IVModelRender.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IVPanel.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\baseentity.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\bitbuffer.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\color.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\convar.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\handle.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\matrix.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\netprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\recvprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\trace.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\usercmd.cpp" />
@@ -182,9 +185,11 @@
     <ClInclude Include="..\detours\opcodes.h" />
     <ClInclude Include="..\detours\splice.h" />
     <ClInclude Include="..\hl2sdk\definitions.h" />
+    <ClInclude Include="..\hl2sdk\hook.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
     <ClInclude Include="..\hl2sdk\interfaces.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientDLL.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientState.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseFileSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientEntity.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IClientEntityList.h" />
@@ -225,6 +230,7 @@
     <ClInclude Include="..\hl2sdk\Structs\handle.h" />
     <ClInclude Include="..\hl2sdk\Structs\keyvalues.h" />
     <ClInclude Include="..\hl2sdk\Structs\matrix.h" />
+    <ClInclude Include="..\hl2sdk\Structs\netprop.h" />
     <ClInclude Include="..\hl2sdk\Structs\playerinfo.h" />
     <ClInclude Include="..\hl2sdk\Structs\recvprop.h" />
     <ClInclude Include="..\hl2sdk\Structs\trace.h" />

@@ -27,6 +27,9 @@ public:
 	template<typename R, typename ...Arg>
 	R Invoke(DWORD index, Arg ...arg);
 
+	LPVOID GetOriginalTable();
+	LPVOID GetHookedTable();
+
 protected:
 	LPVOID CheckHookFunction(DWORD index, LPVOID function, bool update, std::true_type);
 

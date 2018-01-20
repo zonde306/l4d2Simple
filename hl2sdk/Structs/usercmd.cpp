@@ -1,6 +1,6 @@
 #include "usercmd.h"
 
-inline CRC32_t CUserCmd::GetChecksum()
+CRC32_t CUserCmd::GetChecksum()
 {
 	CRC32_t crc;
 

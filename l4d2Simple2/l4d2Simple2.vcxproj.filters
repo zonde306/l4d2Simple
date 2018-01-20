@@ -171,6 +171,15 @@
     <ClCompile Include="..\hl2sdk\Structs\vplane.cpp">
       <Filter>hl2sdk\Structs</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\netprop.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\hook.cpp">
+      <Filter>hl2sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\baseentity.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -402,6 +411,15 @@
       <Filter>hl2sdk\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Interfaces\INetChannelInfo.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\netprop.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\hook.h">
+      <Filter>hl2sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientState.h">
       <Filter>hl2sdk\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>

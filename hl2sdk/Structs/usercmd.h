@@ -27,3 +27,10 @@ public:
 	// Vector headoffset;		// 0x0048
 	byte pad_0x0038[0x20];		// 0x0038
 };	// Size = 0x0058
+
+class CVerifiedUserCmd
+{
+public:
+	CUserCmd	m_cmd;
+	CRC32_t		m_crc;
+};
