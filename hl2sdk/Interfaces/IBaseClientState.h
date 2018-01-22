@@ -102,6 +102,59 @@ public:
 	PROCESS_SVC_MESSAGE(CmdKeyValues) = 0;
 };
 
+class CClockDriftMgr
+{
+	friend class CBaseClientState;
+
+public:
+	CClockDriftMgr() {};
+
+	// Is clock correction even enabled right now?
+	static bool IsClockCorrectionEnabled();
+
+	// Clear our state.
+	void Clear();
+
+	// This is called each time a server packet comes in. It is used to correlate
+	// where the server is in time compared to us.
+	void SetServerTick(int iServerTick);
+
+	// Pass in the frametime you would use, and it will drift it towards the server clock.
+	float AdjustFrameTime(float inputFrameTime);
+
+	// Returns how many ticks ahead of the server the client is.
+	float GetCurrentClockDifference() const;
+
+private:
+	void ShowDebugInfo(float flAdjustment);
+
+	// This scales the offsets so the average produced is equal to the
+	// current average + flAmount. This way, as we add corrections,
+	// we lower the average accordingly so we don't keep responding
+	// as much as we need to after we'd adjusted it a couple times.
+	void AdjustAverageDifferenceBy(float flAmountInSeconds);
+
+private:
+	enum
+	{
+		// This controls how much it smoothes out the samples from the server.
+		NUM_CLOCKDRIFT_SAMPLES = 16
+	};
+
+	// This holds how many ticks the client is ahead each time we get a server tick.
+	// We average these together to get our estimate of how far ahead we are.
+	float m_ClockOffsets[NUM_CLOCKDRIFT_SAMPLES];
+	int m_iCurClockOffset;
+
+	int m_nServerTick; // Last-received tick from the server.
+	int m_nClientTick; // The client's own tick counter (specifically, for interpolation during rendering).
+					   // The server may be on a slightly different tick and the client will drift towards it.
+};
+
+class PackedEntity;
+class CServerClassInfo;
+class CNetworkStringTableContainer;
+
 class CBaseClientState : public INetChannelHandler, public IConnectionlessPacketHandler, public IServerMessageHandler
 {
 public:
@@ -168,6 +221,51 @@ public:
 	virtual void HandleReservationResponse(netadr_s&, bool) = 0;
 	virtual void HandleReserveServerChallengeResponse(int) = 0;
 	virtual void SetServerReservationCookie(unsigned long long) = 0;
+	
+	public:
+	// Connection to server.			
+	int				m_Socket;		// network socket 
+	INetChannel		*m_NetChannel;		// Our sequenced channel to the remote server.
+	unsigned int	m_nChallengeNr;	// connection challenge number
+	double			m_flConnectTime;	// If gap of connect_time to net_time > 3000, then resend connect packet
+	int				m_nRetryNumber;	// number of retry connection attemps
+	char			m_szRetryAddress[ MAX_OSPATH ];
+	int				m_nSignonState;    // see SIGNONSTATE_* definitions
+	double			m_flNextCmdTime; // When can we send the next command packet?
+	int				m_nServerCount;	// server identification for prespawns, must match the svs.spawncount which
+									// is incremented on server spawning.  This supercedes svs.spawn_issued, in that
+									// we can now spend a fair amount of time sitting connected to the server
+									// but downloading models, sounds, etc.  So much time that it is possible that the
+									// server might change levels again and, if so, we need to know that.
+	int			m_nCurrentSequence;	// this is the sequence number of the current incoming packet	
+
+	CClockDriftMgr m_ClockDriftMgr;
+
+	int			m_nDeltaTick;		//	last valid received snapshot (server) tick
+	bool		m_bPaused;			// send over by server
+	int			m_nViewEntity;		// cl_entitites[cl.viewentity] == player point of view
+
+	int			m_nPlayerSlot;		// own player entity index-1. skips world. Add 1 to get cl_entitites index;
+
+	char		m_szLevelName[40];	// for display on solo scoreboard
+	char		m_szLevelNameShort[ 40 ]; // removes maps/ and .bsp extension
+
+	int			m_nMaxClients;		// max clients on server
+
+	PackedEntity	*m_pEntityBaselines[2][MAX_EDICTS];	// storing entity baselines
+		
+	// This stuff manages the receiving of data tables and instantiating of client versions
+	// of server-side classes.
+	CServerClassInfo	*m_pServerClasses;
+	int					m_nServerClasses;
+	int					m_nServerClassBits;
+	char				m_szEncrytionKey[STEAM_KEYSIZE];
+	unsigned int		m_iEncryptionKeySize;
+
+	CNetworkStringTableContainer *m_StringTableContainer;
+	
+	bool m_bRestrictServerCommands;	// If true, then the server is only allowed to execute commands marked with FCVAR_SERVER_CAN_EXECUTE on the client.
+	bool m_bRestrictClientCommands;	// If true, then IVEngineClient::ClientCmd is only allowed to execute commands marked with FCVAR_CLIENTCMD_CAN_EXECUTE on the client.
 };
 
 #define DECLARE_BASE_MESSAGE(msgtype)           \

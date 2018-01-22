@@ -22,6 +22,8 @@
 #include "./Interfaces/IVModelRender.h"
 #include "./Interfaces/INetChannelInfo.h"
 #include "./Interfaces/IBaseFileSystem.h"
+#include "./Interfaces/ILocalize.h"
+#include "./Interfaces/INetworkStringTable.h"
 #include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
@@ -51,6 +53,9 @@ namespace interfaces
 	extern IVModelRender* ModelRender;
 	extern INetChannelInfo* NetChannel;
 	extern IBaseFileSystem* FileSystem;
+	extern ILocalize* Localize;
+	extern INetworkStringTableContainer* StringTable;
+
 	extern std::unique_ptr<CNetVars> NetProp;
 
 	// 初始化

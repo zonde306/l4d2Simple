@@ -1,5 +1,7 @@
 #pragma once
 
+#define MAX_EDICT_BITS				11
+#define MAX_EDICTS					(1 << MAX_EDICT_BITS)
 #define NUM_ENT_ENTRY_BITS			(11 + 2)
 #define NUM_ENT_ENTRIES				(1 << NUM_ENT_ENTRY_BITS)
 #define INVALID_EHANDLE_INDEX		0xFFFFFFFF

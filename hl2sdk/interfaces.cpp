@@ -25,6 +25,9 @@ namespace interfaces
 	IVModelRender* ModelRender = nullptr;
 	INetChannelInfo* NetChannel = nullptr;
 	IBaseFileSystem* FileSystem = nullptr;
+	ILocalize* Localize = nullptr;
+	INetworkStringTableContainer* StringTable = nullptr;
+
 	std::unique_ptr<CNetVars> NetProp = nullptr;
 
 	template<typename T>
@@ -53,6 +56,8 @@ void interfaces::InitAllInterfaces()
 	EngineVGui = GetPointer<IEngineVGui>(XorStr("engine.dll"), XorStr("VEngineVGui"));
 	ModelRender = GetPointer<IVModelRender>(XorStr("engine.dll"), XorStr("VEngineModel"));
 	FileSystem = GetPointer<IBaseFileSystem>(XorStr("engine.dll"), XorStr("VBaseFileSystem"));
+	Localize = GetPointer<ILocalize>(XorStr("localize.dll"), XorStr("Localize_"));
+	StringTable = GetPointer<INetworkStringTableContainer>(XorStr("engine.dll"), XorStr("VEngineClientStringTable"));
 
 	std::stringstream ss;
 
@@ -120,7 +125,6 @@ CGlobalVarsBase * interfaces::FindGlobalVars()
 
 	return nullptr;
 }
-
 
 template<typename T>
 T* interfaces::GetPointer(const std::string & modules, const std::string & factory)

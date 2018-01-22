@@ -422,6 +422,12 @@
     <ClInclude Include="..\hl2sdk\Interfaces\IBaseClientState.h">
       <Filter>hl2sdk\Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\ILocalize.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\INetworkStringTable.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">

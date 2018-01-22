@@ -400,7 +400,7 @@ public:
 	virtual void		EncodeUserCmdToBuffer(bf_write& buf, int slot) = 0;
 	virtual void		DecodeUserCmdFromBuffer(bf_read& buf, int slot) = 0;
 
-	virtual CUserCmd	*GetUserCmd(int givezero, int sequence_number) = 0;
+	virtual CUserCmd	*GetUserCmd(int nSlot, int sequence_number) = 0;
 
 	virtual void		MakeWeaponSelection(CBaseEntity* *weapon) = 0;
 

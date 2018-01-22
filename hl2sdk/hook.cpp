@@ -6,9 +6,16 @@
 #include "../detours/detourxs.h"
 #include <memory>
 
-#define SIG_CL_MOVE			XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 E8")
-#define SIG_START_DRAWING	XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC 14 56 57 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 8B F9 80 3D")
-#define SIG_FINISH_DRAWING	XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 51 56 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 6A 00")
+#define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 34 83 3D")
+#define SIG_CL_SENDMOVE				XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 8D 4D CC")
+#define SIG_WRITE_USERCMD			XorStr("55 8B EC 8B 45 10 83 EC 0C B9")
+#define SIG_START_DRAWING			XorStr("55 8B EC 64 A1 ? ? ? ? 6A FF 68 ? ? ? ? 50 64 89 25 ? ? ? ? 83 EC 14")
+#define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 64 89 25 ? ? ? ? 51 56 6A 00")
+#define SIG_FX_FIREBULLET			XorStr("55 8B EC 8B 0D ? ? ? ? 83 EC 10 53")
+#define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 43")
+#define SIG_LOOKUP_WEAPON_INFO		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0 74 18")
+#define SIG_INVALOID_WEAPON_INFO	XorStr("B8 ? ? ? ? C3")
+#define SIG_GET_WEAPON_FILE_INFO	XorStr("55 8B EC 66 8B 45 08 66 3B 05 ? ? ? ? 73 1A")
 
 static std::unique_ptr<DetourXS> g_pHookCL_Move;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
@@ -140,15 +147,15 @@ bool hook::InstallHook()
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction);
 }
 
-void hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
+void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
 {
 	DWORD _edi;
-	BYTE _bl;
+	DWORD _esi;
 
 	__asm
 	{
 		mov		_edi, edi
-		mov		_bl, bl
+		mov		_esi, esi
 	};
 
 #ifdef _DEBUG
@@ -161,20 +168,20 @@ void hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
 #endif
 
 	// Gateway
-	static auto gwCL_Move = [](DWORD _edi, BYTE _bl, float accumulated_extra_samples, bool bFinalTick) -> void
+	static auto gwCL_Move = [](DWORD _edi, DWORD _esi, float accumulated_extra_samples, bool bFinalTick) -> void
 	{
 		// 不支持 push byte. 所以只能 push word
 		DWORD wFinalTick = bFinalTick;
 
 		__asm
 		{
-			// 寄存器传参
-			mov		bl, _bl
-			mov		edi, _edi
-
 			// 堆栈传参
 			push	wFinalTick
 			push	accumulated_extra_samples
+
+			// 寄存器传参
+			mov		esi, _esi
+			mov		edi, _edi
 
 			// 调用原函数(其实是个蹦床)
 			call	oCL_Move
@@ -187,7 +194,7 @@ void hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
 	// 默认的 1 次调用，如果不调用会导致游戏冻结
 	// 参数 bFinalTick 相当于 bSendPacket
 	// 连续调用可以实现加速效果，但是需要破解 m_nTickBase 才能用
-	gwCL_Move(_edi, _bl, accumulated_extra_samples, bFinalTick);
+	gwCL_Move(_edi, _esi, accumulated_extra_samples, bFinalTick);
 }
 
 void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL panel, bool forcePaint, bool allowForce)

@@ -149,7 +149,7 @@ public:
 
 	// Encode the delta (changes) between the CUserCmd in slot from vs the one in slot to.  The game code will have
 	//  matching logic to read the delta.
-	virtual bool			WriteUsercmdDeltaToBuffer( bf_write *buf, int from, int to, bool isnewcommand ) = 0;
+	virtual bool			WriteUsercmdDeltaToBuffer( int nSlot, bf_write *buf, int from, int to, bool isnewcommand ) = 0;
 	// Demos need to be able to encode/decode CUserCmds to memory buffers, so these functions wrap that
 	virtual void			EncodeUserCmdToBuffer( bf_write& buf, int slot ) = 0;
 	virtual void			DecodeUserCmdFromBuffer( bf_read& buf, int slot ) = 0;

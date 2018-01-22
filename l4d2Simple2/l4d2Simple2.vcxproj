@@ -209,10 +209,12 @@
     <ClInclude Include="..\hl2sdk\Interfaces\IGlobalVarsBase.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IInputSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IKeyValuesSystem.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\ILocalize.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterial.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMaterialSystem.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IMoveHelper.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\INetChannelInfo.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\INetworkStringTable.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IPrediction.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IRenderView.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IStudioRender.h" />
