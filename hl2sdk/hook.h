@@ -7,7 +7,9 @@
 #include <functional>
 #include <memory>
 
+typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
+typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
 typedef void(__thiscall* FnPaintTraverse)(IVPanel*, VPANEL, bool, bool);
 typedef bool(__thiscall* FnCreateMoveShared)(IClientMode*, float, CUserCmd*);
 typedef void(__thiscall* FnCreateMove)(IBaseClientDll*, int, float, bool);
@@ -19,6 +21,7 @@ typedef bool(__thiscall* FnEngineKeyEvent)(IEngineVGui*, const InputEvent_t&);
 typedef bool(__thiscall* FnProcessGetCvarValue)(CBaseClientState*, SVC_GetCvarValue*);
 typedef bool(__thiscall* FnProcessSetConVar)(CBaseClientState*, NET_SetConVar*);
 typedef bool(__thiscall* FnProccessStringCmd)(CBaseClientState*, NET_StringCmd*);
+typedef bool(__thiscall* FnWriteUsercmdDeltaToBuffer)(IBaseClientDll*, bf_write*, int, int, bool);
 
 // 通过修改参数 CUserCmd* 来实现各种操作，修改 bool* 以实现隐藏修改的操作
 // 如果 CUserCmd::viewangles 与 IEngineClient::GetViewAngles 不同则需要修复
@@ -74,6 +77,7 @@ namespace hook
 	extern FnProcessGetCvarValue oProcessGetCvarValue;
 	extern FnProcessSetConVar oProcessSetConVar;
 	extern FnProccessStringCmd oProccessStringCmd;
+	extern FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer;
 
 	extern bool* bSendPacket;
 }

@@ -1,4 +1,5 @@
 #include "handle.h"
+#include "../Interfaces/IClientEntityList.h"
 
 template<class T>
 CHandle<T>::CHandle()
@@ -25,7 +26,7 @@ CHandle<T>::CHandle(T *pObj)
 }
 
 template<class T>
-inline CHandle<T> CHandle<T>::FromIndex(int index)
+CHandle<T> CHandle<T>::FromIndex(int index)
 {
 	CHandle<T> ret;
 	ret.m_Index = index;
@@ -33,37 +34,37 @@ inline CHandle<T> CHandle<T>::FromIndex(int index)
 }
 
 template<class T>
-inline T* CHandle<T>::Get() const
+T* CHandle<T>::Get() const
 {
 	return (T*)CBaseHandle::Get();
 }
 
 template<class T>
-inline CHandle<T>::operator T *()
+CHandle<T>::operator T *()
 {
 	return Get();
 }
 
 template<class T>
-inline CHandle<T>::operator T *() const
+CHandle<T>::operator T *() const
 {
 	return Get();
 }
 
 template<class T>
-inline bool CHandle<T>::operator !() const
+bool CHandle<T>::operator !() const
 {
 	return !Get();
 }
 
 template<class T>
-inline bool CHandle<T>::operator==(T *val) const
+bool CHandle<T>::operator==(T *val) const
 {
 	return Get() == val;
 }
 
 template<class T>
-inline bool CHandle<T>::operator!=(T *val) const
+bool CHandle<T>::operator!=(T *val) const
 {
 	return Get() != val;
 }
@@ -75,7 +76,7 @@ void CHandle<T>::Set(const T* pVal)
 }
 
 template<class T>
-inline const CBaseHandle& CHandle<T>::operator=(const T *val)
+const CBaseHandle& CHandle<T>::operator=(const T *val)
 {
 	Set(val);
 	return *this;
@@ -87,42 +88,42 @@ T* CHandle<T>::operator -> () const
 	return Get();
 }
 
-inline CBaseHandle::CBaseHandle()
+CBaseHandle::CBaseHandle()
 {
 	m_Index = INVALID_EHANDLE_INDEX;
 }
 
-inline CBaseHandle::CBaseHandle(const CBaseHandle &other)
+CBaseHandle::CBaseHandle(const CBaseHandle &other)
 {
 	m_Index = other.m_Index;
 }
 
-inline CBaseHandle::CBaseHandle(unsigned long value)
+CBaseHandle::CBaseHandle(unsigned long value)
 {
 	m_Index = value;
 }
 
-inline CBaseHandle::CBaseHandle(int iEntry, int iSerialNumber)
+CBaseHandle::CBaseHandle(int iEntry, int iSerialNumber)
 {
 	Init(iEntry, iSerialNumber);
 }
 
-inline void CBaseHandle::Init(int iEntry, int iSerialNumber)
+void CBaseHandle::Init(int iEntry, int iSerialNumber)
 {
 	m_Index = (unsigned long)(iEntry | (iSerialNumber << NUM_SERIAL_NUM_SHIFT_BITS));
 }
 
-inline void CBaseHandle::Term()
+void CBaseHandle::Term()
 {
 	m_Index = INVALID_EHANDLE_INDEX;
 }
 
-inline bool CBaseHandle::IsValid() const
+bool CBaseHandle::IsValid() const
 {
 	return m_Index != INVALID_EHANDLE_INDEX;
 }
 
-inline int CBaseHandle::GetEntryIndex() const
+int CBaseHandle::GetEntryIndex() const
 {
 	// There is a hack here: due to a bug in the original implementation of the 
 	// entity handle system, an attempt to look up an invalid entity index in 
@@ -141,53 +142,53 @@ inline int CBaseHandle::GetEntryIndex() const
 	return m_Index & ENT_ENTRY_MASK;
 }
 
-inline int CBaseHandle::GetSerialNumber() const
+int CBaseHandle::GetSerialNumber() const
 {
 	return m_Index >> NUM_SERIAL_NUM_SHIFT_BITS;
 }
 
-inline int CBaseHandle::ToInt() const
+int CBaseHandle::ToInt() const
 {
 	return (int)m_Index;
 }
 
-inline bool CBaseHandle::operator !=(const CBaseHandle &other) const
+bool CBaseHandle::operator !=(const CBaseHandle &other) const
 {
 	return m_Index != other.m_Index;
 }
 
-inline bool CBaseHandle::operator ==(const CBaseHandle &other) const
+bool CBaseHandle::operator ==(const CBaseHandle &other) const
 {
 	return m_Index == other.m_Index;
 }
 
-inline bool CBaseHandle::operator ==(const IHandleEntity* pEnt) const
+bool CBaseHandle::operator ==(const IHandleEntity* pEnt) const
 {
 	return Get() == pEnt;
 }
 
-inline bool CBaseHandle::operator !=(const IHandleEntity* pEnt) const
+bool CBaseHandle::operator !=(const IHandleEntity* pEnt) const
 {
 	return Get() != pEnt;
 }
 
-inline bool CBaseHandle::operator <(const CBaseHandle &other) const
+bool CBaseHandle::operator <(const CBaseHandle &other) const
 {
 	return m_Index < other.m_Index;
 }
 
-inline bool CBaseHandle::operator <(const IHandleEntity *pEntity) const
+bool CBaseHandle::operator <(const IHandleEntity *pEntity) const
 {
 	unsigned long otherIndex = (pEntity) ? pEntity->GetRefEHandle().m_Index : INVALID_EHANDLE_INDEX;
 	return m_Index < otherIndex;
 }
 
-inline const CBaseHandle& CBaseHandle::operator=(const IHandleEntity *pEntity)
+const CBaseHandle& CBaseHandle::operator=(const IHandleEntity *pEntity)
 {
 	return Set(pEntity);
 }
 
-inline const CBaseHandle& CBaseHandle::Set(const IHandleEntity *pEntity)
+const CBaseHandle& CBaseHandle::Set(const IHandleEntity *pEntity)
 {
 	if (pEntity)
 		*this = pEntity->GetRefEHandle();
@@ -195,5 +196,18 @@ inline const CBaseHandle& CBaseHandle::Set(const IHandleEntity *pEntity)
 		m_Index = INVALID_EHANDLE_INDEX;
 
 	return *this;
+}
+
+namespace interfaces
+{
+	extern IClientEntityList* EntList;
+};
+
+IHandleEntity * CBaseHandle::Get() const
+{
+	if (m_Index == INVALID_EHANDLE_INDEX)
+		return nullptr;
+	
+	return interfaces::EntList->GetClientEntity(m_Index);
 }
 

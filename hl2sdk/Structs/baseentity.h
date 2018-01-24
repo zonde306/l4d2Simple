@@ -78,11 +78,11 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 template<typename T>
 inline T & CBaseEntity::GetNetPropLocal(const std::string & table, const std::string & prop, size_t element)
 {
-	return GetNetProp2(table, prop, XorStr("m_Local"), element);
+	return GetNetProp2<T>(table, prop, XorStr("m_Local"), element);
 }
 
 template<typename T>
 inline T & CBaseEntity::GetNetPropCollision(const std::string & table, const std::string & prop, size_t element)
 {
-	return GetNetProp2(table, prop, XorStr("m_Collision"), element);
+	return GetNetProp2<T>(table, prop, XorStr("m_Collision"), element);
 }

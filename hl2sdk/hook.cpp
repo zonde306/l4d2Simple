@@ -16,8 +16,14 @@
 #define SIG_LOOKUP_WEAPON_INFO		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0 74 18")
 #define SIG_INVALOID_WEAPON_INFO	XorStr("B8 ? ? ? ? C3")
 #define SIG_GET_WEAPON_FILE_INFO	XorStr("55 8B EC 66 8B 45 08 66 3B 05 ? ? ? ? 73 1A")
+#define SIG_PROCCESS_SET_CONVAR		XorStr("55 8B EC 8B 49 08 83 EC 0C")
+#define SIG_CREATEMOVESHARED		XorStr("55 8B EC E8 ? ? ? ? 8B C8 85 C9 75 06 B0 01")
 
-static std::unique_ptr<DetourXS> g_pHookCL_Move;
+#define PRINT_OFFSET(_name,_ptr)	{ss.clear();\
+	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
+	Utils::log(ss.str().c_str());}
+
+static std::unique_ptr<DetourXS> g_pDetourCL_Move, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction;
 
@@ -49,6 +55,10 @@ namespace hook
 	FnProcessGetCvarValue oProcessGetCvarValue = nullptr;
 	FnProcessSetConVar oProcessSetConVar = nullptr;
 	FnProccessStringCmd oProccessStringCmd = nullptr;
+	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
+
+	void InstallClientStateHook(CBaseClientState* pointer);
+	void InstallClientModeHook(IClientMode* pointer);
 
 	void __cdecl Hooked_CL_Move(float, bool);
 	void __fastcall Hooked_PaintTraverse(IVPanel*, LPVOID, VPANEL, bool, bool);
@@ -61,10 +71,14 @@ namespace hook
 	bool __fastcall Hooked_ProcessGetCvarValue(CBaseClientState*, LPVOID, SVC_GetCvarValue*);
 	bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
 	bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
+	bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, bf_write*, int, int, bool);
 
-	bool bCreateMoveFinish = false;
 	FnStartDrawing StartDrawing = nullptr;
 	FnFinishDrawing FinishDrawing = nullptr;
+	FnCL_SendMove CL_SendMove = nullptr;
+	FnWriteUsercmd WriteUserCmd = nullptr;
+
+	bool bCreateMoveFinish = false;
 	bool* bSendPacket = nullptr;
 	std::map<std::string, std::string> mGotConVar;
 }
@@ -77,20 +91,52 @@ bool hook::InstallHook()
 	bool hookSuccess = true;
 	std::stringstream ss;
 
-	if (oCL_Move == nullptr || !g_pHookCL_Move)
+	CL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
+	PRINT_OFFSET(XorStr("CL_SendMove"), CL_SendMove);
+
+	WriteUserCmd = reinterpret_cast<FnWriteUsercmd>(Utils::FindPattern(XorStr("client.dll"), SIG_WRITE_USERCMD));
+	PRINT_OFFSET(XorStr("WriteUserCmd"), WriteUserCmd);
+
+	StartDrawing = reinterpret_cast<FnStartDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_START_DRAWING));
+	PRINT_OFFSET(XorStr("StartDrawing"), StartDrawing);
+
+	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
+	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
+
+	if (oCL_Move == nullptr || !g_pDetourCL_Move)
 	{
 		oCL_Move = reinterpret_cast<FnCL_Move>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_MOVE));
 
-		ss << XorStr("CL_Move Found: 0x");
-		ss << std::hex << std::uppercase << oCL_Move;
-		ss << std::oct << std::nouppercase;
-		Utils::log(ss.str().c_str());
+		PRINT_OFFSET(XorStr("CL_Move"), oCL_Move);
 
 		if (oCL_Move != nullptr)
 		{
-			g_pHookCL_Move = std::make_unique<DetourXS>(oCL_Move, Hooked_CL_Move);
-			oCL_Move = reinterpret_cast<FnCL_Move>(g_pHookCL_Move->GetTrampoline());
+			g_pDetourCL_Move = std::make_unique<DetourXS>(oCL_Move, Hooked_CL_Move);
+			oCL_Move = reinterpret_cast<FnCL_Move>(g_pDetourCL_Move->GetTrampoline());
 		}
+	}
+
+	if (oProcessSetConVar == nullptr || !g_pHookClientState)
+	{
+		oProcessSetConVar = reinterpret_cast<FnProcessSetConVar>(Utils::FindPattern(XorStr("engine.dll"), SIG_PROCCESS_SET_CONVAR));
+
+		PRINT_OFFSET(XorStr("CBaseClientState::ProcessSetConVar"), oProcessSetConVar);
+
+		if (oProcessSetConVar != nullptr)
+		{
+			g_pDetourProcessSetConVar = std::make_unique<DetourXS>(oProcessSetConVar, Hooked_ProcessSetConVar);
+			oProcessSetConVar = reinterpret_cast<FnProcessSetConVar>(g_pDetourProcessSetConVar->GetTrampoline());
+		}
+	}
+
+	if (oCreateMoveShared == nullptr || !g_pHookClientMode)
+	{
+		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(Utils::FindPattern(XorStr("client.dll"), SIG_CREATEMOVESHARED));
+
+		PRINT_OFFSET(XorStr("ClientModeShared::CreateMove"), oCreateMoveShared);
+
+		g_pDetourCreateMove = std::make_unique<DetourXS>(oCreateMoveShared, Hooked_CreateMoveShared);
+		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pDetourCreateMove->GetTrampoline());
 	}
 
 	if (interfaces::Client != nullptr && !g_pHookClient)
@@ -99,6 +145,7 @@ bool hook::InstallHook()
 		oCreateMove = reinterpret_cast<FnCreateMove>(g_pHookClient->HookFunction(indexes::CreateMove, Hooked_CreateMove));
 		oFrameStageNotify = reinterpret_cast<FnFrameStageNotify>(g_pHookClient->HookFunction(indexes::FrameStageNotify, Hooked_FrameStageNotify));
 		oDispatchUserMessage = reinterpret_cast<FnDispatchUserMessage>(g_pHookClient->HookFunction(indexes::DispatchUserMessage, Hooked_DispatchUserMessage));
+		oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
 		g_pHookClient->InstallHook();
 	}
 	else
@@ -122,21 +169,6 @@ bool hook::InstallHook()
 		g_pHookVGui = std::make_unique<CVmtHook>(interfaces::EngineVGui);
 		oEnginePaint = reinterpret_cast<FnEnginePaint>(g_pHookPanel->HookFunction(indexes::EnginePaint, Hooked_EnginePaint));
 		g_pHookPanel->InstallHook();
-
-		StartDrawing = reinterpret_cast<FnStartDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_START_DRAWING));
-		FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
-
-		ss.clear();
-		ss << XorStr("StartDrawing Found: 0x");
-		ss << std::hex << std::uppercase << StartDrawing;
-		ss << std::oct << std::nouppercase;
-		Utils::log(ss.str().c_str());
-
-		ss.clear();
-		ss << XorStr("FinishDrawing Found: 0x");
-		ss << std::hex << std::uppercase << FinishDrawing;
-		ss << std::oct << std::nouppercase;
-		Utils::log(ss.str().c_str());
 	}
 
 	if (interfaces::Prediction != nullptr && !g_pHookPrediction)
@@ -341,11 +373,59 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(interfaces::EntList->GetClientEntity(
 		interfaces::Engine->GetLocalPlayer()));
 
+	static CMoveData movedata;
+	int flags = localPlayer->GetNetProp<int>("DT_BasePlayer", "m_fFlags");
+	float serverTime = interfaces::GlobalVars->interval_per_tick * localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
+	float oldCurtime = interfaces::GlobalVars->curtime;
+	float oldFrametime = interfaces::GlobalVars->frametime;
+
+	if (interfaces::MoveHelper != nullptr)
+	{
+		// TODO: 设置随机数的种子为 MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF
+		// 目前还不知道随机数种子用哪个设置
+
+		// 设置需要预测的时间（帧）
+		interfaces::GlobalVars->curtime = serverTime;
+		interfaces::GlobalVars->frametime = interfaces::GlobalVars->interval_per_tick;
+
+		// 启动错误检查
+		interfaces::GameMovement->StartTrackPredictionErrors(localPlayer);
+
+		// 清空预测结果的数据
+		ZeroMemory(&movedata, sizeof(CMoveData));
+
+		// 设置需要预测的玩家
+		interfaces::MoveHelper->SetHost(localPlayer);
+
+		// 开始预测
+		interfaces::Prediction->SetupMove(localPlayer, cmd, interfaces::MoveHelper, &movedata);
+		interfaces::GameMovement->ProcessMovement(localPlayer, &movedata);
+		interfaces::Prediction->FinishMove(localPlayer, cmd, &movedata);
+	}
+
 	for (const FnHookCreateMove& func : _CreateMove)
 		func(localPlayer, cmd, bSendPacket);
 
 	for (const auto& inst : _GameHook)
 		inst->OnCreateMove(cmd, bSendPacket);
+
+	if (interfaces::MoveHelper != nullptr)
+	{
+		// 结束预测
+		interfaces::GameMovement->FinishTrackPredictionErrors(localPlayer);
+		interfaces::MoveHelper->SetHost(nullptr);
+
+		// TODO: 设置随机数种子为 -1
+		// 目前还不知道随机数种子用哪个设置
+
+		// 还原备份
+		interfaces::GlobalVars->curtime = oldCurtime;
+		interfaces::GlobalVars->frametime = oldFrametime;
+
+		// 修复一些错误
+		localPlayer->GetNetProp<int>("DT_BasePlayer", "m_fFlags") = flags;
+		localPlayer->GetNetPropLocal<int>("DT_BasePlayer", "m_iHideHUD") = flags;
+	}
 
 	// 手动进行 CRC 验证
 	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
@@ -353,8 +433,28 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	verified->m_crc = cmd->GetChecksum();
 }
 
+void hook::InstallClientModeHook(IClientMode * pointer)
+{
+	if (!g_pHookClientMode)
+	{
+		if (g_pDetourCreateMove)
+		{
+			if (g_pDetourCreateMove->Created())
+				g_pDetourCreateMove->Destroy();
+
+			g_pDetourCreateMove.reset();
+		}
+
+		g_pHookClientMode = std::make_unique<CVmtHook>(pointer);
+		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pHookClientMode->HookFunction(indexes::SharedCreateMove, Hooked_CreateMoveShared));
+		g_pHookClientMode->InstallHook();
+	}
+}
+
 bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
 {
+	InstallClientModeHook(_ecx);
+	
 	oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 	bCreateMoveFinish = true;
 
@@ -431,6 +531,26 @@ void __fastcall hook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx,
 
 	for (const auto& inst : _GameHook)
 		inst->OnFrameStageNotify(stage);
+}
+
+void hook::InstallClientStateHook(CBaseClientState* pointer)
+{
+	if (!g_pHookClientState)
+	{
+		if (g_pDetourProcessSetConVar)
+		{
+			if (g_pDetourProcessSetConVar->Created())
+				g_pDetourProcessSetConVar->Destroy();
+
+			g_pDetourProcessSetConVar.reset();
+		}
+
+		g_pHookClientState = std::make_unique<CVmtHook>(pointer);
+		oProcessSetConVar = reinterpret_cast<FnProcessSetConVar>(g_pHookClientState->HookFunction(indexes::ProcessSetConVar, Hooked_ProcessSetConVar));
+		oProcessGetCvarValue = reinterpret_cast<FnProcessGetCvarValue>(g_pHookClientState->HookFunction(indexes::ProcessGetCvarValue, Hooked_ProcessGetCvarValue));
+		oProccessStringCmd = reinterpret_cast<FnProccessStringCmd>(g_pHookClientState->HookFunction(indexes::ProcessStringCmd, Hooked_ProcessStringCmd));
+		g_pHookClientState->InstallHook();
+	}
 }
 
 bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID _edx, SVC_GetCvarValue* gcv)
@@ -528,6 +648,7 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 bool __fastcall hook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
 {
 	// oProcessSetConVar(_ecx, scv);
+	InstallClientStateHook(_ecx);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -595,4 +716,22 @@ bool __fastcall hook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _ed
 		oProccessStringCmd(_ecx, sc);
 
 	return true;
+}
+
+bool __fastcall hook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, bf_write* buf, int from, int to, bool isnewcommand)
+{
+	// oWriteUsercmdDeltaToBuffer(_ecx, buf, from, to, isnewcommand);
+	
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook FrameStageNotify Success."));
+	}
+#endif
+
+	// 强制更新本地玩家命令
+	WriteUserCmd(buf, interfaces::Input->GetUserCmd(to), interfaces::Input->GetUserCmd(from));
+	return !(buf->IsOverflowed());
 }

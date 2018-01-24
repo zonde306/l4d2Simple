@@ -5,7 +5,7 @@
 #include <imgui.h>
 
 #define GetLocalPlayer()		(dynamic_cast<CBaseEntity*>(interfaces::EntList->GetClientEntity(interfaces::Engine->GetLocalPlayer())))
-#define GetServerTime()			(interfaces::GlobalVars->interval_per_tick * GetLocalPlayer()->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"))))
+#define GetServerTime()			(interfaces::GlobalVars->interval_per_tick * GetLocalPlayer()->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")))
 #define IsPlayerAlive(_p)		(_p->GetNetProp<LifeStates_t>(XorStr("DT_BasePlayer"), XorStr("m_lifeState")) == LIFE_ALIVE)
 #define IsPlayerInLadder(_p)	(_p->GetNetProp<MoveType>(XorStr("DT_BasePlayer"), XorStr("movetype")) == MOVETYPE_LADDER)
 #define IsPlayerInGround(_p)	(_p->GetNetProp<MoveType>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) & FL_ONGROUND)

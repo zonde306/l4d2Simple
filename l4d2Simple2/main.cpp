@@ -8,6 +8,7 @@
 #include "xorstr.h"
 #include "menu.h"
 #include "../hl2sdk/interfaces.h"
+#include "../hl2sdk/hook.h"
 // #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 // 需要在 StartCheats 里把它设置成游戏窗口
@@ -60,6 +61,7 @@ DWORD WINAPI StartCheats(LPVOID module)
 	g_pBaseMenu->Init();
 
 	interfaces::InitAllInterfaces();
+	hook::InstallHook();
 
 	return EXIT_SUCCESS;
 }
