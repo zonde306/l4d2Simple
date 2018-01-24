@@ -1,4 +1,5 @@
 #pragma once
+#include "../Interfaces/IClientEntity.h"
 #include "netprop.h"
 #include "handle.h"
 #include "../../l4d2Simple2/vector.h"
@@ -15,7 +16,7 @@ namespace interfaces
 
 extern std::map<std::string, int> g_mPropOffset;
 
-class CBaseEntity
+class CBaseEntity : public IClientEntity
 {
 public:
 
@@ -42,12 +43,8 @@ inline T & CBaseEntity::GetNetProp(const std::string & table, const std::string 
 	int offset = GetNetPropOffset(table, prop);
 	if (offset == -1)
 	{
-#ifdef _DEBUG
 		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
 		throw std::runtime_error("NetProp Not Found.");
-#else
-		return T();
-#endif
 	}
 
 	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset) + (sizeof(T) * element));
@@ -59,23 +56,15 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 	int offset = GetNetPropOffset(table, prop);
 	if (offset == -1)
 	{
-#ifdef _DEBUG
 		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
 		throw std::runtime_error("NetProp Not Found.");
-#else
-		return T();
-#endif
 	}
 
 	int offset2 = GetNetPropOffset(table, prop2);
 	if(offset2 == -1)
 	{
-#ifdef _DEBUG
 		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
 		throw std::runtime_error("NetProp Not Found.");
-#else
-		return T();
-#endif
 	}
 
 	/*

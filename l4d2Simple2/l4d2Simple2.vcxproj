@@ -131,6 +131,8 @@
     <ClCompile Include="..\d3dfont\D3DFont.cpp" />
     <ClCompile Include="..\detours\detourxs.cpp" />
     <ClCompile Include="..\detours\splice.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\BaseFeatures.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\BunnyHop.cpp" />
     <ClCompile Include="..\hl2sdk\hook.cpp" />
     <ClCompile Include="..\hl2sdk\interfaces.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h" />
@@ -185,6 +187,8 @@
     <ClInclude Include="..\detours\opcodes.h" />
     <ClInclude Include="..\detours\splice.h" />
     <ClInclude Include="..\hl2sdk\definitions.h" />
+    <ClInclude Include="..\hl2sdk\Features\BaseFeatures.h" />
+    <ClInclude Include="..\hl2sdk\Features\BunnyHop.h" />
     <ClInclude Include="..\hl2sdk\hook.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
     <ClInclude Include="..\hl2sdk\interfaces.h" />

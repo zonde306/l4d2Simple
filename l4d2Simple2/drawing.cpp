@@ -5,6 +5,7 @@
 #include "xorstr.h"
 #include "menu.h"
 #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+#include "../hl2sdk/hook.h"
 
 // 将 D3DCOLOR 转换为 ImGui 的颜色
 // DirectX 的颜色为 ARGB。ImGui 的颜色为 ABGR
@@ -626,6 +627,9 @@ void CDrawing::OnBeginPresent()
 #endif
 
 	g_pBaseMenu->OnPresent();
+
+	for (const auto& inst : hook::_GameHook)
+		inst->OnScreenDrawing();
 }
 
 void CDrawing::OnFinishPresent()

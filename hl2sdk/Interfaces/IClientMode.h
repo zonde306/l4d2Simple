@@ -26,6 +26,11 @@ enum HeadtrackMovementMode_t
 	HMM_NOOVERRIDE = HMM_LAST		// Used as a retrun from ShouldOverrideHeadtrackControl(), not an actual mode.
 };
 
+class CBaseViewport;
+class CBaseHudChat;
+class CBaseHudWeaponSelection;
+class CReplayReminderPanel;
+
 class IClientMode
 {
 	// Misc.
@@ -143,4 +148,23 @@ public:
 	virtual bool	IsInfoPanelAllowed() = 0;
 	virtual void	InfoPanelDisplayed() = 0;
 	virtual bool	IsHTMLInfoPanelAllowed() = 0;
+
+public:
+	CBaseViewport * m_pViewport;
+
+#if defined( REPLAY_ENABLED )
+	float					m_flReplayStartRecordTime;
+	float					m_flReplayStopRecordTime;
+	CReplayReminderPanel	*m_pReplayReminderPanel;
+#endif
+
+	DWORD __padding;
+	DWORD __padding2;
+
+	// Message mode handling
+	// All modes share a common chat interface
+	CBaseHudChat			*m_pChatElement;
+	HCursor					m_CursorNone;
+	CBaseHudWeaponSelection *m_pWeaponSelection;
+	int						m_nRootSize[2];
 };

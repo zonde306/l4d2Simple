@@ -55,6 +55,7 @@ namespace interfaces
 	extern IBaseFileSystem* FileSystem;
 	extern ILocalize* Localize;
 	extern INetworkStringTableContainer* StringTable;
+	extern IClientMode* ClientMode;
 
 	extern std::unique_ptr<CNetVars> NetProp;
 

@@ -37,6 +37,9 @@
     <Filter Include="hl2sdk\Structs">
       <UniqueIdentifier>{d54b2607-934a-4dcb-8349-90c07a7af91c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hl2sdk\Features">
+      <UniqueIdentifier>{a780306e-5961-468e-80e0-5cfbcac40208}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -179,6 +182,12 @@
     </ClCompile>
     <ClCompile Include="..\hl2sdk\Structs\baseentity.cpp">
       <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\BaseFeatures.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\BunnyHop.cpp">
+      <Filter>hl2sdk\Features</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -427,6 +436,12 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Interfaces\INetworkStringTable.h">
       <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\BaseFeatures.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\BunnyHop.h">
+      <Filter>hl2sdk\Features</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

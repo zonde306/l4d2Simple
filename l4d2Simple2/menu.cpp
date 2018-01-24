@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "dx9hook.h"
 #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+#include "../hl2sdk/hook.h"
 
 std::unique_ptr<CBaseMenu> g_pBaseMenu;
 
@@ -60,6 +61,9 @@ void CBaseMenu::OnPresent()
 	}
 
 	ImGui::Checkbox(XorStr("DrawIndexedPrimitive"), &m_bShowStride);
+
+	for (const auto& inst : hook::_GameHook)
+		inst->OnMenuDrawing();
 
 	ImGui::End();
 

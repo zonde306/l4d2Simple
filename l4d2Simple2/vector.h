@@ -12,6 +12,7 @@ class Vector
 {
 public:
 	Vector(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f);
+	Vector(const QAngle& angles);
 
 	void Invalidate();
 	bool IsValid() const;
@@ -86,6 +87,7 @@ class QAngle
 {
 public:
 	QAngle(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f);
+	QAngle(const Vector& vector);
 
 	void Invalidate();
 	bool IsValid() const;

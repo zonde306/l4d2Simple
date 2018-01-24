@@ -1,5 +1,6 @@
 #pragma once
 #include "INetChannelInfo.h"
+#include "../Structs/handle.h"
 #include "../Utils/checksum_crc.h"
 #include "../Utils/utlvector.h"
 
@@ -386,12 +387,12 @@ private:
 	char		m_szCvarValueBuffer[256];
 };
 
-bool CLC_RespondCvarValue::ReadFromBuffer(bf_read& buffer)
+inline bool CLC_RespondCvarValue::ReadFromBuffer(bf_read& buffer)
 {
 	return false;
 }
 
-bool CLC_RespondCvarValue::WriteToBuffer(bf_write& buffer)
+inline bool CLC_RespondCvarValue::WriteToBuffer(bf_write& buffer)
 {
 	return false;
 }

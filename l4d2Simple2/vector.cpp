@@ -76,6 +76,13 @@ Vector::Vector(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z)
 {
 }
 
+Vector::Vector(const QAngle & angles)
+{
+	x = angles.x;
+	y = angles.y;
+	z = angles.z;
+}
+
 void Vector::Invalidate()
 {
 	x = y = z = VEC_T_NAN;
@@ -316,6 +323,13 @@ Vector & Vector::operator/=(const vec_t & f)
 
 QAngle::QAngle(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z)
 {
+}
+
+QAngle::QAngle(const Vector & vector)
+{
+	x = vector.x;
+	y = vector.y;
+	z = vector.z;
 }
 
 void QAngle::Invalidate()

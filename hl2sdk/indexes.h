@@ -4,13 +4,14 @@ namespace indexes
 {
 	// Client
 	const int GetAllClasses = 8;
-	const int CreateMove = 20;
-	const int FrameStageNotify = 34;
-	const int DispatchUserMessage = 35;
+	const int CreateMove = 21;
+	const int FrameStageNotify = 35;
+	const int DispatchUserMessage = 36;
 	const int InKeyEvent = -1;
-	const int HudProcessInput = 9;
+	const int HudProcessInput = 10;
 	const int HudUpdate = 10;
 	const int IN_IsKeyDown = 18;
+	const int WriteUsercmdDeltaToBuffer = 23;
 
 	// Engine
 	const int GetScreenSize = 5;
@@ -93,7 +94,7 @@ namespace indexes
 	const int CAM_IsThirdPerson = 29;
 	const int CAM_ToThirdPerson = 31;
 	const int CAM_ToFirstPerson = 32;
-	const int WriteUsercmdDeltaToBuffer = 5;
+	const int InputWriteUsercmdDeltaToBuffer = 5;
 
 	// Prediction
 	const int RunCommand = 18;

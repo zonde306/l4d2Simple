@@ -26,6 +26,7 @@ typedef void(__thiscall* FnFinishDrawing)(ISurface*);
 
 namespace hook
 {
+	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
 	std::vector<FnHookCreateMove> _CreateMove;
 	std::vector<FnHookCreateMoveShared> _CreateMoveShared;
 	std::vector<FnHookPaintTraverse> _PaintTraverse;
@@ -61,6 +62,7 @@ namespace hook
 	bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
 	bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
 
+	bool bCreateMoveFinish = false;
 	FnStartDrawing StartDrawing = nullptr;
 	FnFinishDrawing FinishDrawing = nullptr;
 	bool* bSendPacket = nullptr;
@@ -243,6 +245,13 @@ void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL pa
 		for (const FnHookPaintTraverse& func : _PaintTraverse)
 			func(false);
 	}
+
+	if ((FocusOverlayPanel > 0 && panel == FocusOverlayPanel) ||
+		(MatSystemTopPanel > 0 && panel == MatSystemTopPanel))
+	{
+		for (const auto& inst : _GameHook)
+			inst->OnPaintTraverse(panel);
+	}
 }
 
 void __fastcall hook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMode_t mode)
@@ -265,6 +274,9 @@ void __fastcall hook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMo
 		for (const FnHookEnginePaint& func : _EnginePaint)
 			func();
 
+		for (const auto& inst : _GameHook)
+			inst->OnEnginePaint(mode);
+
 		FinishDrawing(interfaces::Surface);
 	}
 }
@@ -286,13 +298,22 @@ void __fastcall hook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, CBaseEnt
 		interfaces::MoveHelper = movehelper;
 }
 
+#undef GetLocalPlayer
+
 void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int sequence_number, float input_sample_frametime, bool active)
 {
 	DWORD _ebp;
 	__asm mov _ebp, ebp;
-	bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 0x21);
+
+	// .text:100BBA20			bSendPacket = byte ptr -1
+	bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 1);
+
+	bCreateMoveFinish = false;
 
 	oCreateMove(_ecx, sequence_number, input_sample_frametime, active);
+
+	if (bCreateMoveFinish)
+		return;
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -303,6 +324,10 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	}
 #endif
 
+	CVerifiedUserCmd* verified = &interfaces::Input->m_pVerifiedCommands[sequence_number % MULTIPLAYER_BACKUP];
+	CUserCmd* cmd = interfaces::Input->GetUserCmd(sequence_number);
+
+	/*
 	// 验证 CRC 用的
 	CVerifiedUserCmd* verified = &((*reinterpret_cast<CVerifiedUserCmd**>(
 		reinterpret_cast<DWORD>(interfaces::Input) + 0xE0))[sequence_number % 150]);
@@ -310,6 +335,7 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	// 玩家输入
 	CUserCmd* cmd = &((*reinterpret_cast<CUserCmd**>(
 		reinterpret_cast<DWORD>(interfaces::Input) + 0xDC))[sequence_number % 150]);
+	*/
 	
 	// 本地玩家
 	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(interfaces::EntList->GetClientEntity(
@@ -318,7 +344,11 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	for (const FnHookCreateMove& func : _CreateMove)
 		func(localPlayer, cmd, bSendPacket);
 
-	// 发送到服务器
+	for (const auto& inst : _GameHook)
+		inst->OnCreateMove(cmd, bSendPacket);
+
+	// 手动进行 CRC 验证
+	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
 	verified->m_cmd = *cmd;
 	verified->m_crc = cmd->GetChecksum();
 }
@@ -326,6 +356,7 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
 {
 	oCreateMoveShared(_ecx, flInputSampleTime, cmd);
+	bCreateMoveFinish = true;
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -343,6 +374,9 @@ bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, fl
 	for (const FnHookCreateMoveShared& func : _CreateMoveShared)
 		func(localPlayer, cmd, bSendPacket);
 
+	for (const auto& inst : _GameHook)
+		inst->OnCreateMove(cmd, bSendPacket);
+
 	// 必须要返回 false 否则会出现 bug
 	return false;
 }
@@ -354,6 +388,12 @@ bool __fastcall hook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _e
 	{
 		// 由于 bf_read 是不可逆的，所以使用拷贝来防止读取越界
 		if (!func(msgid, *data))
+			blockMessage = true;
+	}
+
+	for (const auto& inst : _GameHook)
+	{
+		if(!inst->OnUserMessage(msgid, *data))
 			blockMessage = true;
 	}
 
@@ -388,6 +428,9 @@ void __fastcall hook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx,
 
 	for (auto func : _FrameStageNotify)
 		func(stage);
+
+	for (const auto& inst : _GameHook)
+		inst->OnFrameStageNotify(stage);
 }
 
 bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID _edx, SVC_GetCvarValue* gcv)
@@ -411,6 +454,15 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 			newResult = std::move(tmpValue);
 	}
 	
+	bool blockQuery = false;
+	for (const auto& inst : _GameHook)
+	{
+		if (!inst->OnProcessGetCvarValue(gcv, tmpValue))
+			blockQuery = true;
+		else if (!tmpValue.empty())
+			newResult = std::move(tmpValue);
+	}
+
 	/*
 	if (newResult.empty())
 		return oProcessGetCvarValue(_ecx, gcv);
@@ -434,7 +486,7 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
 	}
-	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY))
+	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY) || blockQuery)
 	{
 		// 这玩意不可以查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
@@ -493,6 +545,12 @@ bool __fastcall hook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _ed
 			blockSetting = true;
 	}
 
+	for (const auto& inst : _GameHook)
+	{
+		if (!inst->OnProcessSetConVar(scv))
+			blockSetting = true;
+	}
+
 	if(!blockSetting)
 		oProcessSetConVar(_ecx, scv);
 
@@ -524,6 +582,12 @@ bool __fastcall hook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _ed
 	for (auto func : _ProcessStringCmd)
 	{
 		if (!func(sc))
+			blockExecute = true;
+	}
+
+	for (const auto& inst : _GameHook)
+	{
+		if (!inst->OnProcessClientCommand(sc))
 			blockExecute = true;
 	}
 

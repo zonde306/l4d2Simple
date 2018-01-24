@@ -6,8 +6,9 @@
 class CUserCmd
 {
 public:
-	CRC32_t GetChecksum();
+	CRC32_t GetChecksum() const;
 
+	/*
 	byte pad_0x0000[0x4];		// 0x0000 - VTable
 	int command_number;			// 0x0004	For matching server and client commands for debugging
 	int tick_count;				// 0x0008	the tick the client created this command
@@ -26,6 +27,46 @@ public:
 	// Vector headangles;		// 0x003C
 	// Vector headoffset;		// 0x0048
 	byte pad_0x0038[0x20];		// 0x0038
+	*/
+
+	// For matching server and client commands for debugging
+	int		command_number;
+
+	// the tick the client created this command
+	int		tick_count;
+
+	// Player instantaneous view angles.
+	QAngle	viewangles;
+	// Intended velocities
+	//	forward velocity.
+	float	forwardmove;
+	//  sideways velocity.
+	float	sidemove;
+	//  upward velocity.
+	float	upmove;
+	// Attack button states
+	int		buttons;
+	// Impulse command issued.
+	byte    impulse;
+	// Current weapon id
+	int		weaponselect;
+	int		weaponsubtype;
+
+	int		random_seed;	// For shared random functions
+#ifdef GAME_DLL
+	int		server_random_seed; // Only the server populates this seed
+#endif
+
+	short	mousedx;		// mouse accum in x from create move
+	short	mousedy;		// mouse accum in y from create move
+
+							// Client only, tracks whether we've predicted this command at least once
+	bool	hasbeenpredicted;
+
+	// Back channel to communicate IK state
+#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
+	CUtlVector< CEntityGroundContact > entitygroundcontact;
+#endif
 };	// Size = 0x0058
 
 class CVerifiedUserCmd

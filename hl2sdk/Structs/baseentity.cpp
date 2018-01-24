@@ -2,7 +2,7 @@
 
 std::map<std::string, int> g_mPropOffset;
 
-inline int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop)
+int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop)
 {
 	auto it = g_mPropOffset.find(prop);
 	if (it == g_mPropOffset.end())

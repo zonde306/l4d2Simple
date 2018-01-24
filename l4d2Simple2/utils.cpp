@@ -412,9 +412,14 @@ DWORD Utils::FindPattern(const std::string & szModules, const std::string & szPa
 	DWORD dwAddress = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode;
 	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
 
+	return FindPattern(dwAddress, dwLength, szPattern);
+}
+
+DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern)
+{
 	const char *pat = szPattern.c_str();
 	DWORD firstMatch = NULL;
-	for (DWORD pCur = dwAddress; pCur < dwLength; pCur++)
+	for (DWORD pCur = dwBegin; pCur < dwEnd; pCur++)
 	{
 		if (!*pat)
 			return firstMatch;
@@ -445,9 +450,17 @@ DWORD Utils::FindPattern(const std::string & szModules, const std::string & szPa
 	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hmModule;
 	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)hmModule) + pDOSHeader->e_lfanew);
 
+	DWORD dwAddress = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode;
+	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
+
+	return FindPattern(dwAddress, dwLength, szPattern, szMask);
+}
+
+DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern, std::string szMask)
+{
 	BYTE First = szPattern[0];
-	PBYTE BaseAddress = (PBYTE)(((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode);
-	PBYTE Max = (PBYTE)(BaseAddress + pNTHeaders->OptionalHeader.SizeOfCode - szPattern.length());
+	PBYTE BaseAddress = (PBYTE)(dwBegin);
+	PBYTE Max = (PBYTE)(dwEnd - szPattern.length());
 
 	const static auto CompareByteArray = [](PBYTE Data, const char* Signature, const char* Mask) -> bool
 	{

@@ -2,6 +2,10 @@
 #include "indexes.h"
 #include "../l4d2Simple2/xorstr.h"
 
+#define PRINT_OFFSET(_name,_ptr)	{ss.clear();\
+	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
+	Utils::log(ss.str().c_str());}
+
 namespace interfaces
 {
 	IBaseClientDll* Client = nullptr;
@@ -27,6 +31,7 @@ namespace interfaces
 	IBaseFileSystem* FileSystem = nullptr;
 	ILocalize* Localize = nullptr;
 	INetworkStringTableContainer* StringTable = nullptr;
+	IClientMode* ClientMode = nullptr;
 
 	std::unique_ptr<CNetVars> NetProp = nullptr;
 
@@ -82,20 +87,30 @@ void interfaces::InitAllInterfaces()
 		}
 	}
 	
-
 	if (Client != nullptr)
 	{
-		Input = **reinterpret_cast<decltype(Input)**>(
-			(*(reinterpret_cast<PDWORD*>(Client))[indexes::CreateMove]) + 0x20);
-		
-		ss.clear();
-		ss << XorStr("IInput Got: 0x");
-		ss << std::hex << std::uppercase << Input;
-		Utils::log(ss.str().c_str());
+		DWORD offsetStart = Utils::FindPattern(reinterpret_cast<PDWORD>(Client)[indexes::CreateMove],
+			0x51, XorStr("8B 0D ? ? ? ? FF 75 10 D9 45 0C"));
+		if (offsetStart != NULL)
+			Input = **reinterpret_cast<IInput***>(offsetStart + 0x2);
+		else
+			Input = **reinterpret_cast<IInput***>(reinterpret_cast<PDWORD>(Client)[indexes::CreateMove] + 0x20);
+
+		PRINT_OFFSET(XorStr("CInput"), Input);
+
+		offsetStart = Utils::FindPattern(reinterpret_cast<PDWORD>(Client)[indexes::HudProcessInput],
+			0x51, XorStr("8B 0D ? ? ? ? FF 75 10 D9 45 0C"));
+		if (offsetStart != NULL)
+			ClientMode = *reinterpret_cast<IClientMode**>(offsetStart + 0x2);
+		else
+			ClientMode = *reinterpret_cast<IClientMode**>(reinterpret_cast<PDWORD>(Client)[indexes::HudProcessInput] + 0x5);
+
+		PRINT_OFFSET(XorStr("ClientMode"), Input);
 
 		NetProp = std::make_unique<CNetVars>();
 
 		ss.clear();
+		ss << std::oct << std::nouppercase;
 		ss << XorStr("NetPropTable Got: ") << NetProp->GetCount();
 		Utils::log(ss.str().c_str());
 	}

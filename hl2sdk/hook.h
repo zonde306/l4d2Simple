@@ -1,9 +1,11 @@
 ﻿#pragma once
+#include "./Features/BaseFeatures.h"
 #include "interfaces.h"
 #include "./Interfaces/IBaseClientState.h"
 #include <vector>
 #include <string>
 #include <functional>
+#include <memory>
 
 typedef void(__cdecl* FnCL_Move)(float, bool);
 typedef void(__thiscall* FnPaintTraverse)(IVPanel*, VPANEL, bool, bool);
@@ -49,6 +51,7 @@ namespace hook
 	bool InstallHook();
 	bool UninstallHook();
 
+	extern std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
 	extern std::vector<FnHookCreateMove> _CreateMove;
 	extern std::vector<FnHookCreateMoveShared> _CreateMoveShared;
 	extern std::vector<FnHookPaintTraverse> _PaintTraverse;

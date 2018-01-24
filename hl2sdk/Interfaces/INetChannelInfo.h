@@ -1,7 +1,9 @@
 #pragma once
-#include <sstream>
+#include "IBaseFileSystem.h"
 #include "../Structs/bitbuffer.h"
+#include "../Utils/utlvector.h"
 #include "../../l4d2Simple2/utils.h"
+#include <sstream>
 
 #define FLOW_OUTGOING	0		
 #define FLOW_INCOMING	1
