@@ -374,7 +374,7 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 		interfaces::Engine->GetLocalPlayer()));
 
 	static CMoveData movedata;
-	int flags = localPlayer->GetNetProp<int>("DT_BasePlayer", "m_fFlags");
+	int flags = localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
 	float serverTime = interfaces::GlobalVars->interval_per_tick * localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
 	float oldCurtime = interfaces::GlobalVars->curtime;
 	float oldFrametime = interfaces::GlobalVars->frametime;
@@ -423,8 +423,8 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 		interfaces::GlobalVars->frametime = oldFrametime;
 
 		// 修复一些错误
-		localPlayer->GetNetProp<int>("DT_BasePlayer", "m_fFlags") = flags;
-		localPlayer->GetNetPropLocal<int>("DT_BasePlayer", "m_iHideHUD") = flags;
+		localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = flags;
+		localPlayer->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = flags;
 	}
 
 	// 手动进行 CRC 验证
@@ -611,6 +611,13 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 		// 这玩意不可以查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
 		resultBuffer[0] = '\0';
+		returnMsg.m_szCvarValue = resultBuffer;
+	}
+	else if (cvar->IsFlagSet(FCVAR_NEVER_AS_STRING))
+	{
+		// 可以被查询，但无法转换成字符串
+		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
+		strcpy_s(resultBuffer, XorStr("FCVAR_NEVER_AS_STRING"));
 		returnMsg.m_szCvarValue = resultBuffer;
 	}
 	else

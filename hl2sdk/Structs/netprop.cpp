@@ -1,6 +1,8 @@
 #include "netprop.h"
 #include "../Interfaces/IBaseClientDLL.h"
 #include "../../l4d2Simple2/utils.h"
+#include "../../l4d2Simple2/xorstr.h"
+#include <sstream>
 
 namespace interfaces
 {
@@ -16,7 +18,7 @@ CNetVars::CNetVars()
 	ClientClass* clientClass = interfaces::Client->GetAllClasses();
 	if (clientClass == nullptr)
 	{
-		Utils::log("ERROR: ClientClass was not found");
+		Utils::log(XorStr("ERROR: ClientClass was not found"));
 		return;
 	}
 
@@ -35,7 +37,10 @@ int CNetVars::GetOffset(const char* tableName, const char* propName)
 	int offset = GetProp(tableName, propName);
 	if (offset <= -1)
 	{
-		Utils::log("ERROR: Failed to find offset for prop: %s from table: %s", propName, tableName);
+		std::stringstream ss;
+		ss << XorStr("ERROR: Failed to find offset for prop: ");
+		ss << propName << XorStr(" from table: ") << tableName;
+		Utils::log(ss.str().c_str());
 		return -1;
 	}
 
@@ -50,15 +55,20 @@ size_t CNetVars::GetCount()
 int CNetVars::GetProp(const char* tableName, const char* propName, RecvProp **prop)
 {
 	RecvTable* recvTable = GetTable(tableName);
+	std::stringstream ss;
+
 	if (!recvTable)
 	{
-		Utils::log("ERROR: Failed to find table: %s", tableName);
+		ss << XorStr("ERROR: Failed to find table: ") << tableName;
+		Utils::log(ss.str().c_str());
 		return -1;
 	}
 	int offset = GetProp(recvTable, propName, prop);
 	if (offset <= -1)
 	{
-		Utils::log("ERROR: Failed to find offset for prop: %s from table: %s", propName, tableName);
+		ss << XorStr("ERROR: Failed to find offset for prop: ");
+		ss << propName << XorStr(" from table: ") << tableName;
+		Utils::log(ss.str().c_str());
 		return -1;
 	}
 
@@ -98,7 +108,10 @@ RecvTable *CNetVars::GetTable(const char *tableName)
 {
 	if (_tables.empty())
 	{
-		Utils::log("ERROR: Failed to find table: %s (_tables is empty)", tableName);
+		std::stringstream ss;
+		ss << XorStr("ERROR: Failed to find table: ");
+		ss << tableName << XorStr(" (_tables is empty)");
+		Utils::log(ss.str().c_str());
 		return nullptr;
 	}
 

@@ -43,8 +43,10 @@ inline T & CBaseEntity::GetNetProp(const std::string & table, const std::string 
 	int offset = GetNetPropOffset(table, prop);
 	if (offset == -1)
 	{
-		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
-		throw std::runtime_error("NetProp Not Found.");
+		std::stringstream ss;
+		ss << XorStr("NetProp Not Found: ") << table << "::" << prop;
+		Utils::log(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset) + (sizeof(T) * element));
@@ -56,15 +58,19 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 	int offset = GetNetPropOffset(table, prop);
 	if (offset == -1)
 	{
-		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
-		throw std::runtime_error("NetProp Not Found.");
+		std::stringstream ss;
+		ss << XorStr("NetProp Not Found: ") << table << "::" << prop;
+		Utils::log(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	int offset2 = GetNetPropOffset(table, prop2);
 	if(offset2 == -1)
 	{
-		Utils::log("NetProp Not Found: %s::%s", table.c_str(), prop.c_str());
-		throw std::runtime_error("NetProp Not Found.");
+		std::stringstream ss;
+		ss << XorStr("NetProp Not Found: ") << table << "::" << prop2;
+		Utils::log(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
 	}
 
 	/*
