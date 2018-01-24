@@ -25,7 +25,7 @@
 
 //---- Don't implement demo windows functionality (ShowDemoWindow()/ShowStyleEditor()/ShowUserGuide() methods will be empty)
 //---- It is very strongly recommended to NOT disable the demo windows. Please read the comment at the top of imgui_demo.cpp to learn why.
-//#define IMGUI_DISABLE_DEMO_WINDOWS
+#define IMGUI_DISABLE_DEMO_WINDOWS
 
 //---- Don't implement ImFormatString(), ImFormatStringV() so you can reimplement them yourself.
 //#define IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS
