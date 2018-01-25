@@ -166,6 +166,7 @@
     <ClCompile Include="..\hl2sdk\Utils\utlstring.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlvector.cpp" />
     <ClCompile Include="..\imgui\examples\directx9_example\imgui_impl_dx9.cpp" />
+    <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
@@ -252,6 +253,7 @@
     <ClInclude Include="..\hl2sdk\Utils\utlstring.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlvector.h" />
     <ClInclude Include="..\imgui\examples\directx9_example\imgui_impl_dx9.h" />
+    <ClInclude Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />

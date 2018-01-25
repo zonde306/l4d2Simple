@@ -40,6 +40,9 @@
     <Filter Include="hl2sdk\Features">
       <UniqueIdentifier>{a780306e-5961-468e-80e0-5cfbcac40208}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImGui\opengl">
+      <UniqueIdentifier>{4c6b216f-df04-4cc7-a171-34c656e82f16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -443,10 +446,16 @@
     <ClInclude Include="..\hl2sdk\Features\BunnyHop.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
+    <ClInclude Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.h">
+      <Filter>ImGui\opengl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">
       <Filter>detours</Filter>
+    </None>
+    <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp">
+      <Filter>ImGui\opengl</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
