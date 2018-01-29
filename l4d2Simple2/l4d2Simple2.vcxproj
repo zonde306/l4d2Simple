@@ -142,6 +142,7 @@
     <ClCompile Include="..\hl2sdk\Interfaces\IMaterialSystem.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IPhysicsSurfaceProps.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\ISurface.cpp" />
+    <ClCompile Include="..\hl2sdk\Interfaces\IUniformRandomStream.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IVModelRender.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IVPanel.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\baseentity.cpp" />

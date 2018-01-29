@@ -192,6 +192,9 @@
     <ClCompile Include="..\hl2sdk\Features\BunnyHop.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IUniformRandomStream.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">

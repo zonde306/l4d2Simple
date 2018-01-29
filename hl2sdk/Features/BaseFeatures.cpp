@@ -48,6 +48,10 @@ bool CBaseFeatures::OnProcessClientCommand(NET_StringCmd *)
 	return false;
 }
 
+void CBaseFeatures::OnSceneEnd()
+{
+}
+
 void CBaseFeatures::OnMenuDrawing()
 {
 }

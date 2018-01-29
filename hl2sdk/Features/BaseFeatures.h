@@ -25,6 +25,7 @@ public:
 	virtual bool OnProcessGetCvarValue(SVC_GetCvarValue*, std::string&);
 	virtual bool OnProcessSetConVar(NET_SetConVar*);
 	virtual bool OnProcessClientCommand(NET_StringCmd*);
+	virtual void OnSceneEnd();
 	virtual void OnMenuDrawing();
 	virtual void OnScreenDrawing();
 

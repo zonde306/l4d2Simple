@@ -24,6 +24,7 @@
 #include "./Interfaces/IBaseFileSystem.h"
 #include "./Interfaces/ILocalize.h"
 #include "./Interfaces/INetworkStringTable.h"
+#include "./Interfaces/IUniformRandomStream.h"
 #include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
@@ -56,6 +57,7 @@ namespace interfaces
 	extern ILocalize* Localize;
 	extern INetworkStringTableContainer* StringTable;
 	extern IClientMode* ClientMode;
+	extern IVRenderView* RenderView;
 
 	extern std::unique_ptr<CNetVars> NetProp;
 

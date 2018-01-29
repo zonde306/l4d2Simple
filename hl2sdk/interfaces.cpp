@@ -32,6 +32,7 @@ namespace interfaces
 	ILocalize* Localize = nullptr;
 	INetworkStringTableContainer* StringTable = nullptr;
 	IClientMode* ClientMode = nullptr;
+	IVRenderView* RenderView = nullptr;
 
 	std::unique_ptr<CNetVars> NetProp = nullptr;
 
@@ -63,6 +64,7 @@ void interfaces::InitAllInterfaces()
 	FileSystem = GetPointer<IBaseFileSystem>(XorStr("engine.dll"), XorStr("VBaseFileSystem"));
 	Localize = GetPointer<ILocalize>(XorStr("localize.dll"), XorStr("Localize_"));
 	StringTable = GetPointer<INetworkStringTableContainer>(XorStr("engine.dll"), XorStr("VEngineClientStringTable"));
+	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
 
 	std::stringstream ss;
 

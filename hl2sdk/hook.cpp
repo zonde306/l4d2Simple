@@ -25,23 +25,11 @@
 
 static std::unique_ptr<DetourXS> g_pDetourCL_Move, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
-	g_pHookPanel, g_pHookPrediction;
-
-typedef void(__thiscall* FnStartDrawing)(ISurface*);
-typedef void(__thiscall* FnFinishDrawing)(ISurface*);
+	g_pHookPanel, g_pHookPrediction, g_pHookRenderView;
 
 namespace hook
 {
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
-	std::vector<FnHookCreateMove> _CreateMove;
-	std::vector<FnHookCreateMoveShared> _CreateMoveShared;
-	std::vector<FnHookPaintTraverse> _PaintTraverse;
-	std::vector<FnHookEnginePaint> _EnginePaint;
-	std::vector<FnHookUserMessage> _UserMessage;
-	std::vector<FnOnFrameStageNotify> _FrameStageNotify;
-	std::vector<FnOnProcessGetCvarValue> _ProcessGetCvarValue;
-	std::vector<FnOnProcessSetConVar> _ProcessSetConVar;
-	std::vector<FnOnProcessStringCmd> _ProcessStringCmd;
 	
 	FnCL_Move oCL_Move = nullptr;
 	FnPaintTraverse oPaintTraverse = nullptr;
@@ -56,6 +44,7 @@ namespace hook
 	FnProcessSetConVar oProcessSetConVar = nullptr;
 	FnProccessStringCmd oProccessStringCmd = nullptr;
 	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
+	FnSceneEnd oSceneEnd = nullptr;
 
 	void InstallClientStateHook(CBaseClientState* pointer);
 	void InstallClientModeHook(IClientMode* pointer);
@@ -72,11 +61,19 @@ namespace hook
 	bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
 	bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
 	bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, bf_write*, int, int, bool);
+	void __fastcall Hooked_SceneEnd(IVRenderView*, LPVOID);
 
 	FnStartDrawing StartDrawing = nullptr;
 	FnFinishDrawing FinishDrawing = nullptr;
 	FnCL_SendMove CL_SendMove = nullptr;
 	FnWriteUsercmd WriteUserCmd = nullptr;
+
+	FnRandomSeed RandomSeed;
+	FnRandomFloat RandomFloat;
+	FnRandomFloatExp RandomFloatExp;
+	FnRandomInt RandomInt;
+	FnRandomGaussianFloat RandomGaussianFloat;
+	FnInstallUniformRandomStream InstallUniformRandomStream;
 
 	bool bCreateMoveFinish = false;
 	bool* bSendPacket = nullptr;
@@ -85,11 +82,29 @@ namespace hook
 
 bool hook::InstallHook()
 {
-	if (g_pHookClient && g_pHookClientState && g_pHookVGui && g_pHookClientMode)
+	if (g_pHookClient && g_pHookClientState && g_pHookVGui && g_pHookClientMode && g_pHookRenderView && g_pHookPrediction)
 		return true;
 
 	bool hookSuccess = true;
 	std::stringstream ss;
+
+	HMODULE vstdlib = GetModuleHandleA(XorStr("vstdlib.dll"));
+	if (vstdlib != NULL)
+	{
+		RandomSeed = reinterpret_cast<FnRandomSeed>(GetProcAddress(vstdlib, XorStr("RandomSeed")));
+		RandomFloat = reinterpret_cast<FnRandomFloat>(GetProcAddress(vstdlib, XorStr("RandomFloat")));
+		RandomFloatExp = reinterpret_cast<FnRandomFloatExp>(GetProcAddress(vstdlib, XorStr("RandomFloatExp")));
+		RandomInt = reinterpret_cast<FnRandomInt>(GetProcAddress(vstdlib, XorStr("RandomInt")));
+		RandomGaussianFloat = reinterpret_cast<FnRandomGaussianFloat>(GetProcAddress(vstdlib, XorStr("RandomGaussianFloat")));
+		InstallUniformRandomStream = reinterpret_cast<FnInstallUniformRandomStream>(GetProcAddress(vstdlib, XorStr("InstallUniformRandomStream")));
+
+		PRINT_OFFSET(XorStr("RandomSeed"), RandomSeed);
+		PRINT_OFFSET(XorStr("RandomFloat"), RandomFloat);
+		PRINT_OFFSET(XorStr("RandomFloatExp"), RandomFloatExp);
+		PRINT_OFFSET(XorStr("RandomInt"), RandomInt);
+		PRINT_OFFSET(XorStr("RandomGaussianFloat"), RandomGaussianFloat);
+		PRINT_OFFSET(XorStr("InstallUniformRandomStream"), InstallUniformRandomStream);
+	}
 
 	CL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
 	PRINT_OFFSET(XorStr("CL_SendMove"), CL_SendMove);
@@ -178,7 +193,14 @@ bool hook::InstallHook()
 		g_pHookPrediction->InstallHook();
 	}
 
-	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction);
+	if (interfaces::RenderView != nullptr && !g_pHookRenderView)
+	{
+		g_pHookRenderView = std::make_unique<CVmtHook>(interfaces::RenderView);
+		oSceneEnd = reinterpret_cast<FnSceneEnd>(g_pHookRenderView->HookFunction(indexes::SceneEnd, Hooked_SceneEnd));
+		g_pHookRenderView->InstallHook();
+	}
+
+	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView);
 }
 
 void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
@@ -265,19 +287,6 @@ void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL pa
 		}
 	}
 
-	// 每一帧调用两次
-	if (FocusOverlayPanel > 0 && panel == FocusOverlayPanel)
-	{
-		for (const FnHookPaintTraverse& func : _PaintTraverse)
-			func(true);
-	}
-	// 每一帧调用多次 (至少20次)
-	else if (MatSystemTopPanel > 0 && panel == MatSystemTopPanel)
-	{
-		for (const FnHookPaintTraverse& func : _PaintTraverse)
-			func(false);
-	}
-
 	if ((FocusOverlayPanel > 0 && panel == FocusOverlayPanel) ||
 		(MatSystemTopPanel > 0 && panel == MatSystemTopPanel))
 	{
@@ -302,9 +311,6 @@ void __fastcall hook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMo
 	if (mode & PAINT_UIPANELS)
 	{
 		StartDrawing(interfaces::Surface);
-
-		for (const FnHookEnginePaint& func : _EnginePaint)
-			func();
 
 		for (const auto& inst : _GameHook)
 			inst->OnEnginePaint(mode);
@@ -403,9 +409,6 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 		interfaces::Prediction->FinishMove(localPlayer, cmd, &movedata);
 	}
 
-	for (const FnHookCreateMove& func : _CreateMove)
-		func(localPlayer, cmd, bSendPacket);
-
 	for (const auto& inst : _GameHook)
 		inst->OnCreateMove(cmd, bSendPacket);
 
@@ -467,13 +470,6 @@ bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, fl
 	}
 #endif
 
-	// 本地玩家
-	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(interfaces::EntList->GetClientEntity(
-		interfaces::Engine->GetLocalPlayer()));
-
-	for (const FnHookCreateMoveShared& func : _CreateMoveShared)
-		func(localPlayer, cmd, bSendPacket);
-
 	for (const auto& inst : _GameHook)
 		inst->OnCreateMove(cmd, bSendPacket);
 
@@ -484,13 +480,6 @@ bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, fl
 bool __fastcall hook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _edx, int msgid, bf_read* data)
 {
 	bool blockMessage = false;
-	for (const FnHookUserMessage& func : _UserMessage)
-	{
-		// 由于 bf_read 是不可逆的，所以使用拷贝来防止读取越界
-		if (!func(msgid, *data))
-			blockMessage = true;
-	}
-
 	for (const auto& inst : _GameHook)
 	{
 		if(!inst->OnUserMessage(msgid, *data))
@@ -525,10 +514,6 @@ void __fastcall hook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx,
 		Utils::log(XorStr("Hook FrameStageNotify Success."));
 	}
 #endif
-
-	for (auto func : _FrameStageNotify)
-		func(stage);
-
 	for (const auto& inst : _GameHook)
 		inst->OnFrameStageNotify(stage);
 }
@@ -567,13 +552,6 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 #endif
 
 	std::string newResult, tmpValue;
-	for (auto func : _ProcessGetCvarValue)
-	{
-		tmpValue = func(gcv);
-		if (!tmpValue.empty())
-			newResult = std::move(tmpValue);
-	}
-	
 	bool blockQuery = false;
 	for (const auto& inst : _GameHook)
 	{
@@ -667,12 +645,6 @@ bool __fastcall hook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _ed
 #endif
 
 	bool blockSetting = false;
-	for (auto func : _ProcessSetConVar)
-	{
-		if (!func(scv))
-			blockSetting = true;
-	}
-
 	for (const auto& inst : _GameHook)
 	{
 		if (!inst->OnProcessSetConVar(scv))
@@ -707,12 +679,6 @@ bool __fastcall hook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _ed
 #endif
 
 	bool blockExecute = false;
-	for (auto func : _ProcessStringCmd)
-	{
-		if (!func(sc))
-			blockExecute = true;
-	}
-
 	for (const auto& inst : _GameHook)
 	{
 		if (!inst->OnProcessClientCommand(sc))
@@ -741,4 +707,21 @@ bool __fastcall hook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPV
 	// 强制更新本地玩家命令
 	WriteUserCmd(buf, interfaces::Input->GetUserCmd(to), interfaces::Input->GetUserCmd(from));
 	return !(buf->IsOverflowed());
+}
+
+void __fastcall hook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
+{
+	oSceneEnd(_ecx);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook SceneEnd Success."));
+	}
+#endif
+
+	for (const auto& inst : _GameHook)
+		inst->OnSceneEnd();
 }

@@ -225,7 +225,7 @@ public:
 	virtual bool IsIERender() = 0;
 	virtual void GetIDispatchPtr(void **pIDispatch) = 0;
 	virtual void GetHTMLScroll(int &top, int &left) = 0;
-	};
+};
 
 
 //-----------------------------------------------------------------------------
