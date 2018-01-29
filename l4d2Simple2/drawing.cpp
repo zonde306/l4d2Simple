@@ -529,14 +529,44 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 
 void CDrawing::OnLostDevice()
 {
-	ReleaseObjects();
+	// ReleaseObjects();
+
+	LOCK_ENDSCENE();
+
+#if 0
+	m_vDrawList.clear();
+	m_vStringList.clear();
+	m_vStringListW.clear();
+	m_vTopStringList.clear();
+	m_vSimpleStringList.clear();
+	m_bTopStringDrawing = false;
+#endif
+
+	m_pDefaultFont->OnLostDevice();
+	m_pFont->InvalidateDeviceObjects();
+	m_pLine->OnLostDevice();
+	m_pTextSprite->OnLostDevice();
+
+	UNLOCK_ENDSCENE();
+
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
 void CDrawing::OnResetDevice()
 {
 	ImGui_ImplDX9_CreateDeviceObjects();
-	CreateObjects();
+
+	// CreateObjects();
+
+	LOCK_ENDSCENE();
+
+	m_pDefaultFont->OnResetDevice();
+	m_pFont->InitializeDeviceObjects(m_pDevice);
+	m_pFont->RestoreDeviceObjects();
+	m_pLine->OnResetDevice();
+	m_pTextSprite->OnResetDevice();
+
+	UNLOCK_ENDSCENE();
 }
 
 void CDrawing::OnBeginEndScene()

@@ -375,6 +375,9 @@ public:
 	// todo: if you need to add more IMaterial functions add them here
 };
 
+#undef PlaySound
+#undef CreateFont
+
 class ISurface : public IAppSystem
 {
 public:

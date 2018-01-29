@@ -117,7 +117,7 @@ namespace indexes
 	const int GetWeaponId = 383;
 	const int GetSpread = 0xD0C;	// CTerrorWeapon* + 0xD0C
 
-									// ClientModeShared
+	// ClientModeShared
 	const int SharedCreateMove = 27;
 	const int GetMessagePanel = 24;
 	const int KeyInput = 21;
