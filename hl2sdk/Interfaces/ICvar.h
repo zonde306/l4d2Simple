@@ -1,5 +1,6 @@
 #pragma once
 #include "IAppSystem.h"
+#include "../Structs/convar.h"
 
 class ConCommandBase;
 class ConVar;

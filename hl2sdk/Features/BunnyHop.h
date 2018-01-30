@@ -11,7 +11,7 @@ public:
 	virtual void OnMenuDrawing() override;
 
 protected:
-	void DoNormalAutoBhop(CUserCmd* pCmd, int flags);
+	void DoNormalAutoBhop(CBaseEntity*, CUserCmd* pCmd, int flags);
 	void DoSafeAutoBhop(CUserCmd* pCmd, int flags);
 
 	bool CanRunAutoStrafe(CUserCmd* pCmd, int flags);
@@ -22,6 +22,7 @@ protected:
 
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	void DoExtraAutoStrafe(CBaseEntity* player, CUserCmd* pCmd, int flags);
+	void DoFullAutoStrafe(CBaseEntity* player, CUserCmd* pCmd, int flags);
 
 private:
 	bool m_bShowMenu = false;
@@ -40,7 +41,7 @@ private:
 		XorStr("SMAC-Safe")
 	};
 
-	std::array<std::string, 6> m_arrAutoStrafeModeList
+	std::array<std::string, 7> m_arrAutoStrafeModeList
 	{
 		XorStr("Disabled"),
 		XorStr("Forward"),
@@ -48,5 +49,6 @@ private:
 		XorStr("Left"),
 		XorStr("Right"),
 		XorStr("Don't turn"),
+		XorStr("Full Speed")
 	};
 };

@@ -120,7 +120,7 @@ void CBaseHandle::Term()
 
 bool CBaseHandle::IsValid() const
 {
-	return m_Index != INVALID_EHANDLE_INDEX;
+	return (m_Index != INVALID_EHANDLE_INDEX && m_Index > 0);
 }
 
 int CBaseHandle::GetEntryIndex() const
@@ -205,9 +205,9 @@ namespace interfaces
 
 IHandleEntity * CBaseHandle::Get() const
 {
-	if (m_Index == INVALID_EHANDLE_INDEX)
+	if (!IsValid())
 		return nullptr;
 	
-	return interfaces::EntList->GetClientEntity(m_Index);
+	return interfaces::EntList->GetClientEntityFromHandle(*this);
 }
 
