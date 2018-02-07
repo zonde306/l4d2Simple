@@ -6,6 +6,8 @@
 #include "../detours/detourxs.h"
 #include <memory>
 
+std::unique_ptr<CClientHook> g_pClientHook;
+
 #define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 34 83 3D")
 #define SIG_CL_SENDMOVE				XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 8D 4D CC")
 #define SIG_WRITE_USERCMD			XorStr("55 8B EC 8B 45 10 83 EC 0C B9")
@@ -27,60 +29,7 @@ static std::unique_ptr<DetourXS> g_pDetourCL_Move, g_pDetourProcessSetConVar, g_
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView;
 
-namespace hook
-{
-	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
-	
-	FnCL_Move oCL_Move = nullptr;
-	FnPaintTraverse oPaintTraverse = nullptr;
-	FnCreateMoveShared oCreateMoveShared = nullptr;
-	FnCreateMove oCreateMove = nullptr;
-	FnFrameStageNotify oFrameStageNotify = nullptr;
-	FnRunCommand oRunCommand = nullptr;
-	FnDispatchUserMessage oDispatchUserMessage = nullptr;
-	FnEnginePaint oEnginePaint = nullptr;
-	FnEngineKeyEvent oEngineKeyEvent = nullptr;
-	FnProcessGetCvarValue oProcessGetCvarValue = nullptr;
-	FnProcessSetConVar oProcessSetConVar = nullptr;
-	FnProccessStringCmd oProccessStringCmd = nullptr;
-	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
-	FnSceneEnd oSceneEnd = nullptr;
-
-	void InstallClientStateHook(CBaseClientState* pointer);
-	void InstallClientModeHook(IClientMode* pointer);
-
-	void __cdecl Hooked_CL_Move(float, bool);
-	void __fastcall Hooked_PaintTraverse(IVPanel*, LPVOID, VPANEL, bool, bool);
-	bool __fastcall Hooked_CreateMoveShared(IClientMode*, LPVOID, float, CUserCmd*);
-	void __fastcall Hooked_CreateMove(IBaseClientDll*, LPVOID, int, float, bool);
-	void __fastcall Hooked_FrameStageNotify(IBaseClientDll*, LPVOID, ClientFrameStage_t);
-	void __fastcall Hooked_RunCommand(IPrediction*, LPVOID, CBaseEntity*, CUserCmd*, IMoveHelper*);
-	bool __fastcall Hooked_DispatchUserMessage(IBaseClientDll*, LPVOID, int, bf_read*);
-	void __fastcall Hooked_EnginePaint(IEngineVGui*, LPVOID, PaintMode_t);
-	bool __fastcall Hooked_ProcessGetCvarValue(CBaseClientState*, LPVOID, SVC_GetCvarValue*);
-	bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
-	bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
-	bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, bf_write*, int, int, bool);
-	void __fastcall Hooked_SceneEnd(IVRenderView*, LPVOID);
-
-	FnStartDrawing StartDrawing = nullptr;
-	FnFinishDrawing FinishDrawing = nullptr;
-	FnCL_SendMove CL_SendMove = nullptr;
-	FnWriteUsercmd WriteUserCmd = nullptr;
-
-	FnRandomSeed RandomSeed;
-	FnRandomFloat RandomFloat;
-	FnRandomFloatExp RandomFloatExp;
-	FnRandomInt RandomInt;
-	FnRandomGaussianFloat RandomGaussianFloat;
-	FnInstallUniformRandomStream InstallUniformRandomStream;
-
-	bool bCreateMoveFinish = false;
-	bool* bSendPacket = nullptr;
-	std::map<std::string, std::string> mGotConVar;
-}
-
-bool hook::InstallHook()
+bool CClientHook::Init()
 {
 	if (g_pHookClient && g_pHookClientState && g_pHookVGui && g_pHookClientMode && g_pHookRenderView && g_pHookPrediction)
 		return true;
@@ -154,9 +103,9 @@ bool hook::InstallHook()
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pDetourCreateMove->GetTrampoline());
 	}
 
-	if (interfaces::Client != nullptr && !g_pHookClient)
+	if (g_pClientInterface->Client != nullptr && !g_pHookClient)
 	{
-		g_pHookClient = std::make_unique<CVmtHook>(interfaces::Client);
+		g_pHookClient = std::make_unique<CVmtHook>(g_pClientInterface->Client);
 		oCreateMove = reinterpret_cast<FnCreateMove>(g_pHookClient->HookFunction(indexes::CreateMove, Hooked_CreateMove));
 		oFrameStageNotify = reinterpret_cast<FnFrameStageNotify>(g_pHookClient->HookFunction(indexes::FrameStageNotify, Hooked_FrameStageNotify));
 		oDispatchUserMessage = reinterpret_cast<FnDispatchUserMessage>(g_pHookClient->HookFunction(indexes::DispatchUserMessage, Hooked_DispatchUserMessage));
@@ -168,9 +117,9 @@ bool hook::InstallHook()
 		hookSuccess = false;
 	}
 
-	if (interfaces::Panel != nullptr && !g_pHookPanel)
+	if (g_pClientInterface->Panel != nullptr && !g_pHookPanel)
 	{
-		g_pHookPanel = std::make_unique<CVmtHook>(interfaces::Panel);
+		g_pHookPanel = std::make_unique<CVmtHook>(g_pClientInterface->Panel);
 		oPaintTraverse = reinterpret_cast<FnPaintTraverse>(g_pHookPanel->HookFunction(indexes::PaintTraverse, Hooked_PaintTraverse));
 		g_pHookPanel->InstallHook();
 	}
@@ -179,23 +128,23 @@ bool hook::InstallHook()
 		hookSuccess = false;
 	}
 	
-	if (interfaces::EngineVGui != nullptr && !g_pHookVGui)
+	if (g_pClientInterface->EngineVGui != nullptr && !g_pHookVGui)
 	{
-		g_pHookVGui = std::make_unique<CVmtHook>(interfaces::EngineVGui);
+		g_pHookVGui = std::make_unique<CVmtHook>(g_pClientInterface->EngineVGui);
 		oEnginePaint = reinterpret_cast<FnEnginePaint>(g_pHookPanel->HookFunction(indexes::EnginePaint, Hooked_EnginePaint));
 		g_pHookPanel->InstallHook();
 	}
 
-	if (interfaces::Prediction != nullptr && !g_pHookPrediction)
+	if (g_pClientInterface->Prediction != nullptr && !g_pHookPrediction)
 	{
-		g_pHookPrediction = std::make_unique<CVmtHook>(interfaces::Prediction);
+		g_pHookPrediction = std::make_unique<CVmtHook>(g_pClientInterface->Prediction);
 		oRunCommand = reinterpret_cast<FnRunCommand>(g_pHookPrediction->HookFunction(indexes::RunCommand, Hooked_RunCommand));
 		g_pHookPrediction->InstallHook();
 	}
 
-	if (interfaces::RenderView != nullptr && !g_pHookRenderView)
+	if (g_pClientInterface->RenderView != nullptr && !g_pHookRenderView)
 	{
-		g_pHookRenderView = std::make_unique<CVmtHook>(interfaces::RenderView);
+		g_pHookRenderView = std::make_unique<CVmtHook>(g_pClientInterface->RenderView);
 		oSceneEnd = reinterpret_cast<FnSceneEnd>(g_pHookRenderView->HookFunction(indexes::SceneEnd, Hooked_SceneEnd));
 		g_pHookRenderView->InstallHook();
 	}
@@ -203,7 +152,7 @@ bool hook::InstallHook()
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView);
 }
 
-void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
+void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
 {
 	DWORD _edi;
 	DWORD _esi;
@@ -228,6 +177,7 @@ void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTi
 	{
 		// 不支持 push byte. 所以只能 push word
 		DWORD wFinalTick = bFinalTick;
+		DWORD dwOriginFunction = reinterpret_cast<DWORD>(g_pClientHook->oCL_Move);
 
 		__asm
 		{
@@ -240,7 +190,7 @@ void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTi
 			mov		edi, _edi
 
 			// 调用原函数(其实是个蹦床)
-			call	oCL_Move
+			call	dwOriginFunction
 
 			// 清理堆栈(需要内存对齐)
 			add		esp, 8
@@ -253,9 +203,9 @@ void __cdecl hook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTi
 	gwCL_Move(_edi, _esi, accumulated_extra_samples, bFinalTick);
 }
 
-void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL panel, bool forcePaint, bool allowForce)
+void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL panel, bool forcePaint, bool allowForce)
 {
-	oPaintTraverse(_ecx, panel, forcePaint, allowForce);
+	g_pClientHook->oPaintTraverse(_ecx, panel, forcePaint, allowForce);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -270,7 +220,7 @@ void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL pa
 	static unsigned int FocusOverlayPanel = 0;
 	if (MatSystemTopPanel == 0 || FocusOverlayPanel == 0)
 	{
-		const char* panelName = interfaces::Panel->GetName(panel);
+		const char* panelName = g_pClientInterface->Panel->GetName(panel);
 		if (panelName[0] == 'M' && panelName[3] == 'S' && panelName[9] == 'T')
 		{
 			MatSystemTopPanel = panel;
@@ -290,14 +240,14 @@ void __fastcall hook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL pa
 	if ((FocusOverlayPanel > 0 && panel == FocusOverlayPanel) ||
 		(MatSystemTopPanel > 0 && panel == MatSystemTopPanel))
 	{
-		for (const auto& inst : _GameHook)
+		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnPaintTraverse(panel);
 	}
 }
 
-void __fastcall hook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMode_t mode)
+void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMode_t mode)
 {
-	oEnginePaint(_ecx, mode);
+	g_pClientHook->oEnginePaint(_ecx, mode);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -310,18 +260,18 @@ void __fastcall hook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, PaintMo
 
 	if (mode & PAINT_UIPANELS)
 	{
-		StartDrawing(interfaces::Surface);
+		g_pClientHook->StartDrawing(g_pClientInterface->Surface);
 
-		for (const auto& inst : _GameHook)
+		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnEnginePaint(mode);
 
-		FinishDrawing(interfaces::Surface);
+		g_pClientHook->FinishDrawing(g_pClientInterface->Surface);
 	}
 }
 
-void __fastcall hook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, CBaseEntity *player, CUserCmd *cmd, IMoveHelper *movehelper)
+void __fastcall CClientHook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, CBaseEntity *player, CUserCmd *cmd, IMoveHelper *movehelper)
 {
-	oRunCommand(_ecx, player, cmd, movehelper);
+	g_pClientHook->oRunCommand(_ecx, player, cmd, movehelper);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -332,25 +282,25 @@ void __fastcall hook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, CBaseEnt
 	}
 #endif
 
-	if(interfaces::MoveHelper == nullptr)
-		interfaces::MoveHelper = movehelper;
+	if(g_pClientInterface->MoveHelper == nullptr)
+		g_pClientInterface->MoveHelper = movehelper;
 }
 
 #undef GetLocalPlayer
 
-void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int sequence_number, float input_sample_frametime, bool active)
+void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int sequence_number, float input_sample_frametime, bool active)
 {
 	DWORD _ebp;
 	__asm mov _ebp, ebp;
 
 	// .text:100BBA20			bSendPacket = byte ptr -1
-	bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 1);
+	g_pClientHook->bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 1);
 
-	bCreateMoveFinish = false;
+	g_pClientHook->bCreateMoveFinish = false;
 
-	oCreateMove(_ecx, sequence_number, input_sample_frametime, active);
+	g_pClientHook->oCreateMove(_ecx, sequence_number, input_sample_frametime, active);
 
-	if (bCreateMoveFinish)
+	if (g_pClientHook->bCreateMoveFinish)
 		return;
 
 #ifdef _DEBUG
@@ -362,68 +312,68 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	}
 #endif
 
-	CVerifiedUserCmd* verified = &interfaces::Input->m_pVerifiedCommands[sequence_number % MULTIPLAYER_BACKUP];
-	CUserCmd* cmd = interfaces::Input->GetUserCmd(sequence_number);
+	CVerifiedUserCmd* verified = &g_pClientInterface->Input->m_pVerifiedCommands[sequence_number % MULTIPLAYER_BACKUP];
+	CUserCmd* cmd = g_pClientInterface->Input->GetUserCmd(sequence_number);
 
 	/*
 	// 验证 CRC 用的
 	CVerifiedUserCmd* verified = &((*reinterpret_cast<CVerifiedUserCmd**>(
-		reinterpret_cast<DWORD>(interfaces::Input) + 0xE0))[sequence_number % 150]);
+		reinterpret_cast<DWORD>(g_pClientInterface->Input) + 0xE0))[sequence_number % 150]);
 	
 	// 玩家输入
 	CUserCmd* cmd = &((*reinterpret_cast<CUserCmd**>(
-		reinterpret_cast<DWORD>(interfaces::Input) + 0xDC))[sequence_number % 150]);
+		reinterpret_cast<DWORD>(g_pClientInterface->Input) + 0xDC))[sequence_number % 150]);
 	*/
 	
 	// 本地玩家
-	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(interfaces::EntList->GetClientEntity(
-		interfaces::Engine->GetLocalPlayer()));
+	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntity(
+		g_pClientInterface->Engine->GetLocalPlayer()));
 
 	static CMoveData movedata;
 	int flags = localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
-	float serverTime = interfaces::GlobalVars->interval_per_tick * localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
-	float oldCurtime = interfaces::GlobalVars->curtime;
-	float oldFrametime = interfaces::GlobalVars->frametime;
+	float serverTime = g_pClientInterface->GlobalVars->interval_per_tick * localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
+	float oldCurtime = g_pClientInterface->GlobalVars->curtime;
+	float oldFrametime = g_pClientInterface->GlobalVars->frametime;
 
-	if (interfaces::MoveHelper != nullptr)
+	if (g_pClientInterface->MoveHelper != nullptr)
 	{
 		// TODO: 设置随机数的种子为 MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF
 		// 目前还不知道随机数种子用哪个设置
 
 		// 设置需要预测的时间（帧）
-		interfaces::GlobalVars->curtime = serverTime;
-		interfaces::GlobalVars->frametime = interfaces::GlobalVars->interval_per_tick;
+		g_pClientInterface->GlobalVars->curtime = serverTime;
+		g_pClientInterface->GlobalVars->frametime = g_pClientInterface->GlobalVars->interval_per_tick;
 
 		// 启动错误检查
-		interfaces::GameMovement->StartTrackPredictionErrors(localPlayer);
+		g_pClientInterface->GameMovement->StartTrackPredictionErrors(localPlayer);
 
 		// 清空预测结果的数据
 		ZeroMemory(&movedata, sizeof(CMoveData));
 
 		// 设置需要预测的玩家
-		interfaces::MoveHelper->SetHost(localPlayer);
+		g_pClientInterface->MoveHelper->SetHost(localPlayer);
 
 		// 开始预测
-		interfaces::Prediction->SetupMove(localPlayer, cmd, interfaces::MoveHelper, &movedata);
-		interfaces::GameMovement->ProcessMovement(localPlayer, &movedata);
-		interfaces::Prediction->FinishMove(localPlayer, cmd, &movedata);
+		g_pClientInterface->Prediction->SetupMove(localPlayer, cmd, g_pClientInterface->MoveHelper, &movedata);
+		g_pClientInterface->GameMovement->ProcessMovement(localPlayer, &movedata);
+		g_pClientInterface->Prediction->FinishMove(localPlayer, cmd, &movedata);
 	}
 
-	for (const auto& inst : _GameHook)
-		inst->OnCreateMove(cmd, bSendPacket);
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
-	if (interfaces::MoveHelper != nullptr)
+	if (g_pClientInterface->MoveHelper != nullptr)
 	{
 		// 结束预测
-		interfaces::GameMovement->FinishTrackPredictionErrors(localPlayer);
-		interfaces::MoveHelper->SetHost(nullptr);
+		g_pClientInterface->GameMovement->FinishTrackPredictionErrors(localPlayer);
+		g_pClientInterface->MoveHelper->SetHost(nullptr);
 
 		// TODO: 设置随机数种子为 -1
 		// 目前还不知道随机数种子用哪个设置
 
 		// 还原备份
-		interfaces::GlobalVars->curtime = oldCurtime;
-		interfaces::GlobalVars->frametime = oldFrametime;
+		g_pClientInterface->GlobalVars->curtime = oldCurtime;
+		g_pClientInterface->GlobalVars->frametime = oldFrametime;
 
 		// 修复一些错误
 		localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = flags;
@@ -436,7 +386,7 @@ void __fastcall hook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int s
 	verified->m_crc = cmd->GetChecksum();
 }
 
-void hook::InstallClientModeHook(IClientMode * pointer)
+void CClientHook::InstallClientModeHook(IClientMode * pointer)
 {
 	if (!g_pHookClientMode)
 	{
@@ -454,12 +404,12 @@ void hook::InstallClientModeHook(IClientMode * pointer)
 	}
 }
 
-bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
+bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
 {
-	InstallClientModeHook(_ecx);
+	g_pClientHook->InstallClientModeHook(_ecx);
 	
-	oCreateMoveShared(_ecx, flInputSampleTime, cmd);
-	bCreateMoveFinish = true;
+	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
+	g_pClientHook->bCreateMoveFinish = true;
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -470,24 +420,24 @@ bool __fastcall hook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, fl
 	}
 #endif
 
-	for (const auto& inst : _GameHook)
-		inst->OnCreateMove(cmd, bSendPacket);
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	// 必须要返回 false 否则会出现 bug
 	return false;
 }
 
-bool __fastcall hook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _edx, int msgid, bf_read* data)
+bool __fastcall CClientHook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _edx, int msgid, bf_read* data)
 {
 	bool blockMessage = false;
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 	{
 		if(!inst->OnUserMessage(msgid, *data))
 			blockMessage = true;
 	}
 
 	if(!blockMessage)
-		oDispatchUserMessage(_ecx, msgid, data);
+		g_pClientHook->oDispatchUserMessage(_ecx, msgid, data);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -502,9 +452,9 @@ bool __fastcall hook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _e
 	return true;
 }
 
-void __fastcall hook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx, ClientFrameStage_t stage)
+void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx, ClientFrameStage_t stage)
 {
-	oFrameStageNotify(_ecx, stage);
+	g_pClientHook->oFrameStageNotify(_ecx, stage);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -514,11 +464,11 @@ void __fastcall hook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOID _edx,
 		Utils::log(XorStr("Hook FrameStageNotify Success."));
 	}
 #endif
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnFrameStageNotify(stage);
 }
 
-void hook::InstallClientStateHook(CBaseClientState* pointer)
+void CClientHook::InstallClientStateHook(CBaseClientState* pointer)
 {
 	if (!g_pHookClientState)
 	{
@@ -538,7 +488,7 @@ void hook::InstallClientStateHook(CBaseClientState* pointer)
 	}
 }
 
-bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID _edx, SVC_GetCvarValue* gcv)
+bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID _edx, SVC_GetCvarValue* gcv)
 {
 	// oProcessGetCvarValue(_ecx, gcv);
 
@@ -553,7 +503,7 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 
 	std::string newResult, tmpValue;
 	bool blockQuery = false;
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 	{
 		if (!inst->OnProcessGetCvarValue(gcv, tmpValue))
 			blockQuery = true;
@@ -576,7 +526,7 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 	returnMsg.m_szCvarValue = resultBuffer;
 	returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 
-	ConVar* cvar = interfaces::Cvar->FindVar(gcv->m_szCvarName);
+	ConVar* cvar = g_pClientInterface->Cvar->FindVar(gcv->m_szCvarName);
 	if (cvar == nullptr)
 	{
 		// 服务器查询了一个不存在的 Cvar
@@ -603,8 +553,8 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 		// 可以被查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 
-		auto it = mGotConVar.find(gcv->m_szCvarName);
-		if (it != mGotConVar.end())
+		auto it = g_pClientHook->m_serverConVar.find(gcv->m_szCvarName);
+		if (it != g_pClientHook->m_serverConVar.end())
 		{
 			// 把服务器提供的 ConVar 还回去
 			strcpy_s(resultBuffer, it->second.c_str());
@@ -630,10 +580,10 @@ bool __fastcall hook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, LPVOID 
 	return true;
 }
 
-bool __fastcall hook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
+bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
 {
 	// oProcessSetConVar(_ecx, scv);
-	InstallClientStateHook(_ecx);
+	g_pClientHook->InstallClientStateHook(_ecx);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -645,29 +595,29 @@ bool __fastcall hook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _ed
 #endif
 
 	bool blockSetting = false;
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 	{
 		if (!inst->OnProcessSetConVar(scv))
 			blockSetting = true;
 	}
 
 	if(!blockSetting)
-		oProcessSetConVar(_ecx, scv);
+		g_pClientHook->oProcessSetConVar(_ecx, scv);
 
 	for (const auto& cvar : scv->m_ConVars)
 	{
 		// 纪录从服务器发送的 ConVar
 		// 等服务器查询时把它返回
 		if (cvar.name[0] != '\0')
-			mGotConVar[cvar.name] = cvar.value;
+			g_pClientHook->m_serverConVar[cvar.name] = cvar.value;
 	}
 
 	return true;
 }
 
-bool __fastcall hook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _edx, NET_StringCmd* sc)
+bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _edx, NET_StringCmd* sc)
 {
-	oProccessStringCmd(_ecx, sc);
+	g_pClientHook->oProccessStringCmd(_ecx, sc);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -679,19 +629,19 @@ bool __fastcall hook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _ed
 #endif
 
 	bool blockExecute = false;
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 	{
 		if (!inst->OnProcessClientCommand(sc))
 			blockExecute = true;
 	}
 
 	if (!blockExecute)
-		oProccessStringCmd(_ecx, sc);
+		g_pClientHook->oProccessStringCmd(_ecx, sc);
 
 	return true;
 }
 
-bool __fastcall hook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, bf_write* buf, int from, int to, bool isnewcommand)
+bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, bf_write* buf, int from, int to, bool isnewcommand)
 {
 	// oWriteUsercmdDeltaToBuffer(_ecx, buf, from, to, isnewcommand);
 	
@@ -705,13 +655,13 @@ bool __fastcall hook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPV
 #endif
 
 	// 强制更新本地玩家命令
-	WriteUserCmd(buf, interfaces::Input->GetUserCmd(to), interfaces::Input->GetUserCmd(from));
+	g_pClientHook->WriteUserCmd(buf, g_pClientInterface->Input->GetUserCmd(to), g_pClientInterface->Input->GetUserCmd(from));
 	return !(buf->IsOverflowed());
 }
 
-void __fastcall hook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
+void __fastcall CClientHook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 {
-	oSceneEnd(_ecx);
+	g_pClientHook->oSceneEnd(_ecx);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -722,6 +672,6 @@ void __fastcall hook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 	}
 #endif
 
-	for (const auto& inst : _GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnSceneEnd();
 }

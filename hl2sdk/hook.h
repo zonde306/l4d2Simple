@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "./Features/BaseFeatures.h"
 #include "interfaces.h"
 #include "./Interfaces/IBaseClientState.h"
+#include "./Features/BaseFeatures.h"
 #include <vector>
 #include <string>
 #include <functional>
@@ -37,42 +37,70 @@ typedef int(__cdecl* FnRandomInt)(int iMinVal, int iMaxVal);
 typedef float(__cdecl* FnRandomGaussianFloat)(float flMean, float flStdDev);
 typedef void(__cdecl* FnInstallUniformRandomStream)(IUniformRandomStream* pStream);
 
-namespace hook
+class CClientHook
 {
-	bool InstallHook();
+public:
+	bool Init();
 	bool UninstallHook();
 
-	extern std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
-	
-	// 被 Hook 后的原函数
-	extern FnCL_Move oCL_Move;
-	extern FnPaintTraverse oPaintTraverse;
-	extern FnCreateMoveShared oCreateMoveShared;
-	extern FnCreateMove oCreateMove;
-	extern FnFrameStageNotify oFrameStageNotify;
-	extern FnRunCommand oRunCommand;
-	extern FnDispatchUserMessage oDispatchUserMessage;
-	extern FnEnginePaint oEnginePaint;
-	extern FnEngineKeyEvent oEngineKeyEvent;
-	extern FnProcessGetCvarValue oProcessGetCvarValue;
-	extern FnProcessSetConVar oProcessSetConVar;
-	extern FnProccessStringCmd oProccessStringCmd;
-	extern FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer;
-	extern FnSceneEnd oSceneEnd;
+	void InstallClientStateHook(CBaseClientState* pointer);
+	void InstallClientModeHook(IClientMode* pointer);
 
-	extern bool* bSendPacket;
+protected:
+	static void __cdecl Hooked_CL_Move(float, bool);
+	static void __fastcall Hooked_PaintTraverse(IVPanel*, LPVOID, VPANEL, bool, bool);
+	static bool __fastcall Hooked_CreateMoveShared(IClientMode*, LPVOID, float, CUserCmd*);
+	static void __fastcall Hooked_CreateMove(IBaseClientDll*, LPVOID, int, float, bool);
+	static void __fastcall Hooked_FrameStageNotify(IBaseClientDll*, LPVOID, ClientFrameStage_t);
+	static void __fastcall Hooked_RunCommand(IPrediction*, LPVOID, CBaseEntity*, CUserCmd*, IMoveHelper*);
+	static bool __fastcall Hooked_DispatchUserMessage(IBaseClientDll*, LPVOID, int, bf_read*);
+	static void __fastcall Hooked_EnginePaint(IEngineVGui*, LPVOID, PaintMode_t);
+	static bool __fastcall Hooked_ProcessGetCvarValue(CBaseClientState*, LPVOID, SVC_GetCvarValue*);
+	static bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
+	static bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
+	static bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, bf_write*, int, int, bool);
+	static void __fastcall Hooked_SceneEnd(IVRenderView*, LPVOID);
+
+public:
+	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
+	
+private:
+	// 被 Hook 后的原函数
+	FnCL_Move oCL_Move = nullptr;
+	FnPaintTraverse oPaintTraverse = nullptr;
+	FnCreateMoveShared oCreateMoveShared = nullptr;
+	FnCreateMove oCreateMove = nullptr;
+	FnFrameStageNotify oFrameStageNotify = nullptr;
+	FnRunCommand oRunCommand = nullptr;
+	FnDispatchUserMessage oDispatchUserMessage = nullptr;
+	FnEnginePaint oEnginePaint = nullptr;
+	FnEngineKeyEvent oEngineKeyEvent = nullptr;
+	FnProcessGetCvarValue oProcessGetCvarValue = nullptr;
+	FnProcessSetConVar oProcessSetConVar = nullptr;
+	FnProccessStringCmd oProccessStringCmd = nullptr;
+	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
+	FnSceneEnd oSceneEnd = nullptr;
+
+public:
+	bool* bSendPacket;
 
 	// 搜索特征码得到的函数
-	extern FnStartDrawing StartDrawing;
-	extern FnFinishDrawing FinishDrawing;
-	extern FnCL_SendMove CL_SendMove;
-	extern FnWriteUsercmd WriteUserCmd;
+	FnStartDrawing StartDrawing;
+	FnFinishDrawing FinishDrawing;
+	FnCL_SendMove CL_SendMove;
+	FnWriteUsercmd WriteUserCmd;
 
 	// 通过导出表得到的函数
-	extern FnRandomSeed RandomSeed;
-	extern FnRandomFloat RandomFloat;
-	extern FnRandomFloatExp RandomFloatExp;
-	extern FnRandomInt RandomInt;
-	extern FnRandomGaussianFloat RandomGaussianFloat;
-	extern FnInstallUniformRandomStream InstallUniformRandomStream;
-}
+	FnRandomSeed RandomSeed;
+	FnRandomFloat RandomFloat;
+	FnRandomFloatExp RandomFloatExp;
+	FnRandomInt RandomInt;
+	FnRandomGaussianFloat RandomGaussianFloat;
+	FnInstallUniformRandomStream InstallUniformRandomStream;
+
+private:
+	bool bCreateMoveFinish = false;
+	std::map<std::string, std::string> m_serverConVar;
+};
+
+extern std::unique_ptr<CClientHook> g_pClientHook;

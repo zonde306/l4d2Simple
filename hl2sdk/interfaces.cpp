@@ -2,48 +2,13 @@
 #include "indexes.h"
 #include "../l4d2Simple2/xorstr.h"
 
+std::unique_ptr<CClientInterface> g_pClientInterface;
+
 #define PRINT_OFFSET(_name,_ptr)	{ss.clear();\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
-namespace interfaces
-{
-	IBaseClientDll* Client = nullptr;
-	IEngineClient* Engine = nullptr;
-	IEngineTrace* Trace = nullptr;
-	IClientEntityList* EntList = nullptr;
-	ICvar* Cvar = nullptr;
-	IGameEvent* GameEvent = nullptr;
-	CGlobalVarsBase* GlobalVars = nullptr;
-	IInput* Input = nullptr;
-	ISurface* Surface = nullptr;
-	IVDebugOverlay* DebugOverlay = nullptr;
-	IVPanel* Panel = nullptr;
-	IModelInfo* ModelInfo = nullptr;
-	IGameMovement* GameMovement = nullptr;
-	IPrediction* Prediction = nullptr;
-	IMoveHelper* MoveHelper = nullptr;
-	IPlayerInfoManager* PlayerInfo = nullptr;
-	IInputSystem* InputSystem = nullptr;
-	IEngineVGui* EngineVGui = nullptr;
-	IVModelRender* ModelRender = nullptr;
-	INetChannelInfo* NetChannel = nullptr;
-	IBaseFileSystem* FileSystem = nullptr;
-	ILocalize* Localize = nullptr;
-	INetworkStringTableContainer* StringTable = nullptr;
-	IClientMode* ClientMode = nullptr;
-	IVRenderView* RenderView = nullptr;
-
-	std::unique_ptr<CNetVars> NetProp = nullptr;
-
-	template<typename T>
-	T* GetPointer(const std::string& modules, const std::string& factory);
-
-	// 搜索全局变量
-	CGlobalVarsBase* FindGlobalVars();
-};
-
-void interfaces::InitAllInterfaces()
+void CClientInterface::Init()
 {
 	Client = GetPointer<IBaseClientDll>(XorStr("client.dll"), XorStr("VClient"));
 	Engine = GetPointer<IEngineClient>(XorStr("engine.dll"), XorStr("VEngineClient"));
@@ -128,7 +93,7 @@ void interfaces::InitAllInterfaces()
 	}
 }
 
-CGlobalVarsBase * interfaces::FindGlobalVars()
+CGlobalVarsBase * CClientInterface::FindGlobalVars()
 {
 	if (Client == nullptr)
 		return nullptr;
@@ -144,7 +109,7 @@ CGlobalVarsBase * interfaces::FindGlobalVars()
 }
 
 template<typename T>
-T* interfaces::GetPointer(const std::string & modules, const std::string & factory)
+T* CClientInterface::GetPointer(const std::string & modules, const std::string & factory)
 {
 	HMODULE module = GetModuleHandleA(modules.c_str());
 	if (module == nullptr)

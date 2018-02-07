@@ -109,7 +109,7 @@ void CBunnyHop::DoNormalAutoBhop(CBaseEntity* player, CUserCmd * pCmd, int flags
 	if (!hGroundEntity.IsValid())
 		return;
 
-	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(interfaces::EntList->GetClientEntityFromHandle(hGroundEntity));
+	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
 	bool inWater = (player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) >= 2);
 	bool isBadMoveType = IsBadMoveType(player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("movetype")));
 	
@@ -259,7 +259,7 @@ void CBunnyHop::DoFullAutoStrafe(CBaseEntity * player, CUserCmd * pCmd, int flag
 	if (!hGroundEntity.IsValid())
 		return;
 
-	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(interfaces::EntList->GetClientEntityFromHandle(hGroundEntity));
+	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
 	bool inWater = (player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) >= 2);
 	bool isBadMoveType = IsBadMoveType(player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("movetype")));
 
@@ -287,7 +287,7 @@ void CBunnyHop::DoFullAutoStrafe(CBaseEntity * player, CUserCmd * pCmd, int flag
 	Vector velocity = player->GetNetProp<Vector>(XorStr("DT_BasePlayer"), XorStr("m_vecVelocity[0]"));
 	float yawvel = reddeg(atan2f(velocity.y, velocity.x));
 	float anglesdiff = normalize(pCmd->viewangles.y - yawvel);
-	float sidespeed = interfaces::Cvar->FindVar(XorStr("cl_sidespeed"))->GetFloat();
+	float sidespeed = g_pClientInterface->Cvar->FindVar(XorStr("cl_sidespeed"))->GetFloat();
 	pCmd->sidemove = (anglesdiff > 0.0f ? -sidespeed : sidespeed);
 	pCmd->viewangles.y = normalize(pCmd->viewangles.y - anglesdiff);
 }

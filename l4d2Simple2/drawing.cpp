@@ -658,7 +658,7 @@ void CDrawing::OnBeginPresent()
 
 	g_pBaseMenu->OnPresent();
 
-	for (const auto& inst : hook::_GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnScreenDrawing();
 }
 

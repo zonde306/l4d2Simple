@@ -31,36 +31,45 @@
 #include <sstream>
 #include <memory>
 
-namespace interfaces
+class CClientInterface
 {
-	extern IBaseClientDll* Client;
-	extern IEngineClient* Engine;
-	extern IEngineTrace* Trace;
-	extern IClientEntityList* EntList;
-	extern ICvar* Cvar;
-	extern IGameEvent* GameEvent;
-	extern CGlobalVarsBase* GlobalVars;
-	extern IInput* Input;
-	extern ISurface* Surface;
-	extern IVDebugOverlay* DebugOverlay;
-	extern IVPanel* Panel;
-	extern IModelInfo* ModelInfo;
-	extern IGameMovement* GameMovement;
-	extern IPrediction* Prediction;
-	extern IMoveHelper* MoveHelper;
-	extern IPlayerInfoManager* PlayerInfo;
-	extern IInputSystem* InputSystem;
-	extern IEngineVGui* EngineVGui;
-	extern IVModelRender* ModelRender;
-	extern INetChannelInfo* NetChannel;
-	extern IBaseFileSystem* FileSystem;
-	extern ILocalize* Localize;
-	extern INetworkStringTableContainer* StringTable;
-	extern IClientMode* ClientMode;
-	extern IVRenderView* RenderView;
+public:
+	IBaseClientDll* Client;
+	IEngineClient* Engine;
+	IEngineTrace* Trace;
+	IClientEntityList* EntList;
+	ICvar* Cvar;
+	IGameEvent* GameEvent;
+	CGlobalVarsBase* GlobalVars;
+	IInput* Input;
+	ISurface* Surface;
+	IVDebugOverlay* DebugOverlay;
+	IVPanel* Panel;
+	IModelInfo* ModelInfo;
+	IGameMovement* GameMovement;
+	IPrediction* Prediction;
+	IMoveHelper* MoveHelper;
+	IPlayerInfoManager* PlayerInfo;
+	IInputSystem* InputSystem;
+	IEngineVGui* EngineVGui;
+	IVModelRender* ModelRender;
+	INetChannelInfo* NetChannel;
+	IBaseFileSystem* FileSystem;
+	ILocalize* Localize;
+	INetworkStringTableContainer* StringTable;
+	IClientMode* ClientMode;
+	IVRenderView* RenderView;
 
-	extern std::unique_ptr<CNetVars> NetProp;
+	std::unique_ptr<CNetVars> NetProp;
 
 	// 初始化
-	void InitAllInterfaces();
+	void Init();
+
+protected:
+	CGlobalVarsBase * FindGlobalVars();
+
+	template<typename T>
+	T* GetPointer(const std::string& modules, const std::string& factory);
 };
+
+extern std::unique_ptr<CClientInterface> g_pClientInterface;

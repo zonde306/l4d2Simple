@@ -1,13 +1,9 @@
 #include "netprop.h"
 #include "../Interfaces/IBaseClientDLL.h"
+#include "../interfaces.h"
 #include "../../l4d2Simple2/utils.h"
 #include "../../l4d2Simple2/xorstr.h"
 #include <sstream>
-
-namespace interfaces
-{
-	extern IBaseClientDll* Client;
-}
 
 #undef GetProp
 
@@ -15,7 +11,7 @@ CNetVars::CNetVars()
 {
 	_tables.clear();
 
-	ClientClass* clientClass = interfaces::Client->GetAllClasses();
+	ClientClass* clientClass = g_pClientInterface->Client->GetAllClasses();
 	if (clientClass == nullptr)
 	{
 		Utils::log(XorStr("ERROR: ClientClass was not found"));

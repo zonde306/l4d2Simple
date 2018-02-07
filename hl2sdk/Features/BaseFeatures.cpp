@@ -3,13 +3,13 @@
 
 CBaseFeatures::CBaseFeatures()
 {
-	hook::_GameHook.emplace_back(this);
-	m_iHookIndex = hook::_GameHook.size() - 1;
+	g_pClientHook->_GameHook.emplace_back(this);
+	m_iHookIndex = g_pClientHook->_GameHook.size() - 1;
 }
 
 CBaseFeatures::~CBaseFeatures()
 {
-	hook::_GameHook.erase(hook::_GameHook.begin() + m_iHookIndex);
+	g_pClientHook->_GameHook.erase(g_pClientHook->_GameHook.begin() + m_iHookIndex);
 }
 
 void CBaseFeatures::OnCreateMove(CUserCmd *, bool *)

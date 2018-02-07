@@ -9,11 +9,6 @@
 #include <string>
 #include <map>
 
-namespace interfaces
-{
-	extern std::unique_ptr<CNetVars> NetProp;
-};
-
 extern std::map<std::string, int> g_mPropOffset;
 
 class CBaseEntity : public IClientEntity
@@ -35,6 +30,10 @@ public:	// NetProp
 	T& GetNetPropCollision(const std::string& table, const std::string& prop, size_t element = 0);
 
 	static int GetNetPropOffset(const std::string& table, const std::string& prop);
+
+public:
+	IClientRenderable* m_pClientRenderable;		// 4
+	IClientNetworkable* m_pClientNetworkable;	// 8
 };
 
 template<typename T>

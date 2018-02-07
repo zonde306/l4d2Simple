@@ -60,8 +60,11 @@ DWORD WINAPI StartCheats(LPVOID module)
 	g_pBaseMenu = std::make_unique<CBaseMenu>();
 	g_pBaseMenu->Init();
 
-	interfaces::InitAllInterfaces();
-	hook::InstallHook();
+	g_pClientInterface = std::make_unique<CClientInterface>();
+	g_pClientInterface->Init();
+
+	g_pClientHook = std::make_unique<CClientHook>();
+	g_pClientHook->Init();
 
 	return EXIT_SUCCESS;
 }

@@ -2,11 +2,7 @@
 #include "../definitions.h"
 #include "../Interfaces/ICvar.h"
 #include "../../l4d2Simple2/utils.h"
-
-namespace interfaces
-{
-	extern ICvar* Cvar;
-}
+#include "../interfaces.h"
 
 ConCommandBase*		ConCommandBase::s_pConCommandBases = nullptr;
 static int			s_nCVarFlag = 0;
@@ -20,18 +16,18 @@ bool CDefaultAccessor::RegisterConCommandBase(ConCommandBase * pVar)
 #ifdef _DEBUG
 	Utils::log("Register ConVar: %s", pVar->GetName());
 #endif
-	interfaces::Cvar->RegisterConCommand(pVar);
+	g_pClientInterface->Cvar->RegisterConCommand(pVar);
 	return true;
 }
 
 void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 {
-	if (!interfaces::Cvar || s_bRegistered)
+	if (!g_pClientInterface->Cvar || s_bRegistered)
 		return;
 
 	s_bRegistered = true;
 	s_nCVarFlag = nCVarFlag;
-	s_nDLLIdentifier = interfaces::Cvar->AllocateDLLIdentifier();
+	s_nDLLIdentifier = g_pClientInterface->Cvar->AllocateDLLIdentifier();
 
 	ConCommandBase *pCur = ConCommandBase::s_pConCommandBases, *pNext = nullptr;
 	ConCommandBase::s_pAccessor = pAccessor ? pAccessor : &s_DefaultAccessor;
@@ -540,7 +536,7 @@ SpoofedConvar::SpoofedConvar()
 
 SpoofedConvar::SpoofedConvar(const char* szCVar)
 {
-	m_pOriginalCVar = interfaces::Cvar->FindVar(szCVar);
+	m_pOriginalCVar = g_pClientInterface->Cvar->FindVar(szCVar);
 	Spoof();
 }
 SpoofedConvar::SpoofedConvar(ConVar* pCVar)
@@ -562,7 +558,7 @@ SpoofedConvar::~SpoofedConvar()
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
 
 		//Unregister dummy cvar
-		interfaces::Cvar->UnregisterConCommand(m_pDummyCVar);
+		g_pClientInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
 		free(m_pDummyCVar);
 		m_pDummyCVar = nullptr;
 	}
@@ -589,7 +585,7 @@ void SpoofedConvar::Spoof()
 
 		m_pDummyCVar->m_pNext = nullptr;
 		//Register it
-		interfaces::Cvar->RegisterConCommand(m_pDummyCVar);
+		g_pClientInterface->Cvar->RegisterConCommand(m_pDummyCVar);
 
 		//Fix "write access violation" bullshit
 		DWORD dwOld;

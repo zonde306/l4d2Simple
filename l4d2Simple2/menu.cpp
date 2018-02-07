@@ -62,7 +62,7 @@ void CBaseMenu::OnPresent()
 
 	ImGui::Checkbox(XorStr("DrawIndexedPrimitive"), &m_bShowStride);
 
-	for (const auto& inst : hook::_GameHook)
+	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnMenuDrawing();
 
 	ImGui::End();
