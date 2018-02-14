@@ -1,5 +1,6 @@
 ﻿#include "hook.h"
 #include "indexes.h"
+#include "./Utils/checksum_md5.h"
 #include "./Structs/convar.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
@@ -21,7 +22,7 @@ std::unique_ptr<CClientHook> g_pClientHook;
 #define SIG_PROCCESS_SET_CONVAR		XorStr("55 8B EC 8B 49 08 83 EC 0C")
 #define SIG_CREATEMOVESHARED		XorStr("55 8B EC E8 ? ? ? ? 8B C8 85 C9 75 06 B0 01")
 
-#define PRINT_OFFSET(_name,_ptr)	{ss.clear();\
+#define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
@@ -36,6 +37,13 @@ bool CClientHook::Init()
 
 	bool hookSuccess = true;
 	std::stringstream ss;
+
+	/*
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+	*/
 
 	HMODULE vstdlib = GetModuleHandleA(XorStr("vstdlib.dll"));
 	if (vstdlib != NULL)
@@ -341,6 +349,8 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	{
 		// TODO: 设置随机数的种子为 MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF
 		// 目前还不知道随机数种子用哪个设置
+		if(g_pClientHook->RandomSeed)
+			g_pClientHook->RandomSeed(MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
 
 		// 设置需要预测的时间（帧）
 		g_pClientInterface->GlobalVars->curtime = serverTime;
@@ -372,6 +382,8 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 
 		// TODO: 设置随机数种子为 -1
 		// 目前还不知道随机数种子用哪个设置
+		if (g_pClientHook->RandomSeed)
+			g_pClientHook->RandomSeed(-1);
 
 		// 还原备份
 		g_pClientInterface->GlobalVars->curtime = oldCurtime;

@@ -4,7 +4,7 @@
 
 std::unique_ptr<CClientInterface> g_pClientInterface;
 
-#define PRINT_OFFSET(_name,_ptr)	{ss.clear();\
+#define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
@@ -34,6 +34,12 @@ void CClientInterface::Init()
 	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
 
 	std::stringstream ss;
+
+	/*
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+	*/
 
 	/*
 	if (PlayerInfo != nullptr)
