@@ -97,9 +97,9 @@ namespace indexes
 	const int InputWriteUsercmdDeltaToBuffer = 5;
 
 	// Prediction
-	const int RunCommand = 18;
-	const int SetupMove = 19;
-	const int FinishMove = 20;
+	const int RunCommand = 17;
+	const int SetupMove = 18;
+	const int FinishMove = 19;
 
 	// GameMovement
 	const int ProccessMovement = 1;
@@ -118,9 +118,9 @@ namespace indexes
 	const int GetSpread = 0xD0C;	// CTerrorWeapon* + 0xD0C
 
 	// ClientModeShared
-	const int SharedCreateMove = 27;
-	const int GetMessagePanel = 24;
-	const int KeyInput = 21;
+	const int SharedCreateMove = 21;
+	const int GetMessagePanel = 19;
+	const int KeyInput = 17;
 
 	// CBaseHudChat
 	const int Printf = 22;

@@ -119,7 +119,7 @@ bool CClientHook::Init()
 		oCreateMove = reinterpret_cast<FnCreateMove>(g_pHookClient->HookFunction(indexes::CreateMove, Hooked_CreateMove));
 		oFrameStageNotify = reinterpret_cast<FnFrameStageNotify>(g_pHookClient->HookFunction(indexes::FrameStageNotify, Hooked_FrameStageNotify));
 		oDispatchUserMessage = reinterpret_cast<FnDispatchUserMessage>(g_pHookClient->HookFunction(indexes::DispatchUserMessage, Hooked_DispatchUserMessage));
-		oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
+		// oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
 		g_pHookClient->InstallHook();
 	}
 	else
@@ -252,6 +252,14 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 	{
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnPaintTraverse(panel);
+
+#ifdef _DEBUG
+		if (panel == FocusOverlayPanel)
+		{
+			g_pClientInterface->Surface->DrawSetColor(255, 0, 0, 255);
+			g_pClientInterface->Surface->DrawFilledRect(60, 60, 70, 70);
+		}
+#endif
 	}
 }
 
@@ -274,6 +282,11 @@ void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, 
 
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnEnginePaint(mode);
+
+#ifdef _DEBUG
+		g_pClientInterface->Surface->DrawSetColor(0, 0, 255, 255);
+		g_pClientInterface->Surface->DrawFilledRect(70, 70, 80, 80);
+#endif
 
 		g_pClientHook->FinishDrawing(g_pClientInterface->Surface);
 	}
