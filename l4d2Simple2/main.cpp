@@ -42,7 +42,7 @@ DWORD WINAPI StartCheats(LPVOID module)
 	CreateDebugConsole();
 	
 	// Utils::FindWindowByProccess();
-	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), XorStr("Left 4 Dead 2"))) == NULL)
+	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), nullptr)) == NULL)
 	{
 		Utils::log(XorStr("Please switch to the target window."));
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -54,17 +54,17 @@ DWORD WINAPI StartCheats(LPVOID module)
 
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
 	
-	g_pDirextXHook = std::make_unique<CDirectX9Hook>();
-	g_pDirextXHook->Init();
-
-	g_pBaseMenu = std::make_unique<CBaseMenu>();
-	g_pBaseMenu->Init();
-
 	g_pClientInterface = std::make_unique<CClientInterface>();
 	g_pClientInterface->Init();
 
 	g_pClientHook = std::make_unique<CClientHook>();
 	g_pClientHook->Init();
+
+	g_pDirextXHook = std::make_unique<CDirectX9Hook>();
+	g_pDirextXHook->Init();
+
+	g_pBaseMenu = std::make_unique<CBaseMenu>();
+	g_pBaseMenu->Init();
 
 	return EXIT_SUCCESS;
 }

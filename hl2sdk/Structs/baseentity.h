@@ -23,6 +23,9 @@ public:	// NetProp
 	template<typename T>
 	T& GetNetProp2(const std::string& table, const std::string& prop, const std::string& prop2, size_t element = 0);
 
+	template<typename T, typename... P>
+	T& GetNetPropEx(const std::string& table, const std::string& prop, size_t element, const P& ...more);
+
 	template<typename T>
 	T& GetNetPropLocal(const std::string& table, const std::string& prop, size_t element = 0);
 
@@ -30,6 +33,9 @@ public:	// NetProp
 	T& GetNetPropCollision(const std::string& table, const std::string& prop, size_t element = 0);
 
 	static int GetNetPropOffset(const std::string& table, const std::string& prop);
+
+	template<typename ...T>
+	static int GetNetPropOffsetEx(const std::string& table, const std::string& prop, const T& ...more);
 
 public:
 	IClientRenderable* m_pClientRenderable;		// 4
@@ -80,14 +86,49 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset + offset2) + (sizeof(T) * element));
 }
 
+template<typename T, typename ...P>
+inline T & CBaseEntity::GetNetPropEx(const std::string & table, const std::string & prop, size_t element, const P & ...more)
+{
+	int offset = GetNetPropOffsetEx(table, prop, more...);
+	if (offset == -1)
+	{
+		std::stringstream ss;
+
+		std::string propList[] { more... };
+		ss << XorStr("NetProp Not Found: ") << table << "::" << prop;
+
+		for (const std::string& propEach : propList)
+			ss << "::" << propEach;
+		
+		Utils::log(ss.str().c_str());
+		throw std::runtime_error(ss.str().c_str());
+	}
+
+	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset) + (sizeof(T) * element));
+}
+
 template<typename T>
 inline T & CBaseEntity::GetNetPropLocal(const std::string & table, const std::string & prop, size_t element)
 {
-	return GetNetProp2<T>(table, prop, XorStr("m_Local"), element);
+	// return GetNetProp2<T>(table, prop, XorStr("m_Local"), element);
+	return GetNetPropEx<T>(table, prop, element, XorStr("m_Local"));
 }
 
 template<typename T>
 inline T & CBaseEntity::GetNetPropCollision(const std::string & table, const std::string & prop, size_t element)
 {
-	return GetNetProp2<T>(table, prop, XorStr("m_Collision"), element);
+	// return GetNetProp2<T>(table, prop, XorStr("m_Collision"), element);
+	return return GetNetPropEx<T>(table, prop, element, XorStr("m_Collision"));
+}
+
+template<typename ...T>
+inline int CBaseEntity::GetNetPropOffsetEx(const std::string & table, const std::string & prop, const T & ...more)
+{
+	std::string morePropList[] { more... };
+	int offset = GetNetPropOffset(table, prop);
+
+	for (const std::string& propEach : morePropList)
+		offset += GetNetPropOffset(table, propEach);
+
+	return (offset > -1 ? offset : -1);
 }

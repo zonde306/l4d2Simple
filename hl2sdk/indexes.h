@@ -31,7 +31,7 @@ namespace indexes
 	const int IsTakingScreenShot = 88;
 
 	// EngineVGui
-	const int EnginePaint = 14;
+	const int EnginePaint = 13;
 	const int EngineKeyEvent = 10;
 
 	// ClientEntList

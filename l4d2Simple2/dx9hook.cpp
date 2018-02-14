@@ -286,7 +286,7 @@ bool CDirectX9Hook::CreateDevice()
 		else if(hr == D3DERR_OUTOFVIDEOMEMORY)
 			Utils::log(XorStr("CreateDevice Failed."));
 
-		return false;
+		m_pDevice = nullptr;
 	}
 
 	if (m_pDevice == nullptr || m_pD3D == nullptr)

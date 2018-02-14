@@ -67,6 +67,7 @@ bool CClientHook::Init()
 	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
 	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
 
+	/*
 	if (oCL_Move == nullptr || !g_pDetourCL_Move)
 	{
 		oCL_Move = reinterpret_cast<FnCL_Move>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_MOVE));
@@ -79,6 +80,7 @@ bool CClientHook::Init()
 			oCL_Move = reinterpret_cast<FnCL_Move>(g_pDetourCL_Move->GetTrampoline());
 		}
 	}
+	*/
 
 	if (oProcessSetConVar == nullptr || !g_pHookClientState)
 	{
@@ -131,8 +133,8 @@ bool CClientHook::Init()
 	if (g_pClientInterface->EngineVGui != nullptr && !g_pHookVGui)
 	{
 		g_pHookVGui = std::make_unique<CVmtHook>(g_pClientInterface->EngineVGui);
-		oEnginePaint = reinterpret_cast<FnEnginePaint>(g_pHookPanel->HookFunction(indexes::EnginePaint, Hooked_EnginePaint));
-		g_pHookPanel->InstallHook();
+		oEnginePaint = reinterpret_cast<FnEnginePaint>(g_pHookVGui->HookFunction(indexes::EnginePaint, Hooked_EnginePaint));
+		g_pHookVGui->InstallHook();
 	}
 
 	if (g_pClientInterface->Prediction != nullptr && !g_pHookPrediction)
