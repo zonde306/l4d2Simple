@@ -195,6 +195,9 @@
     <ClCompile Include="..\hl2sdk\Interfaces\IUniformRandomStream.cpp">
       <Filter>hl2sdk\Interfaces</Filter>
     </ClCompile>
+    <ClCompile Include="speedhack.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -451,6 +454,9 @@
     </ClInclude>
     <ClInclude Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.h">
       <Filter>ImGui\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="speedhack.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

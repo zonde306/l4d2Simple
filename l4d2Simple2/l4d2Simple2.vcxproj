@@ -173,6 +173,7 @@
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="drawing.cpp" />
     <ClCompile Include="menu.cpp" />
+    <ClCompile Include="speedhack.cpp" />
     <ClCompile Include="vector.cpp" />
     <ClCompile Include="vmt.cpp" />
     <ClCompile Include="dx9hook.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="..\imgui\imgui_internal.h" />
     <ClInclude Include="drawing.h" />
     <ClInclude Include="menu.h" />
+    <ClInclude Include="speedhack.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="vmt.h" />
     <ClInclude Include="dx9hook.h" />

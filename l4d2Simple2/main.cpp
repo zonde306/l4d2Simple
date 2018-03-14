@@ -7,8 +7,10 @@
 #include "utils.h"
 #include "xorstr.h"
 #include "menu.h"
+#include "speedhack.h"
 #include "../hl2sdk/interfaces.h"
 #include "../hl2sdk/hook.h"
+
 // #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 // 需要在 StartCheats 里把它设置成游戏窗口
@@ -54,6 +56,9 @@ DWORD WINAPI StartCheats(LPVOID module)
 
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
 	
+	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
+	g_pSpeedModifier->Init();
+
 	g_pClientInterface = std::make_unique<CClientInterface>();
 	g_pClientInterface->Init();
 
