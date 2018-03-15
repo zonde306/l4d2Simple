@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "IAppSystem.h"
 #include "../Structs/bitbuffer.h"
 #include "../Structs/baseentity.h"
@@ -400,7 +400,7 @@ public:
 };
 
 // How many data slots to use when in multiplayer.
-#define MULTIPLAYER_BACKUP			90
+#define MULTIPLAYER_BACKUP			150
 
 class IInput
 {
@@ -417,7 +417,8 @@ public:
 	virtual void		EncodeUserCmdToBuffer(bf_write& buf, int slot) = 0;
 	virtual void		DecodeUserCmdFromBuffer(bf_read& buf, int slot) = 0;
 
-	virtual CUserCmd	*GetUserCmd(int sequence_number) = 0;
+	// 如果 solt 不知道就给个 0
+	virtual CUserCmd	*GetUserCmd(int solt, int sequence_number) = 0;
 
 	virtual void		MakeWeaponSelection(CBaseEntity* *weapon) = 0;
 
@@ -433,8 +434,16 @@ public:
 	virtual void		ControllerCommands(void) = 0;
 	// Extra initialization for some joysticks
 	virtual void		Joystick_Advanced(void) = 0;
+
+	/*
 	virtual void		Joystick_SetSampleTime(float frametime) = 0;
 	virtual void		IN_SetSampleTime(float frametime) = 0;
+	*/
+
+	virtual void		Unknown_1() = 0;
+	virtual void		Unknown_2() = 0;
+	virtual void		Unknown_3() = 0;
+	virtual void		Unknown_4() = 0;
 
 	// Accumulate mouse delta
 	virtual void		AccumulateMouse(void) = 0;
@@ -452,10 +461,10 @@ public:
 	virtual void		SetFullscreenMousePos(int mx, int my) = 0;
 	virtual void		ResetMouse(void) = 0;
 	virtual	float		GetLastForwardMove(void) = 0;
-	virtual	float		Joystick_GetForward(void) = 0;
-	virtual	float		Joystick_GetSide(void) = 0;
-	virtual	float		Joystick_GetPitch(void) = 0;
-	virtual	float		Joystick_GetYaw(void) = 0;
+	// virtual	float		Joystick_GetForward(void) = 0;
+	// virtual	float		Joystick_GetSide(void) = 0;
+	// virtual	float		Joystick_GetPitch(void) = 0;
+	// virtual	float		Joystick_GetYaw(void) = 0;
 
 	// Third Person camera ( TODO/FIXME:  Move this to a separate interface? )
 	virtual void		CAM_Think(void) = 0;

@@ -3,15 +3,15 @@
 namespace indexes
 {
 	// Client
-	const int GetAllClasses = 8;
-	const int CreateMove = 21;
-	const int FrameStageNotify = 35;
-	const int DispatchUserMessage = 36;
+	const int GetAllClasses = 7;
+	const int CreateMove = 20;
+	const int FrameStageNotify = 34;
+	const int DispatchUserMessage = 35;
 	const int InKeyEvent = -1;
-	const int HudProcessInput = 10;
+	const int HudProcessInput = 9;
 	const int HudUpdate = 10;
 	const int IN_IsKeyDown = 18;
-	const int WriteUsercmdDeltaToBuffer = 23;
+	const int WriteUsercmdDeltaToBuffer = 22;
 
 	// Engine
 	const int GetScreenSize = 5;
@@ -29,9 +29,10 @@ namespace indexes
 	const int IsConnected = 27;
 	const int IsDrawingLoadingImage = 28;
 	const int IsTakingScreenShot = 88;
+	const int GetNetChannelInfo = 74;
 
 	// EngineVGui
-	const int EnginePaint = 13;
+	const int EnginePaint = 14;
 	const int EngineKeyEvent = 10;
 
 	// ClientEntList
@@ -97,9 +98,9 @@ namespace indexes
 	const int InputWriteUsercmdDeltaToBuffer = 5;
 
 	// Prediction
-	const int RunCommand = 17;
-	const int SetupMove = 18;
-	const int FinishMove = 19;
+	const int RunCommand = 18;
+	const int SetupMove = 19;
+	const int FinishMove = 20;
 
 	// GameMovement
 	const int ProccessMovement = 1;
@@ -115,12 +116,16 @@ namespace indexes
 	const int IsDormant = 7;
 	const int GetModel = 8;
 	const int GetWeaponId = 383;
-	const int GetSpread = 0xD0C;	// CTerrorWeapon* + 0xD0C
+	const int RenderTableDrawModel = 9;
+
+	// Entity Offset
+	const int GetSpread = 0xD0C;
+	const int GetPunch = 0x1224;
 
 	// ClientModeShared
-	const int SharedCreateMove = 21;
-	const int GetMessagePanel = 19;
-	const int KeyInput = 17;
+	const int SharedCreateMove = 27;
+	const int GetMessagePanel = 24;
+	const int KeyInput = 21;
 
 	// CBaseHudChat
 	const int Printf = 22;
@@ -137,10 +142,14 @@ namespace indexes
 	const int SceneBegin = 8;
 	const int SceneEnd = 9;
 
-	// CMaterialSystem
+	// IMaterialSystem
 	const int FindMaterial = 71;
 	const int IsMaterialLoaded = 72;
 	const int FindTexture = 77;
+
+	// IMaterial
+	const int SetMaterialVarFlag = 29;
+	const int ColorModuleate = 28;
 
 	// CBaseClientState
 	const int ProcessStringCmd = 2;
@@ -154,4 +163,7 @@ namespace indexes
 
 	// INetChannelInfo/CNetChan
 	const int SendDatagram = 188;
+
+	// RenderView
+	const int RenderViewSetColorModulation = 1;
 };

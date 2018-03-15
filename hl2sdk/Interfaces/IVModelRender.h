@@ -238,7 +238,25 @@ public:
 
 	virtual void SetupColorMeshes(int nTotalVerts) = 0;
 
+	/*
 	virtual void AddColoredDecal(ModelInstanceHandle_t handle, Ray_t const& ray,
 		Vector const& decalUp, int decalIndex, int body, Color cColor, bool noPokeThru = false, int maxLODToDecal = ADDDECAL_TO_ALL_LODS) = 0;
+	*/
+
+	virtual void SetupLightingEx(Vector const&, unsigned short) = 0;
+
+	virtual void GetBrightestShadowingLightSource(Vector const&, Vector&, Vector&, bool) = 0;
+
+	/*
+	virtual void ComputeLightingState(int, LightingQuery_t const*, MaterialLightingState_t*, ITexture**) = 0;
+
+	virtual void GetModelDecalHandles(StudioDecalHandle_t__**, int, int, unsigned short const*) = 0;
+
+	virtual void ComputeStaticLightingState(int, StaticLightingQuery_t const*, MaterialLightingState_t*, MaterialLightingState_t*, ColorMeshInfo_t**, ITexture**, memhandle_t__**) = 0;
+
+	virtual void CleanupStaticLightingState(int, memhandle_t__**) = 0;
+
+	virtual void GetItemName(unsigned int, void const*, char*, unsigned int) = 0;
+	*/
 #endif
 };

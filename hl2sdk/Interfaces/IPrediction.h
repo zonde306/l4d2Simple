@@ -24,7 +24,7 @@ private:
 	virtual void UnknownVirtual14() = 0;
 	virtual void UnknownVirtual15() = 0;
 	virtual void UnknownVirtual16() = 0;
-	// virtual void UnknownVirtual17() = 0;
+	virtual void UnknownVirtual17() = 0;
 	// virtual void UnknownVirtual18() = 0;
 	// virtual void UnknownVirtual19() = 0;
 public:

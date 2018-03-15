@@ -17,6 +17,9 @@ public:
 	CBaseFeatures();
 	virtual ~CBaseFeatures();
 
+	virtual void OnConnect();
+	virtual void OnDisconnect();
+
 	virtual void OnCreateMove(CUserCmd*, bool*);
 	virtual void OnPaintTraverse(VPANEL);
 	virtual void OnEnginePaint(PaintMode_t);
@@ -28,6 +31,9 @@ public:
 	virtual void OnSceneEnd();
 	virtual void OnMenuDrawing();
 	virtual void OnScreenDrawing();
+	virtual bool OnSendMove();
+	virtual bool OnFindMaterial(std::string&, std::string&);
+	virtual void OnKeyInput(bool, ButtonCode_t, const char*);
 
 private:
 	size_t m_iHookIndex;

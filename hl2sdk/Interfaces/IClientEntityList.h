@@ -21,6 +21,9 @@ public:
 	// Returns number of entities currently in use
 	virtual int					NumberOfEntities(bool bIncludeNonNetworkable) = 0;
 
+	virtual void				Unknown_6() = 0;
+	virtual void				Unknown_7() = 0;
+
 	// Returns highest index actually used
 	virtual int					GetHighestEntityIndex(void) = 0;
 

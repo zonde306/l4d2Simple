@@ -177,11 +177,11 @@ class IMaterialSystem : public IAppSystem
 public:
 
 	// Placeholder for API revision
-	virtual bool Connect(CreateInterfaceFn factory) = 0;
-	virtual void Disconnect() = 0;
-	virtual void *QueryInterface(const char *pInterfaceName) = 0;
-	virtual InitReturnVal_t Init() = 0;
-	virtual void Shutdown() = 0;
+	virtual bool Connect(CreateInterfaceFn factory) override = 0;
+	virtual void Disconnect() override = 0;
+	virtual void *QueryInterface(const char *pInterfaceName) override = 0;
+	virtual InitReturnVal_t Init() override = 0;
+	virtual void Shutdown() override = 0;
 
 	//---------------------------------------------------------
 	// Initialization and shutdown

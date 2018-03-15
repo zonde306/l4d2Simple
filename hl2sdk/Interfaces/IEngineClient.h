@@ -396,6 +396,8 @@ public:
 	// Returns true if the loading plaque should be drawn
 	virtual bool				IsDrawingLoadingImage( void ) = 0;
 
+	virtual void				HideLoadingPlaque(void) = 0;
+
 	// Prints the formatted string to the notification area of the screen ( down the right hand edge
 	//  numbered lines starting at position 0
 	virtual void				Con_NPrintf( int pos, const char *fmt, ... ) = 0;
@@ -484,6 +486,8 @@ public:
 	// Returns true if the box touches the specified area's frustum.
 	virtual bool		DoesBoxTouchAreaFrustum( const Vector &mins, const Vector &maxs, int iArea ) = 0;
 
+	virtual int		    GetFrustumList(Frustum_t **pList, int listMax) = 0;
+
 	// Sets the hearing origin (i.e., the origin and orientation of the listener so that the sound system can spatialize 
 	//  sound appropriately ).
 	virtual void		SetAudioState( const AudioState_t& state ) = 0;
@@ -517,6 +521,8 @@ public:
 	// Debugging functionality:
 	// Very slow routine to draw a physics model
 	virtual void		DebugDrawPhysCollide( const CPhysCollide *pCollide, IMaterial *pMaterial, matrix3x4_t& transform, const color32 &color ) = 0;
+	virtual void		DebugDrawUnknown(void* unknown, IMaterial *pMaterial, matrix3x4_t& transform, const color32 &color) = 0;
+
 	// This can be used to notify test scripts that we're at a particular spot in the code.
 	virtual void		CheckPoint( const char *pName ) = 0;
 	// Draw portals if r_DrawPortals is set (Debugging only)
@@ -560,11 +566,11 @@ public:
 	virtual bool		IsInEditMode( void ) = 0;
 
 	// current screen aspect ratio (eg. 4.0f/3.0f, 16.0f/9.0f)
-	virtual float		GetScreenAspectRatio() = 0;
+	// virtual float		GetScreenAspectRatio() = 0;
 
 	// allow the game UI to login a user
 	virtual bool		REMOVED_SteamRefreshLogin( const char *password, bool isSecure ) = 0;
-	virtual bool		REMOVED_SteamProcessCall( bool & finished ) = 0;
+	// virtual bool		REMOVED_SteamProcessCall( bool & finished ) = 0;
 
 	// allow other modules to know about engine versioning (one use is a proxy for network compatability)
 	virtual unsigned int	GetEngineBuildNumber() = 0; // engines build

@@ -10,6 +10,10 @@ std::unique_ptr<CClientInterface> g_pClientInterface;
 
 #define GET_VFUNC(_ptr,_off)	((*reinterpret_cast<PDWORD*>(_ptr))[_off])
 
+#define SIG_GET_CLIENTMODE		XorStr("8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? C3")
+typedef IClientMode*(__cdecl *FnGetClientMode)();
+FnGetClientMode GetClientMode = nullptr;
+
 void CClientInterface::Init()
 {
 	Client = GetPointer<IBaseClientDll>(XorStr("client.dll"), XorStr("VClient"));
@@ -32,6 +36,7 @@ void CClientInterface::Init()
 	Localize = GetPointer<ILocalize>(XorStr("localize.dll"), XorStr("Localize_"));
 	StringTable = GetPointer<INetworkStringTableContainer>(XorStr("engine.dll"), XorStr("VEngineClientStringTable"));
 	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
+	MaterialSystem = GetPointer<IMaterialSystem>(XorStr("materialsystem.dll"), XorStr("VMaterialSystem"));
 
 	std::stringstream ss;
 
@@ -71,24 +76,16 @@ void CClientInterface::Init()
 	if (Client != nullptr)
 	{
 		DWORD funcStart = GET_VFUNC(Client, indexes::CreateMove);
-		DWORD offsetStart = Utils::FindPattern(funcStart, funcStart + 0x51,
-			XorStr("8B 0D ? ? ? ? FF 75 10 D9 45 0C"));
-		if (offsetStart != NULL)
-			Input = **reinterpret_cast<IInput***>(offsetStart + 0x2);
-		else
-			Input = **reinterpret_cast<IInput***>(funcStart + 0x20);
-
+		Input = **reinterpret_cast<IInput***>(funcStart + 0x28);
 		PRINT_OFFSET(XorStr("CInput"), Input);
 
-		funcStart = GET_VFUNC(Client, indexes::HudProcessInput);
-		offsetStart = Utils::FindPattern(funcStart, funcStart + 0x51,
-			XorStr("8B 0D ? ? ? ? FF 75 10 D9 45 0C"));
-		if (offsetStart != NULL)
-			ClientMode = *reinterpret_cast<IClientMode**>(offsetStart + 0x2);
-		else
-			ClientMode = *reinterpret_cast<IClientMode**>(funcStart + 0x5);
+		GetClientMode = reinterpret_cast<FnGetClientMode>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLIENTMODE));
+		ClientMode = GetClientMode();
+		PRINT_OFFSET(XorStr("ClientMode"), ClientMode);
 
-		PRINT_OFFSET(XorStr("ClientMode"), Input);
+		funcStart = GET_VFUNC(GameMovement, indexes::PlaySwimSound);
+		MoveHelper = **reinterpret_cast<IMoveHelper***>(funcStart + 0x4);
+		PRINT_OFFSET(XorStr("MoveHelper"), MoveHelper);
 
 		NetProp = std::make_unique<CNetVars>();
 

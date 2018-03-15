@@ -59,6 +59,7 @@ public:
 	INetworkStringTableContainer* StringTable;
 	IClientMode* ClientMode;
 	IVRenderView* RenderView;
+	IMaterialSystem* MaterialSystem;
 
 	std::unique_ptr<CNetVars> NetProp;
 

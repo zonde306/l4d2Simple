@@ -403,7 +403,7 @@ public:
 	void		DrawTexturedPolygon(int n, Vertex_t *pVertice, bool bClipVertices = true);
 #else
 	// call to Shutdown surface; surface can no longer be used after this is called
-	virtual void Shutdown() = 0;
+	virtual void Shutdown() override = 0;
 
 	// frame
 	virtual void RunFrame() = 0;
@@ -417,8 +417,8 @@ public:
 	virtual void PopMakeCurrent(VPANEL panel) = 0;
 
 	// rendering functions
-	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetColor(Color col) = 0;
+	virtual void DrawSetColor(int r, int g, int b, int a) = 0;
 
 	virtual void DrawFilledRect(int x0, int y0, int x1, int y1) = 0;
 	virtual void DrawFilledRectArray(IntRect *pRects, int numRects) = 0;
@@ -428,14 +428,16 @@ public:
 	virtual void DrawPolyLine(int *px, int *py, int numPoints) = 0;
 
 	virtual void DrawSetTextFont(HFont font) = 0;
-	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetTextColor(Color col) = 0;
+	virtual void DrawSetTextColor(int r, int g, int b, int a) = 0;
 	virtual void DrawSetTextPos(int x, int y) = 0;
 	virtual void DrawGetTextPos(int& x, int& y) = 0;
 	virtual void DrawPrintText(const wchar_t *text, int textLen, FontDrawType_t drawType = FONT_DRAW_DEFAULT) = 0;
 	virtual void DrawUnicodeChar(wchar_t wch, FontDrawType_t drawType = FONT_DRAW_DEFAULT) = 0;
 
 	virtual void DrawFlushText() = 0;		// flushes any buffered text (for rendering optimizations)
+
+	/*
 	virtual IHTML *CreateHTMLWindow(IHTMLEvents *events, VPANEL context) = 0;
 	virtual void PaintHTMLWindow(IHTML *htmlwin) = 0;
 	virtual void DeleteHTMLWindow(IHTML *htmlwin) = 0;
@@ -474,6 +476,32 @@ public:
 	virtual void CreatePopup(VPANEL panel, bool minimised, bool showTaskbarIcon = true, bool disabled = false, bool mouseInput = true, bool kbInput = true) = 0;
 	virtual void SwapBuffers(VPANEL panel) = 0;
 	virtual void Invalidate(VPANEL panel) = 0;
+	*/
+
+	virtual void Unknown_1() = 0;
+	virtual void Unknown_2() = 0;
+	virtual void Unknown_3() = 0;
+	virtual void Unknown_4() = 0;
+	virtual void Unknown_5() = 0;
+	virtual void Unknown_6() = 0;
+	virtual void Unknown_7() = 0;
+	virtual void Unknown_8() = 0;
+	virtual void Unknown_9() = 0;
+	virtual void Unknown_10() = 0;
+	virtual void Unknown_11() = 0;
+	virtual void Unknown_12() = 0;
+	virtual void Unknown_13() = 0;
+	virtual void Unknown_14() = 0;
+	virtual void Unknown_15() = 0;
+	virtual void Unknown_16() = 0;
+	virtual void Unknown_17() = 0;
+	virtual void Unknown_18() = 0;
+	virtual void Unknown_19() = 0;
+	virtual void Unknown_20() = 0;
+	virtual void Unknown_21() = 0;
+	virtual void Unknown_22() = 0;
+	virtual void Unknown_23() = 0;
+
 	virtual void SetCursor(HCursor cursor) = 0;
 	virtual void SetCursorAlwaysVisible(bool visible) = 0;
 	virtual bool IsCursorVisible() = 0;

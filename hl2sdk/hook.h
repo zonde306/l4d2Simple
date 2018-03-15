@@ -21,6 +21,8 @@ typedef bool(__thiscall* FnProcessSetConVar)(CBaseClientState*, NET_SetConVar*);
 typedef bool(__thiscall* FnProccessStringCmd)(CBaseClientState*, NET_StringCmd*);
 typedef bool(__thiscall* FnWriteUsercmdDeltaToBuffer)(IBaseClientDll*, bf_write*, int, int, bool);
 typedef void(__thiscall* FnSceneEnd)(IVRenderView*);
+typedef IMaterial*(__thiscall* FnFindMaterial)(IMaterialSystem*, char const*, const char*, bool, const char*);
+typedef int(__thiscall* FnKeyInput)(IClientMode*, int, ButtonCode_t, const char*);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -28,6 +30,8 @@ typedef void(__thiscall* FnFinishDrawing)(ISurface*);
 typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
 typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
+typedef int(__cdecl* FnSetPredictionRandomSeed)(int);
+typedef void(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
 
 // 导出函数
 typedef void(__cdecl* FnRandomSeed)(int iSeed);
@@ -48,6 +52,7 @@ public:
 
 protected:
 	static void __cdecl Hooked_CL_Move(float, bool);
+	static void __cdecl Hooked_CL_SendMove();
 	static void __fastcall Hooked_PaintTraverse(IVPanel*, LPVOID, VPANEL, bool, bool);
 	static bool __fastcall Hooked_CreateMoveShared(IClientMode*, LPVOID, float, CUserCmd*);
 	static void __fastcall Hooked_CreateMove(IBaseClientDll*, LPVOID, int, float, bool);
@@ -58,8 +63,10 @@ protected:
 	static bool __fastcall Hooked_ProcessGetCvarValue(CBaseClientState*, LPVOID, SVC_GetCvarValue*);
 	static bool __fastcall Hooked_ProcessSetConVar(CBaseClientState*, LPVOID, NET_SetConVar*);
 	static bool __fastcall Hooked_ProcessStringCmd(CBaseClientState*, LPVOID, NET_StringCmd*);
-	static bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, bf_write*, int, int, bool);
+	static bool __fastcall Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll*, LPVOID, int, bf_write*, int, int, bool);
 	static void __fastcall Hooked_SceneEnd(IVRenderView*, LPVOID);
+	static IMaterial* __fastcall Hooked_FindMaterial(IMaterialSystem*, LPVOID, char const*, const char*, bool, const char*);
+	static int __fastcall Hooked_KeyInput(IClientMode*, LPVOID, int, ButtonCode_t, const char*);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -67,6 +74,7 @@ public:
 private:
 	// 被 Hook 后的原函数
 	FnCL_Move oCL_Move = nullptr;
+	FnCL_SendMove oCL_SendMove = nullptr;
 	FnPaintTraverse oPaintTraverse = nullptr;
 	FnCreateMoveShared oCreateMoveShared = nullptr;
 	FnCreateMove oCreateMove = nullptr;
@@ -80,6 +88,8 @@ private:
 	FnProccessStringCmd oProccessStringCmd = nullptr;
 	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
 	FnSceneEnd oSceneEnd = nullptr;
+	FnFindMaterial oFindMaterial = nullptr;
+	FnKeyInput oKeyInput = nullptr;
 
 public:
 	bool* bSendPacket;
@@ -87,8 +97,9 @@ public:
 	// 搜索特征码得到的函数
 	FnStartDrawing StartDrawing;
 	FnFinishDrawing FinishDrawing;
-	FnCL_SendMove CL_SendMove;
 	FnWriteUsercmd WriteUserCmd;
+	FnSharedRandomFloat SharedRandomFloat;
+	FnSetPredictionRandomSeed SetPredictionRandomSeed;
 
 	// 通过导出表得到的函数
 	FnRandomSeed RandomSeed;
@@ -104,3 +115,28 @@ private:
 };
 
 extern std::unique_ptr<CClientHook> g_pClientHook;
+
+#undef GetServerTime
+#undef GetLocalPlayer
+
+class CClientPrediction
+{
+public:
+	void Init();
+
+	bool StartPrediction(CUserCmd* cmd);
+	bool FinishPrediction();
+	float GetServerTime();
+	CBaseEntity* GetLocalPlayer();
+
+private:
+	CMoveData m_MoveData;
+	int m_iFlags = 0;
+	float m_fCurTime = 0.0f;
+	float m_fFrameTime = 0.0f;
+	int* m_pRandomSeed = nullptr;
+	int m_iTickBase = 0;
+	bool m_bInPrediction = false;
+};
+
+extern std::unique_ptr<CClientPrediction> g_pClientPrediction;

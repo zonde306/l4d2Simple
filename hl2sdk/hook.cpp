@@ -8,27 +8,32 @@
 #include <memory>
 
 std::unique_ptr<CClientHook> g_pClientHook;
+std::unique_ptr<CClientPrediction> g_pClientPrediction;
 
-#define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 34 83 3D")
-#define SIG_CL_SENDMOVE				XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 8D 4D CC")
-#define SIG_WRITE_USERCMD			XorStr("55 8B EC 8B 45 10 83 EC 0C B9")
-#define SIG_START_DRAWING			XorStr("55 8B EC 64 A1 ? ? ? ? 6A FF 68 ? ? ? ? 50 64 89 25 ? ? ? ? 83 EC 14")
-#define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 64 89 25 ? ? ? ? 51 56 6A 00")
+#define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 40 A1 ? ? ? ? 33 C5 89 45 FC 56 E8")
+#define SIG_CL_SENDMOVE				XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 E8")
+#define SIG_WRITE_USERCMD			XorStr("55 8B EC A1 ? ? ? ? 83 78 30 00 53 8B 5D 10")
+#define SIG_START_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC 14 56 57 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 8B F9 80 3D")
+#define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 51 56 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 6A 00")
 #define SIG_FX_FIREBULLET			XorStr("55 8B EC 8B 0D ? ? ? ? 83 EC 10 53")
-#define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 43")
-#define SIG_LOOKUP_WEAPON_INFO		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0 74 18")
+#define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 37")
+#define SIG_LOOKUP_WEAPON_INFO		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
 #define SIG_INVALOID_WEAPON_INFO	XorStr("B8 ? ? ? ? C3")
 #define SIG_GET_WEAPON_FILE_INFO	XorStr("55 8B EC 66 8B 45 08 66 3B 05 ? ? ? ? 73 1A")
-#define SIG_PROCCESS_SET_CONVAR		XorStr("55 8B EC 8B 49 08 83 EC 0C")
-#define SIG_CREATEMOVESHARED		XorStr("55 8B EC E8 ? ? ? ? 8B C8 85 C9 75 06 B0 01")
+#define SIG_PROCCESS_SET_CONVAR		XorStr("55 8B EC 8B 49 08 8B 01 8B 50 18")
+#define SIG_PROCCESS_GET_CONVAR		XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 8B 7D 08 8B 47 10")
+#define SIG_CREATEMOVESHARED		XorStr("55 8B EC 6A FF E8 ? ? ? ? 83 C4 04 85 C0 75 06 B0 01")
+#define SIG_SHARED_RANDOM_FLOAT		XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
+#define SIG_SET_RANDOM_SEED			XorStr("55 8B EC 8B 45 08 85 C0 75 0C")
+#define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
-static std::unique_ptr<DetourXS> g_pDetourCL_Move, g_pDetourProcessSetConVar, g_pDetourCreateMove;
+static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
-	g_pHookPanel, g_pHookPrediction, g_pHookRenderView;
+	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem;
 
 bool CClientHook::Init()
 {
@@ -63,8 +68,8 @@ bool CClientHook::Init()
 		PRINT_OFFSET(XorStr("InstallUniformRandomStream"), InstallUniformRandomStream);
 	}
 
-	CL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
-	PRINT_OFFSET(XorStr("CL_SendMove"), CL_SendMove);
+	oCL_Move = reinterpret_cast<FnCL_Move>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_MOVE));
+	PRINT_OFFSET(XorStr("oCL_SendMove"), oCL_Move);
 
 	WriteUserCmd = reinterpret_cast<FnWriteUsercmd>(Utils::FindPattern(XorStr("client.dll"), SIG_WRITE_USERCMD));
 	PRINT_OFFSET(XorStr("WriteUserCmd"), WriteUserCmd);
@@ -75,20 +80,27 @@ bool CClientHook::Init()
 	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
 	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
 
-	/*
-	if (oCL_Move == nullptr || !g_pDetourCL_Move)
+	SharedRandomFloat = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT));
+	PRINT_OFFSET(XorStr("SharedRandomFloat"), SharedRandomFloat);
+
+	SetPredictionRandomSeed = reinterpret_cast<FnSetPredictionRandomSeed>(Utils::FindPattern(XorStr("client.dll"), SIG_SET_RANDOM_SEED));
+	PRINT_OFFSET(XorStr("SetPredictionRandomSeed"), SetPredictionRandomSeed);
+
+	g_pClientPrediction = std::make_unique<CClientPrediction>();
+	g_pClientPrediction->Init();
+
+	if (oCL_SendMove == nullptr || !g_pDetourCL_SendMove)
 	{
-		oCL_Move = reinterpret_cast<FnCL_Move>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_MOVE));
+		oCL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
 
-		PRINT_OFFSET(XorStr("CL_Move"), oCL_Move);
+		PRINT_OFFSET(XorStr("CL_Move"), oCL_SendMove);
 
-		if (oCL_Move != nullptr)
+		if (oCL_SendMove != nullptr)
 		{
-			g_pDetourCL_Move = std::make_unique<DetourXS>(oCL_Move, Hooked_CL_Move);
-			oCL_Move = reinterpret_cast<FnCL_Move>(g_pDetourCL_Move->GetTrampoline());
+			g_pDetourCL_SendMove = std::make_unique<DetourXS>(oCL_SendMove, Hooked_CL_SendMove);
+			oCL_SendMove = reinterpret_cast<FnCL_SendMove>(g_pDetourCL_SendMove->GetTrampoline());
 		}
 	}
-	*/
 
 	if (oProcessSetConVar == nullptr || !g_pHookClientState)
 	{
@@ -122,20 +134,12 @@ bool CClientHook::Init()
 		// oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
 		g_pHookClient->InstallHook();
 	}
-	else
-	{
-		hookSuccess = false;
-	}
 
 	if (g_pClientInterface->Panel != nullptr && !g_pHookPanel)
 	{
 		g_pHookPanel = std::make_unique<CVmtHook>(g_pClientInterface->Panel);
 		oPaintTraverse = reinterpret_cast<FnPaintTraverse>(g_pHookPanel->HookFunction(indexes::PaintTraverse, Hooked_PaintTraverse));
 		g_pHookPanel->InstallHook();
-	}
-	else
-	{
-		hookSuccess = false;
 	}
 	
 	if (g_pClientInterface->EngineVGui != nullptr && !g_pHookVGui)
@@ -157,6 +161,13 @@ bool CClientHook::Init()
 		g_pHookRenderView = std::make_unique<CVmtHook>(g_pClientInterface->RenderView);
 		oSceneEnd = reinterpret_cast<FnSceneEnd>(g_pHookRenderView->HookFunction(indexes::SceneEnd, Hooked_SceneEnd));
 		g_pHookRenderView->InstallHook();
+	}
+
+	if (g_pClientInterface->MaterialSystem != nullptr && !g_pHookMaterialSystem)
+	{
+		g_pHookMaterialSystem = std::make_unique<CVmtHook>(g_pClientInterface->MaterialSystem);
+		oFindMaterial = reinterpret_cast<FnFindMaterial>(indexes::FindMaterial, Hooked_FindMaterial);
+		g_pHookMaterialSystem->InstallHook();
 	}
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView);
@@ -211,6 +222,19 @@ void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool b
 	// 参数 bFinalTick 相当于 bSendPacket
 	// 连续调用可以实现加速效果，但是需要破解 m_nTickBase 才能用
 	gwCL_Move(_edi, _esi, accumulated_extra_samples, bFinalTick);
+}
+
+void CClientHook::Hooked_CL_SendMove()
+{
+	bool blockSendMovement = false;
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		if (!inst->OnSendMove())
+			blockSendMovement = true;
+	}
+
+	if(!blockSendMovement)
+		g_pClientHook->oCL_SendMove();
 }
 
 void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VPANEL panel, bool forcePaint, bool allowForce)
@@ -310,6 +334,7 @@ void __fastcall CClientHook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, C
 }
 
 #undef GetLocalPlayer
+#define GET_INPUT_CMD(_type,_off,_sn)		(&((*reinterpret_cast<_type**>(reinterpret_cast<DWORD>(g_pClientInterface->Input) + _off))[_sn % sequence_number]))
 
 void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx, int sequence_number, float input_sample_frametime, bool active)
 {
@@ -317,7 +342,7 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	__asm mov _ebp, ebp;
 
 	// .text:100BBA20			bSendPacket = byte ptr -1
-	g_pClientHook->bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 1);
+	g_pClientHook->bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 0x21);
 
 	g_pClientHook->bCreateMoveFinish = false;
 
@@ -335,8 +360,8 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	}
 #endif
 
-	CVerifiedUserCmd* verified = &g_pClientInterface->Input->m_pVerifiedCommands[sequence_number % MULTIPLAYER_BACKUP];
-	CUserCmd* cmd = g_pClientInterface->Input->GetUserCmd(sequence_number);
+	CVerifiedUserCmd* verified = GET_INPUT_CMD(CVerifiedUserCmd, 0xE0, sequence_number);
+	CUserCmd* cmd = GET_INPUT_CMD(CUserCmd, 0xDC, sequence_number);
 
 	/*
 	// 验证 CRC 用的
@@ -348,64 +373,12 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 		reinterpret_cast<DWORD>(g_pClientInterface->Input) + 0xDC))[sequence_number % 150]);
 	*/
 	
-	// 本地玩家
-	CBaseEntity* localPlayer = reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntity(
-		g_pClientInterface->Engine->GetLocalPlayer()));
-
-	static CMoveData movedata;
-	int flags = localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
-	float serverTime = g_pClientInterface->GlobalVars->interval_per_tick * localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
-	float oldCurtime = g_pClientInterface->GlobalVars->curtime;
-	float oldFrametime = g_pClientInterface->GlobalVars->frametime;
-
-	if (g_pClientInterface->MoveHelper != nullptr)
-	{
-		// TODO: 设置随机数的种子为 MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF
-		// 目前还不知道随机数种子用哪个设置
-		if(g_pClientHook->RandomSeed)
-			g_pClientHook->RandomSeed(MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
-
-		// 设置需要预测的时间（帧）
-		g_pClientInterface->GlobalVars->curtime = serverTime;
-		g_pClientInterface->GlobalVars->frametime = g_pClientInterface->GlobalVars->interval_per_tick;
-
-		// 启动错误检查
-		g_pClientInterface->GameMovement->StartTrackPredictionErrors(localPlayer);
-
-		// 清空预测结果的数据
-		ZeroMemory(&movedata, sizeof(CMoveData));
-
-		// 设置需要预测的玩家
-		g_pClientInterface->MoveHelper->SetHost(localPlayer);
-
-		// 开始预测
-		g_pClientInterface->Prediction->SetupMove(localPlayer, cmd, g_pClientInterface->MoveHelper, &movedata);
-		g_pClientInterface->GameMovement->ProcessMovement(localPlayer, &movedata);
-		g_pClientInterface->Prediction->FinishMove(localPlayer, cmd, &movedata);
-	}
+	g_pClientPrediction->StartPrediction(cmd);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
-	if (g_pClientInterface->MoveHelper != nullptr)
-	{
-		// 结束预测
-		g_pClientInterface->GameMovement->FinishTrackPredictionErrors(localPlayer);
-		g_pClientInterface->MoveHelper->SetHost(nullptr);
-
-		// TODO: 设置随机数种子为 -1
-		// 目前还不知道随机数种子用哪个设置
-		if (g_pClientHook->RandomSeed)
-			g_pClientHook->RandomSeed(-1);
-
-		// 还原备份
-		g_pClientInterface->GlobalVars->curtime = oldCurtime;
-		g_pClientInterface->GlobalVars->frametime = oldFrametime;
-
-		// 修复一些错误
-		localPlayer->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = flags;
-		localPlayer->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = flags;
-	}
+	g_pClientPrediction->FinishPrediction();
 
 	// 手动进行 CRC 验证
 	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
@@ -427,6 +400,7 @@ void CClientHook::InstallClientModeHook(IClientMode * pointer)
 
 		g_pHookClientMode = std::make_unique<CVmtHook>(pointer);
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pHookClientMode->HookFunction(indexes::SharedCreateMove, Hooked_CreateMoveShared));
+		oKeyInput = reinterpret_cast<FnKeyInput>(g_pHookClientMode->HookFunction(indexes::KeyInput, Hooked_KeyInput));
 		g_pHookClientMode->InstallHook();
 	}
 }
@@ -447,8 +421,12 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	}
 #endif
 
+	g_pClientPrediction->StartPrediction(cmd);
+
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
+
+	g_pClientPrediction->FinishPrediction();
 
 	// 必须要返回 false 否则会出现 bug
 	return false;
@@ -491,8 +469,42 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 		Utils::log(XorStr("Hook FrameStageNotify Success."));
 	}
 #endif
+
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnFrameStageNotify(stage);
+
+	if (stage == FRAME_NET_UPDATE_END)
+	{
+		static time_t nextUpdate = 0;
+		time_t currentTime = time(NULL);
+		if (nextUpdate <= currentTime)
+		{
+			// 计时，用于每隔 1 秒触发一次
+			nextUpdate = currentTime + 1;
+
+			static bool isConnected = false;
+			if (g_pClientInterface->Engine->IsConnected())
+			{
+				if (!isConnected)
+				{
+					isConnected = true;
+
+					for (const auto& inst : g_pClientHook->_GameHook)
+						inst->OnConnect();
+				}
+			}
+			else if (!g_pClientInterface->Engine->IsInGame())
+			{
+				if (isConnected)
+				{
+					isConnected = false;
+
+					for (const auto& inst : g_pClientHook->_GameHook)
+						inst->OnDisconnect();
+				}
+			}
+		}
+	}
 }
 
 void CClientHook::InstallClientStateHook(CBaseClientState* pointer)
@@ -532,6 +544,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	bool blockQuery = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
+		tmpValue.clear();
 		if (!inst->OnProcessGetCvarValue(gcv, tmpValue))
 			blockQuery = true;
 		else if (!tmpValue.empty())
@@ -589,7 +602,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		}
 		else if (!newResult.empty())
 		{
-			// 发送修改后的 ConVar
+			// 发送假的的 ConVar
 			strcpy_s(resultBuffer, newResult.c_str());
 			returnMsg.m_szCvarValue = resultBuffer;
 		}
@@ -668,7 +681,7 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	return true;
 }
 
-bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, bf_write* buf, int from, int to, bool isnewcommand)
+bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, int solt, bf_write* buf, int from, int to, bool isnewcommand)
 {
 	// oWriteUsercmdDeltaToBuffer(_ecx, buf, from, to, isnewcommand);
 	
@@ -682,7 +695,7 @@ bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _e
 #endif
 
 	// 强制更新本地玩家命令
-	g_pClientHook->WriteUserCmd(buf, g_pClientInterface->Input->GetUserCmd(to), g_pClientInterface->Input->GetUserCmd(from));
+	g_pClientHook->WriteUserCmd(buf, g_pClientInterface->Input->GetUserCmd(solt, to), g_pClientInterface->Input->GetUserCmd(solt, from));
 	return !(buf->IsOverflowed());
 }
 
@@ -701,4 +714,124 @@ void __fastcall CClientHook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnSceneEnd();
+}
+
+IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LPVOID _edx, char const* pMaterialName,
+	const char* pTextureGroupName, bool complain, const char* pComplainPrefix)
+{
+	std::string copyMaterialName, copyTextureGroupName;
+	std::string newMaterialName, newTextureGroupName;
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		copyMaterialName = pMaterialName;
+		copyTextureGroupName = pTextureGroupName;
+		if (inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
+		{
+			newMaterialName = copyMaterialName;
+			newTextureGroupName = copyTextureGroupName;
+		}
+	}
+	
+	if (!newMaterialName.empty())
+	{
+		return g_pClientHook->oFindMaterial(_ecx, newMaterialName.c_str(),
+			(newTextureGroupName.empty() ? nullptr : newTextureGroupName.c_str()),
+			complain, pComplainPrefix);
+	}
+
+	return g_pClientHook->oFindMaterial(_ecx, pMaterialName, pTextureGroupName, complain, pComplainPrefix);
+}
+
+int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, ButtonCode_t keynum, const char* pszCurrentBinding)
+{
+	int result = g_pClientHook->oKeyInput(_ecx, down, keynum, pszCurrentBinding);
+	
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnKeyInput(down != 0, keynum, pszCurrentBinding);
+
+	return result;
+}
+
+void CClientPrediction::Init()
+{
+	m_pRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x1A);
+}
+
+bool CClientPrediction::StartPrediction(CUserCmd* cmd)
+{
+	if (g_pClientInterface->MoveHelper == nullptr)
+		return false;
+
+	CBaseEntity* player = GetLocalPlayer();
+
+	if (m_bInPrediction || player == nullptr)
+		return false;
+
+	// 备份数据
+	m_fCurTime = g_pClientInterface->GlobalVars->curtime;
+	m_fFrameTime = g_pClientInterface->GlobalVars->frametime;
+	m_iTickBase = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
+	m_iFlags = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
+
+	// 设置随机数种子
+	*m_pRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+
+	// 设置需要预测的时间（帧）
+	g_pClientInterface->GlobalVars->curtime = GetServerTime();
+	g_pClientInterface->GlobalVars->frametime = g_pClientInterface->GlobalVars->interval_per_tick;
+
+	// 错误检查
+	g_pClientInterface->GameMovement->StartTrackPredictionErrors(player);
+
+	ZeroMemory(&m_MoveData, sizeof(CMoveData));
+	m_MoveData.m_nButtons = cmd->buttons;
+
+	// 预测目标
+	g_pClientInterface->MoveHelper->SetHost(player);
+
+	// 开始预测
+	g_pClientInterface->Prediction->SetupMove(player, cmd, g_pClientInterface->MoveHelper, &m_MoveData);
+	g_pClientInterface->GameMovement->ProcessMovement(player, &m_MoveData);
+	g_pClientInterface->Prediction->FinishMove(player, cmd, &m_MoveData);
+	
+	m_bInPrediction = true;
+	return true;
+}
+
+bool CClientPrediction::FinishPrediction()
+{
+	if (g_pClientInterface->MoveHelper == nullptr)
+		return false;
+
+	CBaseEntity* player = GetLocalPlayer();
+
+	if (!m_bInPrediction || player == nullptr)
+		return false;
+
+	// 结束预测
+	player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")) = m_iTickBase;
+	g_pClientInterface->GameMovement->FinishTrackPredictionErrors(player);
+	g_pClientInterface->MoveHelper->SetHost(nullptr);
+	*m_pRandomSeed = -1;
+
+	// 还原时间
+	g_pClientInterface->GlobalVars->curtime = m_fCurTime;
+	g_pClientInterface->GlobalVars->frametime = m_fFrameTime;
+
+	// 修复错误
+	player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = m_iFlags;
+	player->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
+
+	m_bInPrediction = false;
+	return true;
+}
+
+float CClientPrediction::GetServerTime()
+{
+	return (g_pClientInterface->GlobalVars->interval_per_tick * GetLocalPlayer()->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")));
+}
+
+CBaseEntity * CClientPrediction::GetLocalPlayer()
+{
+	return (reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntity(g_pClientInterface->Engine->GetLocalPlayer())));
 }

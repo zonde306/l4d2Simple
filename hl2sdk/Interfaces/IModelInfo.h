@@ -17,6 +17,7 @@ public:
 	virtual const char				*GetModelName( const model_t *model ) const = 0;
 	virtual vcollide_t				*GetVCollide( const model_t *model ) = 0;
 	virtual vcollide_t				*GetVCollide( int modelindex ) = 0;
+	virtual vcollide_t				*GetPhysics2VCollide(int) const = 0;
 	virtual void					GetModelBounds( const model_t *model, Vector& mins, Vector& maxs ) const = 0;
 	virtual	void					GetModelRenderBounds( const model_t *model, Vector& mins, Vector& maxs ) const = 0;
 	virtual int						GetModelFrameCount( const model_t *model ) const = 0;
@@ -26,6 +27,7 @@ public:
 	virtual bool					IsTranslucent( model_t const* model ) const = 0;
 	virtual bool					IsTranslucentTwoPass( const model_t *model ) const = 0;
 	virtual void					RecomputeTranslucency( const model_t *model, int nSkin, int nBody, void /*IClientRenderable*/ *pClientRenderable, float fInstanceAlphaModulate=1.0f) = 0;
+	virtual void					ComputeTranslucencyType(model_t const*, int, int) = 0;
 	virtual int						GetModelMaterialCount( const model_t* model ) const = 0;
 	virtual void					GetModelMaterials( const model_t *model, int count, IMaterial** ppMaterial ) = 0;
 	virtual bool					IsModelVertexLit( const model_t *model ) const = 0;
@@ -72,12 +74,15 @@ public:
 
 	// Obsolete methods. These are left in to maintain binary compatibility with clients using the IVModelInfo old version.
 	virtual const model_t			*FindOrLoadModel( const char *name ) { return NULL; }
+	
+	/*
 	virtual void					InitDynamicModels( ) { }
 	virtual void					ShutdownDynamicModels( ) { }
 	virtual void					AddDynamicModel( const char *name, int nModelIndex = -1 ) { }
 	virtual void					ReferenceModel( int modelindex ) { }
 	virtual void					UnreferenceModel( int modelindex ) { }
 	virtual void					CleanupDynamicModels( bool bForce = false ) { }
+	*/
 
 	virtual MDLHandle_t				GetCacheHandle( const model_t *model ) const = 0;
 
@@ -86,6 +91,7 @@ public:
 	virtual void					GetBrushModelPlane( const model_t *model, int nIndex, cplane_t &plane, Vector *pOrigin ) const = 0;
 	virtual int						GetSurfacepropsForVirtualTerrain( int index ) = 0;
 
+	/*
 	// Poked by engine host system
 	virtual void					OnLevelChange() = 0;
 
@@ -105,4 +111,9 @@ public:
 	virtual void					UnregisterModelLoadCallback( int modelindex, IModelLoadCallback* pCallback ) = 0;
 	
 	virtual void OnDynamicModelsStringTableChange( int nStringIndex, const char *pString, const void *pData ) = 0;
+	*/
+
+	virtual void					UsesEnvCubemap(model_t const*) const = 0;
+	virtual void					UsesStaticLighting(model_t const*) const = 0;
+	virtual void					ReloadVCollide(model_t const*) const = 0;
 };

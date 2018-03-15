@@ -12,6 +12,14 @@ CBaseFeatures::~CBaseFeatures()
 	g_pClientHook->_GameHook.erase(g_pClientHook->_GameHook.begin() + m_iHookIndex);
 }
 
+void CBaseFeatures::OnConnect()
+{
+}
+
+void CBaseFeatures::OnDisconnect()
+{
+}
+
 void CBaseFeatures::OnCreateMove(CUserCmd *, bool *)
 {
 }
@@ -57,5 +65,19 @@ void CBaseFeatures::OnMenuDrawing()
 }
 
 void CBaseFeatures::OnScreenDrawing()
+{
+}
+
+bool CBaseFeatures::OnSendMove()
+{
+	return true;
+}
+
+bool CBaseFeatures::OnFindMaterial(std::string &, std::string &)
+{
+	return false;
+}
+
+void CBaseFeatures::OnKeyInput(bool, ButtonCode_t, const char *)
 {
 }
