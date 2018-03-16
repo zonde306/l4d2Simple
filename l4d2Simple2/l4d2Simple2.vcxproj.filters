@@ -198,6 +198,12 @@
     <ClCompile Include="speedhack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\baseplayer.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\baseweapon.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -457,6 +463,12 @@
     </ClInclude>
     <ClInclude Include="speedhack.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\baseplayer.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\baseweapon.h">
+      <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

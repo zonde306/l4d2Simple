@@ -2,11 +2,21 @@
 #include "../../l4d2Simple2/vector.h"
 #include <Windows.h>
 
+typedef float VMatrix[4][4];
+
 struct matrix3x4_t
 {
 public:
-
 	matrix3x4_t() {}
+	inline matrix3x4_t(VMatrix mat)
+	{
+		memcpy_s(this, sizeof(matrix3x4_t), mat, sizeof(matrix3x4_t));
+	}
+
+	inline void GetMatrix(VMatrix mat)
+	{
+		memcpy_s(mat, sizeof(matrix3x4_t), this, sizeof(matrix3x4_t));
+	}
 
 	matrix3x4_t(float m00, float m01, float m02, float m03,
 		float m10, float m11, float m12, float m13,
@@ -83,4 +93,9 @@ public:
 	float m[4][4];
 };
 
-typedef float VMatrix[3][4];
+inline void VectorTransform(const Vector& in1, const matrix3x4_t &in2, Vector &out)
+{
+	out[0] = in1.Dot(Vector(in2[0][0], in2[0][1], in2[0][2])) + in2[0][3];
+	out[1] = in1.Dot(Vector(in2[1][0], in2[1][1], in2[1][2])) + in2[1][3];
+	out[2] = in1.Dot(Vector(in2[2][0], in2[2][1], in2[2][2])) + in2[2][3];
+}

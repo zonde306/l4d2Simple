@@ -64,11 +64,11 @@ public:
 	virtual ClientShadowHandle_t	GetShadowHandle() const = 0;
 
 	// Used by the leaf system to store its render handle.
-	virtual ClientRenderHandle_t&	RenderHandle() = 0;
+	// virtual ClientRenderHandle_t&	RenderHandle() = 0;
 
 	// Render baby!
 	virtual const model_t*			GetModel() const = 0;
-	virtual int						DrawModel(int flags) = 0;
+	virtual int						DrawModel(int flags, float alpha = 1.0f) = 0;
 
 	// Get the body parameter
 	virtual int		GetBody() = 0;

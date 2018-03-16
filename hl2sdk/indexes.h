@@ -121,6 +121,8 @@ namespace indexes
 	// Entity Offset
 	const int GetSpread = 0xD0C;
 	const int GetPunch = 0x1224;
+	const int GetCrosshairsId = 0x19D8;
+	const int GetLastCrosshairsId = 0x19E8;
 
 	// ClientModeShared
 	const int SharedCreateMove = 27;

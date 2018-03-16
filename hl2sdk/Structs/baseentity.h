@@ -2,6 +2,7 @@
 #include "../Interfaces/IClientEntity.h"
 #include "netprop.h"
 #include "handle.h"
+#include "matrix.h"
 #include "../../l4d2Simple2/vector.h"
 #include "../../l4d2Simple2/xorstr.h"
 #include <exception>
@@ -13,9 +14,6 @@ extern std::map<std::string, int> g_mPropOffset;
 
 class CBaseEntity : public IClientEntity
 {
-public:
-
-
 public:	// NetProp
 	template<typename T>
 	T& GetNetProp(const std::string& table, const std::string& prop, size_t element = 0);
@@ -40,6 +38,18 @@ public:	// NetProp
 public:
 	IClientRenderable* m_pClientRenderable;		// 4
 	IClientNetworkable* m_pClientNetworkable;	// 8
+
+public:
+	bool IsDormant();
+	int GetIndex();
+	bool SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime);
+	int DrawModel(int flags, float alpha = 1.f);
+	model_t* GetModel();
+	Vector GetHitboxOrigin(int hitbox);
+	Vector GetBoneOrigin(int bone);
+	Vector GetAbsOrigin();
+	QAngle GetAbsAngles();
+	ClientClass* GetClientClass();
 };
 
 template<typename T>

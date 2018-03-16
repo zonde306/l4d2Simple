@@ -34,7 +34,7 @@ public:
 	virtual IClientUnknown*	GetIClientUnknown() = 0;
 
 	// Called by the engine when the server deletes the entity.
-	virtual void			Release() = 0;
+	// virtual void			Release() = 0;
 
 	// Supplied automatically by the IMPLEMENT_CLIENTCLASS macros.
 	virtual ClientClass*	GetClientClass() = 0;
