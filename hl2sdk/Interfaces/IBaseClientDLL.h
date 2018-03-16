@@ -86,7 +86,7 @@ public:
 									CreateInterfaceFn physicsFactory,
 									CGlobalVarsBase *pGlobals ) = 0;
 
-	virtual void			PostInit() = 0;
+	// virtual void			PostInit() = 0;
 
 	// Called once when the client DLL is being unloaded
 	virtual void			Shutdown( void ) = 0;
@@ -133,7 +133,7 @@ public:
 	virtual void			IN_OnMouseWheeled( int nDelta ) = 0;
 	// Raw keyboard signal, if the client .dll returns 1, the engine processes the key as usual, otherwise,
 	//  if the client .dll returns 0, the key is swallowed.
-	// virtual int				IN_KeyEvent( int eventcode, ButtonCode_t keynum, const char *pszCurrentBinding ) = 0;
+	virtual int				IN_KeyEvent( int eventcode, ButtonCode_t keynum, const char *pszCurrentBinding ) = 0;
 
 	// This function is called once per tick to create the player CUserCmd (used for prediction/physics simulation of the player)
 	// Because the mouse can be sampled at greater than the tick interval, there is a separate input_sample_frametime, which

@@ -11,6 +11,8 @@ public:
 	Vector GetVelocity();
 	int GetHealth();
 	int GetTempHealth();
+	bool IsAlive();
+	MoveType_t GetMoveType();
 	Vector& GetPunch();
 };
 

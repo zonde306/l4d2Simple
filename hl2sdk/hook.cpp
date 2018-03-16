@@ -2,6 +2,7 @@
 #include "indexes.h"
 #include "./Utils/checksum_md5.h"
 #include "./Structs/convar.h"
+#include "./Features/BunnyHop.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -170,7 +171,13 @@ bool CClientHook::Init()
 		g_pHookMaterialSystem->InstallHook();
 	}
 
-	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView);
+	// 初始化功能
+	{
+		if (!g_pBunnyHop)
+			g_pBunnyHop = new CBunnyHop();
+	}
+
+	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
 }
 
 void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
@@ -278,10 +285,21 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 			inst->OnPaintTraverse(panel);
 
 #ifdef _DEBUG
+		static HFont font = 0;
+		if (font == 0)
+		{
+			font = g_pClientInterface->Surface->CreateFont();
+			g_pClientInterface->Surface->SetFontGlyphSet(font, XorStr("Arial"), 16, FW_DONTCARE, 0, 0, FONTFLAG_OUTLINE);
+		}
+
 		if (panel == FocusOverlayPanel)
 		{
 			g_pClientInterface->Surface->DrawSetColor(255, 0, 0, 255);
 			g_pClientInterface->Surface->DrawFilledRect(60, 60, 70, 70);
+			g_pClientInterface->Surface->DrawSetTextPos(80, 80);
+			g_pClientInterface->Surface->DrawSetTextColor(255, 128, 128, 255);
+			g_pClientInterface->Surface->DrawSetTextFont(font);
+			g_pClientInterface->Surface->DrawPrintText(L"这是一些 Surface 文本", 16);
 		}
 #endif
 	}
@@ -348,9 +366,6 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 
 	g_pClientHook->oCreateMove(_ecx, sequence_number, input_sample_frametime, active);
 
-	if (g_pClientHook->bCreateMoveFinish)
-		return;
-
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
@@ -359,6 +374,9 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 		Utils::log(XorStr("Hook CreateMove Success."));
 	}
 #endif
+
+	if (g_pClientHook->bCreateMoveFinish)
+		return;
 
 	CVerifiedUserCmd* verified = GET_INPUT_CMD(CVerifiedUserCmd, 0xE0, sequence_number);
 	CUserCmd* cmd = GET_INPUT_CMD(CUserCmd, 0xDC, sequence_number);
@@ -536,7 +554,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	if (hasFirstEnter)
 	{
 		hasFirstEnter = false;
-		Utils::log(XorStr("Hook FrameStageNotify Success."));
+		Utils::log(XorStr("Hook ProcessGetCvarValue Success."));
 	}
 #endif
 
@@ -630,7 +648,7 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 	if (hasFirstEnter)
 	{
 		hasFirstEnter = false;
-		Utils::log(XorStr("Hook FrameStageNotify Success."));
+		Utils::log(XorStr("Hook ProcessSetConVar Success."));
 	}
 #endif
 
@@ -664,7 +682,7 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	if (hasFirstEnter)
 	{
 		hasFirstEnter = false;
-		Utils::log(XorStr("Hook FrameStageNotify Success."));
+		Utils::log(XorStr("Hook ProcessStringCmd Success."));
 	}
 #endif
 
@@ -690,7 +708,7 @@ bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _e
 	if (hasFirstEnter)
 	{
 		hasFirstEnter = false;
-		Utils::log(XorStr("Hook FrameStageNotify Success."));
+		Utils::log(XorStr("Hook WriteUsercmdDeltaToBuffer Success."));
 	}
 #endif
 
@@ -731,6 +749,15 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 			newTextureGroupName = copyTextureGroupName;
 		}
 	}
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook FindMaterial Success."));
+	}
+#endif
 	
 	if (!newMaterialName.empty())
 	{
@@ -748,6 +775,15 @@ int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, Butto
 	
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnKeyInput(down != 0, keynum, pszCurrentBinding);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook KeyInput Success."));
+	}
+#endif
 
 	return result;
 }
@@ -821,6 +857,15 @@ bool CClientPrediction::FinishPrediction()
 	// 修复错误
 	player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = m_iFlags;
 	player->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Client Prediction Success."));
+	}
+#endif
 
 	m_bInPrediction = false;
 	return true;

@@ -1,13 +1,16 @@
 #pragma once
 #include "../Interfaces/IClientEntity.h"
+#include "../definitions.h"
 #include "netprop.h"
 #include "handle.h"
 #include "matrix.h"
 #include "../../l4d2Simple2/vector.h"
 #include "../../l4d2Simple2/xorstr.h"
+#include "../../l4d2Simple2/utils.h"
 #include <exception>
 #include <memory>
 #include <string>
+#include <sstream>
 #include <map>
 
 extern std::map<std::string, int> g_mPropOffset;
@@ -64,7 +67,7 @@ inline T & CBaseEntity::GetNetProp(const std::string & table, const std::string 
 		throw std::runtime_error(ss.str().c_str());
 	}
 
-	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset) + (sizeof(T) * element));
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (sizeof(T) * element));
 }
 
 template<typename T>
@@ -93,7 +96,7 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 		offset += offset2;
 	*/
 
-	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset + offset2) + (sizeof(T) * element));
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset + offset2) + (sizeof(T) * element));
 }
 
 template<typename T, typename ...P>
@@ -114,7 +117,7 @@ inline T & CBaseEntity::GetNetPropEx(const std::string & table, const std::strin
 		throw std::runtime_error(ss.str().c_str());
 	}
 
-	return *reinterpret_cast<T*>((reinterpret_cast<unsigned int>(this) + offset) + (sizeof(T) * element));
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (sizeof(T) * element));
 }
 
 template<typename T>

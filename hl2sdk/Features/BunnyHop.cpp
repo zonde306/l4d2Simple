@@ -1,4 +1,5 @@
 #include "BunnyHop.h"
+#include <iostream>
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -14,6 +15,8 @@
 
 #define IsBadMoveType(_mt)		(_mt == MOVETYPE_LADDER || _mt == MOVETYPE_NOCLIP || _mt == MOVETYPE_OBSERVER)
 
+CBunnyHop* g_pBunnyHop = nullptr;
+
 CBunnyHop::CBunnyHop() : CBaseFeatures::CBaseFeatures()
 {
 }
@@ -25,17 +28,39 @@ CBunnyHop::~CBunnyHop()
 
 void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 {
+	/*
 	if (!m_bAcitve)
 		return;
+	*/
 
-	CBaseEntity* player = GetLocalPlayer();
-	if (player == nullptr || !IsPlayerAlive(player) || IsPlayerInLadder(player))
+	static bool isFirstEnter = true;
+	if (isFirstEnter)
+	{
+		// isFirstEnter = false;
+		Utils::log("CBunnyHop::OnCreateMove - Start.");
+	}
+
+	CBasePlayer* player = GetLocalPlayer();
+	if (player == nullptr || !player->IsAlive())
+	{
+		// Utils::log("CBunnyHop::OnCreateMove - Failed: 0x%X", (DWORD)player);
+		std::cout << "CBunnyHop::OnCreateMove - Failed: " << (DWORD)player << std::endl;
 		return;
+	}
 
-	int flags = player->GetNetProp<MoveType>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
+	int flags = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
+
+	if (isFirstEnter)
+	{
+		isFirstEnter = false;
+		Utils::log("CBunnyHop::OnCreateMove - Finish.");
+	}
 
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
+		DoSafeAutoBhop(pCmd, flags);
+		
+		/*
 		if (m_pszAutoBhopMode == m_arrAutoBhopModeList[1].c_str())
 			DoNormalAutoBhop(player, pCmd, flags);
 		else if(m_pszAutoBhopMode == m_arrAutoBhopModeList[2].c_str())
@@ -51,11 +76,42 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			DoRightAutoStrafe(pCmd, flags);
 		else if (m_pszAutoStrafeMode == m_arrAutoStrafeModeList[5].c_str())
 			DoExtraAutoStrafe(player, pCmd, flags);
+		*/
+
+		/*
+		if(m_iBhopMode == 1)
+			DoNormalAutoBhop(player, pCmd, flags);
+		else if(m_iBhopMode == 2)
+			DoSafeAutoBhop(pCmd, flags);
+
+		switch (m_iStrafeMode)
+		{
+		case 1:
+			DoForwardAutoStrafe(pCmd, flags);
+			break;
+		case 2:
+			DoBackAutoStrafe(pCmd, flags);
+			break;
+		case 3:
+			DoLeftAutoStrafe(pCmd, flags);
+			break;
+		case 4:
+			DoRightAutoStrafe(pCmd, flags);
+			break;
+		case 5:
+			DoExtraAutoStrafe(player, pCmd, flags);
+			break;
+		case 6:
+			DoFullAutoStrafe(player, pCmd, flags);
+			break;
+		}
+		*/
 	}
 }
 
 void CBunnyHop::OnMenuDrawing()
 {
+	/*
 	if (!ImGui::Checkbox(XorStr("BunnyHop"), &m_bAcitve))
 		return;
 
@@ -64,9 +120,29 @@ void CBunnyHop::OnMenuDrawing()
 		ImGui::End();
 		return;
 	}
+	*/
+	
+	if (!ImGui::TreeNode(XorStr("BunnyHop")))
+		return;
+
+	ImGui::Checkbox(XorStr("AutoBunnyHop Allow"), &m_bAcitve);
 
 	if (ImGui::BeginCombo(XorStr("AutoBhop"), m_pszAutoBhopMode))
 	{
+		for (size_t i = 0; i < m_arrAutoBhopModeList.size(); ++i)
+		{
+			bool selected = (m_pszAutoBhopMode == m_arrAutoBhopModeList[i].c_str());
+			if (ImGui::Selectable(m_arrAutoBhopModeList[i].c_str(), &selected))
+			{
+				m_pszAutoBhopMode = m_arrAutoBhopModeList[i].c_str();
+				m_iBhopMode = i;
+			}
+
+			if (selected)
+				ImGui::SetItemDefaultFocus();
+		}
+
+		/*
 		for (const std::string& item : m_arrAutoBhopModeList)
 		{
 			bool selected = (m_pszAutoBhopMode == item.c_str());
@@ -77,12 +153,27 @@ void CBunnyHop::OnMenuDrawing()
 			if(selected)
 				ImGui::SetItemDefaultFocus();
 		}
+		*/
 		
 		ImGui::EndCombo();
 	}
 
 	if (ImGui::BeginCombo(XorStr("AutoStrafe"), m_pszAutoStrafeMode))
 	{
+		for (size_t i = 0; i < m_arrAutoStrafeModeList.size(); ++i)
+		{
+			bool selected = (m_pszAutoStrafeMode == m_arrAutoStrafeModeList[i].c_str());
+			if (ImGui::Selectable(m_arrAutoStrafeModeList[i].c_str(), &selected))
+			{
+				m_pszAutoStrafeMode = m_arrAutoStrafeModeList[i].c_str();
+				m_iStrafeMode = i;
+			}
+
+			if (selected)
+				ImGui::SetItemDefaultFocus();
+		}
+		
+		/*
 		for (const std::string& item : m_arrAutoStrafeModeList)
 		{
 			bool selected = (m_pszAutoStrafeMode == item.c_str());
@@ -93,11 +184,13 @@ void CBunnyHop::OnMenuDrawing()
 			if (selected)
 				ImGui::SetItemDefaultFocus();
 		}
+		*/
 
 		ImGui::EndCombo();
 	}
 
-	ImGui::End();
+	// ImGui::End();
+	ImGui::TreePop();
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBaseEntity* player, CUserCmd * pCmd, int flags)

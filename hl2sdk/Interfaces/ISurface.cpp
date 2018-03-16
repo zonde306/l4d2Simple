@@ -2,7 +2,7 @@
 #include "../indexes.h"
 #include "../../l4d2Simple2/utils.h"
 
-#ifdef _CSGO
+#ifndef _CSGO
 void ISurface::DrawSetColor(int r, int g, int b, int a)
 {
 	typedef void(__thiscall* OriginalFn)(void*, int, int, int, int);
@@ -12,7 +12,7 @@ void ISurface::DrawSetColor(int r, int g, int b, int a)
 void ISurface::DrawSetColor(Color col)
 {
 	typedef void(__thiscall* OriginalFn)(void*, Color);
-	return Utils::GetVTableFunction<OriginalFn>(this, 14)(this, col);
+	return Utils::GetVTableFunction<OriginalFn>(this, indexes::DrawSetColor - 1)(this, col);
 }
 
 void ISurface::DrawFilledRect(int x0, int y0, int x1, int y1)
@@ -87,7 +87,7 @@ int	ISurface::CreateNewTextureID(bool procedural)
 	return Utils::GetVTableFunction<OriginalFn>(this, 43)(this, procedural);
 }
 
-HFont ISurface::Create_Font()
+HFont ISurface::CreateFont()
 {
 	typedef HFont(__thiscall* OriginalFn)(void*);
 	return Utils::GetVTableFunction<OriginalFn>(this, indexes::SCreateFont)(this);
@@ -115,5 +115,10 @@ void ISurface::DrawTexturedPolygon(int n, Vertex_t *pVertice, bool bClipVertices
 {
 	typedef void(__thiscall* OriginalFn)(void*, int, Vertex_t*, bool);
 	return Utils::GetVTableFunction<OriginalFn>(this, 106)(this, n, pVertice, bClipVertices);
+}
+void ISurface::SetCursorAlwaysVisible(bool visible)
+{
+	typedef void(__thiscall* Fn)(void*, bool);
+	return Utils::GetVTableFunction<Fn>(this, indexes::SetCursorAlwaysVisible)(this, visible);
 }
 #endif

@@ -26,6 +26,8 @@ static int                      g_VertexBufferSize = 5000, g_IndexBufferSize = 1
 WNDPROC							g_pfnOldWndProcHandler = NULL;
 bool							g_bHasShowMenu = false;
 
+extern void _OnMenuStateChanged(bool);
+
 struct CUSTOMVERTEX
 {
 	float    pos[3];
@@ -196,6 +198,7 @@ IMGUI_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wPa
 			g_bHasShowMenu = !g_bHasShowMenu;
 
 		ImGui::GetIO().MouseDrawCursor = g_bHasShowMenu;
+		_OnMenuStateChanged(g_bHasShowMenu);
 	}
 	
 	if (g_bHasShowMenu)

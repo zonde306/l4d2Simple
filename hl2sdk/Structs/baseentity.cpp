@@ -12,6 +12,10 @@ int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string &
 	else
 		return it->second;
 
+	std::stringstream ss;
+	ss << table << "::" << prop << " = " << g_mPropOffset[prop];
+	Utils::log(ss.str().c_str());
+
 	return g_mPropOffset[prop];
 }
 

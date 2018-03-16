@@ -205,7 +205,7 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define MASK_SPLITAREAPORTAL	(CONTENTS_WATER|CONTENTS_SLIME) 									/**< These are things that can split areaportals */
 
 // CBaseEntity::movetype
-enum MoveType
+enum MoveType_t
 {
 	MOVETYPE_NONE = 0,			/**< never moves */
 	MOVETYPE_ISOMETRIC,			/**< For players */

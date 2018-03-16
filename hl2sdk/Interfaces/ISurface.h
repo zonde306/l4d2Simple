@@ -381,7 +381,7 @@ public:
 class ISurface : public IAppSystem
 {
 public:
-#ifdef _CSGO
+#ifndef _CSGO
 	void		DrawSetColor(int r, int g, int b, int a);
 	void		DrawSetColor(Color col);
 	void		DrawFilledRect(int x0, int y0, int x1, int y1);
@@ -396,14 +396,17 @@ public:
 	void		DrawSetTextureRGBA(int id, const unsigned char *rgba, int wide, int tall);
 	void		DrawSetTexture(int id);
 	int			CreateNewTextureID(bool procedural = false);
-	HFont		Create_Font();
+	HFont		CreateFont();
 	bool		SetFontGlyphSet(HFont font, const char *windowsFontName, int tall, int weight, int blur, int scanlines, int flags, int nRangeMin = 0, int nRangeMax = 0);
 	void		GetTextSize(HFont font, const wchar_t *text, int &wide, int &tall);
 	void		DrawOutlinedCircle(int x, int y, int radius, int segments);
 	void		DrawTexturedPolygon(int n, Vertex_t *pVertice, bool bClipVertices = true);
+	void		SetCursorAlwaysVisible(bool visible);
 #else
 	// call to Shutdown surface; surface can no longer be used after this is called
-	virtual void Shutdown() override = 0;
+	// virtual void Shutdown() override = 0;
+
+	virtual void Unknown_padding() = 0;
 
 	// frame
 	virtual void RunFrame() = 0;
@@ -500,7 +503,6 @@ public:
 	virtual void Unknown_20() = 0;
 	virtual void Unknown_21() = 0;
 	virtual void Unknown_22() = 0;
-	virtual void Unknown_23() = 0;
 
 	virtual void SetCursor(HCursor cursor) = 0;
 	virtual void SetCursorAlwaysVisible(bool visible) = 0;

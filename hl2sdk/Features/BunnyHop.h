@@ -30,6 +30,8 @@ private:
 	bool m_bAutoStrafe = false;
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;
+	size_t m_iBhopMode = 0;
+	size_t m_iStrafeMode = 0;
 
 	bool m_bLastJump = false;
 	bool m_bShouldFake = false;
@@ -52,3 +54,5 @@ private:
 		XorStr("Full Speed")
 	};
 };
+
+extern CBunnyHop* g_pBunnyHop;

@@ -8,6 +8,11 @@
 
 std::unique_ptr<CBaseMenu> g_pBaseMenu;
 
+void _OnMenuStateChanged(bool visible)
+{
+	g_pClientInterface->Surface->SetCursorAlwaysVisible(visible);
+}
+
 void CBaseMenu::Init()
 {
 	// g_pDirextXHook->m_vfnDrawIndexedPrimitive.emplace_back(Hooked_DrawIndexedPrimitive);
@@ -54,21 +59,25 @@ void CBaseMenu::OnPresent()
 	}
 #endif
 
-	if (!ImGui::Begin(XorStr("Main Menu"), &g_bHasShowMenu, ImGuiWindowFlags_AlwaysAutoResize))
+	if (!ImGui::Begin(XorStr("l4d2Simple | by zonde306"), &g_bHasShowMenu))
 	{
 		ImGui::End();
+		_OnMenuStateChanged(false);
 		return;
 	}
 
-	ImGui::Checkbox(XorStr("DrawIndexedPrimitive"), &m_bShowStride);
+	// ImGui::Checkbox(XorStr("DrawIndexedPrimitive"), &m_bShowStride);
+	DrawStrideMenu();
 
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnMenuDrawing();
 
 	ImGui::End();
 
+	/*
 	if (m_bShowStride)
 		DrawStrideMenu();
+	*/
 }
 
 HRESULT WINAPI CBaseMenu::Hooked_DrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETYPE type,
@@ -113,6 +122,7 @@ HRESULT WINAPI CBaseMenu::Hooked_DrawIndexedPrimitive(IDirect3DDevice9 * device,
 
 void CBaseMenu::DrawStrideMenu()
 {
+	/*
 	if (!m_bShowStride)
 		return;
 	
@@ -121,6 +131,10 @@ void CBaseMenu::DrawStrideMenu()
 		ImGui::End();
 		return;
 	}
+	*/
+
+	if (!ImGui::TreeNode(XorStr("DrawIndexedPrimitive")))
+		return;
 
 	static char buffer[255]{ '\0' }, rename[255]{ '\0' };
 	
@@ -345,7 +359,8 @@ void CBaseMenu::DrawStrideMenu()
 		}
 	}
 
-	ImGui::End();
+	// ImGui::End();
+	ImGui::TreePop();
 }
 
 CBaseMenu::StrideObject::StrideObject(const std::string & title, int stride, int vertices, int primitive) :

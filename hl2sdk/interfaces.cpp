@@ -83,9 +83,11 @@ void CClientInterface::Init()
 		ClientMode = GetClientMode();
 		PRINT_OFFSET(XorStr("ClientMode"), ClientMode);
 
+		/*
 		funcStart = GET_VFUNC(GameMovement, indexes::PlaySwimSound);
 		MoveHelper = **reinterpret_cast<IMoveHelper***>(funcStart + 0x4);
 		PRINT_OFFSET(XorStr("MoveHelper"), MoveHelper);
+		*/
 
 		NetProp = std::make_unique<CNetVars>();
 
