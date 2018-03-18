@@ -170,25 +170,21 @@ void CBunnyHop::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CBunnyHop::DoNormalAutoBhop(CBaseEntity* player, CUserCmd * pCmd, int flags)
+void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
 {
-	if (player == nullptr || !IsPlayerAlive(player))
+	if (player == nullptr || !player->IsAlive())
 		return;
 
-	CBaseEntity* ground = nullptr;
-	CBaseHandle hGroundEntity = player->GetNetProp<CBaseHandle>(XorStr("DT_BasePlayer"), XorStr("m_hGroundEntity"));
-	if (hGroundEntity.IsValid())
-		ground = reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
-
-	bool inWater = (player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) >= 2);
-	bool isBadMoveType = IsBadMoveType(player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("movetype")));
+	CBaseEntity* ground = player->GetGroundEntity();
+	bool inWater = (player->GetWaterLevel() >= 2);
+	bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
 	
 	/*
 	if ((pCmd->buttons & IN_JUMP) && (flags & FL_ONGROUND))
 		pCmd->buttons &= ~IN_JUMP;
 	*/
 
-	if((pCmd->buttons & IN_JUMP) && ground == nullptr && !isBadMoveType && !inWater)
+	if((pCmd->buttons & IN_JUMP) && player->GetGroundEntity() == nullptr && !isBadMoveType && !inWater)
 		pCmd->buttons &= ~IN_JUMP;
 }
 
@@ -267,12 +263,12 @@ float CBunnyHop::GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate)
 	return 0.0f;
 }
 
-void CBunnyHop::DoExtraAutoStrafe(CBaseEntity* player, CUserCmd * pCmd, int flags)
+void CBunnyHop::DoExtraAutoStrafe(CBasePlayer* player, CUserCmd * pCmd, int flags)
 {
 	if (flags & FL_ONGROUND)
 		return;
 
-	Vector velocity = player->GetNetProp<Vector>(XorStr("DT_BasePlayer"), XorStr("m_vecVelocity[0]"));
+	Vector velocity = player->GetVelocity();
 	velocity.z = 0.0f;
 
 	float speed = velocity.Length();
@@ -320,18 +316,14 @@ void CBunnyHop::DoExtraAutoStrafe(CBaseEntity* player, CUserCmd * pCmd, int flag
 	}
 }
 
-void CBunnyHop::DoFullAutoStrafe(CBaseEntity * player, CUserCmd * pCmd, int flags)
+void CBunnyHop::DoFullAutoStrafe(CBasePlayer * player, CUserCmd * pCmd, int flags)
 {
-	if (player == nullptr || !IsPlayerAlive(player))
+	if (player == nullptr || !player->IsAlive())
 		return;
 
-	CBaseHandle hGroundEntity = player->GetNetProp<CBaseHandle>(XorStr("DT_BasePlayer"), XorStr("m_hGroundEntity"));
-	if (!hGroundEntity.IsValid())
-		return;
-
-	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
-	bool inWater = (player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) >= 2);
-	bool isBadMoveType = IsBadMoveType(player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("movetype")));
+	CBaseEntity* ground = player->GetGroundEntity();
+	bool inWater = (player->GetWaterLevel() >= 2);
+	bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
 
 	if (ground != nullptr || isBadMoveType || inWater)
 		return;
@@ -354,10 +346,12 @@ void CBunnyHop::DoFullAutoStrafe(CBaseEntity * player, CUserCmd * pCmd, int flag
 		return angles;
 	};
 
-	Vector velocity = player->GetNetProp<Vector>(XorStr("DT_BasePlayer"), XorStr("m_vecVelocity[0]"));
+	Vector velocity = player->GetVelocity();
+	static ConVar* sideSpeed = g_pClientInterface->Cvar->FindVar(XorStr("cl_sidespeed"));
+
 	float yawvel = reddeg(atan2f(velocity.y, velocity.x));
 	float anglesdiff = normalize(pCmd->viewangles.y - yawvel);
-	float sidespeed = g_pClientInterface->Cvar->FindVar(XorStr("cl_sidespeed"))->GetFloat();
+	float sidespeed = sideSpeed->GetFloat();
 	pCmd->sidemove = (anglesdiff > 0.0f ? -sidespeed : sidespeed);
 	pCmd->viewangles.y = normalize(pCmd->viewangles.y - anglesdiff);
 }

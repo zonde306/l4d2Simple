@@ -17,6 +17,8 @@ public:
 	Vector& GetPunch();
 	int& GetTickBase();
 	int& GetFlags();
+	CBaseEntity* GetGroundEntity();
+	int GetWaterLevel();
 
 	// 倒地
 	bool IsIncapacitated();
@@ -44,4 +46,7 @@ public:
 
 	// 获取当前的被控制者 (感染者控制的生还者)
 	CBasePlayer* GetVictim();
+
+	// 是否站在地上
+	bool IsOnGround();
 };

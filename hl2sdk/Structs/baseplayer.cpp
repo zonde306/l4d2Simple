@@ -159,6 +159,11 @@ finish_check_handle:
 	return reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
+bool CBasePlayer::IsOnGround()
+{
+	return (GetGroundEntity() != nullptr && (GetFlags() & FL_ONGROUND));
+}
+
 bool CBasePlayer::IsAlive()
 {
 	if (IsDormant())
@@ -244,6 +249,25 @@ int& CBasePlayer::GetFlags()
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(int);
+}
+
+CBaseEntity * CBasePlayer::GetGroundEntity()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_hGroundEntity"));
+	Assert_NetProp(offset);
+
+	CBaseHandle handle = DECL_NETPROP_GET(CBaseHandle);
+	if (!handle.IsValid())
+		return nullptr;
+
+	return reinterpret_cast<CBaseWeapon*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+}
+
+int CBasePlayer::GetWaterLevel()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel"));
+	Assert_NetProp(offset);
+	return DECL_NETPROP_GET(byte);
 }
 
 bool CBasePlayer::IsIncapacitated()

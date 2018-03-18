@@ -11,7 +11,7 @@ public:
 	virtual void OnMenuDrawing() override;
 
 protected:
-	void DoNormalAutoBhop(CBaseEntity*, CUserCmd* pCmd, int flags);
+	void DoNormalAutoBhop(CBasePlayer*, CUserCmd* pCmd, int flags);
 	void DoSafeAutoBhop(CUserCmd* pCmd, int flags);
 
 	bool CanRunAutoStrafe(CUserCmd* pCmd, int flags);
@@ -21,8 +21,8 @@ protected:
 	void DoRightAutoStrafe(CUserCmd* pCmd, int flags);
 
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
-	void DoExtraAutoStrafe(CBaseEntity* player, CUserCmd* pCmd, int flags);
-	void DoFullAutoStrafe(CBaseEntity* player, CUserCmd* pCmd, int flags);
+	void DoExtraAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
+	void DoFullAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
 
 private:
 	bool m_bShowMenu = false;
