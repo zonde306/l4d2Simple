@@ -104,6 +104,9 @@ void CBunnyHop::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("AutoBunnyHop Allow"), &m_bAcitve);
 
+	if (m_pszAutoBhopMode == nullptr)
+		m_pszAutoBhopMode = m_arrAutoBhopModeList[0].c_str();
+
 	if (ImGui::BeginCombo(XorStr("AutoBhop"), m_pszAutoBhopMode))
 	{
 		for (size_t i = 0; i < m_arrAutoBhopModeList.size(); ++i)
@@ -134,6 +137,9 @@ void CBunnyHop::OnMenuDrawing()
 		
 		ImGui::EndCombo();
 	}
+
+	if (m_pszAutoStrafeMode == nullptr)
+		m_pszAutoStrafeMode = m_arrAutoStrafeModeList[0].c_str();
 
 	if (ImGui::BeginCombo(XorStr("AutoStrafe"), m_pszAutoStrafeMode))
 	{
@@ -175,7 +181,7 @@ void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags
 	if (player == nullptr || !player->IsAlive())
 		return;
 
-	CBaseEntity* ground = player->GetGroundEntity();
+	// CBaseEntity* ground = player->GetGroundEntity();
 	bool inWater = (player->GetWaterLevel() >= 2);
 	bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
 	
@@ -184,7 +190,7 @@ void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags
 		pCmd->buttons &= ~IN_JUMP;
 	*/
 
-	if((pCmd->buttons & IN_JUMP) && player->GetGroundEntity() == nullptr && !isBadMoveType && !inWater)
+	if((pCmd->buttons & IN_JUMP) && !(flags & FL_ONGROUND) && !isBadMoveType && !inWater)
 		pCmd->buttons &= ~IN_JUMP;
 }
 
@@ -321,11 +327,11 @@ void CBunnyHop::DoFullAutoStrafe(CBasePlayer * player, CUserCmd * pCmd, int flag
 	if (player == nullptr || !player->IsAlive())
 		return;
 
-	CBaseEntity* ground = player->GetGroundEntity();
+	// CBaseEntity* ground = player->GetGroundEntity();
 	bool inWater = (player->GetWaterLevel() >= 2);
 	bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
 
-	if (ground != nullptr || isBadMoveType || inWater)
+	if ((flags & FL_ONGROUND) || isBadMoveType || inWater)
 		return;
 	
 	if (pCmd->sidemove != 0.0f || pCmd->forwardmove != 0.0f || pCmd->mousedx > 2)
