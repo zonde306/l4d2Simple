@@ -166,3 +166,8 @@ public:
 	vec_t x, y, z, w;
 };
 
+// 获取瞄准角度
+QAngle CalculateAim(const Vector &origin, const Vector &target);
+
+// 获取角度差异
+float GetAnglesFieldOfView(const QAngle& myAngles, const QAngle& aimAngles);

@@ -1,6 +1,6 @@
 #include "trace.h"
 
-inline void Ray_t::Init(const Vector & vecStart, const Vector & vecEnd)
+void Ray_t::Init(const Vector & vecStart, const Vector & vecEnd)
 {
 	m_Delta = vecEnd - vecStart;
 
@@ -14,7 +14,7 @@ inline void Ray_t::Init(const Vector & vecStart, const Vector & vecEnd)
 	m_Start = vecStart;
 }
 
-inline void Ray_t::Init(Vector const & start, Vector const & end, Vector const & mins, Vector const & maxs)
+void Ray_t::Init(Vector const & start, Vector const & end, Vector const & mins, Vector const & maxs)
 {
 	Assert(&end);
 	m_Delta = end - start;
@@ -34,7 +34,7 @@ inline void Ray_t::Init(Vector const & start, Vector const & end, Vector const &
 
 // compute inverse delta
 
-inline Vector Ray_t::InvDelta() const
+Vector Ray_t::InvDelta() const
 {
 	Vector vecInvDelta;
 	for (int iAxis = 0; iAxis < 3; ++iAxis)
@@ -51,34 +51,34 @@ inline Vector Ray_t::InvDelta() const
 	return vecInvDelta;
 }
 
-inline bool CTraceFilter::ShouldHitEntity(CBaseEntity * pEntityHandle, int contentsMask)
+bool CTraceFilter::ShouldHitEntity(CBaseEntity * pEntityHandle, int contentsMask)
 {
 	return !(pEntityHandle == pSkip1);
 }
 
-inline TraceType_t CTraceFilter::GetTraceType() const
+TraceType_t CTraceFilter::GetTraceType() const
 {
 	return TRACE_EVERYTHING;
 }
 
-inline CTraceFilterSimple::CTraceFilterSimple(const CBaseEntity * passentity, int collisionGroup)
+CTraceFilterSimple::CTraceFilterSimple(const CBaseEntity * passentity, int collisionGroup)
 {
 	m_pPassEnt = passentity;
 	m_collisionGroup = collisionGroup;
 }
 
-inline bool CTraceFilterSimple::ShouldHitEntity(CBaseEntity * pHandleEntity, int contentsMask)
+bool CTraceFilterSimple::ShouldHitEntity(CBaseEntity * pHandleEntity, int contentsMask)
 {
 	return !(pHandleEntity == m_pPassEnt);
 }
 
-inline void CTraceFilterSimple::SetPassEntity(const CBaseEntity * pPassEntity) { m_pPassEnt = pPassEntity; }
+void CTraceFilterSimple::SetPassEntity(const CBaseEntity * pPassEntity) { m_pPassEnt = pPassEntity; }
 
-inline void CTraceFilterSimple::SetCollisionGroup(int iCollisionGroup) { m_collisionGroup = iCollisionGroup; }
+void CTraceFilterSimple::SetCollisionGroup(int iCollisionGroup) { m_collisionGroup = iCollisionGroup; }
 
-inline const CBaseEntity * CTraceFilterSimple::GetPassEntity(void) { return m_pPassEnt; }
+const CBaseEntity * CTraceFilterSimple::GetPassEntity(void) { return m_pPassEnt; }
 
-inline CTraceListData::CTraceListData(int nLeafMax, int nEntityMax)
+CTraceListData::CTraceListData(int nLeafMax, int nEntityMax)
 {
 	// MEM_ALLOC_CREDIT();
 	m_nLeafCount = 0;
@@ -88,7 +88,7 @@ inline CTraceListData::CTraceListData(int nLeafMax, int nEntityMax)
 	m_aEntityList.SetSize(nEntityMax);
 }
 
-inline CTraceListData::~CTraceListData()
+CTraceListData::~CTraceListData()
 {
 	m_nLeafCount = 0;
 	m_aLeafList.RemoveAll();
@@ -97,7 +97,7 @@ inline CTraceListData::~CTraceListData()
 	m_aEntityList.RemoveAll();
 }
 
-inline void CTraceListData::Reset(void)
+void CTraceListData::Reset(void)
 {
 	m_nLeafCount = 0;
 	m_nEntityCount = 0;
@@ -105,7 +105,7 @@ inline void CTraceListData::Reset(void)
 
 // For leaves...
 
-inline void CTraceListData::AddLeaf(int iLeaf)
+void CTraceListData::AddLeaf(int iLeaf)
 {
 	if (m_nLeafCount >= m_aLeafList.Count())
 	{
@@ -119,7 +119,7 @@ inline void CTraceListData::AddLeaf(int iLeaf)
 
 // For entities...
 
-inline IterationRetval_t CTraceListData::EnumElement(IHandleEntity * pHandleEntity)
+IterationRetval_t CTraceListData::EnumElement(IHandleEntity * pHandleEntity)
 {
 	if (m_nEntityCount >= m_aEntityList.Count())
 	{

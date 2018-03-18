@@ -4,6 +4,11 @@
 #include "./Structs/convar.h"
 #include "./Features/BunnyHop.h"
 #include "./Features/SpeedHacker.h"
+#include "./Features/TriggerBot.h"
+#include "./Features/Aimbot.h"
+#include "./Features/NoRecoilSpread.h"
+#include "./Features/Knifebot.h"
+#include "./Features/Visual.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -180,10 +185,20 @@ bool CClientHook::Init()
 
 	// 初始化功能
 	{
+		if (!g_pViewAnglesManager)
+			g_pViewAnglesManager = new CViewAnglesManager();
 		if (!g_pBunnyHop)
 			g_pBunnyHop = new CBunnyHop();
 		if (!g_pSpeedHacker)
 			g_pSpeedHacker = new CSpeedHacker();
+		if (!g_pAimbot)
+			g_pAimbot = new CAimBot();
+		if (!g_pTriggerBot)
+			g_pTriggerBot = new CTriggerBot();
+		if (!g_pKnifeBot)
+			g_pKnifeBot = new CKnifeBot();
+		if (!g_pVisual)
+			g_pVisual = new CVisual();
 	}
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
@@ -920,4 +935,20 @@ float CClientPrediction::GetServerTime()
 CBasePlayer * CClientPrediction::GetLocalPlayer()
 {
 	return (reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(g_pClientInterface->Engine->GetLocalPlayer())));
+}
+
+std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, float spread)
+{
+	int oldSeed = *m_pRandomSeed;
+	*m_pRandomSeed = seed;
+
+	float horizontal = 0.0f, vertical = 0.0f;
+	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
+	__asm fstp horizontal;
+
+	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
+	__asm fstp vertical;
+
+	*m_pRandomSeed = oldSeed;
+	return std::make_pair(horizontal, vertical);
 }

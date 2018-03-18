@@ -130,8 +130,10 @@ public:
 
 	bool StartPrediction(CUserCmd* cmd);
 	bool FinishPrediction();
+
 	float GetServerTime();
 	CBasePlayer* GetLocalPlayer();
+	std::pair<float, float> GetWeaponSpread(int seed, float spread);
 
 private:
 	CMoveData m_MoveData;

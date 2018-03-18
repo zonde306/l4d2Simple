@@ -1,4 +1,5 @@
 #include "BunnyHop.h"
+#include "../hook.h"
 #include <iostream>
 
 #ifndef M_PI
@@ -31,7 +32,7 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	if (!m_bAcitve)
 		return;
 
-	CBasePlayer* player = GetLocalPlayer();
+	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge())
 		return;
 

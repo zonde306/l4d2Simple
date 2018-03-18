@@ -207,6 +207,21 @@
     <ClCompile Include="..\hl2sdk\Features\SpeedHacker.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\TriggerBot.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\Aimbot.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\NoRecoilSpread.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\Knifebot.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\Visual.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -474,6 +489,21 @@
       <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Features\SpeedHacker.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\TriggerBot.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\Aimbot.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\NoRecoilSpread.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\Knifebot.h">
+      <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\Visual.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
   </ItemGroup>

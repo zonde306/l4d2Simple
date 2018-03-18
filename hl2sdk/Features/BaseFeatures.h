@@ -6,12 +6,6 @@
 #include "../../l4d2Simple2/drawing.h"
 #include <imgui.h>
 
-#define GetLocalPlayer()		(reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(g_pClientInterface->Engine->GetLocalPlayer())))
-#define GetServerTime()			(g_pClientInterface->GlobalVars->interval_per_tick * GetLocalPlayer()->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")))
-#define IsPlayerAlive(_p)		(_p->GetNetProp<LifeStates_t>(XorStr("DT_BasePlayer"), XorStr("m_lifeState")) == LIFE_ALIVE)
-#define IsPlayerInLadder(_p)	(_p->GetNetProp<MoveType_t>(XorStr("DT_BasePlayer"), XorStr("movetype")) == MOVETYPE_LADDER)
-#define IsPlayerInGround(_p)	(_p->GetNetProp<MoveType_t>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) & FL_ONGROUND)
-
 // 接口类
 class CBaseFeatures
 {
