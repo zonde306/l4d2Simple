@@ -175,11 +175,11 @@ void CBunnyHop::DoNormalAutoBhop(CBaseEntity* player, CUserCmd * pCmd, int flags
 	if (player == nullptr || !IsPlayerAlive(player))
 		return;
 
+	CBaseEntity* ground = nullptr;
 	CBaseHandle hGroundEntity = player->GetNetProp<CBaseHandle>(XorStr("DT_BasePlayer"), XorStr("m_hGroundEntity"));
-	if (!hGroundEntity.IsValid())
-		return;
+	if (hGroundEntity.IsValid())
+		ground = reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
 
-	CBaseEntity* ground = dynamic_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntityFromHandle(hGroundEntity));
 	bool inWater = (player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) >= 2);
 	bool isBadMoveType = IsBadMoveType(player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("movetype")));
 	
