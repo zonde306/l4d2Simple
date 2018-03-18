@@ -21,7 +21,16 @@ int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string &
 
 bool CBaseEntity::IsDormant()
 {
-	return m_pClientNetworkable->IsDormant();
+	try
+	{
+		return m_pClientNetworkable->IsDormant();
+	}
+	catch (...)
+	{
+
+	}
+
+	return true;
 }
 
 int CBaseEntity::GetIndex()
@@ -129,4 +138,13 @@ QAngle CBaseEntity::GetAbsAngles()
 ClientClass * CBaseEntity::GetClientClass()
 {
 	return m_pClientNetworkable->GetClientClass();
+}
+
+int CBaseEntity::GetClassID()
+{
+	ClientClass* cc = GetClientClass();
+	if (cc == nullptr)
+		return ET_INVALID;
+
+	return cc->m_ClassID;
 }

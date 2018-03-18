@@ -20,6 +20,10 @@ void CBaseFeatures::OnDisconnect()
 {
 }
 
+void CBaseFeatures::OnShutdown()
+{
+}
+
 void CBaseFeatures::OnCreateMove(CUserCmd *, bool *)
 {
 }

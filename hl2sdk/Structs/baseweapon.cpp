@@ -1,4 +1,7 @@
-#include "baseweapon.h"
+﻿#include "baseweapon.h"
+#include "baseplayer.h"
+#include "../interfaces.h"
+#include "../hook.h"
 #include "../indexes.h"
 #include "../../l4d2Simple2/utils.h"
 
@@ -46,11 +49,102 @@ const char * CBaseWeapon::GetWeaponName()
 	if (WeaponIdToAlias == nullptr)
 		WeaponIdToAlias = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_WEAPON_ID_TO_ALIAS));
 
-	return WeaponIdToAlias(GetWeaponId());
+	return WeaponIdToAlias(GetWeaponID());
 }
 
-int CBaseWeapon::GetWeaponId()
+int CBaseWeapon::GetWeaponID()
 {
+	if (GetClassID() == ET_WeaponSpawn)
+	{
+		static int offset = GetNetPropOffset(XorStr("DT_WeaponSpawn"), XorStr("m_weaponID"));
+		Assert_NetProp(offset);
+		return DECL_NETPROP_GET(byte);
+	}
+	
 	using Fn = int(__thiscall*)(CBaseWeapon*);
 	return Utils::GetVTableFunction<Fn>(this, indexes::GetWeaponId)(this);
+}
+
+CBasePlayer * CBaseWeapon::GetOwner()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_hOwnerEntity"));
+	// static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_hOwner"));
+	Assert_NetProp(offset);
+
+	CBaseHandle handle = DECL_NETPROP_GET(CBaseHandle);
+	if (!handle.IsValid())
+		return nullptr;
+
+	return reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+}
+
+int CBaseWeapon::GetClip()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_iClip1"));
+	Assert_NetProp(offset);
+
+	// 弹夹可以是负数(有符号)的
+	return DECL_NETPROP_GET(char);
+}
+
+bool CBaseWeapon::IsReloading()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_bInReload"));
+	Assert_NetProp(offset);
+	return (DECL_NETPROP_GET(byte) != 0);
+}
+
+int CBaseWeapon::GetAmmoType()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_iPrimaryAmmoType"));
+	Assert_NetProp(offset);
+	return DECL_NETPROP_GET(byte);
+}
+
+int CBaseWeapon::GetAmmo()
+{
+	CBasePlayer* player = GetOwner();
+	if (player == nullptr)
+	{
+		static int offset = GetNetPropOffset(XorStr("DT_TerrorWeapon"), XorStr("m_iExtraPrimaryAmmo"));
+		Assert_NetProp(offset);
+		return DECL_NETPROP_GET(int);
+	}
+
+	return player->GetAmmo(GetAmmoType());
+}
+
+float CBaseWeapon::GetNextPrimary()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_flNextPrimaryAttack"));
+	Assert_NetProp(offset);
+	return DECL_NETPROP_GET(float);
+}
+
+float CBaseWeapon::GetPrimary()
+{
+	float interval = GetNextPrimary() - g_pClientPrediction->GetServerTime();
+	return max(interval, 0.0f);
+}
+
+float CBaseWeapon::GetNextSecondry()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_flNextSecondaryAttack"));
+	Assert_NetProp(offset);
+	return DECL_NETPROP_GET(float);
+}
+
+float CBaseWeapon::GetSecondry()
+{
+	float interval = GetNextSecondry() - g_pClientPrediction->GetServerTime();
+	return max(interval, 0.0f);
+}
+
+bool CBaseWeapon::CanFire()
+{
+	// 不需要弹药的武器弹夹永远为 -1
+	if (GetClip() == 0)
+		return false;
+
+	return (GetPrimary() <= 0.0f);
 }

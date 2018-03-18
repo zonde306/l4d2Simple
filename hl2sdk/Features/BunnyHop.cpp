@@ -28,38 +28,17 @@ CBunnyHop::~CBunnyHop()
 
 void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 {
-	/*
 	if (!m_bAcitve)
 		return;
-	*/
-
-	static bool isFirstEnter = true;
-	if (isFirstEnter)
-	{
-		// isFirstEnter = false;
-		Utils::log("CBunnyHop::OnCreateMove - Start.");
-	}
 
 	CBasePlayer* player = GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive())
-	{
-		// Utils::log("CBunnyHop::OnCreateMove - Failed: 0x%X", (DWORD)player);
-		std::cout << "CBunnyHop::OnCreateMove - Failed: " << (DWORD)player << std::endl;
+	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge())
 		return;
-	}
 
-	int flags = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
-
-	if (isFirstEnter)
-	{
-		isFirstEnter = false;
-		Utils::log("CBunnyHop::OnCreateMove - Finish.");
-	}
+	int flags = player->GetFlags();
 
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
-		DoSafeAutoBhop(pCmd, flags);
-		
 		/*
 		if (m_pszAutoBhopMode == m_arrAutoBhopModeList[1].c_str())
 			DoNormalAutoBhop(player, pCmd, flags);
@@ -78,7 +57,6 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			DoExtraAutoStrafe(player, pCmd, flags);
 		*/
 
-		/*
 		if(m_iBhopMode == 1)
 			DoNormalAutoBhop(player, pCmd, flags);
 		else if(m_iBhopMode == 2)
@@ -105,7 +83,6 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			DoFullAutoStrafe(player, pCmd, flags);
 			break;
 		}
-		*/
 	}
 }
 

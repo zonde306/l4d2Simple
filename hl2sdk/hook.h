@@ -44,8 +44,11 @@ typedef void(__cdecl* FnInstallUniformRandomStream)(IUniformRandomStream* pStrea
 class CClientHook
 {
 public:
+	~CClientHook();
+	
 	bool Init();
 	bool UninstallHook();
+	void Shutdown();
 
 	void InstallClientStateHook(CBaseClientState* pointer);
 	void InstallClientModeHook(IClientMode* pointer);
@@ -118,6 +121,7 @@ extern std::unique_ptr<CClientHook> g_pClientHook;
 
 #undef GetServerTime
 #undef GetLocalPlayer
+class CBasePlayer;
 
 class CClientPrediction
 {
@@ -127,7 +131,7 @@ public:
 	bool StartPrediction(CUserCmd* cmd);
 	bool FinishPrediction();
 	float GetServerTime();
-	CBaseEntity* GetLocalPlayer();
+	CBasePlayer* GetLocalPlayer();
 
 private:
 	CMoveData m_MoveData;

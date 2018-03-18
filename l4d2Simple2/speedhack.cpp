@@ -1,4 +1,7 @@
 #include "speedhack.h"
+#include "xorstr.h"
+#include <imgui.h>
+
 #pragma comment(lib, "Winmm")
 
 std::unique_ptr<CSpeedModifier> g_pSpeedModifier;
@@ -94,6 +97,11 @@ static BOOL WINAPI Hooked_QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCo
 	return TRUE;
 }
 
+CSpeedModifier::~CSpeedModifier()
+{
+	Shutdown();
+}
+
 void CSpeedModifier::Init()
 {
 	m_fSpeed = 1.0f;
@@ -101,4 +109,18 @@ void CSpeedModifier::Init()
 	m_pGetTickCount64 = SpliceHookFunction(GetTickCount64, Hooked_GetTickCount64);
 	m_pTimeGetTime = SpliceHookFunction(timeGetTime, Hooked_TimeGetTime);
 	m_pQueryPerformanceCounter = SpliceHookFunction(QueryPerformanceCounter, Hooked_QueryPerformanceCounter);
+}
+
+#define DECL_DESTORY_SPLICE(_name)		if(_name != nullptr)\
+{\
+	SpliceUnHookFunction(_name);\
+	_name = nullptr;\
+}
+
+void CSpeedModifier::Shutdown()
+{
+	DECL_DESTORY_SPLICE(m_pGetTickCount);
+	DECL_DESTORY_SPLICE(m_pGetTickCount64);
+	DECL_DESTORY_SPLICE(m_pTimeGetTime);
+	DECL_DESTORY_SPLICE(m_pQueryPerformanceCounter);
 }

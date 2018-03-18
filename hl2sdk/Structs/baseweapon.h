@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "baseentity.h"
 
 struct FileWeaponInfo_t
@@ -28,11 +28,39 @@ public:
 	std::int32_t iFlags;
 };
 
+class CBasePlayer;
+
 class CBaseWeapon : public CBaseEntity
 {
 public:
 	float& GetSpread();
 	FileWeaponInfo_t* GetWeaponData();
 	const char* GetWeaponName();
-	int GetWeaponId();
+	int GetWeaponID();
+
+	// 武器持有人
+	CBasePlayer* GetOwner();
+
+	// 弹夹子弹数量
+	int GetClip();
+
+	// 是否正在填装
+	bool IsReloading();
+
+	// 弹药类型
+	int GetAmmoType();
+
+	// 备用弹药数量
+	int GetAmmo();
+
+	// 下一次可以开枪的时间
+	float GetNextPrimary();
+	float GetPrimary();
+
+	// 下一次可以推的时间
+	float GetNextSecondry();
+	float GetSecondry();
+
+	// 现在是否可以开枪
+	bool CanFire();
 };

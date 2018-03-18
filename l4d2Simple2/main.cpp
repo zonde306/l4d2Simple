@@ -32,8 +32,13 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 	}
 	else if (reason == DLL_PROCESS_DETACH)
 	{
+#ifdef _DEBUG
 		FreeConsole();
+#endif
+
+		g_pClientHook->Shutdown();
 		g_pDirextXHook->Shutdown();
+		g_pSpeedModifier->Shutdown();
 	}
 
 	return TRUE;
@@ -41,7 +46,9 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 
 DWORD WINAPI StartCheats(LPVOID module)
 {
+#ifdef _DEBUG
 	CreateDebugConsole();
+#endif
 	
 	// Utils::FindWindowByProccess();
 	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), nullptr)) == NULL)

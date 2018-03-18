@@ -21,6 +21,7 @@ public:
 
 	virtual void OnConnect();
 	virtual void OnDisconnect();
+	virtual void OnShutdown();
 
 	virtual void OnCreateMove(CUserCmd*, bool*);
 	virtual void OnPaintTraverse(VPANEL);

@@ -10,7 +10,9 @@ using FnQueryPerformanceCounter = BOOL(WINAPI*)(LARGE_INTEGER*);
 class CSpeedModifier
 {
 public:
+	~CSpeedModifier();
 	void Init();
+	void Shutdown();
 
 public:
 	inline float GetSpeed() { return m_fSpeed; };
@@ -22,6 +24,7 @@ public:
 	PSPLICE_ENTRY m_pGetTickCount64 = nullptr;
 	PSPLICE_ENTRY m_pTimeGetTime = nullptr;
 	PSPLICE_ENTRY m_pQueryPerformanceCounter = nullptr;
+
 };
 
 extern std::unique_ptr<CSpeedModifier> g_pSpeedModifier;

@@ -3,6 +3,7 @@
 #include "./Utils/checksum_md5.h"
 #include "./Structs/convar.h"
 #include "./Features/BunnyHop.h"
+#include "./Features/SpeedHacker.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -35,6 +36,12 @@ std::unique_ptr<CClientPrediction> g_pClientPrediction;
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem;
+
+CClientHook::~CClientHook()
+{
+	UninstallHook();
+	Shutdown();
+}
 
 bool CClientHook::Init()
 {
@@ -103,7 +110,7 @@ bool CClientHook::Init()
 		}
 	}
 
-	if (oProcessSetConVar == nullptr || !g_pHookClientState)
+	if (oProcessSetConVar == nullptr || !g_pDetourProcessSetConVar)
 	{
 		oProcessSetConVar = reinterpret_cast<FnProcessSetConVar>(Utils::FindPattern(XorStr("engine.dll"), SIG_PROCCESS_SET_CONVAR));
 
@@ -116,7 +123,7 @@ bool CClientHook::Init()
 		}
 	}
 
-	if (oCreateMoveShared == nullptr || !g_pHookClientMode)
+	if (oCreateMoveShared == nullptr || !g_pDetourCreateMove)
 	{
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(Utils::FindPattern(XorStr("client.dll"), SIG_CREATEMOVESHARED));
 
@@ -175,9 +182,43 @@ bool CClientHook::Init()
 	{
 		if (!g_pBunnyHop)
 			g_pBunnyHop = new CBunnyHop();
+		if (!g_pSpeedHacker)
+			g_pSpeedHacker = new CSpeedHacker();
 	}
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
+}
+
+#define DECL_DESTORY_DETOUR(_name)		if(_name && _name->Created())\
+	_name->Destroy()
+
+#define DECL_DESTORY_VMT(_name)			if(_name)\
+	_name->UninstallHook()
+
+bool CClientHook::UninstallHook()
+{
+	DECL_DESTORY_DETOUR(g_pDetourCL_SendMove);
+	DECL_DESTORY_DETOUR(g_pDetourProcessSetConVar);
+	DECL_DESTORY_DETOUR(g_pDetourCreateMove);
+
+	DECL_DESTORY_VMT(g_pHookClient);
+	DECL_DESTORY_VMT(g_pHookPanel);
+	DECL_DESTORY_VMT(g_pHookVGui);
+	DECL_DESTORY_VMT(g_pHookPrediction);
+	DECL_DESTORY_VMT(g_pHookRenderView);
+	DECL_DESTORY_VMT(g_pHookMaterialSystem);
+	DECL_DESTORY_VMT(g_pHookClientMode);
+	DECL_DESTORY_VMT(g_pHookClientState);
+
+	return true;
+}
+
+void CClientHook::Shutdown()
+{
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnShutdown();
+
+	_GameHook.clear();
 }
 
 void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool bFinalTick)
@@ -798,7 +839,7 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 	if (g_pClientInterface->MoveHelper == nullptr)
 		return false;
 
-	CBaseEntity* player = GetLocalPlayer();
+	CBasePlayer* player = GetLocalPlayer();
 
 	if (m_bInPrediction || player == nullptr)
 		return false;
@@ -806,8 +847,8 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 	// 备份数据
 	m_fCurTime = g_pClientInterface->GlobalVars->curtime;
 	m_fFrameTime = g_pClientInterface->GlobalVars->frametime;
-	m_iTickBase = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase"));
-	m_iFlags = player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags"));
+	m_iTickBase = player->GetTickBase();
+	m_iFlags = player->GetFlags();
 
 	// 设置随机数种子
 	*m_pRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
@@ -839,13 +880,13 @@ bool CClientPrediction::FinishPrediction()
 	if (g_pClientInterface->MoveHelper == nullptr)
 		return false;
 
-	CBaseEntity* player = GetLocalPlayer();
+	CBasePlayer* player = GetLocalPlayer();
 
 	if (!m_bInPrediction || player == nullptr)
 		return false;
 
 	// 结束预测
-	player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")) = m_iTickBase;
+	player->GetTickBase() = m_iTickBase;
 	g_pClientInterface->GameMovement->FinishTrackPredictionErrors(player);
 	g_pClientInterface->MoveHelper->SetHost(nullptr);
 	*m_pRandomSeed = -1;
@@ -854,8 +895,8 @@ bool CClientPrediction::FinishPrediction()
 	g_pClientInterface->GlobalVars->curtime = m_fCurTime;
 	g_pClientInterface->GlobalVars->frametime = m_fFrameTime;
 
-	// 修复错误
-	player->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_fFlags")) = m_iFlags;
+	// 修复预测后产生的错误
+	player->GetFlags() = m_iFlags;
 	player->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
 
 #ifdef _DEBUG
@@ -873,10 +914,10 @@ bool CClientPrediction::FinishPrediction()
 
 float CClientPrediction::GetServerTime()
 {
-	return (g_pClientInterface->GlobalVars->interval_per_tick * GetLocalPlayer()->GetNetProp<int>(XorStr("DT_BasePlayer"), XorStr("m_nTickBase")));
+	return (g_pClientInterface->GlobalVars->interval_per_tick * GetLocalPlayer()->GetTickBase());
 }
 
-CBaseEntity * CClientPrediction::GetLocalPlayer()
+CBasePlayer * CClientPrediction::GetLocalPlayer()
 {
-	return (reinterpret_cast<CBaseEntity*>(g_pClientInterface->EntList->GetClientEntity(g_pClientInterface->Engine->GetLocalPlayer())));
+	return (reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(g_pClientInterface->Engine->GetLocalPlayer())));
 }

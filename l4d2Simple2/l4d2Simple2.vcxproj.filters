@@ -204,6 +204,9 @@
     <ClCompile Include="..\hl2sdk\Structs\baseweapon.cpp">
       <Filter>hl2sdk\Structs</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\SpeedHacker.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -469,6 +472,9 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Structs\baseweapon.h">
       <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\SpeedHacker.h">
+      <Filter>hl2sdk\Features</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

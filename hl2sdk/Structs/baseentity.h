@@ -15,6 +15,22 @@
 
 extern std::map<std::string, int> g_mPropOffset;
 
+#ifdef _DEBUG
+#define Assert_NetProp(_prop)				if(_prop == -1)\
+	throw std::runtime_error("Invalid NetProp Offset.")
+#else
+#define Assert_NetProp(_prop)		((void)0)
+#endif
+
+#define DECL_NETPROP_OFFSET(_table,_name)			static int offset = GetNetPropOffset(XorStr(_table), XorStr(_name));\
+	Assert_NetProp(offset)
+
+#define DECL_NETPROP_GET(_type)						*reinterpret_cast<_type*>(reinterpret_cast<DWORD>(this) + offset)
+#define DECL_NETPROP_GET_EX(_offset,_type)			*reinterpret_cast<_type*>(reinterpret_cast<DWORD>(this) + _offset)
+
+#define DECL_NETPROP_OFFSET_RET(_table,_name,_type)	DECL_NETPROP_OFFSET(_table, _name); return DECL_NETPROP_GET(_type);
+
+
 class CBaseEntity : public IClientEntity
 {
 public:	// NetProp
@@ -53,6 +69,7 @@ public:
 	Vector GetAbsOrigin();
 	QAngle GetAbsAngles();
 	ClientClass* GetClientClass();
+	int GetClassID();
 };
 
 template<typename T>
