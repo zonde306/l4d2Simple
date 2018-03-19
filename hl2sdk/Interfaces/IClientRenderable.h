@@ -69,7 +69,8 @@ public:
 	// Render baby!
 	virtual const model_t*			GetModel() const = 0;
 	virtual int						DrawModel(int flags, float alpha = 1.0f) = 0;
-
+	
+	/*
 	// Get the body parameter
 	virtual int		GetBody() = 0;
 
@@ -83,6 +84,11 @@ public:
 	// Returns false if the entity shouldn't be drawn due to LOD. 
 	// (NOTE: This is no longer used/supported, but kept in the vtable for backwards compat)
 	virtual bool	LODTest() = 0;
+	*/
+
+	virtual void Unknown_10() = 0;
+	virtual void Unknown_11() = 0;
+	virtual void Unknown_12() = 0;
 
 	// Call this to get the current bone transforms for the model.
 	// currentTime parameter will affect interpolation

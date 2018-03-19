@@ -13,7 +13,6 @@ public:
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
 	bool IsTargetVisible(CBasePlayer* entity);
 	bool IsValidTarget(CBasePlayer* entity);
-	Vector GetHeadPosition(CBasePlayer * entity);
 
 	QAngle RunAimbot(CUserCmd* cmd);
 

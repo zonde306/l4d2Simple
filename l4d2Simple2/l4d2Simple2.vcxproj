@@ -167,6 +167,7 @@
     <ClCompile Include="..\hl2sdk\Utils\checksum_crc.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\checksum_md5.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\checksum_sha1.cpp" />
+    <ClCompile Include="..\hl2sdk\Utils\math.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\strtools.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\strtools_unicode.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlblockmemory.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="..\hl2sdk\Utils\checksum_crc.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_md5.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h" />
+    <ClInclude Include="..\hl2sdk\Utils\math.h" />
     <ClInclude Include="..\hl2sdk\Utils\strtools.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlblockmemory.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlbuffer.h" />

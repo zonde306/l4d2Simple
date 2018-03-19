@@ -10,20 +10,30 @@ public:
 	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
 	virtual void OnMenuDrawing() override;
 
+	bool CanMeleeAttack(const QAngle& myEyeAngles);
 	bool RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime);
 
 private:
 	bool m_bAutoFire = false;
-	bool m_bAutoShov = false;
+	bool m_bAutoShove = false;
 	bool m_bFastMelee = false;
 
+	float m_fExtraShoveRange = 0.0f;
+	float m_fExtraMeleeRange = 0.0f;
+
+private:
 	enum FastMeleeStage_t
 	{
 		FMS_None = 0,
 		FMS_Primary,
 		FMS_Secondary
-	} m_eMeleeStage;
+	};
+
+	FastMeleeStage_t m_eMeleeStage = FMS_None;
 	int m_iMeleeTick = 0;
+
+	bool m_bCanMeleeAttack = false;
+	bool m_bCanShoveAttack = false;
 };
 
 extern CKnifeBot* g_pKnifeBot;

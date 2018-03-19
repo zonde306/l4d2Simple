@@ -1,18 +1,8 @@
 ﻿#include "TriggerBot.h"
 #include "NoRecoilSpread.h"
+#include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../hook.h"
-
-#define HITBOX_COMMON			15	// 普感
-#define HITBOX_PLAYER			10	// 生还者/特感
-#define HITBOX_COMMON_1			14
-#define HITBOX_COMMON_2			15
-#define HITBOX_COMMON_3			16
-#define HITBOX_COMMON_4			17
-#define HITBOX_JOCKEY			4
-#define HITBOX_SPITTER			4
-#define HITBOX_CHARGER			9
-#define HITBOX_WITCH			10
 
 CTriggerBot* g_pTriggerBot = nullptr;
 
@@ -67,7 +57,7 @@ QAngle CTriggerBot::RunTrigger(CUserCmd * cmd)
 		return aimAngles;
 
 	GetAimTarget(cmd->viewangles);
-	if (m_pAimTarget == nullptr)
+	if (m_pAimTarget == nullptr || m_pAimTarget->GetTeam() == player->GetTeam())
 		return aimAngles;
 
 	// 开枪
@@ -76,8 +66,8 @@ QAngle CTriggerBot::RunTrigger(CUserCmd * cmd)
 
 	if (m_bFollowEnemy)
 	{
-		aimAngles = CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
-		if (GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
+		aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
+		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
 		{
 			g_pClientInterface->Engine->SetViewAngles(aimAngles);
 		}
@@ -85,8 +75,8 @@ QAngle CTriggerBot::RunTrigger(CUserCmd * cmd)
 
 	if (m_bTraceHead)
 	{
-		aimAngles = CalculateAim(player->GetEyePosition(), GetHeadPosition(m_pAimTarget));
-		if (GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
+		aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
 		{
 			return aimAngles;
 		}
@@ -102,6 +92,7 @@ void CTriggerBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Trigger Allow"), &m_bActive);
+	ImGui::Checkbox(XorStr("Trigger Crosshairs"), &m_bCrosshairs);
 	ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
 	ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
 
@@ -115,6 +106,42 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 
 	ImGui::TreePop();
+}
+
+void CTriggerBot::OnPaintTraverse(VPANEL panel)
+{
+	static VPANEL FocusOverlayPanel = 0;
+	if (FocusOverlayPanel == 0)
+	{
+		const char* panelName = g_pClientInterface->Panel->GetName(panel);
+		if (panelName[0] == 'F' && panelName[5] == 'O')
+			FocusOverlayPanel = panel;
+	}
+
+	if (panel != FocusOverlayPanel || !m_bCrosshairs)
+		return;
+
+	static bool ignoreFrame = false;
+	if ((ignoreFrame = !ignoreFrame))
+		return;
+
+	D3DCOLOR color = CDrawing::WHITE;
+
+	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
+	if (player == nullptr)
+		return;
+
+	if (m_pAimTarget == nullptr)
+		color = CDrawing::LAWNGREEN;
+	else if (player->GetTeam() == m_pAimTarget->GetTeam())
+		color = CDrawing::SKYBLUE;
+	else
+		color = CDrawing::RED;
+
+	int width, height;
+	g_pClientInterface->Engine->GetScreenSize(width, height);
+	g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
+	g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
 }
 
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
@@ -161,26 +188,4 @@ bool CTriggerBot::IsValidTarget(CBasePlayer * entity)
 		return false;
 
 	return true;
-}
-
-Vector CTriggerBot::GetHeadPosition(CBasePlayer * entity)
-{
-	if (!IsValidTarget(entity))
-		return Vector();
-
-	int classId = entity->GetClassID();
-	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_TANK ||
-		classId == ET_WITCH || classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
-		return entity->GetHitboxOrigin(HITBOX_PLAYER);
-
-	if(classId == ET_JOCKEY || classId == ET_SPITTER)
-		return entity->GetHitboxOrigin(HITBOX_JOCKEY);
-
-	if(classId == ET_CHARGER)
-		return entity->GetHitboxOrigin(HITBOX_CHARGER);
-
-	if (classId == ET_INFECTED)
-		return entity->GetHitboxOrigin(HITBOX_COMMON);
-
-	return Vector();
 }

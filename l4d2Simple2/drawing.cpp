@@ -324,6 +324,7 @@ void CDrawing::DrawQueueObject()
 		m_bTopStringDrawing = true;
 
 		// 显示 fps
+#ifdef _DEBUG
 		{
 			char buffer[12];
 			_itoa_s(m_iFramePerSecond, buffer, 10);
@@ -336,6 +337,7 @@ void CDrawing::DrawQueueObject()
 			// 右上角
 			m_pFont->DrawText(m_iScreenWidth - 50.0f, 10.0f, color, buffer);
 		}
+#endif
 
 		if (!m_vSimpleStringList.empty())
 		{
@@ -604,11 +606,13 @@ void CDrawing::OnBeginEndScene()
 
 	UNLOCK_ENDSCENE();
 
+	/*
 #ifdef _DEBUG
 	RenderRect(300, 300, 50, 50, RED);
 	RenderText(100, 100, GREEN, false, u8"这是一些文本");
 	RenderText(100, 150, GREEN, false, L"这是一些文本");
 #endif
+	*/
 }
 
 void CDrawing::OnFinishEndScene()
@@ -651,10 +655,12 @@ void CDrawing::OnBeginPresent()
 
 	UNLOCK_PRESENT();
 
+	/*
 #ifdef _DEBUG
 	DrawText(200, 200, YELLOW, false, u8"这是一些文本2");
 	DrawRect(400, 400, 50, 60, BLUE);
 #endif
+	*/
 
 	g_pBaseMenu->OnPresent();
 

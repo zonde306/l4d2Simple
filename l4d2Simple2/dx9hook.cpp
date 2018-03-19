@@ -80,6 +80,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* devi
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_DrawIndexedPrimitive"));
 
+	/*
 #ifdef _DEBUG
 	UINT offsetByte, stride;
 	static IDirect3DVertexBuffer9* stream = nullptr;
@@ -96,6 +97,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* devi
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 	}
 #endif
+	*/
 
 	// 在这里使用 stride, numVertices, primitiveCount 检查是否为有用的模型
 	// 然后通过修改 D3DRS_ZENABLE 和 D3DRS_ZFUNC 实现透视

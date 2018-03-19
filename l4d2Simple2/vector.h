@@ -1,6 +1,14 @@
 ﻿#pragma once
+#include <cmath>
 
 typedef float vec_t;
+
+#define FLOAT32_NAN_BITS	(unsigned long)0x7FC00000
+#define FLOAT32_NAN			BitsToFloat(FLOAT32_NAN_BITS)
+#define VEC_T_NAN			FLOAT32_NAN
+#define INVALID_VECTOR Vector(VEC_T_NAN, VEC_T_NAN, VEC_T_NAN)
+#define INVALID_QANGLE QAngle(VEC_T_NAN, VEC_T_NAN, VEC_T_NAN)
+
 // #define ALLOW_CAST_POINTER
 // #define PRIVATE_VECTOR_TYPE
 
@@ -166,8 +174,42 @@ public:
 	vec_t x, y, z, w;
 };
 
-// 获取瞄准角度
-QAngle CalculateAim(const Vector &origin, const Vector &target);
+inline unsigned long & FloatBits(float & f)
+{
+	return *reinterpret_cast<unsigned long*>(&f);
+}
 
-// 获取角度差异
-float GetAnglesFieldOfView(const QAngle& myAngles, const QAngle& aimAngles);
+inline unsigned long const& FloatBits(float const& f)
+{
+	return *reinterpret_cast<unsigned long const*>(&f);
+}
+
+inline float BitsToFloat(unsigned long i)
+{
+	return *reinterpret_cast<float*>(&i);
+}
+
+inline float IsFinite(float f)
+{
+	return ((FloatBits(f) & 0x7F800000) != 0x7F800000);
+}
+
+inline unsigned long FloatAbsBits(float f)
+{
+	return FloatBits(f) & 0x7FFFFFFF;
+}
+
+inline float FloatMakeNegative(float f)
+{
+	return BitsToFloat(FloatBits(f) | 0x80000000);
+}
+
+inline float FloatMakePositive(float f)
+{
+	return abs(f);
+}
+
+inline float FloatNegate(float f)
+{
+	return BitsToFloat(FloatBits(f) ^ 0x80000000);
+}

@@ -19,51 +19,12 @@
 #endif
 
 #define CHECK_VALID(_v)		Assert((_v).IsValid())
+
+#ifndef FLOAT32_NAN_BITS
 #define FLOAT32_NAN_BITS	(unsigned long)0x7FC00000
 #define FLOAT32_NAN			BitsToFloat(FLOAT32_NAN_BITS)
 #define VEC_T_NAN			FLOAT32_NAN
-
-inline unsigned long & FloatBits(float & f)
-{
-	return *reinterpret_cast<unsigned long*>(&f);
-}
-
-inline unsigned long const& FloatBits(float const& f)
-{
-	return *reinterpret_cast<unsigned long const*>(&f);
-}
-
-inline float BitsToFloat(unsigned long i)
-{
-	return *reinterpret_cast<float*>(&i);
-}
-
-inline float IsFinite(float f)
-{
-	return ((FloatBits(f) & 0x7F800000) != 0x7F800000);
-}
-
-inline unsigned long FloatAbsBits(float f)
-{
-	return FloatBits(f) & 0x7FFFFFFF;
-}
-
-inline float FloatMakeNegative(float f)
-{
-	return BitsToFloat(FloatBits(f) | 0x80000000);
-}
-
-inline float FloatMakePositive(float f)
-{
-	return fabs(f);
-}
-
-inline float FloatNegate(float f)
-{
-	return BitsToFloat(FloatBits(f) ^ 0x80000000);
-}
-
-
+#endif
 
 // Math routines done in optimized assembly math package routines
 void inline SinCos(float radians, float *sine, float *cosine)
@@ -554,44 +515,4 @@ Vector2D::Vector2D(vec_t x, vec_t y) : x(x), y(y)
 
 Vector4D::Vector4D(vec_t x, vec_t y, vec_t z, vec_t w) : x(x), y(y), z(z), w(w)
 {
-}
-
-QAngle CalculateAim(const Vector & origin, const Vector & target)
-{
-	Vector angles;
-	Vector deltaPos = target - origin;
-
-	angles.y = atan2(deltaPos.y, deltaPos.x) * 180 / M_PI;
-	angles.x = atan2(-(deltaPos.z), sqrt(deltaPos.x * deltaPos.x + deltaPos.y * deltaPos.y)) * 180 / M_PI;
-	angles.z = 0.0f;
-
-	return angles.Normalize();
-}
-
-float GetAnglesFieldOfView(const QAngle & myAngles, const QAngle & aimAngles)
-{
-	static auto getFov = [](float orgViewX, float orgViewY, float ViewX, float ViewY, float& fovX, float& fovY) -> void
-	{
-		fovX = std::abs(orgViewX - ViewX);
-		fovY = std::abs(orgViewY - ViewY);
-
-		if (fovY < -180) fovY += 360;
-
-		if (fovY > 180) fovY -= 360;
-	};
-
-	static auto getDistance = [](float Xhere, float Yhere) -> float
-	{
-		Xhere = std::abs(Xhere);
-		Yhere = std::abs(Yhere);
-
-		Xhere *= Xhere;
-		Yhere *= Yhere;
-		float combined = (Xhere + Yhere);
-		return sqrt(combined);
-	};
-
-	Vector toHim(0.0f, 0.0f, 0.0f);
-	getFov(myAngles.x, myAngles.y, aimAngles.x, aimAngles.y, toHim.x, toHim.y);
-	return getDistance(toHim.x, toHim.y);
 }

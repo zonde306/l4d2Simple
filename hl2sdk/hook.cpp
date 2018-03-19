@@ -191,14 +191,14 @@ bool CClientHook::Init()
 			g_pBunnyHop = new CBunnyHop();
 		if (!g_pSpeedHacker)
 			g_pSpeedHacker = new CSpeedHacker();
-		if (!g_pAimbot)
-			g_pAimbot = new CAimBot();
 		if (!g_pTriggerBot)
 			g_pTriggerBot = new CTriggerBot();
+		if (!g_pAimbot)
+			g_pAimbot = new CAimBot();
 		if (!g_pKnifeBot)
 			g_pKnifeBot = new CKnifeBot();
-		if (!g_pVisual)
-			g_pVisual = new CVisual();
+		if (!g_pVisualPlayer)
+			g_pVisualPlayer = new CVisualPlayer();
 	}
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
@@ -340,6 +340,7 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnPaintTraverse(panel);
 
+		/*
 #ifdef _DEBUG
 		static HFont font = 0;
 		if (font == 0)
@@ -358,6 +359,7 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 			g_pClientInterface->Surface->DrawPrintText(L"这是一些 Surface 文本", 16);
 		}
 #endif
+		*/
 	}
 }
 
@@ -381,10 +383,12 @@ void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, 
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnEnginePaint(mode);
 
+		/*
 #ifdef _DEBUG
 		g_pClientInterface->Surface->DrawSetColor(0, 0, 255, 255);
 		g_pClientInterface->Surface->DrawFilledRect(70, 70, 80, 80);
 #endif
+		*/
 
 		g_pClientHook->FinishDrawing(g_pClientInterface->Surface);
 	}

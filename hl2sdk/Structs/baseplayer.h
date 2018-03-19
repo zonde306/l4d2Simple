@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "baseentity.h"
+#include "playerinfo.h"
 
 class CBaseWeapon;
 
@@ -19,6 +20,11 @@ public:
 	int& GetFlags();
 	CBaseEntity* GetGroundEntity();
 	int GetWaterLevel();
+	std::string GetName();
+
+	// 获取 AABB 盒子
+	// first 为 min, second 为 max
+	std::pair<Vector, Vector> GetBoundingBox();
 
 	// 倒地
 	bool IsIncapacitated();
@@ -49,4 +55,7 @@ public:
 
 	// 是否站在地上
 	bool IsOnGround();
+
+	// 获取头部位置
+	Vector GetHeadOrigin();
 };

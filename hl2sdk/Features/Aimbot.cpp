@@ -1,18 +1,8 @@
 ﻿#include "Aimbot.h"
 #include "NoRecoilSpread.h"
+#include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../hook.h"
-
-#define HITBOX_COMMON			15	// 普感
-#define HITBOX_PLAYER			10	// 生还者/特感
-#define HITBOX_COMMON_1			14
-#define HITBOX_COMMON_2			15
-#define HITBOX_COMMON_3			16
-#define HITBOX_COMMON_4			17
-#define HITBOX_JOCKEY			4
-#define HITBOX_SPITTER			4
-#define HITBOX_CHARGER			9
-#define HITBOX_WITCH			10
 
 CAimBot* g_pAimbot = nullptr;
 
@@ -73,7 +63,7 @@ QAngle CAimBot::RunAimbot(CUserCmd * cmd)
 	if (m_pAimTarget == nullptr)
 		return aimAngles;
 
-	aimAngles = CalculateAim(local->GetEyePosition(), GetHeadPosition(m_pAimTarget));
+	aimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
 	m_bRunning = true;
 
 	if (m_bPerfectSilent)
@@ -130,9 +120,9 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		if (!IsValidTarget(entity))
 			return false;
 
-		Vector aimPosition = GetHeadPosition(entity);
-		float fov = GetAnglesFieldOfView(myEyeAngles, CalculateAim(myEyePosition, aimPosition));
-		float dist = abs((aimPosition - myEyePosition).LengthSqr());
+		Vector aimPosition = entity->GetHeadOrigin();
+		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
+		float dist = math::GetVectorLength(myEyePosition, aimPosition);
 
 		// 距离太近了，可能是自己
 		if (dist <= 1.0f)
@@ -189,7 +179,7 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity)
 		return false;
 
 	Ray_t ray;
-	ray.Init(local->GetEyePosition(), GetHeadPosition(entity));
+	ray.Init(local->GetEyePosition(), entity->GetHeadOrigin());
 
 	CTraceFilter filter;
 	filter.pSkip1 = local;
@@ -240,26 +230,4 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 	}
 
 	return true;
-}
-
-Vector CAimBot::GetHeadPosition(CBasePlayer * entity)
-{
-	if (entity == nullptr || !entity->IsAlive())
-		return Vector();
-
-	int classId = entity->GetClassID();
-	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_TANK ||
-		classId == ET_WITCH || classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
-		return entity->GetHitboxOrigin(HITBOX_PLAYER);
-
-	if (classId == ET_JOCKEY || classId == ET_SPITTER)
-		return entity->GetHitboxOrigin(HITBOX_JOCKEY);
-
-	if (classId == ET_CHARGER)
-		return entity->GetHitboxOrigin(HITBOX_CHARGER);
-
-	if (classId == ET_INFECTED)
-		return entity->GetHitboxOrigin(HITBOX_COMMON);
-
-	return Vector();
 }

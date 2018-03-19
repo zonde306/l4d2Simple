@@ -1,4 +1,5 @@
 #include "baseentity.h"
+#include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../indexes.h"
 
@@ -23,7 +24,7 @@ bool CBaseEntity::IsDormant()
 {
 	try
 	{
-		return m_pClientNetworkable->IsDormant();
+		return GetNetworkable()->IsDormant();
 	}
 	catch (...)
 	{
@@ -35,22 +36,23 @@ bool CBaseEntity::IsDormant()
 
 int CBaseEntity::GetIndex()
 {
-	return m_pClientNetworkable->entindex();
+	return GetNetworkable()->entindex();
 }
 
 bool CBaseEntity::SetupBones(matrix3x4_t * pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime)
 {
-	return m_pClientRenderable->SetupBones(pBoneToWorldOut, nMaxBones, boneMask, currentTime);
+	
+	return GetRenderable()->SetupBones(pBoneToWorldOut, nMaxBones, boneMask, currentTime);
 }
 
 int CBaseEntity::DrawModel(int flags, float alpha)
 {
-	return m_pClientRenderable->DrawModel(flags, alpha);
+	return GetRenderable()->DrawModel(flags, alpha);
 }
 
 model_t * CBaseEntity::GetModel()
 {
-	return const_cast<model_t*>(m_pClientRenderable->GetModel());
+	return const_cast<model_t*>(GetRenderable()->GetModel());
 }
 
 Vector CBaseEntity::GetHitboxOrigin(int hitbox)
@@ -64,13 +66,13 @@ Vector CBaseEntity::GetHitboxOrigin(int hitbox)
 
 	try
 	{
-		if (!m_pClientRenderable->SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
+		if (!SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
 		{
 			Utils::log(XorStr("GetHitboxOrigin.SetupBones Failed."));
 			return Vector();
 		}
 
-		if ((model = m_pClientRenderable->GetModel()) == nullptr)
+		if ((model = GetModel()) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.GetModel Failed."));
 			return Vector();
@@ -100,8 +102,8 @@ Vector CBaseEntity::GetHitboxOrigin(int hitbox)
 		return Vector();
 	}
 
-	VectorTransform(hitboxMat->bbmin, boneMatrix[hitboxMat->bone], min);
-	VectorTransform(hitboxMat->bbmax, boneMatrix[hitboxMat->bone], max);
+	math::VectorTransform(hitboxMat->bbmin, boneMatrix[hitboxMat->bone], min);
+	math::VectorTransform(hitboxMat->bbmax, boneMatrix[hitboxMat->bone], max);
 	return ((min + max) * 0.5f);
 }
 
@@ -111,7 +113,7 @@ Vector CBaseEntity::GetBoneOrigin(int bone)
 
 	try
 	{
-		if (m_pClientRenderable->SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
+		if (SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
 			return Vector(boneMatrix[bone][0][3], boneMatrix[bone][1][3], boneMatrix[bone][2][3]);
 	}
 	catch (...)
@@ -123,21 +125,21 @@ Vector CBaseEntity::GetBoneOrigin(int bone)
 	return Vector();
 }
 
-Vector CBaseEntity::GetAbsOrigin()
+Vector& CBaseEntity::GetAbsOrigin()
 {
-	using Fn = Vector(__thiscall*)(CBaseEntity*);
+	using Fn = Vector&(__thiscall*)(CBaseEntity*);
 	return Utils::GetVTableFunction<Fn>(this, indexes::GetAbsOrigin)(this);
 }
 
-QAngle CBaseEntity::GetAbsAngles()
+QAngle& CBaseEntity::GetAbsAngles()
 {
-	using Fn = QAngle(__thiscall*)(CBaseEntity*);
+	using Fn = QAngle&(__thiscall*)(CBaseEntity*);
 	return Utils::GetVTableFunction<Fn>(this, indexes::GetAbsAngles)(this);
 }
 
 ClientClass * CBaseEntity::GetClientClass()
 {
-	return m_pClientNetworkable->GetClientClass();
+	return GetNetworkable()->GetClientClass();
 }
 
 int CBaseEntity::GetClassID()

@@ -54,9 +54,15 @@ public:	// NetProp
 	template<typename ...T>
 	static int GetNetPropOffsetEx(const std::string& table, const std::string& prop, const T& ...more);
 
+	
 public:
+	/*
 	IClientRenderable* m_pClientRenderable;		// 4
 	IClientNetworkable* m_pClientNetworkable;	// 8
+	*/
+
+	inline IClientRenderable* GetRenderable();
+	inline IClientNetworkable* GetNetworkable();
 
 public:
 	bool IsDormant();
@@ -66,8 +72,8 @@ public:
 	model_t* GetModel();
 	Vector GetHitboxOrigin(int hitbox);
 	Vector GetBoneOrigin(int bone);
-	Vector GetAbsOrigin();
-	QAngle GetAbsAngles();
+	Vector& GetAbsOrigin();
+	QAngle& GetAbsAngles();
 	ClientClass* GetClientClass();
 	int GetClassID();
 };
@@ -161,4 +167,14 @@ inline int CBaseEntity::GetNetPropOffsetEx(const std::string & table, const std:
 		offset += GetNetPropOffset(table, propEach);
 
 	return (offset > -1 ? offset : -1);
+}
+
+inline IClientRenderable * CBaseEntity::GetRenderable()
+{
+	return reinterpret_cast<IClientRenderable*>(reinterpret_cast<DWORD>(this) + 0x4);
+}
+
+inline IClientNetworkable * CBaseEntity::GetNetworkable()
+{
+	return reinterpret_cast<IClientNetworkable*>(reinterpret_cast<DWORD>(this) + 0x8);
 }

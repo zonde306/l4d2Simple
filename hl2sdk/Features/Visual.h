@@ -1,18 +1,47 @@
 #pragma once
 #include "BaseFeatures.h"
 
-class CVisual : public CBaseFeatures
+class CVisualPlayer : public CBaseFeatures
 {
 public:
-	CVisual();
-	~CVisual();
+	CVisualPlayer();
+	~CVisualPlayer();
 
 	virtual void OnPaintTraverse(VPANEL panel) override;
 	virtual void OnSceneEnd() override;
 	virtual void OnMenuDrawing() override;
 
-private:
+public:
+	void DrawBox(bool friendly, const Vector& head, const Vector& foot);
+	void DrawBone(CBasePlayer* entity, bool friendly);
 
+	std::string DrawName(int index, bool separator = false);
+	std::string DrawHealth(CBasePlayer* entity, bool separator = false);
+	std::string DrawWeapon(CBasePlayer* entity, bool separator = false);
+	std::string DrawDistance(CBasePlayer* entity, CBasePlayer* local, bool separator = false);
+	std::string DrawCharacter(CBasePlayer* entity, bool separator = false);
+
+	enum DrawPosition_t
+	{
+		DP_Anywhere = 0,
+		DP_Left,
+		DP_Right,
+	};
+
+	int GetTextMaxWidth(const std::string& text);
+	DrawPosition_t GetTextPosition(const std::string& text, const Vector& head);
+
+private:
+	bool m_bBox = false;
+	bool m_bName = false;
+	bool m_bHealth = false;
+	bool m_bDistance = false;
+	bool m_bWeapon = false;
+	bool m_bCharacter = false;
+	bool m_bBone = false;
+	bool m_bDrawToLeft = false;
+
+	bool m_bChams = false;
 };
 
-extern CVisual* g_pVisual;
+extern CVisualPlayer* g_pVisualPlayer;

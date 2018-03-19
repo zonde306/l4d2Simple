@@ -222,6 +222,9 @@
     <ClCompile Include="..\hl2sdk\Features\Visual.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Utils\math.cpp">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -505,6 +508,9 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Features\Visual.h">
       <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\math.h">
+      <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

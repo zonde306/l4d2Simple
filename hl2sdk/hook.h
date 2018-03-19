@@ -91,11 +91,11 @@ private:
 	FnProccessStringCmd oProccessStringCmd = nullptr;
 	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
 	FnSceneEnd oSceneEnd = nullptr;
-	FnFindMaterial oFindMaterial = nullptr;
 	FnKeyInput oKeyInput = nullptr;
 
 public:
 	bool* bSendPacket;
+	FnFindMaterial oFindMaterial = nullptr;
 
 	// 搜索特征码得到的函数
 	FnStartDrawing StartDrawing;

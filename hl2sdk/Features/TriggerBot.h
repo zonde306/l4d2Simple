@@ -9,16 +9,17 @@ public:
 
 	virtual void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
 	virtual void OnMenuDrawing() override;
+	virtual void OnPaintTraverse(VPANEL panel) override;
 
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 
 	static bool IsValidTarget(CBasePlayer* entity);
-	static Vector GetHeadPosition(CBasePlayer* entity);
 
 	QAngle RunTrigger(CUserCmd* cmd);
 
 private:	// 菜单项
 	bool m_bActive = false;
+	bool m_bCrosshairs = false;
 	bool m_bAntiSpread = false;
 	bool m_bAntiPunch = false;
 

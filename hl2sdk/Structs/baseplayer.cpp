@@ -4,6 +4,17 @@
 #include "convar.h"
 #include "../indexes.h"
 
+#define HITBOX_COMMON			15	// 普感
+#define HITBOX_PLAYER			10	// 生还者/特感
+#define HITBOX_COMMON_1			14
+#define HITBOX_COMMON_2			15
+#define HITBOX_COMMON_3			16
+#define HITBOX_COMMON_4			17
+#define HITBOX_JOCKEY			4
+#define HITBOX_SPITTER			4
+#define HITBOX_CHARGER			9
+#define HITBOX_WITCH			10
+
 Vector CBasePlayer::GetEyePosition()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecViewOffset[0]"));
@@ -164,6 +175,26 @@ bool CBasePlayer::IsOnGround()
 	return (GetGroundEntity() != nullptr && (GetFlags() & FL_ONGROUND));
 }
 
+Vector CBasePlayer::GetHeadOrigin()
+{
+	int classId = GetClassID();
+
+	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_TANK ||
+		classId == ET_WITCH || classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
+		return GetHitboxOrigin(HITBOX_PLAYER);
+
+	if (classId == ET_JOCKEY || classId == ET_SPITTER)
+		return GetHitboxOrigin(HITBOX_JOCKEY);
+
+	if (classId == ET_CHARGER)
+		return GetHitboxOrigin(HITBOX_CHARGER);
+
+	if (classId == ET_INFECTED)
+		return GetHitboxOrigin(HITBOX_COMMON);
+
+	return INVALID_VECTOR;
+}
+
 bool CBasePlayer::IsAlive()
 {
 	if (IsDormant())
@@ -268,6 +299,26 @@ int CBasePlayer::GetWaterLevel()
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(byte);
+}
+
+std::string CBasePlayer::GetName()
+{
+	player_info_t info;
+	if (!g_pClientInterface->Engine->GetPlayerInfo(GetIndex(), &info))
+		return "";
+
+	return info.name;
+}
+
+std::pair<Vector, Vector> CBasePlayer::GetBoundingBox()
+{
+	static int collOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_Collision"));
+	static int minOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecMins"));
+	static int maxOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecMaxs"));
+	
+	Vector origin = GetAbsOrigin();
+	return std::make_pair(origin + DECL_NETPROP_GET_EX(collOffset + minOffset, Vector),
+		origin + DECL_NETPROP_GET_EX(collOffset + maxOffset, Vector));
 }
 
 bool CBasePlayer::IsIncapacitated()

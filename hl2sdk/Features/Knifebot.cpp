@@ -1,7 +1,19 @@
-#include "Knifebot.h"
+﻿#include "Knifebot.h"
+#include "../Utils/math.h"
 #include "../hook.h"
 
 CKnifeBot* g_pKnifeBot = nullptr;
+
+#define HITBOX_COMMON			15	// 普感
+#define HITBOX_PLAYER			10	// 生还者/特感
+#define HITBOX_COMMON_1			14
+#define HITBOX_COMMON_2			15
+#define HITBOX_COMMON_3			16
+#define HITBOX_COMMON_4			17
+#define HITBOX_JOCKEY			4
+#define HITBOX_SPITTER			4
+#define HITBOX_CHARGER			9
+#define HITBOX_WITCH			10
 
 CKnifeBot::CKnifeBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -15,7 +27,7 @@ CKnifeBot::~CKnifeBot()
 void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 {
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive() || player->GetTeam() != 2)
+	if (player == nullptr || !player->IsAlive())
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
@@ -32,7 +44,9 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 			return;
 	}
 
-	if (m_bAutoFire)
+	CanMeleeAttack(cmd->viewangles);
+
+	if (m_bAutoFire && m_bCanMeleeAttack)
 	{
 		if (weaponId == Weapon_Melee && nextAttack <= serverTime)
 		{
@@ -41,7 +55,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 		}
 	}
 
-	if (m_bAutoShov)
+	if (m_bAutoShove && m_bCanShoveAttack)
 	{
 		nextAttack = weapon->GetSecondry();
 		if (nextAttack <= serverTime)
@@ -58,8 +72,12 @@ void CKnifeBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Auto Melee"), &m_bAutoFire);
-	ImGui::Checkbox(XorStr("Auto Shov"), &m_bAutoShov);
+	ImGui::Checkbox(XorStr("Auto Shove"), &m_bAutoShove);
 	ImGui::Checkbox(XorStr("Melee Faster"), &m_bFastMelee);
+
+	ImGui::Separator();
+	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 50.0f, XorStr("%.0f"));
+	ImGui::SliderFloat(XorStr("Auto Shove Range"), &m_fExtraShoveRange, 0.0f, 50.0f, XorStr("%.0f"));
 
 	ImGui::TreePop();
 }
@@ -116,4 +134,76 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 	}
 
 	return false;
+}
+
+bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
+{
+	m_bCanMeleeAttack = false;
+	m_bCanShoveAttack = false;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return false;
+
+	static ConVar* cvShovRange = g_pClientInterface->Cvar->FindVar(XorStr("z_gun_range"));
+	static ConVar* cvClawRange = g_pClientInterface->Cvar->FindVar(XorStr("claw_range"));
+	static ConVar* cvMeleeRange = g_pClientInterface->Cvar->FindVar(XorStr("melee_range"));
+
+	int maxEntity = g_pClientInterface->Engine->GetMaxClients(), i = 0;
+	float swingRange = (local->GetTeam() == 3 ? cvClawRange->GetFloat() : cvShovRange->GetFloat());
+	float meleeRange = cvMeleeRange->GetFloat();
+	Vector myEyePosition = local->GetEyePosition();
+
+	swingRange += m_fExtraShoveRange;
+	meleeRange += m_fExtraMeleeRange;
+
+	auto _CheckEntity = [&](int index) -> bool
+	{
+		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(index));
+		if (player == nullptr || !player->IsAlive())
+			return false;
+
+		int classId = player->GetClassID();
+		Vector aimPosition = player->GetHeadOrigin();
+		float dist = math::GetVectorLength(myEyePosition, aimPosition);
+		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
+
+		if (!m_bCanMeleeAttack &&
+			dist < meleeRange && fov < meleeRange &&
+			classId != ET_BOOMER && classId != ET_WITCH)
+		{
+			// 近战武器攻击 (左键)
+			m_bCanMeleeAttack = true;
+		}
+
+		if (!m_bCanShoveAttack &&
+			dist < swingRange && fov < swingRange &&
+			classId != ET_TANK && classId != ET_WITCH && classId != ET_CHARGER)
+		{
+			// 推 (右键)
+			// TODO: 牛在 z_charger_allow_shove 设置为 1 时可以被推
+			m_bCanShoveAttack = true;
+		}
+
+		return (m_bCanMeleeAttack && m_bCanShoveAttack);
+	};
+
+	for (i = 1; i <= maxEntity; ++i)
+	{
+		if(_CheckEntity(i))
+			return true;
+	}
+
+	if (m_bCanMeleeAttack && m_bCanShoveAttack)
+		return true;
+
+	i = maxEntity + 1;
+	maxEntity = g_pClientInterface->EntList->GetHighestEntityIndex();
+	for (; i <= maxEntity; ++i)
+	{
+		if (_CheckEntity(i))
+			return true;
+	}
+
+	return (m_bCanMeleeAttack && m_bCanShoveAttack);
 }
