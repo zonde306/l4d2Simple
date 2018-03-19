@@ -7,13 +7,16 @@ public:
 	CVisualPlayer();
 	~CVisualPlayer();
 
-	virtual void OnPaintTraverse(VPANEL panel) override;
+	virtual void OnEnginePaint(PaintMode_t mode) override;
 	virtual void OnSceneEnd() override;
 	virtual void OnMenuDrawing() override;
+
+	bool HasTargetVisible(CBasePlayer* entity);
 
 public:
 	void DrawBox(bool friendly, const Vector& head, const Vector& foot);
 	void DrawBone(CBasePlayer* entity, bool friendly);
+	void DrawHeadBox(CBasePlayer* entity, const Vector& head);
 
 	std::string DrawName(int index, bool separator = false);
 	std::string DrawHealth(CBasePlayer* entity, bool separator = false);
@@ -40,6 +43,7 @@ private:
 	bool m_bCharacter = false;
 	bool m_bBone = false;
 	bool m_bDrawToLeft = false;
+	bool m_bHeadBox = false;
 
 	bool m_bChams = false;
 };

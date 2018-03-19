@@ -136,6 +136,32 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 	return false;
 }
 
+bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr)
+		return false;
+
+	Ray_t ray;
+	CTraceFilter filter;
+	ray.Init(local->GetEyePosition(), position);
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
+		return false;
+	}
+
+	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
+}
+
 bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 {
 	m_bCanMeleeAttack = false;
@@ -163,9 +189,12 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 		if (player == nullptr || !player->IsAlive())
 			return false;
 
-		int classId = player->GetClassID();
 		Vector aimPosition = player->GetHeadOrigin();
-		float dist = math::GetVectorLength(myEyePosition, aimPosition);
+		if (!HasEnemyVisible(player, aimPosition))
+			return false;
+
+		int classId = player->GetClassID();
+		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 
 		if (!m_bCanMeleeAttack &&

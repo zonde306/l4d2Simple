@@ -20,62 +20,32 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (!m_bActive || !(*bSendPacket))
 		return;
 	
-	QAngle aimAngles = RunAimbot(cmd);
-	if (aimAngles.IsValid())
-	{
-		*bSendPacket = false;
-		g_pViewAnglesManager->StartSilent(cmd);
-		cmd->viewangles = aimAngles;
-	}
-	else
-	{
-		g_pViewAnglesManager->FinishSilent(cmd);
-	}
-
-	if (m_bRunning)
-	{
-		if (m_bAntiSpread)
-			g_pViewAnglesManager->RemoveSpread(cmd);
-
-		if (m_bAntiPunch)
-			g_pViewAnglesManager->RemoveRecoil(cmd);
-	}
-}
-
-QAngle CAimBot::RunAimbot(CUserCmd * cmd)
-{
-	QAngle aimAngles;
-	aimAngles.Invalidate();
-	m_bRunning = false;
-	
 	if (!m_bActive)
-		return aimAngles;
+		return;
+
+	if (m_bOnFire && !(cmd->buttons & IN_ATTACK))
+		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || !local->IsAlive())
-		return aimAngles;
+	if (local == nullptr || !local->IsAlive() || local->GetAttacker() != nullptr)
+		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
-	if (weapon == nullptr || !weapon->CanFire())
-		return aimAngles;
+	if (!HasValidWeapon(weapon))
+		return;
 
 	FindTarget(cmd->viewangles);
 	if (m_pAimTarget == nullptr)
-		return aimAngles;
+		return;
 
-	aimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
-	m_bRunning = true;
+	QAngle aimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
 
 	if (m_bPerfectSilent)
-		return aimAngles;
-
-	if (!m_bSilent)
+		g_pViewManager->ApplySilentAngles(aimAngles);
+	else if (m_bSilent)
+		cmd->viewangles = aimAngles;
+	else
 		g_pClientInterface->Engine->SetViewAngles(aimAngles);
-
-	cmd->viewangles = aimAngles;
-
-	aimAngles.Invalidate();
-	return aimAngles;
 }
 
 void CAimBot::OnMenuDrawing()
@@ -84,8 +54,9 @@ void CAimBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("AutoAim Allow"), &m_bActive);
-	ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
-	ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
+	ImGui::Checkbox(XorStr("AutoAim Initiative"), &m_bOnFire);
+	// ImGui::Checkbox(XorStr("AutoAim No Spread"), &m_bAntiSpread);
+	// ImGui::Checkbox(XorStr("AutoAim No Recoil"), &m_bAntiPunch);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Silent Aim"), &m_bSilent);
@@ -122,7 +93,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 
 		Vector aimPosition = entity->GetHeadOrigin();
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
-		float dist = math::GetVectorLength(myEyePosition, aimPosition);
+		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
 
 		// 距离太近了，可能是自己
 		if (dist <= 1.0f)
@@ -230,4 +201,16 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 	}
 
 	return true;
+}
+
+bool CAimBot::HasValidWeapon(CBaseWeapon * weapon)
+{
+	if (weapon == nullptr || weapon->GetClip() <= 0)
+		return false;
+
+	int ammoType = weapon->GetAmmoType();
+	if (ammoType < AT_Pistol || ammoType > AT_Turret)
+		return false;
+
+	return (weapon->GetPrimary() <= 0.0f);
 }

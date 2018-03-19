@@ -9,19 +9,15 @@ public:
 
 	virtual void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
 	virtual void OnMenuDrawing() override;
-	virtual void OnPaintTraverse(VPANEL panel) override;
+	virtual void OnEnginePaint(PaintMode_t mode) override;
 
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
-
 	static bool IsValidTarget(CBasePlayer* entity);
-
-	QAngle RunTrigger(CUserCmd* cmd);
+	bool HasValidWeapon(CBaseWeapon* weapon);
 
 private:	// 菜单项
 	bool m_bActive = false;
 	bool m_bCrosshairs = false;
-	bool m_bAntiSpread = false;
-	bool m_bAntiPunch = false;
 
 	bool m_bTraceHead = false;
 	bool m_bTraceSilent = false;
@@ -34,7 +30,6 @@ private:
 	CBasePlayer* m_pAimTarget = nullptr;
 	int m_iHitBox = 0;
 	int m_iHitGroup = 0;
-	bool m_bRunning = false;
 };
 
 extern CTriggerBot* g_pTriggerBot;

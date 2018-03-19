@@ -17,56 +17,27 @@ CTriggerBot::~CTriggerBot()
 
 void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive || !(*bSendPacket))
+	if (!m_bActive)
 		return;
-	
-	QAngle aimAngles = RunTrigger(cmd);
-	if (aimAngles.IsValid())
-	{
-		*bSendPacket = false;
-		g_pViewAnglesManager->StartSilent(cmd);
-		cmd->viewangles = aimAngles;
-	}
-	else
-	{
-		g_pViewAnglesManager->FinishSilent(cmd);
-	}
-
-	if (m_bRunning)
-	{
-		if (m_bAntiSpread)
-			g_pViewAnglesManager->RemoveSpread(cmd);
-
-		if (m_bAntiPunch)
-			g_pViewAnglesManager->RemoveRecoil(cmd);
-	}
-}
-
-QAngle CTriggerBot::RunTrigger(CUserCmd * cmd)
-{
-	QAngle aimAngles;
-	aimAngles.Invalidate();
-	m_bRunning = false;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive())
-		return aimAngles;
+	if (player == nullptr || !player->IsAlive() || player->GetAttacker() != nullptr)
+		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (weapon == nullptr || !weapon->CanFire())
-		return aimAngles;
+	if (!HasValidWeapon(weapon))
+		return;
 
 	GetAimTarget(cmd->viewangles);
 	if (m_pAimTarget == nullptr || m_pAimTarget->GetTeam() == player->GetTeam())
-		return aimAngles;
+		return;
 
 	// 开枪
 	cmd->buttons |= IN_ATTACK;
-	m_bRunning = true;
 
 	if (m_bFollowEnemy)
 	{
-		aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
+		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
 		{
 			g_pClientInterface->Engine->SetViewAngles(aimAngles);
@@ -75,15 +46,12 @@ QAngle CTriggerBot::RunTrigger(CUserCmd * cmd)
 
 	if (m_bTraceHead)
 	{
-		aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
 		{
-			return aimAngles;
+			g_pViewManager->ApplySilentAngles(aimAngles);
 		}
 	}
-
-	aimAngles.Invalidate();
-	return aimAngles;
 }
 
 void CTriggerBot::OnMenuDrawing()
@@ -93,8 +61,8 @@ void CTriggerBot::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Trigger Allow"), &m_bActive);
 	ImGui::Checkbox(XorStr("Trigger Crosshairs"), &m_bCrosshairs);
-	ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
-	ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
+	// ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
+	// ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
@@ -108,21 +76,9 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CTriggerBot::OnPaintTraverse(VPANEL panel)
+void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 {
-	static VPANEL FocusOverlayPanel = 0;
-	if (FocusOverlayPanel == 0)
-	{
-		const char* panelName = g_pClientInterface->Panel->GetName(panel);
-		if (panelName[0] == 'F' && panelName[5] == 'O')
-			FocusOverlayPanel = panel;
-	}
-
-	if (panel != FocusOverlayPanel || !m_bCrosshairs)
-		return;
-
-	static bool ignoreFrame = false;
-	if ((ignoreFrame = !ignoreFrame))
+	if (!m_bCrosshairs)
 		return;
 
 	D3DCOLOR color = CDrawing::WHITE;
@@ -185,6 +141,18 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 bool CTriggerBot::IsValidTarget(CBasePlayer * entity)
 {
 	if (entity == nullptr || !entity->IsAlive())
+		return false;
+
+	return true;
+}
+
+bool CTriggerBot::HasValidWeapon(CBaseWeapon * weapon)
+{
+	if (weapon == nullptr || weapon->GetClip() <= 0)
+		return false;
+
+	int ammoType = weapon->GetAmmoType();
+	if (ammoType < AT_Pistol || ammoType > AT_Turret)
 		return false;
 
 	return true;

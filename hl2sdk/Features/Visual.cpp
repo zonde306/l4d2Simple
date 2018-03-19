@@ -11,6 +11,10 @@ CVisualPlayer* g_pVisualPlayer = nullptr;
 #define Assert_Entity(_e)		0
 #endif
 
+#define IsSurvivor(_id)				(_id == ET_SURVIVORBOT || _id == ET_CTERRORPLAYER)
+#define IsCommonInfected(_id)		(_id == ET_INFECTED || _id == ET_WITCH)
+#define IsSpecialInfected(_id)		(_id == ET_BOOMER || _id == ET_HUNTER || _id == ET_SMOKER || _id == ET_SPITTER || _id == ET_JOCKEY || _id == ET_CHARGER || _id == ET_TANK)
+
 CVisualPlayer::CVisualPlayer() : CBaseFeatures::CBaseFeatures()
 {
 }
@@ -20,23 +24,8 @@ CVisualPlayer::~CVisualPlayer()
 	CBaseFeatures::~CBaseFeatures();
 }
 
-void CVisualPlayer::OnPaintTraverse(VPANEL panel)
+void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 {
-	static VPANEL FocusOverlayPanel = 0;
-	if (FocusOverlayPanel == 0)
-	{
-		const char* panelName = g_pClientInterface->Panel->GetName(panel);
-		if (panelName[0] == 'F' && panelName[5] == 'O')
-			FocusOverlayPanel = panel;
-	}
-
-	if (panel != FocusOverlayPanel)
-		return;
-
-	static bool ignoreFrame = false;
-	if ((ignoreFrame = !ignoreFrame))
-		return;
-
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr)
 		return;
@@ -69,6 +58,8 @@ void CVisualPlayer::OnPaintTraverse(VPANEL panel)
 			DrawBox(friendly, head, foot);
 		if (m_bBone)
 			DrawBone(entity, friendly);
+		if (m_bHeadBox)
+			DrawHeadBox(entity, head);
 
 		if (m_bHealth)
 			ss << DrawHealth(entity, ss.str().empty());
@@ -153,6 +144,7 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Left alignment"), &m_bDrawToLeft);
 	ImGui::Checkbox(XorStr("Player Box"), &m_bBox);
+	ImGui::Checkbox(XorStr("Player Head"), &m_bHeadBox);
 	ImGui::Checkbox(XorStr("Player Bone"), &m_bBone);
 	ImGui::Checkbox(XorStr("Player Name"), &m_bName);
 	ImGui::Checkbox(XorStr("Player Health"), &m_bHealth);
@@ -162,6 +154,32 @@ void CVisualPlayer::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Player Chams"), &m_bChams);
 
 	ImGui::TreePop();
+}
+
+bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr)
+		return false;
+
+	Ray_t ray;
+	CTraceFilter filter;
+	ray.Init(local->GetEyePosition(), entity->GetHeadOrigin());
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
+		return false;
+	}
+
+	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
 }
 
 void CVisualPlayer::DrawBox(bool friendly, const Vector & head, const Vector & foot)
@@ -200,6 +218,27 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 
 		g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
 	}
+}
+
+void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
+{
+	int classId = entity->GetClassID();
+	D3DCOLOR color = CDrawing::WHITE;
+	bool visible = HasTargetVisible(entity);
+
+	if (IsSurvivor(classId))
+		color = CDrawing::SKYBLUE;
+	else if (IsSpecialInfected(classId))
+		color = CDrawing::RED;
+	else if (classId == ET_WITCH)
+		color = CDrawing::PINK;
+	else if (classId == ET_INFECTED)
+		color = CDrawing::ORANGE;
+
+	if (visible)
+		g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
+	else
+		g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
 }
 
 int CVisualPlayer::GetTextMaxWidth(const std::string & text)
@@ -286,7 +325,7 @@ std::string CVisualPlayer::DrawWeapon(CBasePlayer * entity, bool separator)
 std::string CVisualPlayer::DrawDistance(CBasePlayer * entity, CBasePlayer * local, bool separator)
 {
 	char buffer[16];
-	_itoa_s(static_cast<int>(math::GetVectorLength(entity->GetAbsOrigin(), local->GetAbsOrigin())),
+	_itoa_s(static_cast<int>(math::GetVectorDistance(entity->GetAbsOrigin(), local->GetAbsOrigin(), true)),
 		buffer, 10);
 
 	if (separator)

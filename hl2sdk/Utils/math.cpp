@@ -71,12 +71,12 @@ float math::GetAnglesFieldOfView(const QAngle & myAngles, const QAngle & aimAngl
 	return getDistance(toHim.x, toHim.y);
 }
 
-float math::GetVectorLength(const Vector & origin1, const Vector & origin2, bool squared)
+float math::GetVectorDistance(const Vector & origin1, const Vector & origin2, bool squared)
 {
 	if (squared)
-		return abs((origin1 - origin2).Length());
+		return (origin1 - origin2).Length();
 
-	return abs((origin1 - origin2).LengthSqr());
+	return (origin1 - origin2).LengthSqr();
 }
 
 bool math::WorldToScreen(const Vector & origin, Vector & screen)

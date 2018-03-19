@@ -185,8 +185,6 @@ bool CClientHook::Init()
 
 	// 初始化功能
 	{
-		if (!g_pViewAnglesManager)
-			g_pViewAnglesManager = new CViewAnglesManager();
 		if (!g_pBunnyHop)
 			g_pBunnyHop = new CBunnyHop();
 		if (!g_pSpeedHacker)
@@ -199,6 +197,10 @@ bool CClientHook::Init()
 			g_pKnifeBot = new CKnifeBot();
 		if (!g_pVisualPlayer)
 			g_pVisualPlayer = new CVisualPlayer();
+
+		// 这个要排在最后，否则没有效果
+		if (!g_pViewManager)
+			g_pViewManager = new CViewManager();
 	}
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);

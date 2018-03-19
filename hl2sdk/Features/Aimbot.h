@@ -13,13 +13,11 @@ public:
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
 	bool IsTargetVisible(CBasePlayer* entity);
 	bool IsValidTarget(CBasePlayer* entity);
-
-	QAngle RunAimbot(CUserCmd* cmd);
+	bool HasValidWeapon(CBaseWeapon* weapon);
 
 private:	// 菜单项
 	bool m_bActive = false;
-	bool m_bAntiSpread = false;
-	bool m_bAntiPunch = false;
+	bool m_bOnFire = true;
 
 	bool m_bVisible = false;
 	bool m_bSilent = false;
@@ -33,7 +31,6 @@ private:	// 菜单项
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
-	bool m_bRunning = false;
 };
 
 extern CAimBot* g_pAimbot;

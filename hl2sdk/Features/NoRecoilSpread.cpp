@@ -1,14 +1,91 @@
 #include "NoRecoilSpread.h"
 #include "../hook.h"
 
-CViewAnglesManager* g_pViewAnglesManager = nullptr;
+CViewManager* g_pViewManager = nullptr;
 
-CViewAnglesManager::CViewAnglesManager()
+#define IsSingleWeapon(_id)			(_id == Weapon_Pistol || _id == Weapon_ShotgunPump || _id == Weapon_ShotgunAuto || _id == Weapon_SniperHunting || _id == Weapon_ShotgunChrome || _id == Weapon_SniperMilitary || _id == Weapon_ShotgunSpas || _id == Weapon_PistolMagnum || _id == Weapon_SniperAWP || _id == Weapon_SniperScout)
+
+CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
 	m_vecAngles.Invalidate();
 }
 
-bool CViewAnglesManager::StartSilent(CUserCmd * cmd)
+CViewManager::~CViewManager()
+{
+	CBaseFeatures::~CBaseFeatures();
+}
+
+void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	CBaseWeapon* weapon = local->GetActiveWeapon();
+	if (weapon == nullptr)
+		return;
+
+	if (m_bHasApplySilent)
+	{
+		StartSilent(cmd);
+		cmd->viewangles = m_vecSilentAngles;
+		*bSendPacket = false;
+	}
+	else
+	{
+		FinishSilent(cmd);
+		*bSendPacket = true;
+	}
+
+	if (m_bNoRecoil)
+		RemoveRecoil(cmd);
+
+	if (m_bNoSpread)
+		RemoveSpread(cmd);
+
+	if (m_bRapidFire)
+		RunRapidFire(cmd, local, weapon);
+
+	m_bHasApplySilent = false;
+}
+
+void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
+{
+	if (stage != FRAME_NET_UPDATE_POSTDATAUPDATE_START)
+		return;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	if (m_bNoVisRecoil)
+		local->GetPunch().SetZero();
+}
+
+void CViewManager::OnMenuDrawing()
+{
+	if (!ImGui::TreeNode(XorStr("AimHelper")))
+		return;
+
+	ImGui::Checkbox(XorStr("No Recoil"), &m_bNoRecoil);
+	ImGui::Checkbox(XorStr("No Visual Recoil"), &m_bNoVisRecoil);
+	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
+	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);
+
+	ImGui::TreePop();
+}
+
+bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
+{
+	if (m_bHasApplySilent)
+		return false;
+	
+	m_bHasApplySilent = true;
+	m_vecSilentAngles = viewAngles;
+	return true;
+}
+
+bool CViewManager::StartSilent(CUserCmd * cmd)
 {
 	if (m_vecAngles.IsValid())
 		return false;
@@ -21,7 +98,7 @@ bool CViewAnglesManager::StartSilent(CUserCmd * cmd)
 	return true;
 }
 
-bool CViewAnglesManager::FinishSilent(CUserCmd * cmd)
+bool CViewManager::FinishSilent(CUserCmd * cmd)
 {
 	if (!m_vecAngles.IsValid())
 		return false;
@@ -35,7 +112,7 @@ bool CViewAnglesManager::FinishSilent(CUserCmd * cmd)
 	return true;
 }
 
-void CViewAnglesManager::RemoveSpread(CUserCmd * cmd)
+void CViewManager::RemoveSpread(CUserCmd * cmd)
 {
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive())
@@ -50,7 +127,7 @@ void CViewAnglesManager::RemoveSpread(CUserCmd * cmd)
 	cmd->viewangles.y -= spread.second;
 }
 
-void CViewAnglesManager::RemoveRecoil(CUserCmd * cmd)
+void CViewManager::RemoveRecoil(CUserCmd * cmd)
 {
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive())
@@ -59,4 +136,22 @@ void CViewAnglesManager::RemoveRecoil(CUserCmd * cmd)
 	Vector punch = player->GetPunch();
 	cmd->viewangles.x -= punch.x;
 	cmd->viewangles.y -= punch.y;
+}
+
+void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)
+{
+	if (!(cmd->buttons & IN_ATTACK))
+		return;
+
+	int classId = weapon->GetClassID();
+	if ((local->GetTeam() == 3 || IsSingleWeapon(classId)) &&
+		!m_bRapidIgnore && weapon->GetPrimary() <= 0.0f)
+	{
+		cmd->buttons &= ~IN_ATTACK;
+		m_bRapidIgnore = true;
+	}
+	else
+	{
+		m_bRapidIgnore = false;
+	}
 }
