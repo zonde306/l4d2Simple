@@ -38,24 +38,35 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	ss.precision(0);
 
 	int team = local->GetTeam();
-	int maxEntity = g_pClientInterface->EntList->GetHighestEntityIndex();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+
+	if (m_hSurfaceFont == 0)
+	{
+		m_hSurfaceFont = g_pInterface->Surface->CreateFont();
+		g_pInterface->Surface->SetFontGlyphSet(m_hSurfaceFont, XorStr("Tahoma"),
+			g_pDrawing->m_iFontSize, FW_DONTCARE, 0, 0, 0x200);
+	}
 
 	for (int i = 1; i <= maxEntity; ++i)
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(i));
+		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
 		if (entity == nullptr || !entity->IsAlive())
 			continue;
 
-		Vector head, foot;
+		Vector top, botton, head;
 		auto boundingBox = entity->GetBoundingBox();
-		if (!math::WorldToScreen(boundingBox.first, foot) || !math::WorldToScreen(boundingBox.second, head))
+		Vector headOrigin = entity->GetHeadOrigin();
+
+		if (!math::WorldToScreen(boundingBox.first, botton) ||
+			!math::WorldToScreen(boundingBox.second, top) ||
+			!math::WorldToScreen(headOrigin, head))
 			continue;
 
 		ss.str("");
 		bool friendly = (team == entity->GetTeam());
 
 		if (m_bBox)
-			DrawBox(friendly, head, foot);
+			DrawBox(friendly, top, botton);
 		if (m_bBone)
 			DrawBone(entity, friendly);
 		if (m_bHeadBox)
@@ -75,17 +86,37 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		if (ss.str().empty())
 			continue;
 
-		if (GetTextPosition(ss.str(), head) == DP_Left)
+		std::wstring sw = Utils::c2w(ss.str());
+		if (GetTextPosition(ss.str(), top) == DP_Left)
 		{
-			int pixels = GetTextMaxWidth(ss.str()) * g_pDrawing->m_iFontSize;
+			/*
+			int pixels = GetTextMaxWide(ss.str()) * g_pDrawing->m_iFontSize;
 			g_pDrawing->DrawText(head.x - pixels, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
 				false, ss.str().c_str());
+			*/
+
+			int wide = 0, tall = 0;
+			g_pInterface->Surface->GetTextSize(m_hSurfaceFont, sw.c_str(), wide, tall);
+			g_pInterface->Surface->DrawSetTextPos(head.x - wide, head.y);
 		}
 		else
 		{
+			/*
 			g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
 				false, ss.str().c_str());
+			*/
+
+			g_pInterface->Surface->DrawSetTextPos(head.x, head.y);
 		}
+
+		g_pInterface->Surface->DrawSetTextFont(m_hSurfaceFont);
+		
+		if (friendly)
+			g_pInterface->Surface->DrawSetTextColor(0, 255, 255, 255);
+		else
+			g_pInterface->Surface->DrawSetTextColor(255, 0, 0, 255);
+
+		g_pInterface->Surface->DrawPrintText(sw.c_str(), sw.length());
 	}
 }
 
@@ -99,12 +130,12 @@ void CVisualPlayer::OnSceneEnd()
 	{
 		if (g_pClientHook->oFindMaterial != nullptr)
 		{
-			chamsMaterial = g_pClientHook->oFindMaterial(g_pClientInterface->MaterialSystem,
+			chamsMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
 				XorStr("debug/debugambientcube"), XorStr("Model textures"), true, nullptr);
 		}
 		else
 		{
-			chamsMaterial = g_pClientInterface->MaterialSystem->FindMaterial(
+			chamsMaterial = g_pInterface->MaterialSystem->FindMaterial(
 				XorStr("debug/debugambientcube"), XorStr("Model textures"));
 		}
 
@@ -117,11 +148,11 @@ void CVisualPlayer::OnSceneEnd()
 		return;
 
 	int team = local->GetTeam();
-	int maxEntity = g_pClientInterface->EntList->GetHighestEntityIndex();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 
 	for (int i = 1; i <= maxEntity; ++i)
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(i));
+		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
 		if (entity == nullptr || !entity->IsAlive())
 			continue;
 
@@ -131,9 +162,9 @@ void CVisualPlayer::OnSceneEnd()
 			chamsMaterial->ColorModulate(1.0f, 0.0f, 0.0f);
 
 		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
-		g_pClientInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
+		g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
 		entity->DrawModel(0x1);
-		g_pClientInterface->ModelRender->ForcedMaterialOverride(nullptr);
+		g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
 	}
 }
 
@@ -171,7 +202,7 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 
 	try
 	{
-		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
 	}
 	catch (...)
 	{
@@ -185,9 +216,17 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 void CVisualPlayer::DrawBox(bool friendly, const Vector & head, const Vector & foot)
 {
 	if (friendly)
-		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
+	{
+		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+		// g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
+	}
 	else
-		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
+	{
+		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		// g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
+	}
+
+	g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, foot.x, foot.y);
 }
 
 void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
@@ -196,12 +235,18 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	if (models == nullptr)
 		return;
 
-	studiohdr_t* hdr = g_pClientInterface->ModelInfo->GetStudiomodel(models);
+	studiohdr_t* hdr = g_pInterface->ModelInfo->GetStudiomodel(models);
 	if (hdr == nullptr)
 		return;
 
 	Vector parent, child, screenParent, screenChild;
-	D3DCOLOR color = (friendly ? CDrawing::SKYBLUE : CDrawing::RED);
+
+	if (friendly)
+		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+	else
+		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+
+	// D3DCOLOR color = (friendly ? CDrawing::SKYBLUE : CDrawing::RED);
 
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
@@ -216,32 +261,51 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 			!math::WorldToScreen(child, screenChild))
 			continue;
 
-		g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
+		// g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
+		g_pInterface->Surface->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y);
 	}
 }
 
 void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
 {
 	int classId = entity->GetClassID();
-	D3DCOLOR color = CDrawing::WHITE;
+	// D3DCOLOR color = CDrawing::WHITE;
 	bool visible = HasTargetVisible(entity);
 
 	if (IsSurvivor(classId))
-		color = CDrawing::SKYBLUE;
+	{
+		// color = CDrawing::SKYBLUE;
+		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+	}
 	else if (IsSpecialInfected(classId))
-		color = CDrawing::RED;
+	{
+		// color = CDrawing::RED;
+		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+	}
 	else if (classId == ET_WITCH)
-		color = CDrawing::PINK;
+	{
+		// color = CDrawing::PINK;
+		g_pInterface->Surface->DrawSetColor(255, 128, 255, 255);
+	}
 	else if (classId == ET_INFECTED)
-		color = CDrawing::ORANGE;
+	{
+		// color = CDrawing::ORANGE;
+		g_pInterface->Surface->DrawSetColor(255, 128, 0, 255);
+	}
 
 	if (visible)
-		g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
+	{
+		// g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
+		g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
+	}
 	else
-		g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
+	{
+		// g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
+		g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
+	}
 }
 
-int CVisualPlayer::GetTextMaxWidth(const std::string & text)
+int CVisualPlayer::GetTextMaxWide(const std::string & text)
 {
 	size_t width = 0;
 	for (auto line : Utils::Split(text, "\n"))
@@ -256,18 +320,21 @@ int CVisualPlayer::GetTextMaxWidth(const std::string & text)
 typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std::string & text, const Vector & head)
 {
 	int width = 0, height = 0;
-	g_pClientInterface->Engine->GetScreenSize(width, height);
+	g_pInterface->Engine->GetScreenSize(width, height);
 
-	int pixels = GetTextMaxWidth(text) * g_pDrawing->m_iFontSize;
+	// int width = GetTextMaxWide(text) * g_pDrawing->m_iFontSize;
+	int wide = 0, tall = 0;
+	g_pInterface->Surface->GetTextSize(m_hSurfaceFont, Utils::c2w(text).c_str(), wide, tall);
+
 	if (m_bDrawToLeft)
 	{
-		if ((head.x - pixels) < 0)
+		if ((head.x - wide) < 0)
 			return DP_Right;
 
 		return DP_Left;
 	}
 
-	if ((head.x + pixels) > width)
+	if ((head.x + wide) > width)
 		return DP_Left;
 
 	return DP_Right;
@@ -276,7 +343,7 @@ typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std:
 std::string CVisualPlayer::DrawName(int index, bool separator)
 {
 	player_info_t info;
-	if (!g_pClientInterface->Engine->GetPlayerInfo(index, &info))
+	if (!g_pInterface->Engine->GetPlayerInfo(index, &info))
 		return "";
 
 	if (separator)

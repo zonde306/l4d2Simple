@@ -148,6 +148,7 @@ namespace indexes
 	const int FindMaterial = 71;
 	const int IsMaterialLoaded = 72;
 	const int FindTexture = 77;
+	const int OverrideConfig = 16;
 
 	// IMaterial
 	const int SetMaterialVarFlag = 29;

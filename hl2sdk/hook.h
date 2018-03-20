@@ -135,6 +135,8 @@ public:
 	CBasePlayer* GetLocalPlayer();
 	std::pair<float, float> GetWeaponSpread(int seed, float spread);
 
+	inline int GetFlags() { return m_iFlags; };
+
 private:
 	CMoveData m_MoveData;
 	int m_iFlags = 0;

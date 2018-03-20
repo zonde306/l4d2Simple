@@ -75,7 +75,7 @@ CBasePlayer * CBaseWeapon::GetOwner()
 	if (!handle.IsValid())
 		return nullptr;
 
-	return reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+	return reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
 int CBaseWeapon::GetClip()

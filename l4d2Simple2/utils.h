@@ -51,8 +51,10 @@ namespace Utils
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string& szPattern);
 	DWORD FindPattern(const std::string & szModules, const std::string & szPattern, std::string szMask);
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern, std::string szMask);
-	template<typename T, typename ...Arg> T ReadMemory(Arg... offset);
-	template<typename T, typename ...Arg> T WriteMemory(T value, Arg... offset);
+	template<typename T, typename ...Arg>
+	inline T ReadMemory(Arg... offset);
+	template<typename T, typename ...Arg>
+	inline T WriteMemory(T value, Arg... offset);
 
 	// 字符串处理
 	std::vector<std::string> Split(const std::string& s, const std::string& delim);
@@ -60,21 +62,29 @@ namespace Utils
 
 	// 虚函数相关
 	PVOID GetVirtualFunction(PVOID inst, DWORD index);
-	template<typename Fn> Fn GetVTableFunction(PVOID inst, DWORD index);
+
+	template<typename Fn>
+	inline Fn GetVTableFunction(PVOID inst, DWORD index);
+
+	template<typename R, typename ...Args>
+	inline R InvokeVirtualFunction(PVOID inst, DWORD index, Args... arg);
+
+	template<typename Fn, typename ...Args>
+	inline auto InvokeVTableFunction(PVOID inst, DWORD index, Args... arg);
 
 	// 进程相关
 	void FindWindowByProccess(DWORD ProcessID = 0);
 };
 
 template<typename T, typename ...Arg>
-void Utils::log2(const T & value, Arg ...arg)
+inline void Utils::log2(const T & value, Arg ...arg)
 {
 	std::cout << value;
 	return log2(std::forward<Arg>(arg)...);
 }
 
 template<typename T, typename ...Arg>
-T Utils::ReadMemory(Arg ...offset)
+inline T Utils::ReadMemory(Arg ...offset)
 {
 	DWORD offsetList[] = { (DWORD)offset... };
 	DWORD currentAddress = 0, finalAddress = 0, oldProtect = 0;
@@ -128,7 +138,7 @@ T Utils::ReadMemory(Arg ...offset)
 }
 
 template<typename T, typename ...Arg>
-T Utils::WriteMemory(T value, Arg ...offset)
+inline T Utils::WriteMemory(T value, Arg ...offset)
 {
 	DWORD offsetList[] = { (DWORD)offset... };
 	DWORD currentAddress = 0, finalAddress = 0, oldProtect = 0;
@@ -205,3 +215,15 @@ inline Fn Utils::GetVTableFunction(PVOID inst, DWORD index)
 	return reinterpret_cast<Fn>(table[index]);
 }
 
+template<typename R, typename ...Args>
+inline R Utils::InvokeVirtualFunction(PVOID inst, DWORD index, Args ...arg)
+{
+	using Fn = R(__thiscall*)(PVOID, Args...);
+	return std::forward<R>(reinterpret_cast<Fn>(GetVirtualFunction(inst, index))(inst, std::forward<Args>(arg)...));
+}
+
+template<typename Fn, typename ...Args>
+inline auto Utils::InvokeVTableFunction(PVOID inst, DWORD index, Args ...arg)
+{
+	return std::forward<auto>(GetVTableFunction<Fn>(inst, index)(inst, std::forward<Args>(arg)...));
+}

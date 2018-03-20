@@ -2,7 +2,7 @@
 #include "indexes.h"
 #include "../l4d2Simple2/xorstr.h"
 
-std::unique_ptr<CClientInterface> g_pClientInterface;
+std::unique_ptr<CClientInterface> g_pInterface;
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\

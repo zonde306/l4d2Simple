@@ -61,7 +61,7 @@ int CBasePlayer::GetTempHealth()
 {
 	static int bufferOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_healthBuffer"));
 	static int timeOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_healthBufferTime"));
-	static ConVar* decayRate = g_pClientInterface->Cvar->FindVar(XorStr("pain_pills_decay_rate"));
+	static ConVar* decayRate = g_pInterface->Cvar->FindVar(XorStr("pain_pills_decay_rate"));
 	int amount = static_cast<int>(ceil(DECL_NETPROP_GET_EX(bufferOffset, float) -
 		((g_pClientPrediction->GetServerTime() - DECL_NETPROP_GET_EX(timeOffset, float)) *
 		decayRate->GetFloat())));
@@ -78,7 +78,7 @@ CBaseWeapon * CBasePlayer::GetActiveWeapon()
 	if (!handle.IsValid())
 		return nullptr;
 
-	return reinterpret_cast<CBaseWeapon*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+	return reinterpret_cast<CBaseWeapon*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
 int CBasePlayer::GetCrosshairID()
@@ -132,7 +132,7 @@ CBasePlayer * CBasePlayer::GetAttacker()
 	return nullptr;
 
 finish_check_handle:
-	return reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+	return reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
 CBasePlayer * CBasePlayer::GetVictim()
@@ -167,7 +167,7 @@ CBasePlayer * CBasePlayer::GetVictim()
 	return nullptr;
 
 finish_check_handle:
-	return reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+	return reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
 bool CBasePlayer::IsOnGround()
@@ -291,7 +291,7 @@ CBaseEntity * CBasePlayer::GetGroundEntity()
 	if (!handle.IsValid())
 		return nullptr;
 
-	return reinterpret_cast<CBaseWeapon*>(g_pClientInterface->EntList->GetClientEntityFromHandle(handle));
+	return reinterpret_cast<CBaseWeapon*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
 int CBasePlayer::GetWaterLevel()
@@ -304,7 +304,7 @@ int CBasePlayer::GetWaterLevel()
 std::string CBasePlayer::GetName()
 {
 	player_info_t info;
-	if (!g_pClientInterface->Engine->GetPlayerInfo(GetIndex(), &info))
+	if (!g_pInterface->Engine->GetPlayerInfo(GetIndex(), &info))
 		return "";
 
 	return info.name;

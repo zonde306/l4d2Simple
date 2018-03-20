@@ -103,7 +103,7 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 		{
 			if (weaponId == Weapon_Melee && nextAttack > serverTime)
 			{
-				g_pClientInterface->Engine->ClientCmd_Unrestricted(XorStr("lastinv"));
+				g_pInterface->Engine->ClientCmd_Unrestricted(XorStr("lastinv"));
 				m_eMeleeStage = FMS_Primary;
 				return true;
 			}
@@ -116,7 +116,7 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 		{
 			if (weaponId != Weapon_Melee)
 			{
-				g_pClientInterface->Engine->ClientCmd_Unrestricted(XorStr("lastinv"));
+				g_pInterface->Engine->ClientCmd_Unrestricted(XorStr("lastinv"));
 				m_eMeleeStage = FMS_None;
 				return true;
 			}
@@ -151,7 +151,7 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 
 	try
 	{
-		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
 	}
 	catch (...)
 	{
@@ -171,11 +171,11 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 	if (local == nullptr || !local->IsAlive())
 		return false;
 
-	static ConVar* cvShovRange = g_pClientInterface->Cvar->FindVar(XorStr("z_gun_range"));
-	static ConVar* cvClawRange = g_pClientInterface->Cvar->FindVar(XorStr("claw_range"));
-	static ConVar* cvMeleeRange = g_pClientInterface->Cvar->FindVar(XorStr("melee_range"));
+	static ConVar* cvShovRange = g_pInterface->Cvar->FindVar(XorStr("z_gun_range"));
+	static ConVar* cvClawRange = g_pInterface->Cvar->FindVar(XorStr("claw_range"));
+	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
 
-	int maxEntity = g_pClientInterface->Engine->GetMaxClients(), i = 0;
+	int maxEntity = g_pInterface->Engine->GetMaxClients(), i = 0;
 	float swingRange = (local->GetTeam() == 3 ? cvClawRange->GetFloat() : cvShovRange->GetFloat());
 	float meleeRange = cvMeleeRange->GetFloat();
 	Vector myEyePosition = local->GetEyePosition();
@@ -185,7 +185,7 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 
 	auto _CheckEntity = [&](int index) -> bool
 	{
-		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(index));
+		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
 		if (player == nullptr || !player->IsAlive())
 			return false;
 
@@ -227,7 +227,7 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 		return true;
 
 	i = maxEntity + 1;
-	maxEntity = g_pClientInterface->EntList->GetHighestEntityIndex();
+	maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 	for (; i <= maxEntity; ++i)
 	{
 		if (_CheckEntity(i))

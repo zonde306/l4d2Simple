@@ -45,7 +45,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	else if (m_bSilent)
 		cmd->viewangles = aimAngles;
 	else
-		g_pClientInterface->Engine->SetViewAngles(aimAngles);
+		g_pInterface->Engine->SetViewAngles(aimAngles);
 }
 
 void CAimBot::OnMenuDrawing()
@@ -82,12 +82,12 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		return nullptr;
 	
 	Vector myEyePosition = local->GetEyePosition();
-	int maxEntity = g_pClientInterface->Engine->GetMaxClients(), i = 0;
+	int maxEntity = g_pInterface->Engine->GetMaxClients(), i = 0;
 	float minFov = 361.0f, minDistance = 65535.0f;
 
 	auto _CheckTarget = [&](int index) -> bool
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pClientInterface->EntList->GetClientEntity(index));
+		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
 		if (!IsValidTarget(entity))
 			return false;
 
@@ -133,7 +133,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		return m_pAimTarget;
 
 	i = maxEntity + 1;
-	maxEntity = g_pClientInterface->EntList->GetHighestEntityIndex();
+	maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 	for (; i <= maxEntity; ++i)
 	{
 		// 检查普感敌人
@@ -159,7 +159,7 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity)
 
 	try
 	{
-		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
 	}
 	catch (...)
 	{

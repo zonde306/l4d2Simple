@@ -204,6 +204,6 @@ IHandleEntity * CBaseHandle::Get() const
 	if (!IsValid())
 		return nullptr;
 	
-	return g_pClientInterface->EntList->GetClientEntityFromHandle(*this);
+	return g_pInterface->EntList->GetClientEntityFromHandle(*this);
 }
 

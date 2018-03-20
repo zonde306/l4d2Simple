@@ -36,7 +36,8 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge())
 		return;
 
-	int flags = player->GetFlags();
+	// int flags = player->GetFlags();
+	int flags = g_pClientPrediction->GetFlags();
 
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
@@ -354,7 +355,7 @@ void CBunnyHop::DoFullAutoStrafe(CBasePlayer * player, CUserCmd * pCmd, int flag
 	};
 
 	Vector velocity = player->GetVelocity();
-	static ConVar* sideSpeed = g_pClientInterface->Cvar->FindVar(XorStr("cl_sidespeed"));
+	static ConVar* sideSpeed = g_pInterface->Cvar->FindVar(XorStr("cl_sidespeed"));
 
 	float yawvel = reddeg(atan2f(velocity.y, velocity.x));
 	float anglesdiff = normalize(pCmd->viewangles.y - yawvel);

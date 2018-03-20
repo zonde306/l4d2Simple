@@ -40,7 +40,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
 		{
-			g_pClientInterface->Engine->SetViewAngles(aimAngles);
+			g_pInterface->Engine->SetViewAngles(aimAngles);
 		}
 	}
 
@@ -81,23 +81,34 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 	if (!m_bCrosshairs)
 		return;
 
-	D3DCOLOR color = CDrawing::WHITE;
+	// D3DCOLOR color = CDrawing::WHITE;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr)
 		return;
 
 	if (m_pAimTarget == nullptr)
-		color = CDrawing::LAWNGREEN;
+	{
+		// color = CDrawing::LAWNGREEN;
+		g_pInterface->Surface->DrawSetColor(128, 255, 0, 255);
+	}
 	else if (player->GetTeam() == m_pAimTarget->GetTeam())
-		color = CDrawing::SKYBLUE;
+	{
+		// color = CDrawing::SKYBLUE;
+		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+	}
 	else
-		color = CDrawing::RED;
+	{
+		// color = CDrawing::RED;
+		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+	}
 
 	int width, height;
-	g_pClientInterface->Engine->GetScreenSize(width, height);
-	g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
-	g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
+	g_pInterface->Engine->GetScreenSize(width, height);
+	g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
+	g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
+	// g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
+	// g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
 }
 
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
@@ -116,7 +127,7 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 
 	try
 	{
-		g_pClientInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
 	}
 	catch (...)
 	{

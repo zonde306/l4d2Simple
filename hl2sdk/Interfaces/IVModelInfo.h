@@ -1,6 +1,7 @@
 #pragma once
 #include "../definitions.h"
 #include "../Structs/matrix.h"
+#include "../Structs/trace.h"
 #include "../../l4d2Simple2/vector.h"
 
 enum Bone: int
@@ -126,7 +127,22 @@ public:
 
 	// array access...
 	float operator[]( int i ) const;
-	float& operator[]( int i );
+	inline float& operator[](int i)
+	{
+		switch (i)
+		{
+		case 0:
+			return x;
+		case 1:
+			return y;
+		case 2:
+			return z;
+		case 3:
+			return w;
+		}
+
+		return z;
+	};
 
 	float x, y, z, w;
 };

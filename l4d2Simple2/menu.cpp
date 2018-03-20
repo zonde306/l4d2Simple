@@ -10,7 +10,7 @@ std::unique_ptr<CBaseMenu> g_pBaseMenu;
 
 void _OnMenuStateChanged(bool visible)
 {
-	g_pClientInterface->Surface->SetCursorAlwaysVisible(visible);
+	g_pInterface->Surface->SetCursorAlwaysVisible(visible);
 }
 
 void CBaseMenu::Init()

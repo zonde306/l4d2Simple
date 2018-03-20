@@ -73,4 +73,4 @@ protected:
 	T* GetPointer(const std::string& modules, const std::string& factory);
 };
 
-extern std::unique_ptr<CClientInterface> g_pClientInterface;
+extern std::unique_ptr<CClientInterface> g_pInterface;

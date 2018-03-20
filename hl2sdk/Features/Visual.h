@@ -31,7 +31,7 @@ public:
 		DP_Right,
 	};
 
-	int GetTextMaxWidth(const std::string& text);
+	int GetTextMaxWide(const std::string& text);
 	DrawPosition_t GetTextPosition(const std::string& text, const Vector& head);
 
 private:
@@ -44,8 +44,10 @@ private:
 	bool m_bBone = false;
 	bool m_bDrawToLeft = false;
 	bool m_bHeadBox = false;
-
 	bool m_bChams = false;
+
+private:
+	HFont m_hSurfaceFont = 0;
 };
 
 extern CVisualPlayer* g_pVisualPlayer;

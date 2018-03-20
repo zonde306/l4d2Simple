@@ -11,7 +11,7 @@ CNetVars::CNetVars()
 {
 	_tables.clear();
 
-	ClientClass* clientClass = g_pClientInterface->Client->GetAllClasses();
+	ClientClass* clientClass = g_pInterface->Client->GetAllClasses();
 	if (clientClass == nullptr)
 	{
 		Utils::log(XorStr("ERROR: ClientClass was not found"));

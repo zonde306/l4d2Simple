@@ -9,7 +9,7 @@ int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string &
 {
 	auto it = g_mPropOffset.find(prop);
 	if (it == g_mPropOffset.end())
-		g_mPropOffset.emplace(prop, g_pClientInterface->NetProp->GetOffset(table.c_str(), prop.c_str()));
+		g_mPropOffset.emplace(prop, g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str()));
 	else
 		return it->second;
 
@@ -66,40 +66,40 @@ Vector CBaseEntity::GetHitboxOrigin(int hitbox)
 
 	try
 	{
-		if (!SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
+		if (!SetupBones(boneMatrix, 128, 0x00000100, g_pInterface->GlobalVars->curtime))
 		{
 			Utils::log(XorStr("GetHitboxOrigin.SetupBones Failed."));
-			return Vector();
+			return INVALID_VECTOR;
 		}
 
 		if ((model = GetModel()) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.GetModel Failed."));
-			return Vector();
+			return INVALID_VECTOR;
 		}
 
-		if ((hdr = g_pClientInterface->ModelInfo->GetStudiomodel(model)) == nullptr)
+		if ((hdr = g_pInterface->ModelInfo->GetStudiomodel(model)) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.GetStudiomodel Failed."));
-			return Vector();
+			return INVALID_VECTOR;
 		}
 
 		if ((set = hdr->pHitboxSet(0)) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.pHitboxSet Failed."));
-			return Vector();
+			return INVALID_VECTOR;
 		}
 
 		if ((hitboxMat = set->pHitbox(hitbox)) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.pHitbox Failed."));
-			return Vector();
+			return INVALID_VECTOR;
 		}
 	}
 	catch (...)
 	{
 		Utils::log(XorStr("GetHitboxOrigin.Unknown Error."));
-		return Vector();
+		return INVALID_VECTOR;
 	}
 
 	math::VectorTransform(hitboxMat->bbmin, boneMatrix[hitboxMat->bone], min);
@@ -113,16 +113,16 @@ Vector CBaseEntity::GetBoneOrigin(int bone)
 
 	try
 	{
-		if (SetupBones(boneMatrix, 128, 0x00000100, g_pClientInterface->GlobalVars->curtime))
+		if (SetupBones(boneMatrix, 128, 0x00000100, g_pInterface->GlobalVars->curtime))
 			return Vector(boneMatrix[bone][0][3], boneMatrix[bone][1][3], boneMatrix[bone][2][3]);
 	}
 	catch (...)
 	{
 		Utils::log(XorStr("GetBoneOrigin.Unknown Error."));
-		return Vector();
+		return INVALID_VECTOR;
 	}
 
-	return Vector();
+	return INVALID_VECTOR;
 }
 
 Vector& CBaseEntity::GetAbsOrigin()

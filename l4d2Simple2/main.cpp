@@ -66,8 +66,8 @@ DWORD WINAPI StartCheats(LPVOID module)
 	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
 	g_pSpeedModifier->Init();
 
-	g_pClientInterface = std::make_unique<CClientInterface>();
-	g_pClientInterface->Init();
+	g_pInterface = std::make_unique<CClientInterface>();
+	g_pInterface->Init();
 
 	g_pClientHook = std::make_unique<CClientHook>();
 	g_pClientHook->Init();
