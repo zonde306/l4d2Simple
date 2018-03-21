@@ -10,6 +10,7 @@ public:
 	void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
 	virtual void OnMenuDrawing() override;
+	virtual void OnEnginePaint(PaintMode_t mode);
 
 	bool ApplySilentAngles(const QAngle& viewAngles);
 
@@ -27,6 +28,9 @@ private:
 	bool m_bNoVisRecoil = false;
 	bool m_bRapidFire = false;
 
+	bool m_bRecoilCrosshair = false;
+	bool m_bSpreadCrosshair = false;
+
 private:
 	bool m_bHasApplySilent = false;
 	QAngle m_vecSilentAngles;
@@ -36,6 +40,10 @@ private:
 	float m_fSideMove = 0.0f;
 	float m_fForwardMove = 0.0f;
 	float m_fUpMove = 0.0f;
+
+private:
+	Vector m_vecPunch;
+	Vector m_vecSpread;
 
 private:
 	bool m_bRapidIgnore = true;

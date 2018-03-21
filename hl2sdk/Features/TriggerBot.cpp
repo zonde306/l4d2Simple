@@ -110,8 +110,8 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 
 	// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
 	// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
-	g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
-	g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
+	g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
+	g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
 }
 
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)

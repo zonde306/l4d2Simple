@@ -37,6 +37,11 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		*bSendPacket = true;
 	}
 
+	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon->GetSpread());
+	m_vecSpread.x = spread.first;
+	m_vecSpread.y = spread.second;
+	m_vecSpread.z = 0.0f;
+
 	if (m_bNoRecoil)
 		RemoveRecoil(cmd);
 
@@ -58,6 +63,9 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 	if (local == nullptr || !local->IsAlive())
 		return;
 
+	m_vecPunch = local->GetPunch();
+	m_vecPunch.z = 0.0f;
+
 	if (m_bNoVisRecoil)
 		local->GetPunch().SetZero();
 }
@@ -72,7 +80,44 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
 	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);
 
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Recoil Crosshiars"), &m_bRecoilCrosshair);
+	ImGui::Checkbox(XorStr("Spread Crosshiars"), &m_bSpreadCrosshair);
+
 	ImGui::TreePop();
+}
+
+void CViewManager::OnEnginePaint(PaintMode_t mode)
+{
+	if (!m_bRecoilCrosshair && !m_bSpreadCrosshair)
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	bool update = false;
+	width /= 2;
+	height /= 2;
+
+	if (m_bRecoilCrosshair && m_vecPunch.Length2DSqr() != 0.0f)
+	{
+		width += m_vecPunch.x;
+		height += m_vecPunch.y;
+		update = true;
+	}
+
+	if (m_bSpreadCrosshair && m_vecSpread.Length2DSqr() != 0.0f)
+	{
+		width += m_vecSpread.x;
+		height += m_vecSpread.y;
+		update = true;
+	}
+
+	if (!update)
+		return;
+
+	g_pDrawing->DrawLine(width - 9, height, width + 9, height, CDrawing::BLUE);
+	g_pDrawing->DrawLine(width, height - 9, width, height + 9, CDrawing::GREEN);
 }
 
 bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
@@ -122,9 +167,8 @@ void CViewManager::RemoveSpread(CUserCmd * cmd)
 	if (weapon == nullptr/* || !weapon->CanFire()*/)
 		return;
 
-	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon->GetSpread());
-	cmd->viewangles.x -= spread.first;
-	cmd->viewangles.y -= spread.second;
+	cmd->viewangles.x -= m_vecSpread.x;
+	cmd->viewangles.y -= m_vecSpread.y;
 }
 
 void CViewManager::RemoveRecoil(CUserCmd * cmd)
