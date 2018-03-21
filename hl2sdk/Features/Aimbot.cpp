@@ -212,5 +212,5 @@ bool CAimBot::HasValidWeapon(CBaseWeapon * weapon)
 	if (ammoType < AT_Pistol || ammoType > AT_Turret)
 		return false;
 
-	return (weapon->GetPrimary() <= 0.0f);
+	return (weapon->GetPrimaryAttackDelay() <= 0.0f);
 }

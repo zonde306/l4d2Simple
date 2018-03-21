@@ -10,11 +10,13 @@ std::unique_ptr<CSpeedModifier> g_pSpeedModifier;
 // http://blog.csdn.net/Anton8801/article/details/78726786
 static DWORD WINAPI Hooked_GetTickCount()
 {
-	static DWORD iLastFakeTick = 0;
-	static DWORD iLastRealTick = 0;
+	DWORD nowTick = reinterpret_cast<FnGetTickCount>(g_pSpeedModifier->m_pGetTickCount->trampoline)();
+	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
+		return nowTick;
 
 	DWORD result = 0;
-	DWORD nowTick = reinterpret_cast<FnGetTickCount>(g_pSpeedModifier->m_pGetTickCount->trampoline)();
+	static DWORD iLastFakeTick = 0;
+	static DWORD iLastRealTick = 0;
 
 	if (iLastRealTick == 0)
 	{
@@ -32,11 +34,13 @@ static DWORD WINAPI Hooked_GetTickCount()
 
 static ULONGLONG WINAPI Hooked_GetTickCount64()
 {
-	static ULONGLONG iLastFakeTick = 0;
-	static ULONGLONG iLastRealTick = 0;
+	ULONGLONG nowTick = reinterpret_cast<FnGetTickCount64>(g_pSpeedModifier->m_pGetTickCount64->trampoline)();
+	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
+		return nowTick;
 
 	ULONGLONG result = 0;
-	ULONGLONG nowTick = reinterpret_cast<FnGetTickCount64>(g_pSpeedModifier->m_pGetTickCount64->trampoline)();
+	static ULONGLONG iLastFakeTick = 0;
+	static ULONGLONG iLastRealTick = 0;
 
 	if (iLastRealTick == 0)
 	{
@@ -54,11 +58,13 @@ static ULONGLONG WINAPI Hooked_GetTickCount64()
 
 static DWORD WINAPI Hooked_TimeGetTime()
 {
-	static DWORD iLastFakeTick = 0;
-	static DWORD iLastRealTick = 0;
+	DWORD nowTick = reinterpret_cast<FnTimeGetTime>(g_pSpeedModifier->m_pTimeGetTime->trampoline)();
+	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
+		return nowTick;
 
 	DWORD result = 0;
-	DWORD nowTick = reinterpret_cast<FnTimeGetTime>(g_pSpeedModifier->m_pTimeGetTime->trampoline)();
+	static DWORD iLastFakeTick = 0;
+	static DWORD iLastRealTick = 0;
 
 	if (iLastRealTick == 0)
 	{
@@ -78,6 +84,9 @@ static BOOL WINAPI Hooked_QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCo
 {
 	if (!reinterpret_cast<FnQueryPerformanceCounter>(g_pSpeedModifier->m_pQueryPerformanceCounter->trampoline)(lpPerformanceCount))
 		return FALSE;
+
+	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
+		return TRUE;
 
 	static LARGE_INTEGER iLastFakeTick = { 0 };
 	static LARGE_INTEGER iLastRealTick = { 0 };

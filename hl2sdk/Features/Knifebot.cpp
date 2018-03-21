@@ -35,7 +35,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 		return;
 	
 	int weaponId = weapon->GetWeaponID();
-	float nextAttack = weapon->GetNextPrimary();
+	float nextAttack = weapon->GetNextPrimaryAttack();
 	float serverTime = g_pClientPrediction->GetServerTime();
 
 	if (m_bFastMelee)
@@ -57,7 +57,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack)
 	{
-		nextAttack = weapon->GetSecondry();
+		nextAttack = weapon->GetSecondryAttackDelay();
 		if (nextAttack <= serverTime)
 		{
 			cmd->buttons |= IN_ATTACK2;

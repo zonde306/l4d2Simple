@@ -100,6 +100,7 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 {
 	if (!origin.IsValid())
 		return false;
+
 	int m_iWidth, m_iHeight;
 	g_pInterface->Engine->GetScreenSize(m_iWidth, m_iHeight);
 
@@ -127,6 +128,7 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 
 		return true;
 	}
+	
 	return false;
 }
 

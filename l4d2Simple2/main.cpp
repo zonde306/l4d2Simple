@@ -21,14 +21,27 @@ DWORD WINAPI StartCheats(LPVOID);
 void CreateDebugConsole();
 HWND CheckTopWindow();
 
+HANDLE g_hStartThread = NULL;
+
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(module);
-		// HideDll(module);
 
-		CreateThread(NULL, NULL, StartCheats, module, NULL, NULL);
+		/*
+#ifndef _DEBUG
+		HideDll(module);
+#endif
+		*/
+
+		g_hStartThread = CreateThread(NULL, NULL, StartCheats, module, NULL, NULL);
+
+		/*
+#ifndef _DEBUG
+		HideThread(g_hStartThread);
+#endif
+		*/
 	}
 	else if (reason == DLL_PROCESS_DETACH)
 	{
@@ -77,6 +90,9 @@ DWORD WINAPI StartCheats(LPVOID module)
 
 	g_pBaseMenu = std::make_unique<CBaseMenu>();
 	g_pBaseMenu->Init();
+
+	CloseHandle(g_hStartThread);
+	g_hStartThread = NULL;
 
 	return EXIT_SUCCESS;
 }

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <vector>
 #include "peb.h"
+#include "xorstr.h"
 
 /********************************************************************************************\
   TEB Structs
@@ -556,7 +557,7 @@ bool HideThread(HANDLE hThread)
 	typedef NTSTATUS(NTAPI *pNtSetInformationThread)(HANDLE, UINT, PVOID, ULONG);
 	NTSTATUS Status;
 
-	pNtSetInformationThread NtSIT = (pNtSetInformationThread)GetProcAddress(GetModuleHandle(TEXT("ntdll.dll")), "NtSetInformationThread");
+	pNtSetInformationThread NtSIT = (pNtSetInformationThread)GetProcAddress(GetModuleHandleA(XorStr("ntdll.dll")), XorStr("NtSetInformationThread"));
 
 	if (NtSIT == NULL)
 	{

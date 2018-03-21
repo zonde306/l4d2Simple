@@ -187,9 +187,9 @@ void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* 
 	if (!(cmd->buttons & IN_ATTACK))
 		return;
 
-	int classId = weapon->GetClassID();
-	if ((local->GetTeam() == 3 || IsSingleWeapon(classId)) &&
-		!m_bRapidIgnore && weapon->GetPrimary() <= 0.0f)
+	int weaponId = weapon->GetWeaponID();
+	if ((local->GetTeam() == 3 || IsSingleWeapon(weaponId)) &&
+		!m_bRapidIgnore && weapon->GetPrimaryAttackDelay() <= 0.0f)
 	{
 		cmd->buttons &= ~IN_ATTACK;
 		m_bRapidIgnore = true;

@@ -114,29 +114,29 @@ int CBaseWeapon::GetAmmo()
 	return player->GetAmmo(GetAmmoType());
 }
 
-float CBaseWeapon::GetNextPrimary()
+float CBaseWeapon::GetNextPrimaryAttack()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_flNextPrimaryAttack"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(float);
 }
 
-float CBaseWeapon::GetPrimary()
+float CBaseWeapon::GetPrimaryAttackDelay()
 {
-	float interval = GetNextPrimary() - g_pClientPrediction->GetServerTime();
+	float interval = GetNextPrimaryAttack() - g_pClientPrediction->GetServerTime();
 	return max(interval, 0.0f);
 }
 
-float CBaseWeapon::GetNextSecondry()
+float CBaseWeapon::GetNextSecondryAttack()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BaseCombatWeapon"), XorStr("m_flNextSecondaryAttack"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(float);
 }
 
-float CBaseWeapon::GetSecondry()
+float CBaseWeapon::GetSecondryAttackDelay()
 {
-	float interval = GetNextSecondry() - g_pClientPrediction->GetServerTime();
+	float interval = GetNextSecondryAttack() - g_pClientPrediction->GetServerTime();
 	return max(interval, 0.0f);
 }
 
@@ -146,5 +146,5 @@ bool CBaseWeapon::CanFire()
 	if (GetClip() == 0)
 		return false;
 
-	return (GetPrimary() <= 0.0f);
+	return (GetPrimaryAttackDelay() <= 0.0f);
 }

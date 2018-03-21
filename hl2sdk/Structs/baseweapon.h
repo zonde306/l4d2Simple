@@ -54,12 +54,12 @@ public:
 	int GetAmmo();
 
 	// 下一次可以开枪的时间
-	float GetNextPrimary();
-	float GetPrimary();
+	float GetNextPrimaryAttack();
+	float GetPrimaryAttackDelay();
 
 	// 下一次可以推的时间
-	float GetNextSecondry();
-	float GetSecondry();
+	float GetNextSecondryAttack();
+	float GetSecondryAttackDelay();
 
 	// 现在是否可以开枪
 	bool CanFire();

@@ -55,6 +55,7 @@ private:
 
 struct model_t
 {
+	DWORD		unknown;
 	char        name[255];
 };
 

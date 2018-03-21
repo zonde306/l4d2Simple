@@ -249,7 +249,7 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
 		mstudiobone_t* bone = hdr->pBone(i);
-		if (bone == nullptr || !(bone->flags & 0x100) || bone->parent == -1)
+		if (bone == nullptr || !(bone->flags & 0x100) || bone->parent < 0 || bone->parent > hdr->numbones)
 			continue;
 
 		child = entity->GetBoneOrigin(i);
@@ -478,22 +478,47 @@ std::string CVisualPlayer::DrawCharacter(CBasePlayer * entity, bool separator)
 	case ET_CTERRORPLAYER:
 		// const char* models = entity->GetNetProp<const char*>(XorStr("DT_BasePlayer"), XorStr("m_ModelName"));
 		const model_t* models = entity->GetModel();
-		if (_stricmp(models->name, XorStr("models/survivors/survivor_gambler.mdl")))
+		if (models->name[0] != 'm' || models->name[7] != 's' || models->name[17] != 's')
+			break;
+
+		if(models->name[26] == 'g')				// models/survivors/survivor_gambler.mdl
+			buffer = XorStr("Nick");		// 西装
+		else if(models->name[26] == 'p')		// models/survivors/survivor_producer.mdl
+			buffer = XorStr("Rochelle");	// 黑妹
+		else if (models->name[26] == 'c')		// models/survivors/survivor_coach.mdl
+			buffer = XorStr("Coach");		// 黑胖
+		else if (models->name[26] == 'n')		// models/survivors/survivor_namvet.mdl
+			buffer = XorStr("Bill");		// 老头
+		else if (models->name[26] == 't')		// models/survivors/survivor_teenangst.mdl
+			buffer = XorStr("Zoey");		// 萌妹
+		else if (models->name[26] == 'b')		// models/survivors/survivor_biker.mdl
+			buffer = XorStr("Francis");		// 背心
+		else if (models->name[26] == 'm')
+		{
+			if (models->name[27] == 'e')		// models/survivors/survivor_mechanic.mdl
+				buffer = XorStr("Ellis");	// 帽子
+			else if (models->name[27] == 'a')	// models/survivors/survivor_manager.mdl
+				buffer = XorStr("Louis");	// 光头
+		}
+
+		/*
+		if (!_stricmp(models->name, XorStr("models/survivors/survivor_gambler.mdl")))
 			buffer = XorStr("Nick");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_producer.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_producer.mdl")))
 			buffer = XorStr("Rochelle");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_coach.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_coach.mdl")))
 			buffer = XorStr("Coach");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_mechanic.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_mechanic.mdl")))
 			buffer = XorStr("Ellis");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_namvet.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_namvet.mdl")))
 			buffer = XorStr("Bill");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_namvet.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_teenangst.mdl")))
 			buffer = XorStr("Zoey");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_biker.mdl")))
-			buffer = XorStr("Francis");
-		else if (_stricmp(models->name, XorStr("models/survivors/survivor_manager.mdl")))
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_manager.mdl")))
 			buffer = XorStr("Louis");
+		else if (!_stricmp(models->name, XorStr("models/survivors/survivor_biker.mdl")))
+			buffer = XorStr("Francis");
+		*/
 		break;
 	}
 
