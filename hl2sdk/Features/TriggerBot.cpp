@@ -139,7 +139,7 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 		return nullptr;
 	}
 
-	if (!IsValidTarget(reinterpret_cast<CBasePlayer*>(trace.m_pEnt)))
+	if (trace.m_pEnt == player || !IsValidTarget(reinterpret_cast<CBasePlayer*>(trace.m_pEnt)))
 	{
 		m_pAimTarget = nullptr;
 		return nullptr;

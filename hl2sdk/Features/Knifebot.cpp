@@ -186,7 +186,7 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 	auto _CheckEntity = [&](int index) -> bool
 	{
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
-		if (player == nullptr || !player->IsAlive())
+		if (player == nullptr || player == local || !player->IsAlive())
 			return false;
 
 		Vector aimPosition = player->GetHeadOrigin();

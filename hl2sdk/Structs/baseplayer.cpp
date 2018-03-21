@@ -201,7 +201,7 @@ bool CBasePlayer::IsAlive()
 		return false;
 	
 	static int lifeOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_lifeState"));
-	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags")) + GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_Local"));
+	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
 	static int sequenceOffset = GetNetPropOffset(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
 	static int burnOffset = GetNetPropOffset(XorStr("DT_Infected"), XorStr("m_bIsBurning"));
 	Assert_NetProp(lifeOffset);
@@ -312,13 +312,13 @@ std::string CBasePlayer::GetName()
 
 std::pair<Vector, Vector> CBasePlayer::GetBoundingBox()
 {
-	static int collOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_Collision"));
+	// static int collOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_Collision"));
 	static int minOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecMins"));
 	static int maxOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecMaxs"));
 	
 	Vector origin = GetAbsOrigin();
-	return std::make_pair(origin + DECL_NETPROP_GET_EX(collOffset + minOffset, Vector),
-		origin + DECL_NETPROP_GET_EX(collOffset + maxOffset, Vector));
+	return std::make_pair(origin + DECL_NETPROP_GET_EX(minOffset, Vector),
+		origin + DECL_NETPROP_GET_EX(maxOffset, Vector));
 }
 
 bool CBasePlayer::IsIncapacitated()

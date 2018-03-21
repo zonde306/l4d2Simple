@@ -338,11 +338,14 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 		}
 	}
 
-	if (panel == FocusOverlayPanel || panel == MatSystemTopPanel)
+	if (panel == FocusOverlayPanel)
 	{
 		// 在这里获取不会出错
 		g_pWorldToScreenMatrix = &g_pInterface->Engine->WorldToScreenMatrix();
-		
+	}
+
+	if (panel == FocusOverlayPanel || panel == MatSystemTopPanel)
+	{
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnPaintTraverse(panel);
 
@@ -877,7 +880,7 @@ int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, Butto
 
 void CClientPrediction::Init()
 {
-	m_pRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x1A);
+	m_pRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x7);
 }
 
 bool CClientPrediction::StartPrediction(CUserCmd* cmd)
@@ -943,7 +946,7 @@ bool CClientPrediction::FinishPrediction()
 
 	// 修复预测后产生的错误
 	player->GetFlags() = m_iFlags;
-	player->GetNetPropLocal<int>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
+	player->GetNetProp<WORD>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;

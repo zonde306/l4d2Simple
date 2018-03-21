@@ -37,6 +37,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	ss.setf(std::ios::fixed);
 	ss.precision(0);
 
+	std::string temp;
 	int team = local->GetTeam();
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 
@@ -55,71 +56,58 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		if (entity == nullptr || !entity->IsAlive())
 			continue;
 
-		Vector top, botton, head;
-		auto boundingBox = entity->GetBoundingBox();
+		if (entity == local)
+		{
+			m_iLocalPlayer = i;
+			continue;
+		}
+
+		Vector eye, foot, head;
+		Vector eyeOrigin = entity->GetEyePosition();
+		Vector footOrigin = entity->GetAbsOrigin();
 		Vector headOrigin = entity->GetHeadOrigin();
 
-		if (!math::WorldToScreen(boundingBox.first, botton) ||
-			!math::WorldToScreen(boundingBox.second, top) ||
+		if (!math::WorldToScreen(footOrigin, foot) ||
+			!math::WorldToScreen(eyeOrigin, eye) ||
 			!math::WorldToScreen(headOrigin, head))
 			continue;
 
 		ss.str("");
+
+		// 是否为队友
 		bool friendly = (team == entity->GetTeam());
 
+		// 方框的大小
+		float height = fabs(head.y - foot.y);
+		float width = height * 0.65f;
+
 		if (m_bBox)
-			DrawBox(friendly, top, botton);
+			DrawBox(friendly, Vector(foot.x - width / 2, foot.y), Vector(width, -height));
 		if (m_bBone)
 			DrawBone(entity, friendly);
 		if (m_bHeadBox)
 			DrawHeadBox(entity, head);
 
 		if (m_bHealth)
-			ss << DrawHealth(entity, ss.str().empty());
+			ss << DrawHealth(entity);
 		if (m_bName)
-			ss << DrawName(i, ss.str().empty());
+			ss << DrawName(i);
 		if (m_bCharacter)
-			ss << DrawCharacter(entity, ss.str().empty());
+			ss << DrawCharacter(entity);
+
+		if (!ss.str().empty())
+			ss << "\n";
+
 		if (m_bWeapon)
-			ss << DrawWeapon(entity, ss.str().empty());
+			ss << DrawWeapon(entity);
 		if (m_bDistance)
-			ss << DrawDistance(entity, local, ss.str().empty());
+			ss << DrawDistance(entity, local);
 
 		if (ss.str().empty())
 			continue;
 
-		/*
-		std::wstring sw = Utils::c2w(ss.str());
-		if (GetTextPosition(ss.str(), top) == DP_Left)
-		{
-			// int pixels = GetTextMaxWide(ss.str()) * g_pDrawing->m_iFontSize;
-			// g_pDrawing->DrawText(head.x - pixels, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
-			//	false, ss.str().c_str());
-
-			int wide = 0, tall = 0;
-			g_pInterface->Surface->GetTextSize(m_hSurfaceFont, sw.c_str(), wide, tall);
-			g_pInterface->Surface->DrawSetTextPos(head.x - wide, head.y);
-		}
-		else
-		{
-			// g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
-			//	false, ss.str().c_str());
-
-			g_pInterface->Surface->DrawSetTextPos(head.x, head.y);
-		}
-
-		g_pInterface->Surface->DrawSetTextFont(m_hSurfaceFont);
-		
-		if (friendly)
-			g_pInterface->Surface->DrawSetTextColor(0, 255, 255, 255);
-		else
-			g_pInterface->Surface->DrawSetTextColor(255, 0, 0, 255);
-
-		g_pInterface->Surface->DrawPrintText(sw.c_str(), sw.length());
-		*/
-
-		g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
-			true, ss.str().c_str());
+		GetTextPosition(ss.str(), eye);
+		g_pDrawing->DrawText(eye.x, eye.y, GetDrawColor(entity, team), true, ss.str().c_str());
 	}
 }
 
@@ -221,12 +209,14 @@ void CVisualPlayer::DrawBox(bool friendly, const Vector & head, const Vector & f
 	if (friendly)
 	{
 		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
-		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
+		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::SKYBLUE);
+		// g_pDrawing->DrawRect(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
 	}
 	else
 	{
 		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
-		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
+		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::RED);
+		// g_pDrawing->DrawRect(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
 	}
 
 	// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, foot.x, foot.y);
@@ -303,12 +293,12 @@ void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
 
 	if (visible)
 	{
-		g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
+		g_pDrawing->DrawCircleFilled(head.x, head.y, 5, color, 8);
 		// g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 	else
 	{
-		g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
+		g_pDrawing->DrawCircle(head.x, head.y, 5, color, 8);
 		// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 }
@@ -325,27 +315,71 @@ int CVisualPlayer::GetTextMaxWide(const std::string & text)
 	return static_cast<int>(width);
 }
 
-typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std::string & text, const Vector & head)
+typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std::string & text, Vector & head)
 {
 	int width = 0, height = 0;
 	g_pInterface->Engine->GetScreenSize(width, height);
 
-	int wide = GetTextMaxWide(text) * g_pDrawing->m_iFontSize;
+	// int wide = GetTextMaxWide(text) * g_pDrawing->m_iFontSize;
 	// int wide = 0, tall = 0;
 	// g_pInterface->Surface->GetTextSize(m_hSurfaceFont, Utils::c2w(text).c_str(), wide, tall);
+	auto fontSize = g_pDrawing->GetDrawTextSize(text.c_str());
+
+	DrawPosition_t result = DP_Anywhere;
 
 	if (m_bDrawToLeft)
 	{
-		if ((head.x - wide) < 0)
-			return DP_Right;
-
-		return DP_Left;
+		if ((head.x - fontSize.first) < 0)
+			result = DP_Right;
+		else
+			result = DP_Left;
+	}
+	else
+	{
+		if ((head.x + fontSize.first) > width)
+			result = DP_Left;
+		else
+			result = DP_Right;
 	}
 
-	if ((head.x + wide) > width)
-		return DP_Left;
+	/*
+	if ((head.y + fontSize.second) > height)
+		result |= DP_Top;
+	else
+		result |= DP_Bottom;
+	*/
 
-	return DP_Right;
+	if (result & DP_Left)
+		head.x -= fontSize.first;
+	else if (result & DP_Right)
+		head.x += fontSize.first / 2;
+
+	if (result & DP_Top)
+		head.y -= fontSize.second;
+	else if (result & DP_Bottom)
+		head.y += fontSize.second / 2;
+
+	return result;
+}
+
+D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity, int team)
+{
+	if (entity == nullptr || !entity->IsAlive())
+		return CDrawing::WHITE;
+
+	int classId = entity->GetClassID();
+	if (IsSurvivor(classId))
+		return CDrawing::SKYBLUE;
+	else if (classId == ET_TANK)
+		return CDrawing::YELLOW;
+	else if (IsSpecialInfected(classId))
+		return CDrawing::RED;
+	else if (classId == ET_WITCH)
+		return CDrawing::PINK;
+	else if (classId == ET_INFECTED)
+		return CDrawing::GREEN;
+
+	return CDrawing::GRAY;
 }
 
 std::string CVisualPlayer::DrawName(int index, bool separator)
@@ -357,7 +391,7 @@ std::string CVisualPlayer::DrawName(int index, bool separator)
 	if (separator)
 		return std::string("\n") + info.name;
 
-	return info.name;
+	return info.name + std::string(" ");
 }
 
 std::string CVisualPlayer::DrawHealth(CBasePlayer * entity, bool separator)
@@ -387,9 +421,9 @@ std::string CVisualPlayer::DrawWeapon(CBasePlayer * entity, bool separator)
 	char buffer[64];
 	const char* weaponName = weapon->GetWeaponName();
 	if (weapon->IsReloading())
-		sprintf_s(buffer, "%s %s", weaponName, XorStr("(reloading)"));
+		sprintf_s(buffer, "%s %s ", weaponName, XorStr("(reloading)"));
 	else
-		sprintf_s(buffer, "%s (%d/%d)", weaponName, weapon->GetClip(), weapon->GetAmmo());
+		sprintf_s(buffer, "%s (%d/%d) ", weaponName, weapon->GetClip(), weapon->GetAmmo());
 
 	if (separator)
 		return std::string("\n") + buffer;
@@ -442,22 +476,23 @@ std::string CVisualPlayer::DrawCharacter(CBasePlayer * entity, bool separator)
 		break;
 	case ET_SURVIVORBOT:
 	case ET_CTERRORPLAYER:
-		const char* models = entity->GetNetProp<const char*>(XorStr("DT_BasePlayer"), XorStr("m_ModelName"));
-		if (_stricmp(models, XorStr("models/survivors/survivor_gambler.mdl")))
+		// const char* models = entity->GetNetProp<const char*>(XorStr("DT_BasePlayer"), XorStr("m_ModelName"));
+		const model_t* models = entity->GetModel();
+		if (_stricmp(models->name, XorStr("models/survivors/survivor_gambler.mdl")))
 			buffer = XorStr("Nick");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_producer.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_producer.mdl")))
 			buffer = XorStr("Rochelle");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_coach.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_coach.mdl")))
 			buffer = XorStr("Coach");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_mechanic.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_mechanic.mdl")))
 			buffer = XorStr("Ellis");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_namvet.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_namvet.mdl")))
 			buffer = XorStr("Bill");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_namvet.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_namvet.mdl")))
 			buffer = XorStr("Zoey");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_biker.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_biker.mdl")))
 			buffer = XorStr("Francis");
-		else if (_stricmp(models, XorStr("models/survivors/survivor_manager.mdl")))
+		else if (_stricmp(models->name, XorStr("models/survivors/survivor_manager.mdl")))
 			buffer = XorStr("Louis");
 		break;
 	}
@@ -468,5 +503,5 @@ std::string CVisualPlayer::DrawCharacter(CBasePlayer * entity, bool separator)
 			buffer = "\n" + buffer;
 	}
 
-	return "";
+	return " (" + buffer + ")";
 }

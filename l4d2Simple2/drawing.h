@@ -114,6 +114,9 @@ public:	// 使用 ImGui 的绘制函数
 	// 绘制文本
 	void DrawText(int x, int y, D3DCOLOR color, bool centered, const char* text, ...);
 
+	// 获取需要绘制的文本的大小
+	std::pair<int, int> GetDrawTextSize(const char* text, ...);
+
 protected:
 	struct D3DVertex
 	{

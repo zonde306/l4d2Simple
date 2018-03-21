@@ -1,4 +1,6 @@
 #pragma once
+#include <d3d9.h>
+#include <d3dx9.h>
 #include "../Interfaces/IVModelInfo.h"
 #include "../../l4d2Simple2/vector.h"
 #include "../Structs/matrix.h"
@@ -10,9 +12,11 @@ namespace math
 	QAngle CalculateAim(const Vector &origin, const Vector &target);
 	float GetAnglesFieldOfView(const QAngle& myAngles, const QAngle& aimAngles);
 	float GetVectorDistance(const Vector& origin1, const Vector& origin2, bool squared = false);
+
 	bool WorldToScreen(const Vector& origin, Vector& screen);
 	bool WorldToScreenEx(const Vector& origin, Vector& screen);
 	bool ScreenTransform(const Vector& origin, Vector& screen);
+	bool WorldToScreen(const D3DXVECTOR3& origin, D3DXVECTOR3& screen);
 
 	void CorrectMovement(Vector vOldAngles, CUserCmd* pCmd, Vector Viewangs);
 	void CorrectMovement(const QAngle& vOldAngles, CUserCmd* pCmd, float fOldForward, float fOldSidemove);

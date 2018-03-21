@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../Interfaces/IClientEntity.h"
 #include "../definitions.h"
 #include "netprop.h"
@@ -43,9 +43,13 @@ public:	// NetProp
 	template<typename T, typename... P>
 	T& GetNetPropEx(const std::string& table, const std::string& prop, size_t element, const P& ...more);
 
+	// 没有用的，不需要使用
+	// 像是 m_Local 这种二次偏移已经不需要了
 	template<typename T>
 	T& GetNetPropLocal(const std::string& table, const std::string& prop, size_t element = 0);
 
+	// 没有用的，不需要使用
+	// 像是 m_Collision 这种二次偏移已经不需要了
 	template<typename T>
 	T& GetNetPropCollision(const std::string& table, const std::string& prop, size_t element = 0);
 

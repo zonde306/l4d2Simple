@@ -88,7 +88,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 	auto _CheckTarget = [&](int index) -> bool
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
-		if (!IsValidTarget(entity))
+		if (entity == local || !IsValidTarget(entity))
 			return false;
 
 		Vector aimPosition = entity->GetHeadOrigin();

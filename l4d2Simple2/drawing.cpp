@@ -1059,3 +1059,18 @@ void CDrawing::DrawText(int x, int y, D3DCOLOR color, bool centered, const char 
 
 	UNLOCK_PRESENT();
 }
+
+std::pair<int, int> CDrawing::GetDrawTextSize(const char * text, ...)
+{
+	va_list ap;
+	va_start(ap, text);
+
+	char buffer[1024];
+	vsprintf_s(buffer, text, ap);
+
+	va_end(ap);
+
+	ImFont* font = m_imFonts.Fonts[0];
+	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, buffer);
+	return std::make_pair(textSize.x, textSize.y);
+}
