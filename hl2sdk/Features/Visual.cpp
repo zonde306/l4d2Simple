@@ -40,12 +40,14 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	int team = local->GetTeam();
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 
+	/*
 	if (m_hSurfaceFont == 0)
 	{
 		m_hSurfaceFont = g_pInterface->Surface->CreateFont();
 		g_pInterface->Surface->SetFontGlyphSet(m_hSurfaceFont, XorStr("Tahoma"),
 			g_pDrawing->m_iFontSize, FW_DONTCARE, 0, 0, 0x200);
 	}
+	*/
 
 	for (int i = 1; i <= maxEntity; ++i)
 	{
@@ -86,14 +88,13 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		if (ss.str().empty())
 			continue;
 
+		/*
 		std::wstring sw = Utils::c2w(ss.str());
 		if (GetTextPosition(ss.str(), top) == DP_Left)
 		{
-			/*
-			int pixels = GetTextMaxWide(ss.str()) * g_pDrawing->m_iFontSize;
-			g_pDrawing->DrawText(head.x - pixels, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
-				false, ss.str().c_str());
-			*/
+			// int pixels = GetTextMaxWide(ss.str()) * g_pDrawing->m_iFontSize;
+			// g_pDrawing->DrawText(head.x - pixels, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
+			//	false, ss.str().c_str());
 
 			int wide = 0, tall = 0;
 			g_pInterface->Surface->GetTextSize(m_hSurfaceFont, sw.c_str(), wide, tall);
@@ -101,10 +102,8 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		}
 		else
 		{
-			/*
-			g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
-				false, ss.str().c_str());
-			*/
+			// g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
+			//	false, ss.str().c_str());
 
 			g_pInterface->Surface->DrawSetTextPos(head.x, head.y);
 		}
@@ -117,6 +116,10 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 			g_pInterface->Surface->DrawSetTextColor(255, 0, 0, 255);
 
 		g_pInterface->Surface->DrawPrintText(sw.c_str(), sw.length());
+		*/
+
+		g_pDrawing->DrawText(head.x, head.y, (friendly ? CDrawing::SKYBLUE : CDrawing::RED),
+			true, ss.str().c_str());
 	}
 }
 
@@ -217,16 +220,16 @@ void CVisualPlayer::DrawBox(bool friendly, const Vector & head, const Vector & f
 {
 	if (friendly)
 	{
-		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
-		// g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
+		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
 	}
 	else
 	{
-		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
-		// g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
+		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		g_pDrawing->DrawCorner(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
 	}
 
-	g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, foot.x, foot.y);
+	// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, foot.x, foot.y);
 }
 
 void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
@@ -240,13 +243,18 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 		return;
 
 	Vector parent, child, screenParent, screenChild;
+	D3DCOLOR color = CDrawing::WHITE;
 
 	if (friendly)
-		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+	{
+		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+		color = CDrawing::SKYBLUE;
+	}
 	else
-		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
-
-	// D3DCOLOR color = (friendly ? CDrawing::SKYBLUE : CDrawing::RED);
+	{
+		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		color = CDrawing::RED;
+	}
 
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
@@ -261,47 +269,47 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 			!math::WorldToScreen(child, screenChild))
 			continue;
 
-		// g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
-		g_pInterface->Surface->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y);
+		g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
+		// g_pInterface->Surface->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y);
 	}
 }
 
 void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
 {
 	int classId = entity->GetClassID();
-	// D3DCOLOR color = CDrawing::WHITE;
+	D3DCOLOR color = CDrawing::WHITE;
 	bool visible = HasTargetVisible(entity);
 
 	if (IsSurvivor(classId))
 	{
-		// color = CDrawing::SKYBLUE;
-		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+		color = CDrawing::SKYBLUE;
+		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
 	}
 	else if (IsSpecialInfected(classId))
 	{
-		// color = CDrawing::RED;
-		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		color = CDrawing::RED;
+		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
 	}
 	else if (classId == ET_WITCH)
 	{
-		// color = CDrawing::PINK;
-		g_pInterface->Surface->DrawSetColor(255, 128, 255, 255);
+		color = CDrawing::PINK;
+		// g_pInterface->Surface->DrawSetColor(255, 128, 255, 255);
 	}
 	else if (classId == ET_INFECTED)
 	{
-		// color = CDrawing::ORANGE;
-		g_pInterface->Surface->DrawSetColor(255, 128, 0, 255);
+		color = CDrawing::ORANGE;
+		// g_pInterface->Surface->DrawSetColor(255, 128, 0, 255);
 	}
 
 	if (visible)
 	{
-		// g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
-		g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
+		g_pDrawing->DrawCircleFilled(head.x, head.y, 3, color, 8);
+		// g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 	else
 	{
-		// g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
-		g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
+		g_pDrawing->DrawCircle(head.x, head.y, 3, color, 8);
+		// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 }
 
@@ -322,9 +330,9 @@ typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std:
 	int width = 0, height = 0;
 	g_pInterface->Engine->GetScreenSize(width, height);
 
-	// int width = GetTextMaxWide(text) * g_pDrawing->m_iFontSize;
-	int wide = 0, tall = 0;
-	g_pInterface->Surface->GetTextSize(m_hSurfaceFont, Utils::c2w(text).c_str(), wide, tall);
+	int wide = GetTextMaxWide(text) * g_pDrawing->m_iFontSize;
+	// int wide = 0, tall = 0;
+	// g_pInterface->Surface->GetTextSize(m_hSurfaceFont, Utils::c2w(text).c_str(), wide, tall);
 
 	if (m_bDrawToLeft)
 	{

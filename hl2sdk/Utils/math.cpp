@@ -31,6 +31,8 @@ enum
 	ROLL		// fall over
 };
 
+const VMatrix* g_pWorldToScreenMatrix = nullptr;
+
 // Math routines done in optimized assembly math package routines
 void inline SinCos(float radians, float *sine, float *cosine)
 {
@@ -100,10 +102,9 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 	
 	int width = 0, height = 0;
 	g_pInterface->Engine->GetScreenSize(width, height);
-	const VMatrix& w2sMatrix = g_pInterface->Engine->WorldToScreenMatrix();
-
-	float w = w2sMatrix[3][0] * origin[0] + w2sMatrix[3][1] * origin[1] +
-		w2sMatrix[3][2] * origin[2] + w2sMatrix[3][3];
+	
+	float w = (*g_pWorldToScreenMatrix)[3][0] * origin[0] + (*g_pWorldToScreenMatrix)[3][1] * origin[1] +
+		(*g_pWorldToScreenMatrix)[3][2] * origin[2] + (*g_pWorldToScreenMatrix)[3][3];
 
 	screen.z = 0.0f;
 
@@ -111,13 +112,13 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 	{
 		float w1 = 1 / w;
 
-		screen.x = width / 2 + (0.5f * ((w2sMatrix[0][0] * origin[0] +
-			w2sMatrix[0][1] * origin[1] + w2sMatrix[0][2] * origin[2] +
-			w2sMatrix[0][3]) * w1) * width + 0.5);
+		screen.x = width / 2 + (0.5f * (((*g_pWorldToScreenMatrix)[0][0] * origin[0] +
+			(*g_pWorldToScreenMatrix)[0][1] * origin[1] + (*g_pWorldToScreenMatrix)[0][2] * origin[2] +
+			(*g_pWorldToScreenMatrix)[0][3]) * w1) * width + 0.5);
 
-		screen.y = height / 2 - (0.5f * ((w2sMatrix[1][0] * origin[0] +
-			w2sMatrix[1][1] * origin[1] + w2sMatrix[1][2] * origin[2] +
-			w2sMatrix[1][3]) * w1) * height + 0.5);
+		screen.y = height / 2 - (0.5f * (((*g_pWorldToScreenMatrix)[1][0] * origin[0] +
+			(*g_pWorldToScreenMatrix)[1][1] * origin[1] + (*g_pWorldToScreenMatrix)[1][2] * origin[2] +
+			(*g_pWorldToScreenMatrix)[1][3]) * w1) * height + 0.5);
 
 		return true;
 	}
@@ -162,16 +163,14 @@ bool math::WorldToScreenEx(const Vector & origin, Vector & screen)
 
 bool math::ScreenTransform(const Vector & origin, Vector & screen)
 {
-	const VMatrix& w2sMatrix = g_pInterface->Engine->WorldToScreenMatrix();
+	screen.x = (*g_pWorldToScreenMatrix)[0][0] * origin[0] + (*g_pWorldToScreenMatrix)[0][1] *
+		origin[1] + (*g_pWorldToScreenMatrix)[0][2] * origin[2] + (*g_pWorldToScreenMatrix)[0][3];
 
-	screen.x = w2sMatrix[0][0] * origin[0] + w2sMatrix[0][1] *
-		origin[1] + w2sMatrix[0][2] * origin[2] + w2sMatrix[0][3];
+	screen.y = (*g_pWorldToScreenMatrix)[1][0] * origin[0] + (*g_pWorldToScreenMatrix)[1][1] *
+		origin[1] + (*g_pWorldToScreenMatrix)[1][2] * origin[2] + (*g_pWorldToScreenMatrix)[1][3];
 
-	screen.y = w2sMatrix[1][0] * origin[0] + w2sMatrix[1][1] *
-		origin[1] + w2sMatrix[1][2] * origin[2] + w2sMatrix[1][3];
-
-	float w = w2sMatrix[3][0] * origin[0] + w2sMatrix[3][1] *
-		origin[1] + w2sMatrix[3][2] * origin[2] + w2sMatrix[3][3];
+	float w = (*g_pWorldToScreenMatrix)[3][0] * origin[0] + (*g_pWorldToScreenMatrix)[3][1] *
+		origin[1] + (*g_pWorldToScreenMatrix)[3][2] * origin[2] + (*g_pWorldToScreenMatrix)[3][3];
 
 	screen.z = 0.0f;
 	bool behind = false;

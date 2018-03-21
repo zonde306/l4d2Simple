@@ -81,7 +81,7 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 	if (!m_bCrosshairs)
 		return;
 
-	// D3DCOLOR color = CDrawing::WHITE;
+	D3DCOLOR color = CDrawing::WHITE;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr)
@@ -89,26 +89,29 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 
 	if (m_pAimTarget == nullptr)
 	{
-		// color = CDrawing::LAWNGREEN;
-		g_pInterface->Surface->DrawSetColor(128, 255, 0, 255);
+		color = CDrawing::LAWNGREEN;
+		// g_pInterface->Surface->DrawSetColor(128, 255, 0, 255);
 	}
 	else if (player->GetTeam() == m_pAimTarget->GetTeam())
 	{
-		// color = CDrawing::SKYBLUE;
-		g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
+		color = CDrawing::SKYBLUE;
+		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
 	}
 	else
 	{
-		// color = CDrawing::RED;
-		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		color = CDrawing::RED;
+		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
 	}
 
 	int width, height;
 	g_pInterface->Engine->GetScreenSize(width, height);
-	g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
-	g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
-	// g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
-	// g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
+	width /= 2;
+	height /= 2;
+
+	// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
+	// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
+	g_pDrawing->DrawLine(width - 5, height, width + 5, height, color);
+	g_pDrawing->DrawLine(width, height - 5, width, height + 5, color);
 }
 
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)

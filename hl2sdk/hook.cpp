@@ -17,6 +17,7 @@
 
 std::unique_ptr<CClientHook> g_pClientHook;
 std::unique_ptr<CClientPrediction> g_pClientPrediction;
+extern const VMatrix* g_pWorldToScreenMatrix;
 
 #define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 40 A1 ? ? ? ? 33 C5 89 45 FC 56 E8")
 #define SIG_CL_SENDMOVE				XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 E8")
@@ -337,9 +338,11 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 		}
 	}
 
-	if ((FocusOverlayPanel > 0 && panel == FocusOverlayPanel) ||
-		(MatSystemTopPanel > 0 && panel == MatSystemTopPanel))
+	if (panel == FocusOverlayPanel || panel == MatSystemTopPanel)
 	{
+		// 在这里获取不会出错
+		g_pWorldToScreenMatrix = &g_pInterface->Engine->WorldToScreenMatrix();
+		
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnPaintTraverse(panel);
 
@@ -382,6 +385,9 @@ void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, 
 	if (mode & PAINT_UIPANELS)
 	{
 		g_pClientHook->StartDrawing(g_pInterface->Surface);
+
+		if(g_pWorldToScreenMatrix == nullptr)
+			g_pWorldToScreenMatrix = &g_pInterface->Engine->WorldToScreenMatrix();
 
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnEnginePaint(mode);
@@ -498,6 +504,8 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	g_pClientHook->InstallClientModeHook(_ecx);
 	
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
+
+	/*
 	g_pClientHook->bCreateMoveFinish = true;
 
 #ifdef _DEBUG
@@ -523,6 +531,7 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
+	*/
 
 	// 必须要返回 false 否则会出现 bug
 	return false;
