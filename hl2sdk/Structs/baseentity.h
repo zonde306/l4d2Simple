@@ -80,6 +80,7 @@ public:
 	QAngle& GetAbsAngles();
 	ClientClass* GetClientClass();
 	int GetClassID();
+	int GetSequence();
 };
 
 template<typename T>

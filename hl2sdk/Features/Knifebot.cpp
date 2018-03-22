@@ -38,13 +38,13 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	float nextAttack = weapon->GetNextPrimaryAttack();
 	float serverTime = g_pClientPrediction->GetServerTime();
 
-	if (m_bFastMelee)
+	if (m_bFastMelee && (cmd->buttons & IN_RELOAD))
 	{
 		if (RunFastMelee(cmd, weaponId, nextAttack, serverTime))
 			return;
 	}
 
-	CanMeleeAttack(cmd->viewangles);
+	CheckMeleeAttack(cmd->viewangles);
 
 	if (m_bAutoFire && m_bCanMeleeAttack)
 	{
@@ -57,8 +57,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack)
 	{
-		nextAttack = weapon->GetSecondryAttackDelay();
-		if (nextAttack <= serverTime)
+		if (weapon->GetPrimaryAttackDelay() <= 0.0f)
 		{
 			cmd->buttons |= IN_ATTACK2;
 			return;
@@ -104,7 +103,7 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 			if (weaponId == Weapon_Melee && nextAttack > serverTime)
 			{
 				g_pInterface->Engine->ClientCmd_Unrestricted(XorStr("lastinv"));
-				m_eMeleeStage = FMS_Primary;
+				m_eMeleeStage = FMS_Secondary;
 				return true;
 			}
 			else
@@ -162,7 +161,7 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
 }
 
-bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
+bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 {
 	m_bCanMeleeAttack = false;
 	m_bCanShoveAttack = false;
@@ -171,29 +170,32 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 	if (local == nullptr || !local->IsAlive())
 		return false;
 
-	static ConVar* cvShovRange = g_pInterface->Cvar->FindVar(XorStr("z_gun_range"));
+	static ConVar* cvShoveRange = g_pInterface->Cvar->FindVar(XorStr("z_gun_range"));
 	static ConVar* cvClawRange = g_pInterface->Cvar->FindVar(XorStr("claw_range"));
 	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
+	static ConVar* cvShoveCharger = g_pInterface->Cvar->FindVar(XorStr("z_charger_allow_shove"));
 
-	int maxEntity = g_pInterface->Engine->GetMaxClients(), i = 0;
-	float swingRange = (local->GetTeam() == 3 ? cvClawRange->GetFloat() : cvShovRange->GetFloat());
+	int team = local->GetTeam();
+	bool canShoveCharger = (cvShoveCharger->GetInt() > 0);
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	float swingRange = (team == 3 ? cvClawRange->GetFloat() : cvShoveRange->GetFloat());
 	float meleeRange = cvMeleeRange->GetFloat();
 	Vector myEyePosition = local->GetEyePosition();
 
 	swingRange += m_fExtraShoveRange;
 	meleeRange += m_fExtraMeleeRange;
 
-	auto _CheckEntity = [&](int index) -> bool
+	for (int i = 1; i <= maxEntity; ++i)
 	{
-		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
-		if (player == nullptr || player == local || !player->IsAlive())
-			return false;
+		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+		if (entity == nullptr || entity == local || !entity->IsAlive() || entity->GetTeam() == team)
+			continue;
 
-		Vector aimPosition = player->GetHeadOrigin();
-		if (!HasEnemyVisible(player, aimPosition))
-			return false;
+		Vector aimPosition = entity->GetHeadOrigin();
+		if (!HasEnemyVisible(entity, aimPosition))
+			continue;
 
-		int classId = player->GetClassID();
+		int classId = entity->GetClassID();
 		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 
@@ -207,32 +209,16 @@ bool CKnifeBot::CanMeleeAttack(const QAngle& myEyeAngles)
 
 		if (!m_bCanShoveAttack &&
 			dist < swingRange && fov < swingRange &&
-			classId != ET_TANK && classId != ET_WITCH && classId != ET_CHARGER)
+			classId != ET_TANK && classId != ET_WITCH &&
+			(classId != ET_CHARGER || canShoveCharger))
 		{
 			// 推 (右键)
-			// TODO: 牛在 z_charger_allow_shove 设置为 1 时可以被推
 			m_bCanShoveAttack = true;
 		}
 
-		return (m_bCanMeleeAttack && m_bCanShoveAttack);
-	};
-
-	for (i = 1; i <= maxEntity; ++i)
-	{
-		if(_CheckEntity(i))
-			return true;
+		if (m_bCanMeleeAttack && m_bCanShoveAttack)
+			break;
 	}
 
-	if (m_bCanMeleeAttack && m_bCanShoveAttack)
-		return true;
-
-	i = maxEntity + 1;
-	maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-	for (; i <= maxEntity; ++i)
-	{
-		if (_CheckEntity(i))
-			return true;
-	}
-
-	return (m_bCanMeleeAttack && m_bCanShoveAttack);
+	return (m_bCanMeleeAttack || m_bCanShoveAttack);
 }

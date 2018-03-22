@@ -176,7 +176,7 @@ void CVisualPlayer::OnSceneEnd()
 
 		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
 		g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
-		entity->DrawModel(0x1);
+		entity->DrawModel(STUDIO_RENDER);
 		g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
 	}
 }
@@ -206,7 +206,7 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 	if (!m_bBarrel || stage != FRAME_RENDER_START)
 		return;
 
-	const float duration = 1.0f / 30.0f;
+	const float duration = 0.01f;
 	int maxEntity = g_pInterface->Engine->GetMaxClients();
 	for (int i = 1; i <= maxEntity; ++i)
 	{
@@ -287,7 +287,7 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 		return;
 
 	static matrix3x4_t boneMatrix[128];
-	if (!entity->SetupBones(boneMatrix, 128, 0x100, g_pInterface->GlobalVars->curtime))
+	if (!entity->SetupBones(boneMatrix, 128, BONE_USED_BY_HITBOX, g_pInterface->GlobalVars->curtime))
 		return;
 
 	Vector parent, child, screenParent, screenChild;
@@ -307,7 +307,8 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
 		mstudiobone_t* bone = hdr->GetBone(i);
-		if (bone == nullptr || !(bone->flags & 0x100) || bone->parent < 0 || bone->parent >= hdr->numbones)
+		if (bone == nullptr || !(bone->flags & BONE_USED_BY_HITBOX) ||
+			bone->parent < 0 || bone->parent >= hdr->numbones)
 			continue;
 
 		child = Vector(boneMatrix[i][0][3], boneMatrix[i][1][3], boneMatrix[i][2][3]);

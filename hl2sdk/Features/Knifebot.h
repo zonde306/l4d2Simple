@@ -10,7 +10,7 @@ public:
 	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
 	virtual void OnMenuDrawing() override;
 
-	bool CanMeleeAttack(const QAngle& myEyeAngles);
+	bool CheckMeleeAttack(const QAngle& myEyeAngles);
 	bool RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime);
 	bool HasEnemyVisible(CBasePlayer* entity, const Vector& position);
 

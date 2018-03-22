@@ -26,7 +26,7 @@ protected:
 
 private:
 	bool m_bShowMenu = false;
-	bool m_bAcitve = false;
+	bool m_bAcitve = true;
 	bool m_bAutoStrafe = false;
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;

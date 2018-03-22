@@ -32,6 +32,19 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_pAimTarget == nullptr || m_pAimTarget->GetTeam() == player->GetTeam())
 		return;
 
+	if (m_pAimTarget->GetClassID() == ET_WITCH)
+	{
+		if (m_bNonWitch || m_pAimTarget->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+			return;
+	}
+
+	if (m_bBlockFriendlyFire && m_pAimTarget->GetTeam() == player->GetTeam() &&
+		!player->IsIncapacitated() && player->GetAttacker() == nullptr)
+	{
+		cmd->buttons &= ~IN_ATTACK;
+		return;
+	}
+
 	// 开枪
 	cmd->buttons |= IN_ATTACK;
 
@@ -63,6 +76,8 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Trigger Crosshairs"), &m_bCrosshairs);
 	// ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
 	// ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
+	ImGui::Checkbox(XorStr("Block Friendly Fire"), &m_bBlockFriendlyFire);
+	ImGui::Checkbox(XorStr("Trigger No Witchs"), &m_bNonWitch);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);

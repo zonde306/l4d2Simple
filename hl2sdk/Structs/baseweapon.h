@@ -58,10 +58,14 @@ public:
 
 	// 下一次可以开枪的时间
 	float GetNextPrimaryAttack();
+
+	// 距离下一次可以开枪的间隔
 	float GetPrimaryAttackDelay();
 
 	// 下一次可以推的时间
 	float GetNextSecondryAttack();
+
+	// 距离下一次可以推的间隔
 	float GetSecondryAttackDelay();
 
 	// 现在是否可以开枪

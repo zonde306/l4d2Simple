@@ -10,6 +10,7 @@
 #include "./Features/NoRecoilSpread.h"
 #include "./Features/Knifebot.h"
 #include "./Features/Visual.h"
+#include "./Features/DropVisual.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -201,6 +202,8 @@ bool CClientHook::Init()
 			g_pKnifeBot = new CKnifeBot();
 		if (!g_pVisualPlayer)
 			g_pVisualPlayer = new CVisualPlayer();
+		if (!g_pVisualDrop)
+			g_pVisualDrop = new CVisualDrop();
 
 		// 这个要排在最后，否则没有效果
 		if (!g_pViewManager)

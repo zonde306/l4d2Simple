@@ -18,6 +18,8 @@ public:
 private:	// 菜单项
 	bool m_bActive = false;
 	bool m_bCrosshairs = false;
+	bool m_bNonWitch = true;
+	bool m_bBlockFriendlyFire = true;
 
 	bool m_bTraceHead = false;
 	bool m_bTraceSilent = false;

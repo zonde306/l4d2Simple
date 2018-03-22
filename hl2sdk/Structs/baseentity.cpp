@@ -66,7 +66,7 @@ Vector CBaseEntity::GetHitboxOrigin(int hitbox)
 
 	try
 	{
-		if (!SetupBones(boneMatrix, 128, 0x00000100, g_pInterface->GlobalVars->curtime))
+		if (!SetupBones(boneMatrix, 128, BONE_USED_BY_HITBOX, g_pInterface->GlobalVars->curtime))
 		{
 			Utils::log(XorStr("GetHitboxOrigin.SetupBones Failed."));
 			return INVALID_VECTOR;
@@ -113,7 +113,7 @@ Vector CBaseEntity::GetBoneOrigin(int bone)
 
 	try
 	{
-		if (SetupBones(boneMatrix, 128, 0x00000100, g_pInterface->GlobalVars->curtime))
+		if (SetupBones(boneMatrix, 128, BONE_USED_BY_HITBOX, g_pInterface->GlobalVars->curtime))
 			return Vector(boneMatrix[bone][0][3], boneMatrix[bone][1][3], boneMatrix[bone][2][3]);
 	}
 	catch (...)
@@ -149,4 +149,11 @@ int CBaseEntity::GetClassID()
 		return ET_INVALID;
 
 	return cc->m_ClassID;
+}
+
+int CBaseEntity::GetSequence()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
+	Assert_NetProp(offset);
+	return DECL_NETPROP_GET(WORD);
 }

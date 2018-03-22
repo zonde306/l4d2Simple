@@ -17,35 +17,54 @@ CAimBot::~CAimBot()
 
 void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive || !(*bSendPacket))
-		return;
-	
 	if (!m_bActive)
+	{
+		m_bRunAutoAim = false;
 		return;
+	}
 
 	if (m_bOnFire && !(cmd->buttons & IN_ATTACK))
+	{
+		m_bRunAutoAim = false;
 		return;
+	}
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive() || local->GetAttacker() != nullptr)
+	{
+		m_bRunAutoAim = false;
 		return;
+	}
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
 	if (!HasValidWeapon(weapon))
+	{
+		m_bRunAutoAim = false;
 		return;
+	}
 
 	FindTarget(cmd->viewangles);
 	if (m_pAimTarget == nullptr)
+	{
+		m_bRunAutoAim = false;
 		return;
+	}
 
-	QAngle aimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+	m_vecAimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+	if (!m_vecAimAngles.IsValid())
+	{
+		m_bRunAutoAim = false;
+		return;
+	}
 
 	if (m_bPerfectSilent)
-		g_pViewManager->ApplySilentAngles(aimAngles);
+		g_pViewManager->ApplySilentAngles(m_vecAimAngles);
 	else if (m_bSilent)
-		cmd->viewangles = aimAngles;
+		cmd->viewangles = m_vecAimAngles;
 	else
-		g_pInterface->Engine->SetViewAngles(aimAngles);
+		g_pInterface->Engine->SetViewAngles(m_vecAimAngles);
+
+	m_bRunAutoAim = true;
 }
 
 void CAimBot::OnMenuDrawing()
@@ -70,7 +89,47 @@ void CAimBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Aimbot Fov"), &m_fAimFov, 1.0f, 360.0f, XorStr("%.0f"));
 	ImGui::SliderFloat(XorStr("Aimbot Distance"), &m_fAimDist, 1.0f, 5000.0f, XorStr("%.0f"));
 
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("AutoAim Range"), &m_bShowRange);
+	ImGui::Checkbox(XorStr("AutoAim Angles"), &m_bShowAngles);
+
 	ImGui::TreePop();
+}
+
+void CAimBot::OnEnginePaint(PaintMode_t mode)
+{
+	if (!m_bShowRange)
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+	width /= 2;
+	height /= 2;
+
+	if(m_bRunAutoAim)
+		g_pDrawing->DrawCircle(width, height, m_fAimFov, CDrawing::GREEN, 8);
+	else
+		g_pDrawing->DrawCircle(width, height, m_fAimFov, CDrawing::WHITE, 8);
+}
+
+void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
+{
+	if (!m_bShowAngles || !m_bRunAutoAim)
+		return;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr)
+		return;
+
+	CBasePlayer* hitEntity = nullptr;
+	Vector eyePosition = local->GetEyePosition();
+	Vector aimPosition = GetAimPosition(local, eyePosition, &hitEntity);
+
+	g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, aimPosition, 64, 128, 128, false, 0.01f);
+
+	Vector screenPosition;
+	if (hitEntity != nullptr && math::WorldToScreenEx(aimPosition, screenPosition))
+		g_pDrawing->DrawText(screenPosition.x, screenPosition.y, CDrawing::PURPLE, true, "X");
 }
 
 CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
@@ -82,22 +141,19 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		return nullptr;
 	
 	Vector myEyePosition = local->GetEyePosition();
-	int maxEntity = g_pInterface->Engine->GetMaxClients(), i = 0;
-	float minFov = 361.0f, minDistance = 65535.0f;
 
-	auto _CheckTarget = [&](int index) -> bool
+	float minFov = 361.0f, minDistance = 65535.0f;
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	int maxClient = g_pInterface->Engine->GetMaxClients();
+	for (int i = 1; i <= maxEntity; ++i)
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(index));
+		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
 		if (entity == local || !IsValidTarget(entity))
-			return false;
+			continue;
 
 		Vector aimPosition = entity->GetHeadOrigin();
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
-
-		// 距离太近了，可能是自己
-		if (dist <= 1.0f)
-			return false;
 
 		if (m_bDistance)
 		{
@@ -106,7 +162,6 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			{
 				m_pAimTarget = entity;
 				minDistance = dist;
-				return true;
 			}
 		}
 		else
@@ -116,28 +171,11 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			{
 				m_pAimTarget = entity;
 				minFov = fov;
-				return true;
 			}
 		}
 
-		return false;
-	};
-
-	for (i = 1; i <= maxEntity; ++i)
-	{
-		// 检查玩家敌人
-		_CheckTarget(i);
-	}
-
-	if (m_pAimTarget != nullptr || local->GetTeam() != 2)
-		return m_pAimTarget;
-
-	i = maxEntity + 1;
-	maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-	for (; i <= maxEntity; ++i)
-	{
-		// 检查普感敌人
-		_CheckTarget(i);
+		if (i >= maxClient && m_pAimTarget != nullptr)
+			break;
 	}
 
 	return m_pAimTarget;
@@ -213,4 +251,29 @@ bool CAimBot::HasValidWeapon(CBaseWeapon * weapon)
 		return false;
 
 	return (weapon->GetPrimaryAttackDelay() <= 0.0f);
+}
+
+Vector CAimBot::GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity)
+{
+	Ray_t ray;
+	CTraceFilter filter;
+	ray.Init(eyePosition, m_vecAimAngles.Forward().Scale(1500.0f) + eyePosition);
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
+		return false;
+	}
+
+	if (hitEntity != nullptr)
+		*hitEntity = reinterpret_cast<CBasePlayer*>(trace.m_pEnt);
+
+	return trace.end;
 }
