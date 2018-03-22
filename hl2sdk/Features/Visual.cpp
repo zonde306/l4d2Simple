@@ -40,6 +40,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	std::string temp;
 	int team = local->GetTeam();
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	Vector myFootOrigin = local->GetAbsOrigin();
 
 	/*
 	if (m_hSurfaceFont == 0)
@@ -67,41 +68,62 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		Vector footOrigin = entity->GetAbsOrigin();
 		Vector headOrigin = entity->GetHeadOrigin();
 
-		if (!math::WorldToScreen(footOrigin, foot) ||
-			!math::WorldToScreen(eyeOrigin, eye) ||
-			!math::WorldToScreen(headOrigin, head))
+		if (!math::WorldToScreenEx(footOrigin, foot) ||
+			!math::WorldToScreenEx(eyeOrigin, eye) ||
+			!math::WorldToScreenEx(headOrigin, head))
 			continue;
 
 		ss.str("");
 
 		// 是否为队友
 		bool friendly = (team == entity->GetTeam());
+		int classId = entity->GetClassID();
 
 		// 方框的大小
 		float height = fabs(head.y - foot.y);
 		float width = height * 0.65f;
 
+		// 距离
+		float dist = math::GetVectorDistance(myFootOrigin, footOrigin, true);
+
+		/*
+		// 生还者在倒地时是横着的
+		// 所以方框需要横着计算大小
+		if (IsSurvivor(classId) && entity->IsIncapacitated())
+		{
+			width = fabs(head.x - foot.x);
+			height = width * 0.65f;
+		}
+		*/
+
 		if (m_bBox)
-			DrawBox(friendly, Vector(foot.x - width / 2, foot.y), Vector(width, -height));
+			DrawBox(friendly, entity, Vector(foot.x - width / 2, foot.y), Vector(width, -height));
 		if (m_bBone)
 			DrawBone(entity, friendly);
 		if (m_bHeadBox)
-			DrawHeadBox(entity, head);
+			DrawHeadBox(entity, head, dist);
 
-		if (m_bHealth)
-			ss << DrawHealth(entity);
-		if (m_bName)
-			ss << DrawName(i);
-		if (m_bCharacter)
-			ss << DrawCharacter(entity);
+		if (IsSurvivor(classId) || IsSpecialInfected(classId))
+		{
+			if (m_bHealth)
+				ss << DrawHealth(entity);
+			if (m_bName)
+				ss << DrawName(i);
+			if (m_bCharacter)
+				ss << DrawCharacter(entity);
+		}
 
 		if (!ss.str().empty())
 			ss << "\n";
 
-		if (m_bWeapon)
-			ss << DrawWeapon(entity);
+		if (IsSurvivor(classId))
+		{
+			if (m_bWeapon)
+				ss << DrawWeapon(entity);
+		}
+
 		if (m_bDistance)
-			ss << DrawDistance(entity, local);
+			ss << DrawDistance(entity, dist);
 
 		if (ss.str().empty())
 			continue;
@@ -161,21 +183,49 @@ void CVisualPlayer::OnSceneEnd()
 
 void CVisualPlayer::OnMenuDrawing()
 {
-	if (!ImGui::TreeNode(XorStr("VisualPlayer")))
+	if (!ImGui::TreeNode(XorStr("Visual Players")))
 		return;
 
 	ImGui::Checkbox(XorStr("Left alignment"), &m_bDrawToLeft);
 	ImGui::Checkbox(XorStr("Player Box"), &m_bBox);
 	ImGui::Checkbox(XorStr("Player Head"), &m_bHeadBox);
-	ImGui::Checkbox(XorStr("Player Bone"), &m_bBone);
+	ImGui::Checkbox(XorStr("Player Skeleton"), &m_bBone);
 	ImGui::Checkbox(XorStr("Player Name"), &m_bName);
 	ImGui::Checkbox(XorStr("Player Health"), &m_bHealth);
 	ImGui::Checkbox(XorStr("Player Distance"), &m_bDistance);
 	ImGui::Checkbox(XorStr("Player Weapon"), &m_bWeapon);
 	ImGui::Checkbox(XorStr("Player Character"), &m_bCharacter);
 	ImGui::Checkbox(XorStr("Player Chams"), &m_bChams);
+	ImGui::Checkbox(XorStr("Player Barrel"), &m_bBarrel);
 
 	ImGui::TreePop();
+}
+
+void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
+{
+	if (!m_bBarrel || stage != FRAME_RENDER_START)
+		return;
+
+	const float duration = 1.0f / 30.0f;
+	int maxEntity = g_pInterface->Engine->GetMaxClients();
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+		if (i == m_iLocalPlayer || player == nullptr || !player->IsAlive())
+			continue;
+
+		int team = player->GetTeam();
+		Vector eyePosition = player->GetEyePosition();
+		// Vector endPosition = GetSeePosition(player, eyePosition, player->GetEyeAngles());
+		Vector endPosition = player->GetEyeAngles().Forward().Scale(1500.0f) + eyePosition;
+
+		if (team == 3)
+			g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, endPosition, 255, 0, 0, false, duration);
+		else if (team == 2)
+			g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, endPosition, 0, 128, 255, false, duration);
+		else
+			g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, endPosition, 255, 128, 0, false, duration);
+	}
 }
 
 bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
@@ -204,8 +254,12 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
 }
 
-void CVisualPlayer::DrawBox(bool friendly, const Vector & head, const Vector & foot)
+void CVisualPlayer::DrawBox(bool friendly, CBasePlayer* entity, const Vector & head, const Vector & foot)
 {
+	if (entity->IsDying())
+	{
+		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::WHITE);
+	}
 	if (friendly)
 	{
 		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
@@ -232,6 +286,10 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	if (hdr == nullptr)
 		return;
 
+	static matrix3x4_t boneMatrix[128];
+	if (!entity->SetupBones(boneMatrix, 128, 0x100, g_pInterface->GlobalVars->curtime))
+		return;
+
 	Vector parent, child, screenParent, screenChild;
 	D3DCOLOR color = CDrawing::WHITE;
 
@@ -248,15 +306,15 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
-		mstudiobone_t* bone = hdr->pBone(i);
-		if (bone == nullptr || !(bone->flags & 0x100) || bone->parent < 0 || bone->parent > hdr->numbones)
+		mstudiobone_t* bone = hdr->GetBone(i);
+		if (bone == nullptr || !(bone->flags & 0x100) || bone->parent < 0 || bone->parent >= hdr->numbones)
 			continue;
 
-		child = entity->GetBoneOrigin(i);
-		parent = entity->GetBoneOrigin(bone->parent);
+		child = Vector(boneMatrix[i][0][3], boneMatrix[i][1][3], boneMatrix[i][2][3]);
+		parent = Vector(boneMatrix[bone->parent][0][3], boneMatrix[bone->parent][1][3], boneMatrix[bone->parent][2][3]);
 		if (!child.IsValid() || !parent.IsValid() ||
-			!math::WorldToScreen(parent, screenParent) ||
-			!math::WorldToScreen(child, screenChild))
+			!math::WorldToScreenEx(parent, screenParent) ||
+			!math::WorldToScreenEx(child, screenChild))
 			continue;
 
 		g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
@@ -264,7 +322,7 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	}
 }
 
-void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
+void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head, float distance)
 {
 	int classId = entity->GetClassID();
 	D3DCOLOR color = CDrawing::WHITE;
@@ -291,14 +349,18 @@ void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head)
 		// g_pInterface->Surface->DrawSetColor(255, 128, 0, 255);
 	}
 
+	int boxSize = 5;
+	if (distance > 1000.0f)
+		boxSize = 3;
+
 	if (visible)
 	{
-		g_pDrawing->DrawCircleFilled(head.x, head.y, 5, color, 8);
+		g_pDrawing->DrawCircleFilled(head.x, head.y, boxSize, color, 8);
 		// g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 	else
 	{
-		g_pDrawing->DrawCircle(head.x, head.y, 5, color, 8);
+		g_pDrawing->DrawCircle(head.x, head.y, boxSize, color, 8);
 		// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 }
@@ -382,6 +444,28 @@ D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity, int team)
 	return CDrawing::GRAY;
 }
 
+Vector CVisualPlayer::GetSeePosition(CBasePlayer * player, const Vector & eyePosition, const QAngle & eyeAngles)
+{
+	Ray_t ray;
+	CTraceFilter filter;
+	ray.Init(eyePosition, eyeAngles.Forward().Scale(1500.0f) + eyePosition);
+	filter.pSkip1 = player;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
+		return false;
+	}
+
+	return trace.end;
+}
+
 std::string CVisualPlayer::DrawName(int index, bool separator)
 {
 	player_info_t info;
@@ -431,11 +515,10 @@ std::string CVisualPlayer::DrawWeapon(CBasePlayer * entity, bool separator)
 	return buffer;
 }
 
-std::string CVisualPlayer::DrawDistance(CBasePlayer * entity, CBasePlayer * local, bool separator)
+std::string CVisualPlayer::DrawDistance(CBasePlayer * entity, float distance, bool separator)
 {
 	char buffer[16];
-	_itoa_s(static_cast<int>(math::GetVectorDistance(entity->GetAbsOrigin(), local->GetAbsOrigin(), true)),
-		buffer, 10);
+	_itoa_s(static_cast<int>(distance), buffer, 10);
 
 	if (separator)
 		return std::string("\n") + buffer;

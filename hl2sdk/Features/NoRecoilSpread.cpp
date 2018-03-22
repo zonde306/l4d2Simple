@@ -37,7 +37,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		*bSendPacket = true;
 	}
 
-	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon->GetSpread());
+	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon);
 	m_vecSpread.x = spread.first;
 	m_vecSpread.y = spread.second;
 	m_vecSpread.z = 0.0f;

@@ -9,13 +9,15 @@
 #define SIG_LOOKUP_WEAPON_SLOT		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
 #define SIG_GET_INVALID_SLOT		XorStr("B8 ? ? ? ? C3")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
+#define SIG_GET_WEAPON_DATA			XorStr("0F B7 ? ? ? ? ? 50 E8 ? ? ? ? 83 C4 ? C3")
+#define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
 
 float& CBaseWeapon::GetSpread()
 {
 	return *reinterpret_cast<float*>(reinterpret_cast<DWORD>(this) + indexes::GetSpread);
 }
 
-FileWeaponInfo_t * CBaseWeapon::GetWeaponData()
+FileWeaponInfo_t * CBaseWeapon::GetWeaponInfo()
 {
 	using FnGetSlot = uint16_t(__cdecl*)(const char*);
 	using FnGetInvalidSlot = uint16_t(__cdecl*)();
@@ -41,6 +43,13 @@ FileWeaponInfo_t * CBaseWeapon::GetWeaponData()
 	return GetFileWeaponInfoFromHandle(slot);
 }
 
+FileWeaponInfo_t * CBaseWeapon::GetWeaponData()
+{
+	using Fn = FileWeaponInfo_t*(__thiscall*)(LPVOID);
+	static Fn GetCSWpnData = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_WEAPON_DATA));
+	return GetCSWpnData(this);
+}
+
 const char * CBaseWeapon::GetWeaponName()
 {
 	using Fn = const char*(__cdecl*)(int);
@@ -62,7 +71,19 @@ int CBaseWeapon::GetWeaponID()
 	}
 	
 	using Fn = int(__thiscall*)(CBaseWeapon*);
-	return Utils::GetVTableFunction<Fn>(this, indexes::GetWeaponId)(this);
+	return Utils::GetVTableFunction<Fn>(this, indexes::GetWeaponID)(this);
+}
+
+int CBaseWeapon::GetWeaponId()
+{
+	return *reinterpret_cast<int*>(reinterpret_cast<DWORD>(this) + indexes::GetWeaponId);
+}
+
+void CBaseWeapon::UpdateSpread()
+{
+	using Fn = void(__thiscall*)(CBaseWeapon*);
+	static Fn UpdateMaxSpread = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_UPDATE_WEAPON_SPREAD));
+	return UpdateMaxSpread(this);
 }
 
 CBasePlayer * CBaseWeapon::GetOwner()

@@ -35,6 +35,8 @@ extern const VMatrix* g_pWorldToScreenMatrix;
 #define SIG_SHARED_RANDOM_FLOAT		XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
 #define SIG_SET_RANDOM_SEED			XorStr("55 8B EC 8B 45 08 85 C0 75 0C")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
+#define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
+#define SIG_RANDOM_SEED				XorStr("A3 ? ? ? ? 5D C3 55")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
@@ -596,6 +598,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (!isConnected)
 				{
 					isConnected = true;
+					// g_pClientHook->m_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnConnect();
@@ -606,6 +609,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (isConnected)
 				{
 					isConnected = false;
+					g_pClientHook->m_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnDisconnect();
@@ -701,8 +705,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		// 可以被查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 
-		auto it = g_pClientHook->m_serverConVar.find(gcv->m_szCvarName);
-		if (it != g_pClientHook->m_serverConVar.end())
+		auto it = g_pClientHook->m_ServerConVar.find(gcv->m_szCvarName);
+		if (it != g_pClientHook->m_ServerConVar.end())
 		{
 			// 把服务器提供的 ConVar 还回去
 			strcpy_s(resultBuffer, it->second.c_str());
@@ -757,7 +761,10 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 		// 纪录从服务器发送的 ConVar
 		// 等服务器查询时把它返回
 		if (cvar.name[0] != '\0')
-			g_pClientHook->m_serverConVar[cvar.name] = cvar.value;
+		{
+			// g_pClientHook->m_ServerConVar[std::string(cvar.name)] = std::string(cvar.value);
+			// g_pClientHook->m_ServerConVar.try_emplace(cvar.name, cvar.value);
+		}
 	}
 
 	return true;
@@ -880,7 +887,8 @@ int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, Butto
 
 void CClientPrediction::Init()
 {
-	m_pRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x7);
+	m_pSpreadRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x7);
+	m_pPredictionRandomSeed = *reinterpret_cast<int**>(Utils::FindPattern(XorStr("client.dll"), SIG_RANDOM_SEED) + 0x1);
 }
 
 bool CClientPrediction::StartPrediction(CUserCmd* cmd)
@@ -900,7 +908,7 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 	m_iFlags = player->GetFlags();
 
 	// 设置随机数种子
-	*m_pRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+	*m_pPredictionRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
 
 	// 设置需要预测的时间（帧）
 	g_pInterface->GlobalVars->curtime = GetServerTime();
@@ -938,7 +946,7 @@ bool CClientPrediction::FinishPrediction()
 	player->GetTickBase() = m_iTickBase;
 	g_pInterface->GameMovement->FinishTrackPredictionErrors(player);
 	g_pInterface->MoveHelper->SetHost(nullptr);
-	*m_pRandomSeed = -1;
+	*m_pPredictionRandomSeed = -1;
 
 	// 还原时间
 	g_pInterface->GlobalVars->curtime = m_fCurTime;
@@ -971,18 +979,29 @@ CBasePlayer * CClientPrediction::GetLocalPlayer()
 	return (reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(g_pInterface->Engine->GetLocalPlayer())));
 }
 
-std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, float spread)
+#pragma optimize("", off)
+std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon* weapon)
 {
-	int oldSeed = *m_pRandomSeed;
-	*m_pRandomSeed = seed;
+	if (weapon == nullptr || weapon->GetWeaponData()->iMaxClip1 <= 0)
+		return std::make_pair(0.0f, 0.0f);
+	
+	int oldSeed = *m_pSpreadRandomSeed;
+	*m_pSpreadRandomSeed = seed;
+
+	float oldSpread = weapon->GetSpread();
+	weapon->UpdateSpread();
+	float spread = weapon->GetSpread();
 
 	float horizontal = 0.0f, vertical = 0.0f;
-	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
-	__asm fstp horizontal;
+	horizontal = g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
+	// __asm fstp horizontal;
 
-	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
-	__asm fstp vertical;
+	vertical = g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
+	// __asm fstp vertical;
 
-	*m_pRandomSeed = oldSeed;
+	weapon->GetSpread() = oldSpread;
+	*m_pSpreadRandomSeed = oldSeed;
+
 	return std::make_pair(horizontal, vertical);
 }
+#pragma optimize("", on)

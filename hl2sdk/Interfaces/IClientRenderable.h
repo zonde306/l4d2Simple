@@ -5,7 +5,7 @@ class Vector;
 class QAngle;
 
 struct model_t;
-struct matrix3x4_t;
+class matrix3x4_t;
 
 typedef unsigned short ClientShadowHandle_t;
 typedef unsigned short ClientRenderHandle_t;

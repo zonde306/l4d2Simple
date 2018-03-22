@@ -1000,7 +1000,7 @@ void CDrawing::DrawCorner(int x, int y, int w, int h, D3DCOLOR color, int length
 		if (w == 0)
 			return;
 
-		length = w / 3;
+		length = (w < h ? w / 3 : h / 3);
 	}
 
 	// 左上

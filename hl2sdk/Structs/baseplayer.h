@@ -58,4 +58,7 @@ public:
 
 	// 获取头部位置
 	Vector GetHeadOrigin();
+
+	// 是否为黑白状态 (生还者再次倒下就会死亡)
+	bool IsDying();
 };

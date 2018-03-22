@@ -34,9 +34,12 @@ class CBaseWeapon : public CBaseEntity
 {
 public:
 	float& GetSpread();
+	FileWeaponInfo_t* GetWeaponInfo();
 	FileWeaponInfo_t* GetWeaponData();
 	const char* GetWeaponName();
 	int GetWeaponID();
+	int GetWeaponId();
+	void UpdateSpread();
 
 	// 武器持有人
 	CBasePlayer* GetOwner();

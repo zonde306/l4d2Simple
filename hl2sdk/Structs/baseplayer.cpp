@@ -13,6 +13,7 @@
 #define HITBOX_JOCKEY			4
 #define HITBOX_SPITTER			4
 #define HITBOX_CHARGER			9
+#define HITBOX_TANK				12
 #define HITBOX_WITCH			10
 
 Vector CBasePlayer::GetEyePosition()
@@ -179,9 +180,12 @@ Vector CBasePlayer::GetHeadOrigin()
 {
 	int classId = GetClassID();
 
-	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_TANK ||
-		classId == ET_WITCH || classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
+	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_WITCH ||
+		classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
 		return GetHitboxOrigin(HITBOX_PLAYER);
+
+	if (classId == ET_TANK)
+		return GetHitboxOrigin(HITBOX_TANK);
 
 	if (classId == ET_JOCKEY || classId == ET_SPITTER)
 		return GetHitboxOrigin(HITBOX_JOCKEY);
@@ -193,6 +197,16 @@ Vector CBasePlayer::GetHeadOrigin()
 		return GetHitboxOrigin(HITBOX_COMMON);
 
 	return INVALID_VECTOR;
+}
+
+bool CBasePlayer::IsDying()
+{
+	if(IsIncapacitated())
+		return false;
+
+	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_bIsOnThirdStrike"));
+	Assert_NetProp(offset);
+	return (DECL_NETPROP_GET(byte) != 0);
 }
 
 bool CBasePlayer::IsAlive()

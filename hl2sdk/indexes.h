@@ -115,7 +115,7 @@ namespace indexes
 	const int SetupBones = 13;
 	const int IsDormant = 7;
 	const int GetModel = 8;
-	const int GetWeaponId = 383;
+	const int GetWeaponID = 383;
 	const int RenderTableDrawModel = 9;
 
 	// Entity Offset
@@ -123,6 +123,7 @@ namespace indexes
 	const int GetPunch = 0x1224;
 	const int GetCrosshairsId = 0x19D8;
 	const int GetLastCrosshairsId = 0x19E8;
+	const int GetWeaponId = 0x958;
 
 	// ClientModeShared
 	const int SharedCreateMove = 27;

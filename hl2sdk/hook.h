@@ -6,6 +6,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 
 // 虚函数
 typedef void(__thiscall* FnPaintTraverse)(IVPanel*, VPANEL, bool, bool);
@@ -31,7 +32,7 @@ typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
 typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
 typedef int(__cdecl* FnSetPredictionRandomSeed)(int);
-typedef void(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
+typedef float(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
 
 // 导出函数
 typedef void(__cdecl* FnRandomSeed)(int iSeed);
@@ -45,7 +46,7 @@ class CClientHook
 {
 public:
 	~CClientHook();
-	
+
 	bool Init();
 	bool UninstallHook();
 	void Shutdown();
@@ -73,7 +74,7 @@ protected:
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
-	
+
 private:
 	// 被 Hook 后的原函数
 	FnCL_Move oCL_Move = nullptr;
@@ -114,7 +115,7 @@ public:
 
 private:
 	bool bCreateMoveFinish = false;
-	std::map<std::string, std::string> m_serverConVar;
+	std::map<std::string, std::string> m_ServerConVar;
 };
 
 extern std::unique_ptr<CClientHook> g_pClientHook;
@@ -133,7 +134,7 @@ public:
 
 	float GetServerTime();
 	CBasePlayer* GetLocalPlayer();
-	std::pair<float, float> GetWeaponSpread(int seed, float spread);
+	std::pair<float, float> GetWeaponSpread(int seed, CBaseWeapon* weapon);
 
 	inline int GetFlags() { return m_iFlags; };
 
@@ -142,7 +143,8 @@ private:
 	int m_iFlags = 0;
 	float m_fCurTime = 0.0f;
 	float m_fFrameTime = 0.0f;
-	int* m_pRandomSeed = nullptr;
+	int* m_pSpreadRandomSeed = nullptr;
+	int* m_pPredictionRandomSeed = nullptr;
 	int m_iTickBase = 0;
 	bool m_bInPrediction = false;
 };

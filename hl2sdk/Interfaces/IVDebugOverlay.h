@@ -4,7 +4,7 @@
 
 class Vector;
 class QAngle;
-struct matrix3x4_t;
+class matrix3x4_t;
 #define NDEBUG_PERSIST_TILL_NEXT_SERVER (0.01023f)
 #define VDEBUG_OVERLAY_INTERFACE_VERSION	"VDebugOverlay003"
 

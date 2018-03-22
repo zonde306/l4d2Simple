@@ -115,16 +115,16 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 	screen.z = 0;
 	if (w > 0.01f)
 	{
-		float w1 = 1 / w;
+		float inverseWidth = 1 / w;
 		screen.x = m_iWidth / 2 + (0.5f * (((*g_pWorldToScreenMatrix)[0][0] * origin[0] +
 			(*g_pWorldToScreenMatrix)[0][1] * origin[1] +
 			(*g_pWorldToScreenMatrix)[0][2] * origin[2] +
-			(*g_pWorldToScreenMatrix)[0][3]) * w1) * m_iWidth + 0.5);
+			(*g_pWorldToScreenMatrix)[0][3]) * inverseWidth) * m_iWidth + 0.5);
 
 		screen.y = m_iHeight / 2 - (0.5f * (((*g_pWorldToScreenMatrix)[1][0] * origin[0] +
 			(*g_pWorldToScreenMatrix)[1][1] * origin[1] +
 			(*g_pWorldToScreenMatrix)[1][2] * origin[2] +
-			(*g_pWorldToScreenMatrix)[1][3]) * w1) * m_iHeight + 0.5);
+			(*g_pWorldToScreenMatrix)[1][3]) * inverseWidth) * m_iHeight + 0.5);
 
 		return true;
 	}
@@ -146,20 +146,28 @@ inline void FindScreenPoint(Vector &point, int screenwidth, int screenheight, in
 
 bool math::WorldToScreenEx(const Vector & origin, Vector & screen)
 {
-	bool st = ScreenTransform(origin, screen);
 	int iScreenWidth, iScreenHeight;
 	g_pInterface->Engine->GetScreenSize(iScreenWidth, iScreenHeight);
+
+	bool st = ScreenTransform(origin, screen);
+	screen.x = (iScreenWidth / 2.0f) + (screen.x * iScreenWidth) / 2.0f;
+	screen.y = (iScreenHeight / 2.0f) - (screen.y * iScreenHeight) / 2.0f;
+
+	/*
 	float x = iScreenWidth / 2.0f;
 	float y = iScreenHeight / 2.0f;
 	x += 0.5f * screen.x * iScreenWidth + 0.5f;
 	y -= 0.5f * screen.y * iScreenHeight + 0.5f;
 	screen.x = x;
 	screen.y = y;
-	if (screen.x > iScreenWidth || screen.x < 0.0f || screen.y > iScreenHeight || screen.y < 0.0f || st)
+	*/
+
+	if (screen.x > iScreenWidth || screen.x < 0.0f || screen.y > iScreenHeight || screen.y < 0.0f || !st)
 	{
 		FindScreenPoint(screen, iScreenWidth, iScreenHeight, iScreenHeight / 2);
 		return false;
 	}
+
 	return true;
 }
 
@@ -172,27 +180,32 @@ bool math::ScreenTransform(const Vector & origin, Vector & screen)
 
 	screen.x = (*g_pWorldToScreenMatrix)[0][0] * origin[0] + (*g_pWorldToScreenMatrix)[0][1] *
 		origin[1] + (*g_pWorldToScreenMatrix)[0][2] * origin[2] + (*g_pWorldToScreenMatrix)[0][3];
+
 	screen.y = (*g_pWorldToScreenMatrix)[1][0] * origin[0] + (*g_pWorldToScreenMatrix)[1][1] *
 		origin[1] + (*g_pWorldToScreenMatrix)[1][2] * origin[2] + (*g_pWorldToScreenMatrix)[1][3];
+
 	w = (*g_pWorldToScreenMatrix)[3][0] * origin[0] + (*g_pWorldToScreenMatrix)[3][1] *
 		origin[1] + (*g_pWorldToScreenMatrix)[3][2] * origin[2] + (*g_pWorldToScreenMatrix)[3][3];
+
 	screen.z = 0.0f;
-	bool behind = false;
+
 	if (w < 0.001f)
 	{
-		behind = true;
-		float invw = -1.0f / w;
-		screen.x *= invw;
-		screen.y *= invw;
+		screen.x *= 100000;
+		screen.y *= 100000;
+		return false;
 	}
-	else
-	{
-		behind = false;
-		float invw = 1.0f / w;
-		screen.x *= invw;
-		screen.y *= invw;
-	}
-	return behind;
+	
+	/*
+	float inverseWidth = 1.0f / w;
+	screen.x *= inverseWidth;
+	screen.y *= inverseWidth;
+	*/
+
+	screen.x /= w;
+	screen.y /= w;
+	
+	return true;
 }
 
 bool math::WorldToScreen(const D3DXVECTOR3 & origin, D3DXVECTOR3 & screen)
@@ -574,7 +587,7 @@ void math::MatrixAngles(const matrix3x4_t & matrix, Quaternion & q, Vector & pos
 	Assert(fabs(d) > 0.99 && fabs(d) < 1.01);
 #endif
 
-	MatrixGetColumn(matrix, 3, pos);
+	math::MatrixGetColumn(matrix, 3, pos);
 }
 
 void math::VectorVectors(const Vector & forward, Vector & right, Vector & up)

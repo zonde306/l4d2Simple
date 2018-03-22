@@ -151,16 +151,15 @@ public:
 struct mstudiohitboxset_t
 {
 	int sznameindex;
+	int numhitboxes;
+	int hitboxindex;
 
 	inline char * const pszName( void ) const
 	{
 		return ( ( char* )this ) + sznameindex;
 	}
 
-	int numhitboxes;
-	int hitboxindex;
-
-	inline mstudiobbox_t* pHitbox( int i ) const
+	inline mstudiobbox_t* GetHitbox( int i ) const
 	{
 		return ( mstudiobbox_t* )( ( ( byte* )this ) + hitboxindex ) + i;
 	}
@@ -169,30 +168,31 @@ struct mstudiohitboxset_t
 struct mstudiobone_t
 {
 	int					sznameindex;
-	inline char * const pszName(void) const { return ((char *)this) + sznameindex; }
 	int		 			parent;		// parent bone
 	int					bonecontroller[6];	// bone controller index, -1 == none
 
 	// default values
 	Vector				pos;
 	Quaternion			quat;
-	Vector			rot;
+	Vector				rot;
 	// compression scale
 	Vector				posscale;
 	Vector				rotscale;
 
-	VMatrix			poseToBone;
+	VMatrix				poseToBone;
 	Quaternion			qAlignment;
 	int					flags;
 	int					proctype;
 	int					procindex;		// procedural rule
 	mutable int			physicsbone;	// index into physically simulated bone
-	inline void *pProcedure() const { if (procindex == 0) return NULL; else return  (void *)(((byte *)this) + procindex); };
 	int					surfacepropidx;	// index into string tablefor property name
-	inline char * const pszSurfaceProp(void) const { return ((char *)this) + surfacepropidx; }
 	int					contents;		// See BSPFlags.h for the contents flags
 
 	int					unused[8];		// remove as appropriate
+
+	inline char * const pszName(void) const { return ((char *)this) + sznameindex; }
+	inline void *pProcedure() const { if (procindex == 0) return NULL; else return  (void *)(((byte *)this) + procindex); };
+	inline char * const pszSurfaceProp(void) const { return ((char *)this) + surfacepropidx; }
 
 	mstudiobone_t() {}
 private:
@@ -215,8 +215,7 @@ struct studiohdr_t
 {
 	int					id;
 	int					version;
-	long				checksum;		// this has to be the same in the phy and vtx files to load!
-	inline const char *	pszName(void) const { return name; }
+	int					checksum;		// this has to be the same in the phy and vtx files to load!
 	char				name[64];
 	int					length;
 
@@ -230,37 +229,101 @@ struct studiohdr_t
 	int					flags;
 	int					numbones;			// bones
 	int					boneindex;
-	inline mstudiobone_t *pBone(int i) const { return (mstudiobone_t *)(((byte *)this) + boneindex) + i; };
-	int					RemapSeqBone(int iSequence, int iLocalBone) const;	// maps local sequence bone to global bone
-	int					RemapAnimBone(int iAnim, int iLocalBone) const;		// maps local animations bone to global bone
 
 	int					numbonecontrollers;		// bone controllers
 	int					bonecontrollerindex;
-	inline void *pBonecontroller(int i) const { return  (((byte *)this) + bonecontrollerindex) + i; };
 
 	int					numhitboxsets;
 	int					hitboxsetindex;
 
+	int numlocalanim;
+	int localanimindex;
+	int numlocalseq;
+	int localseqindex;
+	mutable int activitylistversion;
+	mutable int eventsindexed;
+	int numtextures;
+	int textureindex;
+	int numcdtextures;
+	int cdtextureindex;
+	int numskinref;
+	int numskinfamilies;
+	int skinindex;
+	int numbodyparts;
+	int bodypartindex;
+	int numlocalattachments;
+	int localattachmentindex;
+	int numlocalnodes;
+	int localnodeindex;
+	int localnodenameindex;
+	int numflexdesc;
+	int flexdescindex;
+	int numflexcontrollers;
+	int flexcontrollerindex;
+	int numflexrules;
+	int flexruleindex;
+	int numikchains;
+	int ikchainindex;
+	int nummouths;
+	int mouthindex;
+	int numlocalposeparameters;
+	int localposeparamindex;
+	int surfacepropindex;
+	int keyvalueindex;
+	int keyvaluesize;
+	int numlocalikautoplaylocks;
+	int localikautoplaylockindex;
+	float mass;
+	int contents;
+	int numincludemodels;
+	int includemodelindex;
+	mutable void *virtualModel;
+	int szanimblocknameindex;
+	int numanimblocks;
+	int animblockindex;
+	mutable void *animblockModel;
+	int bonetablebynameindex;
+	void *pVertexBase;
+	void *pIndexBase;
+	BYTE constdirectionallightdot;
+	BYTE rootLOD;
+	BYTE numAllowedRootLODs;
+	BYTE unused[1];
+	int unused4;
+	int numflexcontrollerui;
+	int flexcontrolleruiindex;
+	float flVertAnimFixedPointScale;
+	int unused3[1];
+	int studiohdr2index;
+	int unused2[1];
+
+	int					RemapSeqBone(int iSequence, int iLocalBone) const;	// maps local sequence bone to global bone
+	int					RemapAnimBone(int iAnim, int iLocalBone) const;		// maps local animations bone to global bone
+	inline const char *	pszName(void) const { return name; }
+
+	inline mstudiobone_t *GetBone(int i) const { return (mstudiobone_t *)(((byte *)this) + boneindex) + i; };
+	inline void *pBonecontroller(int i) const { return  (((byte *)this) + bonecontrollerindex) + i; };
+
 	// Look up hitbox set by index
-	mstudiohitboxset_t	*pHitboxSet(int i) const
+	mstudiohitboxset_t	*GetHitboxSet(int i) const
 	{
 		return (mstudiohitboxset_t *)(((byte *)this) + hitboxsetindex) + i;
 	};
 
 	// Calls through to hitbox to determine size of specified set
-	inline mstudiobbox_t *pHitbox(int i, int set) const
+	inline mstudiobbox_t *GetHitbox(int i, int set) const
 	{
-		mstudiohitboxset_t const *s = pHitboxSet(set);
+		mstudiohitboxset_t const *s = GetHitboxSet(set);
 		if (!s)
 			return NULL;
 
-		return s->pHitbox(i);
+		return s->GetHitbox(i);
 	};
 
 	// Calls through to set to get hitbox count for set
 	inline int			iHitboxCount(int set) const
 	{
-		mstudiohitboxset_t const *s = pHitboxSet(set);
+		mstudiohitboxset_t const *s = GetHitboxSet(set);
 		if (!s)
 			return 0;
 
