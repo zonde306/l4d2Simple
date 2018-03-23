@@ -21,6 +21,10 @@ std::unique_ptr<CClientPrediction> g_pClientPrediction;
 std::map<std::string, std::string> g_ServerConVar;
 extern const VMatrix* g_pWorldToScreenMatrix;
 
+// 计时
+extern time_t g_tpPlayingTimer;
+extern time_t g_tpGameTimer;
+
 #define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 40 A1 ? ? ? ? 33 C5 89 45 FC 56 E8")
 #define SIG_CL_SENDMOVE				XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 E8")
 #define SIG_WRITE_USERCMD			XorStr("55 8B EC A1 ? ? ? ? 83 78 30 00 53 8B 5D 10")
@@ -609,6 +613,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (!isConnected)
 				{
 					isConnected = true;
+					g_tpPlayingTimer = time(nullptr);
 					// g_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
@@ -620,6 +625,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (isConnected)
 				{
 					isConnected = false;
+					g_tpPlayingTimer = 0;
 					g_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)

@@ -527,7 +527,6 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 	m_iFontSize = fontSize;
 	CreateObjects();
 	ImGui_ImplDX9_Init(g_hGameWindow, device);
-	ImGui::StyleColorsDark();
 	g_pfnOldWndProcHandler = (WNDPROC)SetWindowLongPtrA(g_hGameWindow, GWL_WNDPROC, (LONG_PTR)ImGui_ImplWin32_WndProcHandler);
 
 	Utils::log(XorStr("CDrawing Initialization..."));
