@@ -34,11 +34,12 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	if (weapon == nullptr)
 		return;
 	
+	int team = player->GetTeam();
 	int weaponId = weapon->GetWeaponID();
 	float nextAttack = weapon->GetNextPrimaryAttack();
 	float serverTime = g_pClientPrediction->GetServerTime();
 
-	if (m_bFastMelee && (cmd->buttons & IN_RELOAD))
+	if (m_bFastMelee && team == 2 && (cmd->buttons & IN_RELOAD))
 	{
 		if (RunFastMelee(cmd, weaponId, nextAttack, serverTime))
 			return;
@@ -46,7 +47,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	CheckMeleeAttack(cmd->viewangles);
 
-	if (m_bAutoFire && m_bCanMeleeAttack)
+	if (m_bAutoFire && m_bCanMeleeAttack && team == 2)
 	{
 		if (weaponId == Weapon_Melee && nextAttack <= serverTime)
 		{

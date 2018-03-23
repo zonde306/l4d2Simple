@@ -39,7 +39,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive())
+	if (player == nullptr || !player->IsAlive() || player->GetTeam() == 3)
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();

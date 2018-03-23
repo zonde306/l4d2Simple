@@ -23,10 +23,10 @@ public:
 	void RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon);
 
 private:
-	bool m_bNoSpread = false;
-	bool m_bNoRecoil = false;
-	bool m_bNoVisRecoil = false;
-	bool m_bRapidFire = false;
+	bool m_bNoSpread = true;
+	bool m_bNoRecoil = true;
+	bool m_bNoVisRecoil = true;
+	bool m_bRapidFire = true;
 
 	bool m_bRecoilCrosshair = false;
 	bool m_bSpreadCrosshair = false;

@@ -855,8 +855,16 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 	std::string newMaterialName, newTextureGroupName;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
-		copyMaterialName = pMaterialName;
-		copyTextureGroupName = pTextureGroupName;
+		if (pMaterialName != nullptr)
+			copyMaterialName = pMaterialName;
+		else
+			copyMaterialName.clear();
+
+		if (pTextureGroupName != nullptr)
+			copyTextureGroupName = pTextureGroupName;
+		else
+			copyTextureGroupName.clear();
+
 		if (inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
 		{
 			newMaterialName = copyMaterialName;

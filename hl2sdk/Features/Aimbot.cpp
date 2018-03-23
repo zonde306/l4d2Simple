@@ -37,7 +37,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
-	if (!HasValidWeapon(weapon))
+	if (local->GetTeam() != 3 && !HasValidWeapon(weapon))
 	{
 		m_bRunAutoAim = false;
 		return;
