@@ -38,7 +38,7 @@ void CBaseFeatures::OnEnginePaint(PaintMode_t)
 
 bool CBaseFeatures::OnUserMessage(int, bf_read)
 {
-	return false;
+	return true;
 }
 
 void CBaseFeatures::OnFrameStageNotify(ClientFrameStage_t)
@@ -47,17 +47,17 @@ void CBaseFeatures::OnFrameStageNotify(ClientFrameStage_t)
 
 bool CBaseFeatures::OnProcessGetCvarValue(SVC_GetCvarValue *, std::string&)
 {
-	return false;
+	return true;
 }
 
 bool CBaseFeatures::OnProcessSetConVar(NET_SetConVar *)
 {
-	return false;
+	return true;
 }
 
 bool CBaseFeatures::OnProcessClientCommand(NET_StringCmd *)
 {
-	return false;
+	return true;
 }
 
 void CBaseFeatures::OnSceneEnd()
@@ -83,5 +83,9 @@ bool CBaseFeatures::OnFindMaterial(std::string &, std::string &)
 }
 
 void CBaseFeatures::OnKeyInput(bool, ButtonCode_t, const char *)
+{
+}
+
+void CBaseFeatures::OnGameEvent(IGameEvent *)
 {
 }

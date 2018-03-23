@@ -97,7 +97,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		*/
 
 		if (m_bBox)
-			DrawBox(friendly, entity, Vector(foot.x - width / 2, foot.y), Vector(width, -height));
+			DrawBox(friendly, entity, Vector(head.x - width / 2, head.y), Vector(width, height));
 		if (m_bBone)
 			DrawBone(entity, friendly);
 		if (m_bHeadBox)
@@ -129,7 +129,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 			continue;
 
 		GetTextPosition(ss.str(), eye);
-		g_pDrawing->DrawText(eye.x, eye.y, GetDrawColor(entity, team), true, ss.str().c_str());
+		g_pDrawing->DrawText(eye.x, eye.y, GetDrawColor(entity), true, ss.str().c_str());
 	}
 }
 
@@ -256,24 +256,7 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 
 void CVisualPlayer::DrawBox(bool friendly, CBasePlayer* entity, const Vector & head, const Vector & foot)
 {
-	if (entity->IsDying())
-	{
-		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::WHITE);
-	}
-	if (friendly)
-	{
-		// g_pInterface->Surface->DrawSetColor(0, 255, 255, 255);
-		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::SKYBLUE);
-		// g_pDrawing->DrawRect(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::SKYBLUE);
-	}
-	else
-	{
-		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
-		g_pDrawing->DrawCorner(head.x, head.y, foot.x, foot.y, CDrawing::RED);
-		// g_pDrawing->DrawRect(head.x, head.y, abs(foot.x - head.x), abs(foot.y - head.y), CDrawing::RED);
-	}
-
-	// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, foot.x, foot.y);
+	g_pDrawing->DrawRect(head.x, head.y - 5, foot.x, foot.y + 5, GetDrawColor(entity));
 }
 
 void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
@@ -425,22 +408,39 @@ typename CVisualPlayer::DrawPosition_t CVisualPlayer::GetTextPosition(const std:
 	return result;
 }
 
-D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity, int team)
+D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity)
 {
 	if (entity == nullptr || !entity->IsAlive())
 		return CDrawing::WHITE;
 
 	int classId = entity->GetClassID();
 	if (IsSurvivor(classId))
+	{
+		if (entity->IsDying())
+			return CDrawing::WHITE;
+		if(entity->IsIncapacitated())
+			return CDrawing::DEEPSKYBLUE;
+
 		return CDrawing::SKYBLUE;
+	}
 	else if (classId == ET_TANK)
-		return CDrawing::YELLOW;
+		return CDrawing::ORANGE;
 	else if (IsSpecialInfected(classId))
+	{
+		if (entity->IsGhost())
+			return CDrawing::PURPLE;
+
 		return CDrawing::RED;
+	}
 	else if (classId == ET_WITCH)
+	{
+		if(entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) >= 1.0f)
+			return CDrawing::ORANGE;
+
 		return CDrawing::PINK;
+	}
 	else if (classId == ET_INFECTED)
-		return CDrawing::GREEN;
+		return CDrawing::YELLOW;
 
 	return CDrawing::GRAY;
 }

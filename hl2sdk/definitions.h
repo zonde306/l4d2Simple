@@ -649,7 +649,8 @@ enum EntityType_t
 	ET_WeaponGnome = 95,
 	ET_WeaponGascan = 94,
 	ET_WeaponFirework = 72,
-	ET_WeaponCola = 44
+	ET_WeaponCola = 44,
+	ET_PhysicsProp = 127,
 };
 
 // CTerrorPlayer::m_zombieClass

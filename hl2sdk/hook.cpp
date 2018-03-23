@@ -18,6 +18,7 @@
 
 std::unique_ptr<CClientHook> g_pClientHook;
 std::unique_ptr<CClientPrediction> g_pClientPrediction;
+std::map<std::string, std::string> g_ServerConVar;
 extern const VMatrix* g_pWorldToScreenMatrix;
 
 #define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 40 A1 ? ? ? ? 33 C5 89 45 FC 56 E8")
@@ -45,7 +46,7 @@ extern const VMatrix* g_pWorldToScreenMatrix;
 
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
-	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem;
+g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent;
 
 CClientHook::~CClientHook()
 {
@@ -159,7 +160,7 @@ bool CClientHook::Init()
 		oPaintTraverse = reinterpret_cast<FnPaintTraverse>(g_pHookPanel->HookFunction(indexes::PaintTraverse, Hooked_PaintTraverse));
 		g_pHookPanel->InstallHook();
 	}
-	
+
 	if (g_pInterface->EngineVGui != nullptr && !g_pHookVGui)
 	{
 		g_pHookVGui = std::make_unique<CVmtHook>(g_pInterface->EngineVGui);
@@ -184,8 +185,15 @@ bool CClientHook::Init()
 	if (g_pInterface->MaterialSystem != nullptr && !g_pHookMaterialSystem)
 	{
 		g_pHookMaterialSystem = std::make_unique<CVmtHook>(g_pInterface->MaterialSystem);
-		oFindMaterial = reinterpret_cast<FnFindMaterial>(indexes::FindMaterial, Hooked_FindMaterial);
+		oFindMaterial = reinterpret_cast<FnFindMaterial>(g_pHookMaterialSystem->HookFunction(indexes::FindMaterial, Hooked_FindMaterial));
 		g_pHookMaterialSystem->InstallHook();
+	}
+
+	if (g_pInterface->GameEvent != nullptr && !g_pHookGameEvent)
+	{
+		g_pHookGameEvent = std::make_unique<CVmtHook>(g_pInterface->GameEvent);
+		oFireEventClientSide = reinterpret_cast<FnFireEventClientSide>(g_pHookGameEvent->HookFunction(indexes::FireEventClientSide, Hooked_FireEventClientSide));
+		g_pHookGameEvent->InstallHook();
 	}
 
 	// 初始化功能
@@ -305,7 +313,7 @@ void CClientHook::Hooked_CL_SendMove()
 			blockSendMovement = true;
 	}
 
-	if(!blockSendMovement)
+	if (!blockSendMovement)
 		g_pClientHook->oCL_SendMove();
 }
 
@@ -355,24 +363,24 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 			inst->OnPaintTraverse(panel);
 
 		/*
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		static HFont font = 0;
 		if (font == 0)
 		{
-			font = g_pInterface->Surface->CreateFont();
-			g_pInterface->Surface->SetFontGlyphSet(font, XorStr("Arial"), 16, FW_DONTCARE, 0, 0, FONTFLAG_OUTLINE);
+		font = g_pInterface->Surface->CreateFont();
+		g_pInterface->Surface->SetFontGlyphSet(font, XorStr("Arial"), 16, FW_DONTCARE, 0, 0, FONTFLAG_OUTLINE);
 		}
 
 		if (panel == FocusOverlayPanel)
 		{
-			g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
-			g_pInterface->Surface->DrawFilledRect(60, 60, 70, 70);
-			g_pInterface->Surface->DrawSetTextPos(80, 80);
-			g_pInterface->Surface->DrawSetTextColor(255, 128, 128, 255);
-			g_pInterface->Surface->DrawSetTextFont(font);
-			g_pInterface->Surface->DrawPrintText(L"这是一些 Surface 文本", 16);
+		g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
+		g_pInterface->Surface->DrawFilledRect(60, 60, 70, 70);
+		g_pInterface->Surface->DrawSetTextPos(80, 80);
+		g_pInterface->Surface->DrawSetTextColor(255, 128, 128, 255);
+		g_pInterface->Surface->DrawSetTextFont(font);
+		g_pInterface->Surface->DrawPrintText(L"这是一些 Surface 文本", 16);
 		}
-#endif
+		#endif
 		*/
 	}
 }
@@ -394,17 +402,17 @@ void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, 
 	{
 		g_pClientHook->StartDrawing(g_pInterface->Surface);
 
-		if(g_pWorldToScreenMatrix == nullptr)
+		if (g_pWorldToScreenMatrix == nullptr)
 			g_pWorldToScreenMatrix = &g_pInterface->Engine->WorldToScreenMatrix();
 
 		for (const auto& inst : g_pClientHook->_GameHook)
 			inst->OnEnginePaint(mode);
 
 		/*
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		g_pInterface->Surface->DrawSetColor(0, 0, 255, 255);
 		g_pInterface->Surface->DrawFilledRect(70, 70, 80, 80);
-#endif
+		#endif
 		*/
 
 		g_pClientHook->FinishDrawing(g_pInterface->Surface);
@@ -424,7 +432,7 @@ void __fastcall CClientHook::Hooked_RunCommand(IPrediction *_ecx, LPVOID _edx, C
 	}
 #endif
 
-	if(g_pInterface->MoveHelper == nullptr)
+	if (g_pInterface->MoveHelper == nullptr)
 		g_pInterface->MoveHelper = movehelper;
 }
 
@@ -463,13 +471,13 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	/*
 	// 验证 CRC 用的
 	CVerifiedUserCmd* verified = &((*reinterpret_cast<CVerifiedUserCmd**>(
-		reinterpret_cast<DWORD>(g_pInterface->Input) + 0xE0))[sequence_number % 150]);
-	
+	reinterpret_cast<DWORD>(g_pInterface->Input) + 0xE0))[sequence_number % 150]);
+
 	// 玩家输入
 	CUserCmd* cmd = &((*reinterpret_cast<CUserCmd**>(
-		reinterpret_cast<DWORD>(g_pInterface->Input) + 0xDC))[sequence_number % 150]);
+	reinterpret_cast<DWORD>(g_pInterface->Input) + 0xDC))[sequence_number % 150]);
 	*/
-	
+
 	g_pClientPrediction->StartPrediction(cmd);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
@@ -510,28 +518,28 @@ void CClientHook::InstallClientModeHook(IClientMode * pointer)
 bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
 {
 	g_pClientHook->InstallClientModeHook(_ecx);
-	
+
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 
 	/*
 	g_pClientHook->bCreateMoveFinish = true;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
 	{
-		hasFirstEnter = false;
-		Utils::log(XorStr("Hook CreateMoveShared Success."));
+	hasFirstEnter = false;
+	Utils::log(XorStr("Hook CreateMoveShared Success."));
 	}
-#endif
+	#endif
 
 	if (cmd == nullptr || cmd->command_number == 0)
-		return false;
+	return false;
 
 	g_pClientPrediction->StartPrediction(cmd);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
+	inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
 
@@ -550,11 +558,11 @@ bool __fastcall CClientHook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LP
 	bool blockMessage = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
-		if(!inst->OnUserMessage(msgid, *data))
+		if (!inst->OnUserMessage(msgid, *data))
 			blockMessage = true;
 	}
 
-	if(!blockMessage)
+	if (!blockMessage)
 		g_pClientHook->oDispatchUserMessage(_ecx, msgid, data);
 
 #ifdef _DEBUG
@@ -601,7 +609,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (!isConnected)
 				{
 					isConnected = true;
-					// g_pClientHook->m_ServerConVar.clear();
+					// g_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnConnect();
@@ -612,7 +620,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 				if (isConnected)
 				{
 					isConnected = false;
-					g_pClientHook->m_ServerConVar.clear();
+					g_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnDisconnect();
@@ -668,7 +676,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 
 	/*
 	if (newResult.empty())
-		return oProcessGetCvarValue(_ecx, gcv);
+	return oProcessGetCvarValue(_ecx, gcv);
 	*/
 
 	// 空字符串
@@ -708,8 +716,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		// 可以被查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 
-		auto it = g_pClientHook->m_ServerConVar.find(gcv->m_szCvarName);
-		if (it != g_pClientHook->m_ServerConVar.end())
+		auto it = g_ServerConVar.find(gcv->m_szCvarName);
+		if (it != g_ServerConVar.end())
 		{
 			// 把服务器提供的 ConVar 还回去
 			strcpy_s(resultBuffer, it->second.c_str());
@@ -756,7 +764,7 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 			blockSetting = true;
 	}
 
-	if(!blockSetting)
+	if (!blockSetting)
 		g_pClientHook->oProcessSetConVar(_ecx, scv);
 
 	for (const auto& cvar : scv->m_ConVars)
@@ -765,8 +773,8 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 		// 等服务器查询时把它返回
 		if (cvar.name[0] != '\0')
 		{
-			// g_pClientHook->m_ServerConVar[std::string(cvar.name)] = std::string(cvar.value);
-			// g_pClientHook->m_ServerConVar.try_emplace(cvar.name, cvar.value);
+			g_ServerConVar[cvar.name] = cvar.value;
+			// g_ServerConVar.try_emplace(cvar.name, cvar.value);
 		}
 	}
 
@@ -802,7 +810,7 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 bool __fastcall CClientHook::Hooked_WriteUsercmdDeltaToBuffer(IBaseClientDll* _ecx, LPVOID _edx, int solt, bf_write* buf, int from, int to, bool isnewcommand)
 {
 	// oWriteUsercmdDeltaToBuffer(_ecx, buf, from, to, isnewcommand);
-	
+
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
@@ -858,7 +866,7 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 		Utils::log(XorStr("Hook FindMaterial Success."));
 	}
 #endif
-	
+
 	if (!newMaterialName.empty())
 	{
 		return g_pClientHook->oFindMaterial(_ecx, newMaterialName.c_str(),
@@ -872,7 +880,7 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, ButtonCode_t keynum, const char* pszCurrentBinding)
 {
 	int result = g_pClientHook->oKeyInput(_ecx, down, keynum, pszCurrentBinding);
-	
+
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnKeyInput(down != 0, keynum, pszCurrentBinding);
 
@@ -882,6 +890,25 @@ int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, Butto
 	{
 		hasFirstEnter = false;
 		Utils::log(XorStr("Hook KeyInput Success."));
+	}
+#endif
+
+	return result;
+}
+
+bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event)
+{
+	bool result = g_pClientHook->oFireEventClientSide(_ecx, event);
+
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnGameEvent(event);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook FireEventClientSide Success."));
 	}
 #endif
 
@@ -930,7 +957,7 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 	g_pInterface->Prediction->SetupMove(player, cmd, g_pInterface->MoveHelper, &m_MoveData);
 	g_pInterface->GameMovement->ProcessMovement(player, &m_MoveData);
 	g_pInterface->Prediction->FinishMove(player, cmd, &m_MoveData);
-	
+
 	m_bInPrediction = true;
 	return true;
 }
@@ -987,7 +1014,7 @@ std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon
 {
 	if (weapon == nullptr || weapon->GetWeaponData()->iMaxClip1 <= 0)
 		return std::make_pair(0.0f, 0.0f);
-	
+
 	int oldSeed = *m_pSpreadRandomSeed;
 	*m_pSpreadRandomSeed = seed;
 

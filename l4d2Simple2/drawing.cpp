@@ -1003,21 +1003,26 @@ void CDrawing::DrawCorner(int x, int y, int w, int h, D3DCOLOR color, int length
 		length = (w < h ? w / 3 : h / 3);
 	}
 
+	if (w < 0)
+		w = -w;
+	if (h < 0)
+		h = -h;
+
 	// 左上
 	DrawLine(x, y, x + length, y, color);
-	DrawLine(x, y, x, y - length, color);
+	DrawLine(x, y, x, y + length, color);
 
 	// 右上
-	DrawLine(x + w, y, x + w - length, y, color);
-	DrawLine(x + w, y, x + w, y - length, color);
+	DrawLine(x + w, y, x - length, y, color);
+	DrawLine(x + w, y, y + length, color);
 
 	// 左下
-	DrawLine(x, y + h, x + length, y + h, color);
-	DrawLine(x, y + h, x, y + h + length, color);
+	DrawLine(x, y + h, x + length, color);
+	DrawLine(x, y + h, x, y - length, color);
 
 	// 右下
-	DrawLine(x + w, y + h, x + w - length, y + h, color);
-	DrawLine(x + w, y + h, x + w, y + h + length, color);
+	DrawLine(x + w, y + h, x - length, y + h, color);
+	DrawLine(x + w, y + h, x + w, y - length, color);
 }
 
 void CDrawing::DrawText(int x, int y, D3DCOLOR color, bool centered, const char * text, ...)

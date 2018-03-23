@@ -17,6 +17,7 @@ public:
 	void DrawMelee(CBaseWeapon* weapon, const Vector& screen);
 	void DrawSurvovorDeadbody(CBaseWeapon* weapon, const Vector& screen);
 	void DrawOtherWeapon(CBaseWeapon* weapon, const Vector& screen);
+	bool DrawCarryProps(CBaseWeapon* weapon, const Vector& screen);
 
 	bool CanDrawWeapon(CBaseWeapon* weapon);
 

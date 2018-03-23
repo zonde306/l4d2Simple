@@ -36,7 +36,7 @@ public:
 
 	int GetTextMaxWide(const std::string& text);
 	DrawPosition_t GetTextPosition(const std::string& text, Vector& head);
-	D3DCOLOR GetDrawColor(CBasePlayer* entity, int team);
+	D3DCOLOR GetDrawColor(CBasePlayer* entity);
 
 	Vector GetSeePosition(CBasePlayer* player, const Vector& eyePosition, const QAngle& eyeAngles);
 

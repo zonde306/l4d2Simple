@@ -170,4 +170,8 @@ namespace indexes
 
 	// RenderView
 	const int RenderViewSetColorModulation = 1;
+
+	// IGameEvent
+	const int FireEvent = 7;
+	const int FireEventClientSide = 8;
 };

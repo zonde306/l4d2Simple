@@ -79,6 +79,11 @@ void CVisualDrop::OnEnginePaint(PaintMode_t mode)
 			DrawSurvovorDeadbody(entity, screenPosition);
 			continue;
 		}
+		if (classId == ET_PhysicsProp)
+		{
+			if (DrawCarryProps(entity, screenPosition))
+				continue;
+		}
 
 		DrawOtherWeapon(entity, screenPosition);
 	}
@@ -259,6 +264,53 @@ void CVisualDrop::DrawOtherWeapon(CBaseWeapon * weapon, const Vector & screen)
 		DrawWeaponSpawn(weapon, screen);
 		return;
 	}
+}
+
+bool CVisualDrop::DrawCarryProps(CBaseWeapon * weapon, const Vector & screen)
+{
+	if(!m_bCarry)
+		return false;
+
+	const model_t* model = weapon->GetModel();
+	if (model->name[0] != 'm' || model->name[7] != 'p')
+		return false;
+
+	if (model->name[13] == 'e' && model->name[23] == 'o')
+	{
+		// models/props_equipment/oxygentank01.mdl
+		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("oxygentank"));
+		return true;
+	}
+
+	if (model->name[13] != 'j')
+		return false;
+
+	if (model->name[18] == 'p')
+	{
+		// models/props_junk/propanecanister001a.mdl
+		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("propanetank"));
+		return true;
+	}
+
+	if (model->name[18] == 'e')
+	{
+		// models/props_junk/explosive_box001.mdl
+		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("firework"));
+		return true;
+	}
+
+	if (model->name[18] == 'g')
+	{
+		// models/props_junk/gascan001a.mdl
+		if(weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSkin")) > 0)
+			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("gascan_scavenge"));
+		else
+			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("gascan"));
+
+		return true;
+	}
+
+	return false;
 }
 
 bool CVisualDrop::CanDrawWeapon(CBaseWeapon * weapon)

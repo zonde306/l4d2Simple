@@ -51,7 +51,7 @@ public:
 	virtual int GetEventDebugID(void) final { return m_nDebugID; };
 	virtual int IndicateEventHandling(void) final { return m_nDebugID; };
 
-	int m_nDebugID = EVENT_DEBUG_ID_INIT;
+	const int m_nDebugID = EVENT_DEBUG_ID_INIT;
 };
 
 class IGameEventManager2 : public IBaseInterface

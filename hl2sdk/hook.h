@@ -24,6 +24,7 @@ typedef bool(__thiscall* FnWriteUsercmdDeltaToBuffer)(IBaseClientDll*, bf_write*
 typedef void(__thiscall* FnSceneEnd)(IVRenderView*);
 typedef IMaterial*(__thiscall* FnFindMaterial)(IMaterialSystem*, char const*, const char*, bool, const char*);
 typedef int(__thiscall* FnKeyInput)(IClientMode*, int, ButtonCode_t, const char*);
+typedef bool(__thiscall* FnFireEventClientSide)(IGameEventManager2*, IGameEvent*);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -71,6 +72,7 @@ protected:
 	static void __fastcall Hooked_SceneEnd(IVRenderView*, LPVOID);
 	static IMaterial* __fastcall Hooked_FindMaterial(IMaterialSystem*, LPVOID, char const*, const char*, bool, const char*);
 	static int __fastcall Hooked_KeyInput(IClientMode*, LPVOID, int, ButtonCode_t, const char*);
+	static bool __fastcall Hooked_FireEventClientSide(IGameEventManager2*, LPVOID, IGameEvent*);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -93,6 +95,7 @@ private:
 	FnWriteUsercmdDeltaToBuffer oWriteUsercmdDeltaToBuffer = nullptr;
 	FnSceneEnd oSceneEnd = nullptr;
 	FnKeyInput oKeyInput = nullptr;
+	FnFireEventClientSide oFireEventClientSide = nullptr;
 
 public:
 	bool* bSendPacket;
@@ -115,7 +118,6 @@ public:
 
 private:
 	bool bCreateMoveFinish = false;
-	std::map<std::string, std::string> m_ServerConVar;
 };
 
 extern std::unique_ptr<CClientHook> g_pClientHook;

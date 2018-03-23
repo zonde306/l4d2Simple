@@ -50,6 +50,7 @@ void math::VectorTransform(const Vector & in1, const matrix3x4_t & in2, Vector &
 
 QAngle math::CalculateAim(const Vector & origin, const Vector & target)
 {
+	/*
 	Vector angles;
 	Vector deltaPos = target - origin;
 
@@ -58,6 +59,9 @@ QAngle math::CalculateAim(const Vector & origin, const Vector & target)
 	angles.z = 0.0f;
 
 	return angles.Normalize();
+	*/
+
+	return (target - origin).Normalize().toAngles();
 }
 
 float math::GetAnglesFieldOfView(const QAngle & myAngles, const QAngle & aimAngles)

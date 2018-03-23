@@ -51,6 +51,8 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	m_vecAimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+	// m_vecAimAngles = (m_pAimTarget->GetHeadOrigin() - local->GetEyePosition()).Normalize().toAngles();
+
 	if (!m_vecAimAngles.IsValid())
 	{
 		m_bRunAutoAim = false;
