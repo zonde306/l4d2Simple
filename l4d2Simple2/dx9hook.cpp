@@ -5,13 +5,21 @@
 #include "utils.h"
 #include "xorstr.h"
 #include "drawing.h"
+#include "menu.h"
 #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 std::unique_ptr<CDirectX9Hook> g_pDirextXHook;
+
+// .text:10005D5C A1 88 39 17 10              mov     eax, g_pD3DDevice
+#define SIG_MOV_DIRECT_PTR		XorStr("A1 ? ? ? ? 50 8B CE E8 ? ? ? ? 84 DB 75 0F")
+
+#define DECL_DESTORY_DETOURXS(_name)	if(_name && _name->Created())\
+	_name->Destroy()
+
 #pragma comment(lib, "d3d9")
 #pragma comment(lib, "d3dx9")
 
-CDirectX9Hook::CDirectX9Hook() : m_pVmtHook(nullptr), m_pVMT(nullptr), m_pD3D(nullptr), m_pDevice(nullptr),
+CDirectX9Hook::CDirectX9Hook() : m_pVMTHook(nullptr), m_pD3D(nullptr), m_pDevice(nullptr),
 	m_pOriginDevice(nullptr), m_bSuccessCreated(false), m_bIsFirstHooked(false), m_bIsSecondHooked(false)
 {
 }
@@ -31,21 +39,17 @@ CDirectX9Hook::~CDirectX9Hook()
 
 	if (m_bIsFirstHooked)
 	{
-		for (DetourXS*& entity : m_vpDetourList)
-		{
-			if (entity != nullptr)
-				delete entity;
-			
-			entity = nullptr;
-		}
-
-		m_vpDetourList.clear();
+		DECL_DESTORY_DETOURXS(m_pHookDrawIndexedPrimitive);
+		DECL_DESTORY_DETOURXS(m_pHookEndScene);
+		DECL_DESTORY_DETOURXS(m_pHookCreateQuery);
+		DECL_DESTORY_DETOURXS(m_pHookReset);
+		DECL_DESTORY_DETOURXS(m_pHookPresent);
 	}
 
-	if (m_bIsSecondHooked && m_pVmtHook)
+	if (m_bIsSecondHooked && m_pVMTHook)
 	{
-		m_pVmtHook->UninstallHook();
-		delete m_pVmtHook;
+		m_pVMTHook->UninstallHook();
+		m_pVMTHook.reset();
 	}
 }
 
@@ -69,11 +73,6 @@ void CDirectX9Hook::Shutdown()
 	ImGui_ImplDX9_Shutdown();
 }
 
-IDirect3DDevice9 * CDirectX9Hook::GetDevice()
-{
-	return m_pOriginDevice;
-}
-
 HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
 	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
 {
@@ -92,20 +91,14 @@ HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* devi
 		device->GetRenderState(D3DRS_ZENABLE, &oldZEnable);
 		device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_NEVER);
-		g_pDirextXHook->m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
+		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
 		device->SetRenderState(D3DRS_ZENABLE, oldZEnable);
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
 	}
 #endif
 	*/
 
-	// 在这里使用 stride, numVertices, primitiveCount 检查是否为有用的模型
-	// 然后通过修改 D3DRS_ZENABLE 和 D3DRS_ZFUNC 实现透视
-	for (auto& func : g_pDirextXHook->m_vfnDrawIndexedPrimitive)
-	{
-		func(device, type, baseIndex, minIndex,
-			numVertices, startIndex, primitiveCount);
-	}
+	g_pBaseMenu->OnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
 
 #ifdef _DEBUG
 	static bool bHasFirst = true;
@@ -116,7 +109,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* devi
 	}
 #endif
 
-	return g_pDirextXHook->m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex,
+	return g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex, minIndex,
 		numVertices, startIndex, primitiveCount);
 }
 
@@ -127,11 +120,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_EndScene(IDirect3DDevice9* device)
 
 	g_pDrawing->OnBeginEndScene();
 
-	// 在这里使用 DrawIndexedPrimitive 或 DrawIndexedPrimitiveUp 绘制屏幕
-	for (auto& func : g_pDirextXHook->m_vfnEndScene)
-	{
-		func(device);
-	}
+	// 在这里使用 CDrawing::Render 开头的函数进行绘制
 
 	g_pDrawing->OnFinishEndScene();
 	g_pDrawing->OnGameFrame();
@@ -145,7 +134,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_EndScene(IDirect3DDevice9* device)
 	}
 #endif
 
-	return g_pDirextXHook->m_pfnEndScene(device);
+	return g_pDirextXHook->oEndScene(device);
 }
 
 HRESULT WINAPI CDirectX9Hook::Hooked_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type,
@@ -154,12 +143,6 @@ HRESULT WINAPI CDirectX9Hook::Hooked_CreateQuery(IDirect3DDevice9* device, D3DQU
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_CreateQuery"));
 
-	for (auto& func : g_pDirextXHook->m_vfnCreateQuery)
-	{
-		func(device, type, query);
-	}
-
-	// 简易的透视，但是会有屏幕变黑的 bug
 	/*
 	if (type == D3DQUERYTYPE_OCCLUSION)
 		type = D3DQUERYTYPE_TIMESTAMP;
@@ -174,7 +157,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_CreateQuery(IDirect3DDevice9* device, D3DQU
 	}
 #endif
 
-	return g_pDirextXHook->m_pfnCreateQuery(device, type, query);
+	return g_pDirextXHook->oCreateQuery(device, type, query);
 }
 
 HRESULT WINAPI CDirectX9Hook::Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
@@ -184,12 +167,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_
 
 	g_pDrawing->OnLostDevice();
 
-	HRESULT hr = g_pDirextXHook->m_pfnReset(device, pp);
-
-	for (auto& func : g_pDirextXHook->m_vfnReset)
-	{
-		func(device, pp);
-	}
+	HRESULT hr = g_pDirextXHook->oReset(device, pp);
 
 	g_pDrawing->OnResetDevice();
 
@@ -213,11 +191,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_Present(IDirect3DDevice9* device, const REC
 
 	g_pDrawing->OnBeginPresent();
 
-	// 在这里使用 ImGui 绘制屏幕
-	for (auto& func : g_pDirextXHook->m_vfnPresent)
-	{
-		func(device, source, dest, window, region);
-	}
+	// 在这里使用 CDrawing::Draw 开头的函数进行绘制
 
 	g_pDrawing->OnFinishPresent();
 
@@ -230,7 +204,7 @@ HRESULT WINAPI CDirectX9Hook::Hooked_Present(IDirect3DDevice9* device, const REC
 	}
 #endif
 
-	return g_pDirextXHook->m_pfnPresent(device, source, dest, window, region);
+	return g_pDirextXHook->oPresent(device, source, dest, window, region);
 }
 
 bool CDirectX9Hook::CreateDevice()
@@ -307,7 +281,6 @@ bool CDirectX9Hook::CreateDevice()
 
 	m_bSuccessCreated = true;
 	Utils::log(XorStr("Create Fake Device."));
-
 	return true;
 }
 
@@ -325,7 +298,6 @@ bool CDirectX9Hook::ReleaseDevice()
 	m_pD3D = nullptr;
 	m_bSuccessCreated = false;
 	Utils::log(XorStr("Release Fake Device."));
-
 	return true;
 }
 
@@ -334,30 +306,23 @@ bool CDirectX9Hook::SetupFirstHook()
 	if (!m_bSuccessCreated || m_bIsSecondHooked || m_bIsFirstHooked || m_pOriginDevice != nullptr)
 		return false;
 
-	m_pVMT = *(reinterpret_cast<PDWORD*>(m_pDevice));
-	DetourXS* detour = new DetourXS(reinterpret_cast<LPVOID>(m_pVMT[16]), Hooked_Reset);
-	m_pfnReset = reinterpret_cast<FnReset>(detour->GetTrampoline());
-	m_vpDetourList.push_back(std::move(detour));
+	m_pHookReset = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 16), Hooked_Reset);
+	oReset = reinterpret_cast<FnReset>(m_pHookReset->GetTrampoline());
 
-	detour = new DetourXS(reinterpret_cast<LPVOID>(m_pVMT[17]), Hooked_Present);
-	m_pfnPresent = reinterpret_cast<FnPresent>(detour->GetTrampoline());
-	m_vpDetourList.push_back(std::move(detour));
+	m_pHookPresent = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 17), Hooked_Present);
+	oPresent = reinterpret_cast<FnPresent>(m_pHookPresent->GetTrampoline());
 
-	detour = new DetourXS(reinterpret_cast<LPVOID>(m_pVMT[42]), Hooked_EndScene);
-	m_pfnEndScene = reinterpret_cast<FnEndScene>(detour->GetTrampoline());
-	m_vpDetourList.push_back(std::move(detour));
+	m_pHookEndScene = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 42), Hooked_EndScene);
+	oEndScene = reinterpret_cast<FnEndScene>(m_pHookEndScene->GetTrampoline());
 
-	detour = new DetourXS(reinterpret_cast<LPVOID>(m_pVMT[82]), Hooked_DrawIndexedPrimitive);
-	m_pfnDrawIndexedPrimitive = reinterpret_cast<FnDrawIndexedPrimitive>(detour->GetTrampoline());
-	m_vpDetourList.push_back(std::move(detour));
+	m_pHookDrawIndexedPrimitive = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 82), Hooked_DrawIndexedPrimitive);
+	oDrawIndexedPrimitive = reinterpret_cast<FnDrawIndexedPrimitive>(m_pHookDrawIndexedPrimitive->GetTrampoline());
 
-	detour = new DetourXS(reinterpret_cast<LPVOID>(m_pVMT[118]), Hooked_CreateQuery);
-	m_pfnCreateQuery = reinterpret_cast<FnCreateQuery>(detour->GetTrampoline());
-	m_vpDetourList.push_back(std::move(detour));
+	m_pHookCreateQuery = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 118), Hooked_CreateQuery);
+	oCreateQuery = reinterpret_cast<FnCreateQuery>(m_pHookCreateQuery->GetTrampoline());
 
 	m_bIsFirstHooked = true;
 	Utils::log(XorStr("Setup DirectX Hook 1st."));
-
 	return true;
 }
 
@@ -371,30 +336,24 @@ bool CDirectX9Hook::SetupSecondHook(IDirect3DDevice9* device)
 
 	if (m_bIsFirstHooked)
 	{
-		for (DetourXS*& entity : m_vpDetourList)
-		{
-			if (entity != nullptr)
-				delete entity;
-
-			entity = nullptr;
-		}
-
-		m_vpDetourList.clear();
-		m_bIsFirstHooked = false;
+		DECL_DESTORY_DETOURXS(m_pHookDrawIndexedPrimitive);
+		DECL_DESTORY_DETOURXS(m_pHookEndScene);
+		DECL_DESTORY_DETOURXS(m_pHookCreateQuery);
+		DECL_DESTORY_DETOURXS(m_pHookReset);
+		DECL_DESTORY_DETOURXS(m_pHookPresent);
 	}
 
 	m_pOriginDevice = device;
-	m_pVmtHook = new CVmtHook(device);
-	m_pfnReset = reinterpret_cast<FnReset>(m_pVmtHook->HookFunction(16, Hooked_Reset));
-	m_pfnPresent = reinterpret_cast<FnPresent>(m_pVmtHook->HookFunction(17, Hooked_Present));
-	m_pfnEndScene = reinterpret_cast<FnEndScene>(m_pVmtHook->HookFunction(42, Hooked_EndScene));
-	m_pfnDrawIndexedPrimitive = reinterpret_cast<FnDrawIndexedPrimitive>(m_pVmtHook->HookFunction(82, Hooked_DrawIndexedPrimitive));
-	m_pfnCreateQuery = reinterpret_cast<FnCreateQuery>(m_pVmtHook->HookFunction(118, Hooked_CreateQuery));
-	m_pVmtHook->InstallHook();
+	m_pVMTHook = std::make_unique<CVmtHook>(device);
+	oReset = reinterpret_cast<FnReset>(m_pVMTHook->HookFunction(16, Hooked_Reset));
+	oPresent = reinterpret_cast<FnPresent>(m_pVMTHook->HookFunction(17, Hooked_Present));
+	oEndScene = reinterpret_cast<FnEndScene>(m_pVMTHook->HookFunction(42, Hooked_EndScene));
+	oDrawIndexedPrimitive = reinterpret_cast<FnDrawIndexedPrimitive>(m_pVMTHook->HookFunction(82, Hooked_DrawIndexedPrimitive));
+	oCreateQuery = reinterpret_cast<FnCreateQuery>(m_pVMTHook->HookFunction(118, Hooked_CreateQuery));
+	m_pVMTHook->InstallHook();
 
 	m_bIsSecondHooked = true;
 	Utils::log(XorStr("Setup DirectX Hook 2nd."));
-
 	return true;
 }
 
@@ -416,333 +375,4 @@ bool CDirectX9Hook::CheckHookStatus(IDirect3DDevice9 * device)
 	}
 
 	return doInit;
-}
-
-std::vector<FnDrawIndexedPrimitive>& CDirectX9Hook::GetHookList(FnDrawIndexedPrimitive)
-{
-	return m_vfnDrawIndexedPrimitive;
-}
-
-std::vector<FnEndScene>& CDirectX9Hook::GetHookList(FnEndScene)
-{
-	return m_vfnEndScene;
-}
-
-std::vector<FnCreateQuery>& CDirectX9Hook::GetHookList(FnCreateQuery)
-{
-	return m_vfnCreateQuery;
-}
-
-std::vector<FnReset>& CDirectX9Hook::GetHookList(FnReset)
-{
-	return m_vfnReset;
-}
-
-std::vector<FnPresent>& CDirectX9Hook::GetHookList(FnPresent)
-{
-	return m_vfnPresent;
-}
-
-HRESULT CDirectX9Hook::CallOriginalFunction(FnDrawIndexedPrimitive, IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
-	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
-{
-	return m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
-}
-
-HRESULT CDirectX9Hook::CallOriginalFunction(FnEndScene, IDirect3DDevice9* device)
-{
-	return m_pfnEndScene(device);
-}
-
-HRESULT CDirectX9Hook::CallOriginalFunction(FnCreateQuery, IDirect3DDevice9* device, D3DQUERYTYPE type,
-	IDirect3DQuery9** query)
-{
-	return m_pfnCreateQuery(device, type, query);
-}
-
-HRESULT CDirectX9Hook::CallOriginalFunction(FnReset, IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pp)
-{
-	return m_pfnReset(device, pp);
-}
-
-HRESULT CDirectX9Hook::CallOriginalFunction(FnPresent, IDirect3DDevice9* device, const RECT* source,
-	const RECT* dest, HWND window, const RGNDATA* region)
-{
-	return m_pfnPresent(device, source, dest, window, region);
-}
-
-bool CDirectX9Hook::AddHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function)
-{
-	return _FunctionHook(m_vfnDrawIndexedPrimitive, function);
-}
-
-bool CDirectX9Hook::AddHook_EndScene(FnEndScene function)
-{
-	return _FunctionHook(m_vfnEndScene, function);
-}
-
-bool CDirectX9Hook::AddHook_CreateQuery(FnCreateQuery function)
-{
-	return _FunctionHook(m_vfnCreateQuery, function);
-}
-
-bool CDirectX9Hook::AddHook_Reset(FnReset function)
-{
-	return _FunctionHook(m_vfnReset, function);
-}
-
-bool CDirectX9Hook::AddHook_Present(FnPresent function)
-{
-	return _FunctionHook(m_vfnPresent, function);
-}
-
-bool CDirectX9Hook::RemoveHook_DrawIndexedPrimitive(FnDrawIndexedPrimitive function)
-{
-	return _FunctionUnhook(m_vfnDrawIndexedPrimitive, function);
-}
-
-bool CDirectX9Hook::RemoveHook_EndScene(FnEndScene function)
-{
-	return _FunctionUnhook(m_vfnEndScene, function);
-}
-
-bool CDirectX9Hook::RemoveHook_CreateQuery(FnCreateQuery function)
-{
-	return _FunctionUnhook(m_vfnCreateQuery, function);
-}
-
-bool CDirectX9Hook::RemoveHook_Reset(FnReset function)
-{
-	return _FunctionUnhook(m_vfnReset, function);
-}
-
-bool CDirectX9Hook::RemoveHook_Present(FnPresent function)
-{
-	return _FunctionUnhook(m_vfnPresent, function);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_DrawIndexedPrimitive(D3DPRIMITIVETYPE type,
-	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
-{
-	return m_pfnDrawIndexedPrimitive(m_pOriginDevice, type, baseIndex, minIndex, numVertices,
-		startIndex, primitiveCount);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_EndScene()
-{
-	return m_pfnEndScene(m_pOriginDevice);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_CreateQuery(D3DQUERYTYPE type, IDirect3DQuery9** query)
-{
-	return m_pfnCreateQuery(m_pOriginDevice, type, query);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_Reset(D3DPRESENT_PARAMETERS *pp)
-{
-	return m_pfnReset(m_pOriginDevice, pp);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_Present(const RECT* source, const RECT* dest,
-	HWND window, const RGNDATA* region)
-{
-	return m_pfnPresent(m_pOriginDevice, source, dest, window, region);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_DrawIndexedPrimitive(IDirect3DDevice9* device,
-	D3DPRIMITIVETYPE type, INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
-{
-	return m_pfnDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices,
-		startIndex, primitiveCount);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_EndScene(IDirect3DDevice9* device)
-{
-	return m_pfnEndScene(device);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_CreateQuery(IDirect3DDevice9* device, D3DQUERYTYPE type,
-	IDirect3DQuery9** query)
-{
-	return m_pfnCreateQuery(device, type, query);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS *pp)
-{
-	return m_pfnReset(device, pp);
-}
-
-HRESULT CDirectX9Hook::CallOriginal_Present(IDirect3DDevice9* device, const RECT* source,
-	const RECT* dest, HWND window, const RGNDATA* region)
-{
-	return m_pfnPresent(device, source, dest, window, region);
-}
-
-template<typename Fn>
-bool CDirectX9Hook::HookFunction(Fn function)
-{
-	const std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();;
-	if (std::find(list.cbegin(), list.cend(), function) != list.cend())
-		return false;
-
-	list.push_back(function);
-	return true;
-}
-
-template<typename Fn>
-bool CDirectX9Hook::UnhookFunction(Fn function)
-{
-	std::vector<Fn>& list = *_DeclTypeCall<Fn>::GetHookList();
-	std::vector<Fn>::iterator iter = std::find(list.begin(), list.end(), function);
-	if (iter != list.end())
-	{
-		list.erase(iter);
-		return true;
-	}
-
-	return false;
-}
-
-template<typename Fn, typename ...Arg>
-HRESULT CDirectX9Hook::InvokeOriginal(Fn, Arg ...arg)
-{
-	return _DeclTypeCall<Fn>::Invoke(std::forward<Arg>(arg)...);
-}
-
-template<typename Fn>
-bool CDirectX9Hook::_FunctionHook(std::vector<Fn>& list, Fn function)
-{
-	if (!list.empty() && std::find(list.cbegin(), list.cend(), function) != list.cend())
-		return false;
-
-	list.emplace_back(function);
-	return true;
-}
-
-template<typename Fn>
-bool CDirectX9Hook::_FunctionUnhook(std::vector<Fn>& list, Fn function)
-{
-	if (list.empty())
-		return false;
-
-	auto it = std::find(list.begin(), list.end(), function);
-	if (it == list.end())
-		return false;
-
-	list.erase(it);
-	return true;
-}
-
-template<typename Fn>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<Fn>::Invoke(Arg ...arg)
-{
-	return E_NOTIMPL;
-}
-
-template<typename Fn>
-Fn _DeclTypeCall<Fn>::GetFunction()
-{
-	return NULL;
-}
-
-template<typename Fn>
-std::vector<Fn>* _DeclTypeCall<Fn>::GetHookList()
-{
-	return nullptr;
-}
-
-template<>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<FnEndScene>::Invoke(Arg ...arg)
-{
-	return g_pDirextXHook->m_pfnEndScene(std::forward<Arg>(arg)...);
-}
-
-template<>
-FnEndScene _DeclTypeCall<FnEndScene>::GetFunction()
-{
-	return g_pDirextXHook->m_pfnEndScene;
-}
-
-template<>
-std::vector<FnEndScene>* _DeclTypeCall<FnEndScene>::GetHookList()
-{
-	return &g_pDirextXHook->m_vfnEndScene;
-}
-
-template<>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<FnPresent>::Invoke(Arg ...arg)
-{
-	return g_pDirextXHook->m_pfnPresent(std::forward<Arg>(arg)...);
-}
-
-template<>
-FnPresent _DeclTypeCall<FnPresent>::GetFunction()
-{
-	return g_pDirextXHook->m_pfnPresent;
-}
-
-template<>
-std::vector<FnPresent>* _DeclTypeCall<FnPresent>::GetHookList()
-{
-	return &g_pDirextXHook->m_vfnPresent;
-}
-
-template<>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<FnCreateQuery>::Invoke(Arg ...arg)
-{
-	return g_pDirextXHook->m_pfnCreateQuery(std::forward<Arg>(arg)...);
-}
-
-template<>
-FnCreateQuery _DeclTypeCall<FnCreateQuery>::GetFunction()
-{
-	return g_pDirextXHook->m_pfnCreateQuery;
-}
-
-template<>
-std::vector<FnCreateQuery>* _DeclTypeCall<FnCreateQuery>::GetHookList()
-{
-	return &g_pDirextXHook->m_vfnCreateQuery;
-}
-
-template<>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<FnReset>::Invoke(Arg ...arg)
-{
-	return g_pDirextXHook->m_pfnReset(std::forward<Arg>(arg)...);
-}
-
-template<>
-FnReset _DeclTypeCall<FnReset>::GetFunction()
-{
-	return g_pDirextXHook->m_pfnReset;
-}
-
-template<>
-std::vector<FnReset>* _DeclTypeCall<FnReset>::GetHookList()
-{
-	return &g_pDirextXHook->m_vfnReset;
-}
-
-template<>
-template<typename ...Arg>
-HRESULT _DeclTypeCall<FnDrawIndexedPrimitive>::Invoke(Arg ...arg)
-{
-	return g_pDirextXHook->m_pfnDrawIndexedPrimitive(std::forward<Arg>(arg)...);
-}
-
-template<>
-FnDrawIndexedPrimitive _DeclTypeCall<FnDrawIndexedPrimitive>::GetFunction()
-{
-	return g_pDirextXHook->m_pfnDrawIndexedPrimitive;
-}
-
-template<>
-std::vector<FnDrawIndexedPrimitive>* _DeclTypeCall<FnDrawIndexedPrimitive>::GetHookList()
-{
-	return &g_pDirextXHook->m_vfnDrawIndexedPrimitive;
 }

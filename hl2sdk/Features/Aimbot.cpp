@@ -127,7 +127,7 @@ void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
 	Vector eyePosition = local->GetEyePosition();
 	Vector aimPosition = GetAimPosition(local, eyePosition, &hitEntity);
 
-	g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, aimPosition, 64, 128, 128, false, 0.01f);
+	g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, aimPosition, 64, 128, 128, true, 0.1f);
 
 	Vector screenPosition;
 	if (hitEntity != nullptr && math::WorldToScreenEx(aimPosition, screenPosition))

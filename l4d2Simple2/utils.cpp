@@ -533,7 +533,7 @@ std::string Utils::Trim(const std::string & s, const std::string & delim)
 	return result;
 }
 
-inline PVOID Utils::GetVirtualFunction(PVOID inst, DWORD index)
+PVOID Utils::GetVirtualFunction(PVOID inst, DWORD index)
 {
 	if (inst == nullptr)
 		return nullptr;

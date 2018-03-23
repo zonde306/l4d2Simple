@@ -16,7 +16,7 @@ void _OnMenuStateChanged(bool visible)
 void CBaseMenu::Init()
 {
 	// g_pDirextXHook->m_vfnDrawIndexedPrimitive.emplace_back(Hooked_DrawIndexedPrimitive);
-	g_pDirextXHook->AddHook_DrawIndexedPrimitive(Hooked_DrawIndexedPrimitive);
+	// g_pDirextXHook->AddHook_DrawIndexedPrimitive(Hooked_DrawIndexedPrimitive);
 }
 
 void CBaseMenu::OnPresent()
@@ -80,7 +80,7 @@ void CBaseMenu::OnPresent()
 	*/
 }
 
-HRESULT WINAPI CBaseMenu::Hooked_DrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETYPE type,
+void CBaseMenu::OnDrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETYPE type,
 	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
 {
 	UINT offsetByte, stride;
@@ -104,11 +104,11 @@ HRESULT WINAPI CBaseMenu::Hooked_DrawIndexedPrimitive(IDirect3DDevice9 * device,
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_NEVER);
 
 		/*
-		g_pDirextXHook->m_pfnDrawIndexedPrimitive(device, type, baseIndex,
+		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex,
 			minIndex, numVertices, startIndex, primitiveCount);
 		*/
 
-		g_pDirextXHook->CallOriginal_DrawIndexedPrimitive(type, baseIndex, minIndex,
+		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex, minIndex,
 			numVertices, startIndex, primitiveCount);
 
 		device->SetRenderState(D3DRS_ZENABLE, oldZEnable);
@@ -116,8 +116,6 @@ HRESULT WINAPI CBaseMenu::Hooked_DrawIndexedPrimitive(IDirect3DDevice9 * device,
 
 		break;
 	}
-
-	return S_OK;
 }
 
 void CBaseMenu::DrawStrideMenu()

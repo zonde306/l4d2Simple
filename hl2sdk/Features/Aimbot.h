@@ -23,11 +23,11 @@ private:	// 菜单项
 	bool m_bActive = false;
 	bool m_bOnFire = true;
 
-	bool m_bVisible = false;
-	bool m_bSilent = false;
-	bool m_bPerfectSilent = false;
+	bool m_bVisible = true;
+	bool m_bSilent = true;
+	bool m_bPerfectSilent = true;
 	bool m_bNonFriendly = true;
-	bool m_bDistance = false;
+	bool m_bDistance = true;
 	bool m_bNonWitch = true;
 	bool m_bShowRange = false;
 	bool m_bShowAngles = false;

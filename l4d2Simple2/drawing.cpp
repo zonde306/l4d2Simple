@@ -146,10 +146,12 @@ void CDrawing::ReleaseObjects()
 	UNLOCK_PRESENT();
 
 	m_bIsReady = false;
+	Utils::log(XorStr("CDrawing::ReleaseObjects"));
 }
 
 void CDrawing::CreateObjects()
 {
+	/*
 #ifdef _DEBUG
 	if (m_bIsReady)
 		ReleaseObjects();
@@ -157,6 +159,7 @@ void CDrawing::CreateObjects()
 	if (m_bIsReady)
 		return;
 #endif
+	*/
 	
 	if (m_iFontSize <= 0)
 		m_iFontSize = 16;
@@ -313,6 +316,7 @@ void CDrawing::CreateObjects()
 
 	m_bIsReady = true;
 
+	Utils::log(XorStr("CDrawing::CreateObjects"));
 	ss << XorStr("Screen - Width: ") << m_iScreenWidth << XorStr(", Height: ") << m_iScreenHeight;
 	Utils::log(ss.str().c_str());
 }
@@ -531,23 +535,23 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 
 void CDrawing::OnLostDevice()
 {
-	// ReleaseObjects();
+	ReleaseObjects();
 
 	LOCK_ENDSCENE();
 
-#if 0
 	m_vDrawList.clear();
 	m_vStringList.clear();
 	m_vStringListW.clear();
 	m_vTopStringList.clear();
 	m_vSimpleStringList.clear();
 	m_bTopStringDrawing = false;
-#endif
 
+	/*
 	m_pDefaultFont->OnLostDevice();
 	m_pFont->InvalidateDeviceObjects();
 	m_pLine->OnLostDevice();
 	m_pTextSprite->OnLostDevice();
+	*/
 
 	UNLOCK_ENDSCENE();
 
@@ -557,16 +561,17 @@ void CDrawing::OnLostDevice()
 void CDrawing::OnResetDevice()
 {
 	ImGui_ImplDX9_CreateDeviceObjects();
-
-	// CreateObjects();
+	CreateObjects();
 
 	LOCK_ENDSCENE();
 
+	/*
 	m_pDefaultFont->OnResetDevice();
 	m_pFont->InitializeDeviceObjects(m_pDevice);
 	m_pFont->RestoreDeviceObjects();
 	m_pLine->OnResetDevice();
 	m_pTextSprite->OnResetDevice();
+	*/
 
 	UNLOCK_ENDSCENE();
 }

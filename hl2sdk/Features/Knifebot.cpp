@@ -57,7 +57,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack)
 	{
-		if (weapon->GetPrimaryAttackDelay() <= 0.0f)
+		if (weapon->GetSecondryAttackDelay() <= 0.0f)
 		{
 			cmd->buttons |= IN_ATTACK2;
 			return;
