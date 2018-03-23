@@ -17,6 +17,7 @@ public:
 	bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);
 
+	bool CanRunAimbot(CBasePlayer* entity);
 	Vector GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
 
 private:	// 菜单项

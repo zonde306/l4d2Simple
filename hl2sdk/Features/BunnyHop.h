@@ -30,7 +30,7 @@ private:
 	bool m_bAutoStrafe = false;
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;
-	size_t m_iBhopMode = 0;
+	size_t m_iBhopMode = 2;
 	size_t m_iStrafeMode = 0;
 
 	bool m_bLastJump = false;

@@ -6,6 +6,25 @@
 
 CAimBot* g_pAimbot = nullptr;
 
+#define IsSubMachinegun(_id)		(_id == WeaponId_SubMachinegun || _id == WeaponId_Silenced || _id == WeaponId_MP5)
+#define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
+#define IsAssaultRifle(_id)			(_id == WeaponId_AssaultRifle || _id == WeaponId_AK47 || _id == WeaponId_Desert || _id == WeaponId_SG552 || _id == WeaponId_M60)
+#define IsSniper(_id)				(_id == WeaponId_SniperRifle || _id == WeaponId_Military || _id == WeaponId_Scout || _id == WeaponId_AWP)
+#define IsPistol(_id)				(_id == WeaponId_Pistol || _id == WeaponId_MagnumPistol)
+#define IsMedical(_id)				(_id == WeaponId_FirstAidKit || _id == WeaponId_ItemDefibrillator || _id == WeaponId_PainPills || _id == WeaponId_Adrenaline)
+#define IsAmmoPack(_id)				(_id == WeaponId_ItemAmmoPack || _id == WeaponId_ItemUpgradePackExplosive || _id == WeaponId_ItemUpgradePackIncendiary)
+#define IsMelee(_id)				(_id == WeaponId_TerrorMeleeWeapon || _id == WeaponId_Chainsaw)
+#define IsWeaponT1(_id)				(IsSubMachinegun(_id) || _id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_Pistol)
+#define IsWeaponT2(_id)				(_id == WeaponId_AutoShotgun || _id == WeaponId_SPAS || _id == WeaponId_AssaultRifle || _id == WeaponId_AK47 || _id == WeaponId_Desert || _id == WeaponId_SG552 || _id == WeaponId_MagnumPistol || IsSniper(_id))
+#define IsWeaponT3(_id)				(_id == WeaponId_M60 || _id == WeaponId_GrenadeLauncher)
+#define IsNotGunWeapon(_id)			(IsGrenadeWeapon(_id) || IsMedicalWeapon(_id) || IsPillsWeapon(_id) || IsCarryWeapon(_id) || _id == Weapon_Melee || _id == Weapon_Chainsaw)
+#define IsGunWeapon(_id)			(IsSubMachinegun(_id) || IsShotgun(_id) || IsAssaultRifle(_id) || IsSniper(_id) || IsPistol(_id))
+#define IsGrenadeWeapon(_id)		(_id == Weapon_Molotov || _id == Weapon_PipeBomb || _id == Weapon_Vomitjar)
+#define IsMedicalWeapon(_id)		(_id == Weapon_FirstAidKit || _id == Weapon_Defibrillator || _id == Weapon_FireAmmo || _id == Weapon_ExplodeAmmo)
+#define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
+#define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
+
+
 CAimBot::CAimBot() : CBaseFeatures::CBaseFeatures()
 {
 }
@@ -23,21 +42,8 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 	}
 
-	if (m_bOnFire && !(cmd->buttons & IN_ATTACK))
-	{
-		m_bRunAutoAim = false;
-		return;
-	}
-
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || !local->IsAlive() || local->GetAttacker() != nullptr)
-	{
-		m_bRunAutoAim = false;
-		return;
-	}
-
-	CBaseWeapon* weapon = local->GetActiveWeapon();
-	if (local->GetTeam() != 3 && !HasValidWeapon(weapon))
+	if (!CanRunAimbot(local) || (m_bOnFire && !(cmd->buttons & IN_ATTACK)))
 	{
 		m_bRunAutoAim = false;
 		return;
@@ -248,11 +254,32 @@ bool CAimBot::HasValidWeapon(CBaseWeapon * weapon)
 	if (weapon == nullptr || weapon->GetClip() <= 0)
 		return false;
 
-	int ammoType = weapon->GetAmmoType();
-	if (ammoType < AT_Pistol || ammoType > AT_Turret)
+	int weaponId = weapon->GetWeaponID();
+	if (IsNotGunWeapon(weaponId) || weaponId == Weapon_GrenadeLauncher)
 		return false;
 
 	return (weapon->GetPrimaryAttackDelay() <= 0.0f);
+}
+
+bool CAimBot::CanRunAimbot(CBasePlayer * entity)
+{
+	if (entity == nullptr || !entity->IsAlive())
+		return false;
+
+	if (entity->GetTeam() == 3)
+	{
+		int zombieClass = entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
+		if (zombieClass == ZC_JOCKEY || zombieClass == ZC_SMOKER || zombieClass == ZC_CHARGER)
+			return true;
+
+		return false;
+	}
+
+	CBaseWeapon* weapon = entity->GetActiveWeapon();
+	if (!HasValidWeapon(weapon))
+		return false;
+
+	return true;
 }
 
 Vector CAimBot::GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity)

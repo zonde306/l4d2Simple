@@ -38,7 +38,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	ss.precision(0);
 
 	std::string temp;
-	int team = local->GetTeam();
+	int team = local->GetTeam(), totalSpectator = 0;
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 	Vector myFootOrigin = local->GetAbsOrigin();
 
@@ -54,8 +54,17 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+
 		if (entity == nullptr || !entity->IsAlive())
+		{
+			if (entity != nullptr && m_bSpectator)
+			{
+				if (DrawSpectator(entity, local, i, totalSpectator))
+					++totalSpectator;
+			}
+
 			continue;
+		}
 
 		if (entity == local)
 		{
@@ -73,11 +82,10 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 			!math::WorldToScreenEx(headOrigin, head))
 			continue;
 
-		ss.str("");
-
 		// 是否为队友
 		bool friendly = (team == entity->GetTeam());
 		int classId = entity->GetClassID();
+		ss.str("");
 
 		// 方框的大小
 		float height = fabs(head.y - foot.y);
@@ -131,6 +139,7 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		GetTextPosition(ss.str(), eye);
 		g_pDrawing->DrawText(eye.x, eye.y, GetDrawColor(entity), true, ss.str().c_str());
 	}
+
 }
 
 void CVisualPlayer::OnSceneEnd()
@@ -196,7 +205,11 @@ void CVisualPlayer::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Player Weapon"), &m_bWeapon);
 	ImGui::Checkbox(XorStr("Player Character"), &m_bCharacter);
 	ImGui::Checkbox(XorStr("Player Chams"), &m_bChams);
+	ImGui::Checkbox(XorStr("My Spectator"), &m_bSpectator);
+
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Player Barrel"), &m_bBarrel);
+	ImGui::SliderFloat(XorStr("Barrel Distance"), &m_fBarrelDistance, 100.0f, 3000.0f, XorStr("%.0f"));
 
 	ImGui::TreePop();
 }
@@ -217,7 +230,7 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 		int team = player->GetTeam();
 		Vector eyePosition = player->GetEyePosition();
 		// Vector endPosition = GetSeePosition(player, eyePosition, player->GetEyeAngles());
-		Vector endPosition = player->GetEyeAngles().Forward().Scale(1500.0f) + eyePosition;
+		Vector endPosition = player->GetEyeAngles().Forward().Scale(m_fBarrelDistance) + eyePosition;
 
 		if (team == 3)
 			g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, endPosition, 255, 0, 0, false, duration);
@@ -613,4 +626,67 @@ std::string CVisualPlayer::DrawCharacter(CBasePlayer * entity, bool separator)
 	}
 
 	return " (" + buffer + ")";
+}
+
+bool CVisualPlayer::DrawSpectator(CBasePlayer * player, CBasePlayer* local, int index, int line)
+{
+	int classId = player->GetClassID();
+	if (!IsSurvivor(classId) && !IsSpecialInfected(classId))
+		return false;
+
+	int obsMode = player->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iObserverMode"));
+	if (obsMode != OBS_MODE_IN_EYE && obsMode != OBS_MODE_CHASE)
+		return false;
+
+	CBaseHandle handle = player->GetNetProp<CBaseHandle>(XorStr("DT_BasePlayer"), XorStr("m_hObserverTarget"));
+	if (!handle.IsValid())
+		return false;
+
+	CBasePlayer* target = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
+	if (target == nullptr || !target->IsAlive())
+		return false;
+
+	if (!local->IsAlive())
+	{
+		handle = local->GetNetProp<CBaseHandle>(XorStr("DT_BasePlayer"), XorStr("m_hObserverTarget"));
+		if (!handle.IsValid())
+			return false;
+
+		local = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
+		if (local == nullptr || !local->IsAlive())
+			return false;
+	}
+
+	if (target != local)
+		return false;
+
+	player_info_t info;
+	if (!g_pInterface->Engine->GetPlayerInfo(index, &info))
+		return false;
+
+	D3DCOLOR color = CDrawing::WHITE;
+	if (IsSurvivor(classId))
+		color = CDrawing::SKYBLUE;
+	else if (IsSpecialInfected(classId))
+		color = CDrawing::RED;
+
+	std::stringstream ss;
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+
+	ss << info.name;
+	if (obsMode == OBS_MODE_CHASE)
+		ss << XorStr(" [3rd]");
+	else
+		ss << XorStr(" [1st]");
+
+	int width, height;
+	g_pInterface->Engine->GetScreenSize(width, height);
+	auto size = g_pDrawing->GetDrawTextSize(ss.str().c_str());
+	g_pDrawing->DrawText(width * 0.75f, (height * 0.75f) + (line * size.second), 
+		color, false, ss.str().c_str());
+
+	return true;
 }

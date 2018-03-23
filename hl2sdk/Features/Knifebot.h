@@ -17,7 +17,7 @@ public:
 private:
 	bool m_bAutoFire = false;
 	bool m_bAutoShove = false;
-	bool m_bFastMelee = false;
+	bool m_bFastMelee = true;
 
 	float m_fExtraShoveRange = 0.0f;
 	float m_fExtraMeleeRange = 0.0f;
