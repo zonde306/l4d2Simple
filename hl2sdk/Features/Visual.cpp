@@ -54,21 +54,23 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-
-		if (entity == nullptr || !entity->IsAlive())
+		if (entity == local)
 		{
-			if (entity != nullptr && m_bSpectator)
+			m_iLocalPlayer = i;
+			continue;
+		}
+		
+		if (entity == nullptr)
+			continue;
+
+		if (!entity->IsAlive())
+		{
+			if (m_bSpectator)
 			{
 				if (DrawSpectator(entity, local, i, totalSpectator))
 					++totalSpectator;
 			}
 
-			continue;
-		}
-
-		if (entity == local)
-		{
-			m_iLocalPlayer = i;
 			continue;
 		}
 
@@ -137,7 +139,8 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 			continue;
 
 		GetTextPosition(ss.str(), eye);
-		g_pDrawing->DrawText(eye.x, eye.y, GetDrawColor(entity), true, ss.str().c_str());
+		g_pDrawing->DrawText(static_cast<int>(eye.x), static_cast<int>(eye.y),
+			GetDrawColor(entity), true, ss.str().c_str());
 	}
 
 }
@@ -175,7 +178,7 @@ void CVisualPlayer::OnSceneEnd()
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (entity == nullptr || !entity->IsAlive())
+		if (entity == nullptr || entity == local || !entity->IsAlive())
 			continue;
 
 		if(team == entity->GetTeam())
@@ -223,8 +226,11 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 	int maxEntity = g_pInterface->Engine->GetMaxClients();
 	for (int i = 1; i <= maxEntity; ++i)
 	{
+		if (i == m_iLocalPlayer)
+			continue;
+		
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (i == m_iLocalPlayer || player == nullptr || !player->IsAlive())
+		if (player == nullptr || !player->IsAlive())
 			continue;
 
 		int team = player->GetTeam();
@@ -269,7 +275,8 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 
 void CVisualPlayer::DrawBox(bool friendly, CBasePlayer* entity, const Vector & head, const Vector & foot)
 {
-	g_pDrawing->DrawRect(head.x, head.y - 5, foot.x, foot.y + 5, GetDrawColor(entity));
+	g_pDrawing->DrawRect(static_cast<int>(head.x), static_cast<int>(head.y - 5),
+		static_cast<int>(foot.x), static_cast<int>(foot.y + 5), GetDrawColor(entity));
 }
 
 void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
@@ -314,7 +321,8 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 			!math::WorldToScreenEx(child, screenChild))
 			continue;
 
-		g_pDrawing->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y, color);
+		g_pDrawing->DrawLine(static_cast<int>(screenParent.x), static_cast<int>(screenParent.y),
+			static_cast<int>(screenChild.x), static_cast<int>(screenChild.y), color);
 		// g_pInterface->Surface->DrawLine(screenParent.x, screenParent.y, screenChild.x, screenChild.y);
 	}
 }
@@ -352,12 +360,12 @@ void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head, float 
 
 	if (visible)
 	{
-		g_pDrawing->DrawCircleFilled(head.x, head.y, boxSize, color, 8);
+		g_pDrawing->DrawCircleFilled(static_cast<int>(head.x), static_cast<int>(head.y), boxSize, color, 8);
 		// g_pInterface->Surface->DrawFilledRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 	else
 	{
-		g_pDrawing->DrawCircle(head.x, head.y, boxSize, color, 8);
+		g_pDrawing->DrawCircle(static_cast<int>(head.x), static_cast<int>(head.y), boxSize, color, 8);
 		// g_pInterface->Surface->DrawOutlinedRect(head.x, head.y, head.x + 3, head.y + 3);
 	}
 }
@@ -685,7 +693,8 @@ bool CVisualPlayer::DrawSpectator(CBasePlayer * player, CBasePlayer* local, int 
 	int width, height;
 	g_pInterface->Engine->GetScreenSize(width, height);
 	auto size = g_pDrawing->GetDrawTextSize(ss.str().c_str());
-	g_pDrawing->DrawText(width * 0.75f, (height * 0.75f) + (line * size.second), 
+	g_pDrawing->DrawText(static_cast<int>(width * 0.75f),
+		static_cast<int>((height * 0.75f) + (line * size.second)),
 		color, false, ss.str().c_str());
 
 	return true;

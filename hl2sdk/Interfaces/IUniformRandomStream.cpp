@@ -126,7 +126,7 @@ int CUniformRandomStream::GenerateRandomNumber()
 float CUniformRandomStream::RandomFloat(float flLow, float flHigh)
 {
 	// float in [0,1)
-	float fl = AM * GenerateRandomNumber();
+	float fl = static_cast<float>(AM * GenerateRandomNumber());
 	if (fl > RNMX)
 	{
 		fl = RNMX;
@@ -137,7 +137,7 @@ float CUniformRandomStream::RandomFloat(float flLow, float flHigh)
 float CUniformRandomStream::RandomFloatExp(float flMinVal, float flMaxVal, float flExponent)
 {
 	// float in [0,1)
-	float fl = AM * GenerateRandomNumber();
+	float fl = static_cast<float>(AM * GenerateRandomNumber());
 	if (fl > RNMX)
 	{
 		fl = RNMX;

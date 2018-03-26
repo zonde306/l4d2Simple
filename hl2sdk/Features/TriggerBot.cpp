@@ -46,7 +46,10 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (!HasValidWeapon(weapon))
 		return;
 
-	GetAimTarget(cmd->viewangles);
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+	GetAimTarget(viewAngles);
+
 	if (m_pAimTarget == nullptr || m_pAimTarget->GetTeam() == player->GetTeam())
 		return;
 

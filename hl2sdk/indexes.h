@@ -12,6 +12,7 @@ namespace indexes
 	const int HudUpdate = 10;
 	const int IN_IsKeyDown = 18;
 	const int WriteUsercmdDeltaToBuffer = 22;
+	const int RenderView = 26;
 
 	// Engine
 	const int GetScreenSize = 5;
@@ -101,6 +102,7 @@ namespace indexes
 	const int RunCommand = 18;
 	const int SetupMove = 19;
 	const int FinishMove = 20;
+	const int InPrediction = 14;
 
 	// GameMovement
 	const int ProccessMovement = 1;

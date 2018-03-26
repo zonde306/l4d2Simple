@@ -1230,7 +1230,7 @@ int32_t bf_read::ReadSignedVarInt32()
 
 int64_t bf_read::ReadSignedVarInt64()
 {
-	uint32_t value = ReadVarInt64();
+	uint64_t value = ReadVarInt64();
 	return bitbuf::ZigZagDecode64(value);
 }
 

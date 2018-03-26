@@ -403,7 +403,7 @@ float V_atof(const char *str)
 			else if (c >= 'A' && c <= 'F')
 				val = (val * 16) + c - 'A' + 10;
 			else
-				return val * sign;
+				return static_cast<float>(val * sign);
 		}
 	}
 
@@ -412,7 +412,7 @@ float V_atof(const char *str)
 	//
 	if (str[0] == '\'')
 	{
-		return sign * str[1];
+		return static_cast<float>(sign * str[1]);
 	}
 
 	//
@@ -435,14 +435,14 @@ float V_atof(const char *str)
 	}
 
 	if (decimal == -1)
-		return val * sign;
+		return static_cast<float>(val * sign);
 	while (total > decimal)
 	{
 		val /= 10;
 		total--;
 	}
 
-	return val * sign;
+	return static_cast<float>(val * sign);
 }
 
 //-----------------------------------------------------------------------------

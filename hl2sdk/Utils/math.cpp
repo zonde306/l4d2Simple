@@ -120,15 +120,17 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 	if (w > 0.01f)
 	{
 		float inverseWidth = 1 / w;
-		screen.x = m_iWidth / 2 + (0.5f * (((*g_pWorldToScreenMatrix)[0][0] * origin[0] +
+		screen.x = m_iWidth / 2 + (0.5f * ((
+			(*g_pWorldToScreenMatrix)[0][0] * origin[0] +
 			(*g_pWorldToScreenMatrix)[0][1] * origin[1] +
 			(*g_pWorldToScreenMatrix)[0][2] * origin[2] +
-			(*g_pWorldToScreenMatrix)[0][3]) * inverseWidth) * m_iWidth + 0.5);
+			(*g_pWorldToScreenMatrix)[0][3]) * inverseWidth) * m_iWidth + 0.5f);
 
-		screen.y = m_iHeight / 2 - (0.5f * (((*g_pWorldToScreenMatrix)[1][0] * origin[0] +
+		screen.y = m_iHeight / 2 - (0.5f * ((
+			(*g_pWorldToScreenMatrix)[1][0] * origin[0] +
 			(*g_pWorldToScreenMatrix)[1][1] * origin[1] +
 			(*g_pWorldToScreenMatrix)[1][2] * origin[2] +
-			(*g_pWorldToScreenMatrix)[1][3]) * inverseWidth) * m_iHeight + 0.5);
+			(*g_pWorldToScreenMatrix)[1][3]) * inverseWidth) * m_iHeight + 0.5f);
 
 		return true;
 	}
@@ -138,8 +140,8 @@ bool math::WorldToScreen(const Vector & origin, Vector & screen)
 
 inline void FindScreenPoint(Vector &point, int screenwidth, int screenheight, int degrees)
 {
-	float x2 = screenwidth / 2;
-	float y2 = screenheight / 2;
+	float x2 = screenwidth / 2.0f;
+	float y2 = screenheight / 2.0f;
 
 	float d = sqrt(pow((point.x - x2), 2) + (pow((point.y - y2), 2))); //Distance
 	float r = degrees / d; //Segment ratio
@@ -428,12 +430,12 @@ void math::VectorAngles(const Vector & forward, QAngle & angles)
 	}
 	else
 	{
-		yaw = (atan2(forward[1], forward[0]) * 180 / M_PI);
+		yaw = (atan2(forward[1], forward[0]) * 180 / M_PI_F);
 		if (yaw < 0)
 			yaw += 360;
 
 		tmp = sqrt(forward[0] * forward[0] + forward[1] * forward[1]);
-		pitch = (atan2(-forward[2], tmp) * 180 / M_PI);
+		pitch = (atan2(-forward[2], tmp) * 180 / M_PI_F);
 		if (pitch < 0)
 			pitch += 360;
 	}

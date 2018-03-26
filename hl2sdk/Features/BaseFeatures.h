@@ -26,6 +26,7 @@ public:
 	virtual void OnScreenDrawing();
 	virtual void OnKeyInput(bool, ButtonCode_t, const char*);
 	virtual void OnGameEvent(IGameEvent*);
+	virtual void OnRenderView(CViewSetup&);
 
 	// 以下函数返回 false 阻止调用原函数
 	// 如果不打算阻止原函数，则需要返回 true

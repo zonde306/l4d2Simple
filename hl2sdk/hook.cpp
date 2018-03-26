@@ -155,6 +155,7 @@ bool CClientHook::Init()
 		oFrameStageNotify = reinterpret_cast<FnFrameStageNotify>(g_pHookClient->HookFunction(indexes::FrameStageNotify, Hooked_FrameStageNotify));
 		oDispatchUserMessage = reinterpret_cast<FnDispatchUserMessage>(g_pHookClient->HookFunction(indexes::DispatchUserMessage, Hooked_DispatchUserMessage));
 		// oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
+		// oRenderView = reinterpret_cast<FnRenderView>(g_pHookClient->HookFunction(indexes::RenderView, Hooked_RenderView));
 		g_pHookClient->InstallHook();
 	}
 
@@ -770,9 +771,6 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 			blockSetting = true;
 	}
 
-	if (!blockSetting)
-		g_pClientHook->oProcessSetConVar(_ecx, scv);
-
 	for (const auto& cvar : scv->m_ConVars)
 	{
 		// 纪录从服务器发送的 ConVar
@@ -782,7 +780,17 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 			g_ServerConVar[cvar.name] = cvar.value;
 			// g_ServerConVar.try_emplace(cvar.name, cvar.value);
 		}
+
+		// 某些 ConVar 会导致玩家无法正常游戏
+		// 在这里防止这些 ConVar 被更改
+		if (!_stricmp(cvar.name, XorStr("sv_pure")) || !_stricmp(cvar.name, XorStr("sv_consistency")) ||
+			!_stricmp(cvar.name, XorStr("sv_allow_wait_command")) ||
+			!_stricmp(cvar.name, XorStr("addons_eclipse_content")))
+			blockSetting = true;
 	}
+
+	if (!blockSetting)
+		g_pClientHook->oProcessSetConVar(_ecx, scv);
 
 	return true;
 }
@@ -806,6 +814,13 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 		if (!inst->OnProcessClientCommand(sc))
 			blockExecute = true;
 	}
+
+	// 屏蔽某些坑人的 Command
+	if (!_stricmp(sc->m_szCommand, XorStr("bind")) || !_stricmp(sc->m_szCommand, XorStr("sv_pure")) ||
+		!_stricmp(sc->m_szCommand, XorStr("sv_consistency")) ||
+		!_stricmp(sc->m_szCommand, XorStr("sv_allow_wait_command")) ||
+		!_stricmp(sc->m_szCommand, XorStr("addons_eclipse_content")))
+		blockExecute = true;
 
 	if (!blockExecute)
 		g_pClientHook->oProccessStringCmd(_ecx, sc);
@@ -927,6 +942,14 @@ bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx
 #endif
 
 	return result;
+}
+
+void CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx, const CViewSetup& view, int nClearFlags, int whatToDraw)
+{
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnRenderView(const_cast<CViewSetup&>(view));
+	
+	g_pClientHook->oRenderView(_ecx, view, nClearFlags, whatToDraw);
 }
 
 void CClientPrediction::Init()

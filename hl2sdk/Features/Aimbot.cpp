@@ -115,9 +115,9 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 	height /= 2;
 
 	if(m_bRunAutoAim)
-		g_pDrawing->DrawCircle(width, height, m_fAimFov, CDrawing::GREEN, 8);
+		g_pDrawing->DrawCircle(width, height, static_cast<int>(m_fAimFov), CDrawing::GREEN, 8);
 	else
-		g_pDrawing->DrawCircle(width, height, m_fAimFov, CDrawing::WHITE, 8);
+		g_pDrawing->DrawCircle(width, height, static_cast<int>(m_fAimFov), CDrawing::WHITE, 8);
 }
 
 void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -137,7 +137,8 @@ void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
 
 	Vector screenPosition;
 	if (hitEntity != nullptr && math::WorldToScreenEx(aimPosition, screenPosition))
-		g_pDrawing->DrawText(screenPosition.x, screenPosition.y, CDrawing::PURPLE, true, "X");
+		g_pDrawing->DrawText(static_cast<int>(screenPosition.x), static_cast<int>(screenPosition.y),
+			CDrawing::PURPLE, true, "X");
 }
 
 CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)

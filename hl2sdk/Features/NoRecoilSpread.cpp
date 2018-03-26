@@ -1,4 +1,4 @@
-#include "NoRecoilSpread.h"
+﻿#include "NoRecoilSpread.h"
 #include "../hook.h"
 
 CViewManager* g_pViewManager = nullptr;
@@ -25,22 +25,31 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (weapon == nullptr)
 		return;
 
-	if (m_bHasApplySilent)
+	bool canFire = weapon->CanFire();
+	if (m_bApplySilentFrame)
 	{
 		StartSilent(cmd);
 		cmd->viewangles = m_vecSilentAngles;
 		*bSendPacket = false;
 	}
-	else
+	else if(!m_bApplySilentByFire || !canFire)
 	{
 		FinishSilent(cmd);
 		*bSendPacket = true;
+		m_bApplySilentByFire = false;
 	}
+
+	if (m_bRapidFire)
+		RunRapidFire(cmd, local, weapon);
+
+	// 在不是开枪的情况下不需要调整后坐力和扩散
+	if (weapon->GetWeaponData()->iMaxClip1 <= 0 || !canFire || !(cmd->buttons & IN_ATTACK))
+		return;
 
 	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon);
 	m_vecSpread.x = spread.first;
 	m_vecSpread.y = spread.second;
-	m_vecSpread.z = 0.0f;
+	// m_vecSpread.z = 0.0f;
 
 	if (m_bNoRecoil)
 		RemoveRecoil(cmd);
@@ -48,14 +57,15 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_bNoSpread)
 		RemoveSpread(cmd);
 
-	if (m_bRapidFire)
-		RunRapidFire(cmd, local, weapon);
+	if (m_bSilentNoSpread)
+		*bSendPacket = false;
 
-	m_bHasApplySilent = false;
+	m_bApplySilentFrame = false;
 }
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 {
+	// if (stage != FRAME_RENDER_START)
 	if (stage != FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 		return;
 
@@ -64,7 +74,6 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 		return;
 
 	m_vecPunch = local->GetPunch();
-	m_vecPunch.z = 0.0f;
 
 	if (m_bNoVisRecoil)
 		local->GetPunch().SetZero();
@@ -72,13 +81,14 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 
 void CViewManager::OnMenuDrawing()
 {
-	if (!ImGui::TreeNode(XorStr("AimHelper")))
+	if (!ImGui::TreeNode(XorStr("Aim Helper")))
 		return;
 
 	ImGui::Checkbox(XorStr("No Recoil"), &m_bNoRecoil);
 	ImGui::Checkbox(XorStr("No Visual Recoil"), &m_bNoVisRecoil);
 	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
 	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);
+	ImGui::Checkbox(XorStr("Spread/Recoil Silent"), &m_bSilentNoSpread);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Recoil Crosshiars"), &m_bRecoilCrosshair);
@@ -101,15 +111,15 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 
 	if (m_bRecoilCrosshair && m_vecPunch.Length2DSqr() != 0.0f)
 	{
-		width += m_vecPunch.x;
-		height += m_vecPunch.y;
+		width += static_cast<int>(m_vecPunch.x);
+		height += static_cast<int>(m_vecPunch.y);
 		update = true;
 	}
 
 	if (m_bSpreadCrosshair && m_vecSpread.Length2DSqr() != 0.0f)
 	{
-		width += m_vecSpread.x;
-		height += m_vecSpread.y;
+		width += static_cast<int>(m_vecSpread.x);
+		height += static_cast<int>(m_vecSpread.y);
 		update = true;
 	}
 
@@ -120,12 +130,10 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 	g_pDrawing->DrawLine(width, height - 9, width, height + 9, CDrawing::GREEN);
 }
 
-bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
+bool CViewManager::ApplySilentAngles(const QAngle & viewAngles, bool withFire)
 {
-	if (m_bHasApplySilent)
-		return false;
-	
-	m_bHasApplySilent = true;
+	m_bApplySilentFrame = true;
+	m_bApplySilentByFire = withFire;
 	m_vecSilentAngles = viewAngles;
 	return true;
 }
@@ -159,6 +167,9 @@ bool CViewManager::FinishSilent(CUserCmd * cmd)
 
 void CViewManager::RemoveSpread(CUserCmd * cmd)
 {
+	if (!(cmd->buttons & IN_ATTACK))
+		return;
+	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive())
 		return;
@@ -173,6 +184,9 @@ void CViewManager::RemoveSpread(CUserCmd * cmd)
 
 void CViewManager::RemoveRecoil(CUserCmd * cmd)
 {
+	if (!(cmd->buttons & IN_ATTACK))
+		return;
+	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive())
 		return;

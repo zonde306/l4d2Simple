@@ -120,7 +120,8 @@ void CVisualDrop::DrawWeaponSpawn(CBaseWeapon * weapon, const Vector & screen)
 		return;
 	}
 
-	g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, weapon->GetWeaponName());
+	g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+		CDrawing::LAWNGREEN, true, weapon->GetWeaponName());
 }
 
 void CVisualDrop::DrawUpgradeSpawn(CBaseWeapon * weapon, const Vector & screen)
@@ -136,13 +137,22 @@ void CVisualDrop::DrawUpgradeSpawn(CBaseWeapon * weapon, const Vector & screen)
 
 	if (model->name[7] == 'p' && model->name[13] == 't')
 	{
-		if(model->name[20] == 'e')
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("upgrade_explosive"));
-		else if(model->name[20] == 'i')
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("upgrade_incendiary"));
+		if (model->name[20] == 'e')
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::WHITE, true, XorStr("upgrade_explosive"));
+		}
+		else if (model->name[20] == 'i')
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::WHITE, true, XorStr("upgrade_incendiary"));
+		}
 	}
-	else if(model->name[7] == 'w' && model->name[26] == 'l' && model->name[32] == 's')
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("upgrade_laser"));
+	else if (model->name[7] == 'w' && model->name[26] == 'l' && model->name[32] == 's')
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::WHITE, true, XorStr("upgrade_laser"));
+	}
 
 	/*
 	if(!_stricmp(model->name, XorStr("models/props/terror/exploding_ammo.mdl")))
@@ -161,11 +171,20 @@ void CVisualDrop::DrawAmmoStack(CBaseWeapon * weapon, const Vector & screen)
 
 	const model_t* model = weapon->GetModel();
 	if (!_stricmp(model->name, XorStr("models/props/terror/ammo_stack.mdl")))
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("ammo_stack"));
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::WHITE, true, XorStr("ammo_stack"));
+	}
 	else if (!_stricmp(model->name, XorStr("models/props_unique/spawn_apartment/coffeeammo.mdl")))
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("ammo_coffee"));
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::WHITE, true, XorStr("ammo_coffee"));
+	}
 	else
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::WHITE, true, XorStr("ammo_unknown"));
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::WHITE, true, XorStr("ammo_unknown"));
+	}
 }
 
 void CVisualDrop::DrawMelee(CBaseWeapon * weapon, const Vector & screen)
@@ -180,7 +199,8 @@ void CVisualDrop::DrawMelee(CBaseWeapon * weapon, const Vector & screen)
 	{
 		std::string melee = model->name;
 		melee = melee.substr(23, melee.rfind('.') - 23);
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::GREEN, true, melee.c_str());
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::GREEN, true, melee.c_str());
 	}
 }
 
@@ -194,23 +214,47 @@ void CVisualDrop::DrawSurvovorDeadbody(CBaseWeapon * weapon, const Vector & scre
 		return;
 
 	if (model->name[26] == 'g')				// models/survivors/survivor_gambler.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Nick"));		// 西装
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Nick"));		// 西装
+	}
 	else if (model->name[26] == 'p')		// models/survivors/survivor_producer.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Rochelle"));	// 黑妹
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Rochelle"));	// 黑妹
+	}
 	else if (model->name[26] == 'c')		// models/survivors/survivor_coach.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Coach"));		// 黑胖
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Coach"));		// 黑胖
+	}
 	else if (model->name[26] == 'n')		// models/survivors/survivor_namvet.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Bill"));		// 老头
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Bill"));		// 老头
+	}
 	else if (model->name[26] == 't')		// models/survivors/survivor_teenangst.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Zoey"));		// 萌妹
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Zoey"));		// 萌妹
+	}
 	else if (model->name[26] == 'b')		// models/survivors/survivor_biker.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Francis"));	// 背心
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::PURPLE, true, XorStr("Francis"));	// 背心
+	}
 	else if (model->name[26] == 'm')
 	{
 		if (model->name[27] == 'e')		// models/survivors/survivor_mechanic.mdl
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Ellis"));	// 帽子
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::PURPLE, true, XorStr("Ellis"));	// 帽子
+		}
 		else if (model->name[27] == 'a')	// models/survivors/survivor_manager.mdl
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::PURPLE, true, XorStr("Louis"));	// 光头
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::PURPLE, true, XorStr("Louis"));	// 光头
+		}
 	}
 }
 
@@ -220,37 +264,55 @@ void CVisualDrop::DrawOtherWeapon(CBaseWeapon * weapon, const Vector & screen)
 	if (classId == ET_MolotovProjectile)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::BLUE, true, XorStr("molotov_projectile"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::BLUE, true, XorStr("molotov_projectile"));
+		}
 		return;
 	}
 	if (classId == ET_PipeBombProjectile)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::BLUE, true, XorStr("pipiebomb_projectile"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::BLUE, true, XorStr("pipiebomb_projectile"));
+		}
 		return;
 	}
 	if (classId == ET_VomitJarProjectile)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::BLUE, true, XorStr("vomitjar_projectile"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::BLUE, true, XorStr("vomitjar_projectile"));
+		}
 		return;
 	}
 	if (classId == ET_TankRock)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::GREEN, true, XorStr("tank_rock"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::GREEN, true, XorStr("tank_rock"));
+		}
 		return;
 	}
 	if (classId == ET_SpitterProjectile)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::GREEN, true, XorStr("spit_projectile"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::GREEN, true, XorStr("spit_projectile"));
+		}
 		return;
 	}
 	if (classId == ET_GrenadeProjectile)
 	{
 		if (m_bProjectile)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::GREEN, true, XorStr("grenade_projectile"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::GREEN, true, XorStr("grenade_projectile"));
+		}
 		return;
 	}
 
@@ -278,7 +340,8 @@ bool CVisualDrop::DrawCarryProps(CBaseWeapon * weapon, const Vector & screen)
 	if (model->name[13] == 'e' && model->name[23] == 'o')
 	{
 		// models/props_equipment/oxygentank01.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("oxygentank"));
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::LAWNGREEN, true, XorStr("oxygentank"));
 		return true;
 	}
 
@@ -288,24 +351,32 @@ bool CVisualDrop::DrawCarryProps(CBaseWeapon * weapon, const Vector & screen)
 	if (model->name[18] == 'p')
 	{
 		// models/props_junk/propanecanister001a.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("propanetank"));
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::LAWNGREEN, true, XorStr("propanetank"));
 		return true;
 	}
 
 	if (model->name[18] == 'e')
 	{
 		// models/props_junk/explosive_box001.mdl
-		g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("firework"));
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::LAWNGREEN, true, XorStr("firework"));
 		return true;
 	}
 
 	if (model->name[18] == 'g')
 	{
 		// models/props_junk/gascan001a.mdl
-		if(weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSkin")) > 0)
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("gascan_scavenge"));
+		if (weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSkin")) > 0)
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::LAWNGREEN, true, XorStr("gascan_scavenge"));
+		}
 		else
-			g_pDrawing->DrawText(screen.x, screen.y, CDrawing::LAWNGREEN, true, XorStr("gascan"));
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::LAWNGREEN, true, XorStr("gascan"));
+		}
 
 		return true;
 	}

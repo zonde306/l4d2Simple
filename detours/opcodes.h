@@ -288,130 +288,130 @@ static DWORD table_0F[256] =
 	/* 01 */,  C_MODRM
 	/* 02 */,  C_MODRM
 	/* 03 */,  C_MODRM
-	/* 04 */,  -1
-	/* 05 */,  -1
+	/* 04 */,  C_ERROR
+	/* 05 */,  C_ERROR
 	/* 06 */,  0
-	/* 07 */,  -1
+	/* 07 */,  C_ERROR
 	/* 08 */,  0
 	/* 09 */,  0
 	/* 0A */,  0
 	/* 0B */,  0
-	/* 0C */,  -1
-	/* 0D */,  -1
-	/* 0E */,  -1
-	/* 0F */,  -1
-	/* 10 */,  -1
-	/* 11 */,  -1
-	/* 12 */,  -1
-	/* 13 */,  -1
-	/* 14 */,  -1
-	/* 15 */,  -1
-	/* 16 */,  -1
-	/* 17 */,  -1
-	/* 18 */,  -1
-	/* 19 */,  -1
-	/* 1A */,  -1
-	/* 1B */,  -1
-	/* 1C */,  -1
-	/* 1D */,  -1
-	/* 1E */,  -1
-	/* 1F */,  -1
-	/* 20 */,  -1
-	/* 21 */,  -1
-	/* 22 */,  -1
-	/* 23 */,  -1
-	/* 24 */,  -1
-	/* 25 */,  -1
-	/* 26 */,  -1
-	/* 27 */,  -1
-	/* 28 */,  -1
-	/* 29 */,  -1
-	/* 2A */,  -1
-	/* 2B */,  -1
-	/* 2C */,  -1
-	/* 2D */,  -1
-	/* 2E */,  -1
-	/* 2F */,  -1
-	/* 30 */,  -1
-	/* 31 */,  -1
-	/* 32 */,  -1
-	/* 33 */,  -1
-	/* 34 */,  -1
-	/* 35 */,  -1
-	/* 36 */,  -1
-	/* 37 */,  -1
-	/* 38 */,  -1
-	/* 39 */,  -1
-	/* 3A */,  -1
-	/* 3B */,  -1
-	/* 3C */,  -1
-	/* 3D */,  -1
-	/* 3E */,  -1
-	/* 3F */,  -1
-	/* 40 */,  -1
-	/* 41 */,  -1
-	/* 42 */,  -1
-	/* 43 */,  -1
-	/* 44 */,  -1
-	/* 45 */,  -1
-	/* 46 */,  -1
-	/* 47 */,  -1
-	/* 48 */,  -1
-	/* 49 */,  -1
-	/* 4A */,  -1
-	/* 4B */,  -1
-	/* 4C */,  -1
-	/* 4D */,  -1
-	/* 4E */,  -1
-	/* 4F */,  -1
-	/* 50 */,  -1
-	/* 51 */,  -1
-	/* 52 */,  -1
-	/* 53 */,  -1
-	/* 54 */,  -1
-	/* 55 */,  -1
-	/* 56 */,  -1
-	/* 57 */,  -1
-	/* 58 */,  -1
-	/* 59 */,  -1
-	/* 5A */,  -1
-	/* 5B */,  -1
-	/* 5C */,  -1
-	/* 5D */,  -1
-	/* 5E */,  -1
-	/* 5F */,  -1
-	/* 60 */,  -1
-	/* 61 */,  -1
-	/* 62 */,  -1
-	/* 63 */,  -1
-	/* 64 */,  -1
-	/* 65 */,  -1
-	/* 66 */,  -1
-	/* 67 */,  -1
-	/* 68 */,  -1
-	/* 69 */,  -1
-	/* 6A */,  -1
-	/* 6B */,  -1
-	/* 6C */,  -1
-	/* 6D */,  -1
-	/* 6E */,  -1
-	/* 6F */,  -1
-	/* 70 */,  -1
-	/* 71 */,  -1
-	/* 72 */,  -1
-	/* 73 */,  -1
-	/* 74 */,  -1
-	/* 75 */,  -1
-	/* 76 */,  -1
-	/* 77 */,  -1
-	/* 78 */,  -1
-	/* 79 */,  -1
-	/* 7A */,  -1
-	/* 7B */,  -1
-	/* 7C */,  -1
-	/* 7D */,  -1
-	/* 7E */,  -1
-	/* 7F */,  -1
+	/* 0C */,  C_ERROR
+	/* 0D */,  C_ERROR
+	/* 0E */,  C_ERROR
+	/* 0F */,  C_ERROR
+	/* 10 */,  C_ERROR
+	/* 11 */,  C_ERROR
+	/* 12 */,  C_ERROR
+	/* 13 */,  C_ERROR
+	/* 14 */,  C_ERROR
+	/* 15 */,  C_ERROR
+	/* 16 */,  C_ERROR
+	/* 17 */,  C_ERROR
+	/* 18 */,  C_ERROR
+	/* 19 */,  C_ERROR
+	/* 1A */,  C_ERROR
+	/* 1B */,  C_ERROR
+	/* 1C */,  C_ERROR
+	/* 1D */,  C_ERROR
+	/* 1E */,  C_ERROR
+	/* 1F */,  C_ERROR
+	/* 20 */,  C_ERROR
+	/* 21 */,  C_ERROR
+	/* 22 */,  C_ERROR
+	/* 23 */,  C_ERROR
+	/* 24 */,  C_ERROR
+	/* 25 */,  C_ERROR
+	/* 26 */,  C_ERROR
+	/* 27 */,  C_ERROR
+	/* 28 */,  C_ERROR
+	/* 29 */,  C_ERROR
+	/* 2A */,  C_ERROR
+	/* 2B */,  C_ERROR
+	/* 2C */,  C_ERROR
+	/* 2D */,  C_ERROR
+	/* 2E */,  C_ERROR
+	/* 2F */,  C_ERROR
+	/* 30 */,  C_ERROR
+	/* 31 */,  C_ERROR
+	/* 32 */,  C_ERROR
+	/* 33 */,  C_ERROR
+	/* 34 */,  C_ERROR
+	/* 35 */,  C_ERROR
+	/* 36 */,  C_ERROR
+	/* 37 */,  C_ERROR
+	/* 38 */,  C_ERROR
+	/* 39 */,  C_ERROR
+	/* 3A */,  C_ERROR
+	/* 3B */,  C_ERROR
+	/* 3C */,  C_ERROR
+	/* 3D */,  C_ERROR
+	/* 3E */,  C_ERROR
+	/* 3F */,  C_ERROR
+	/* 40 */,  C_ERROR
+	/* 41 */,  C_ERROR
+	/* 42 */,  C_ERROR
+	/* 43 */,  C_ERROR
+	/* 44 */,  C_ERROR
+	/* 45 */,  C_ERROR
+	/* 46 */,  C_ERROR
+	/* 47 */,  C_ERROR
+	/* 48 */,  C_ERROR
+	/* 49 */,  C_ERROR
+	/* 4A */,  C_ERROR
+	/* 4B */,  C_ERROR
+	/* 4C */,  C_ERROR
+	/* 4D */,  C_ERROR
+	/* 4E */,  C_ERROR
+	/* 4F */,  C_ERROR
+	/* 50 */,  C_ERROR
+	/* 51 */,  C_ERROR
+	/* 52 */,  C_ERROR
+	/* 53 */,  C_ERROR
+	/* 54 */,  C_ERROR
+	/* 55 */,  C_ERROR
+	/* 56 */,  C_ERROR
+	/* 57 */,  C_ERROR
+	/* 58 */,  C_ERROR
+	/* 59 */,  C_ERROR
+	/* 5A */,  C_ERROR
+	/* 5B */,  C_ERROR
+	/* 5C */,  C_ERROR
+	/* 5D */,  C_ERROR
+	/* 5E */,  C_ERROR
+	/* 5F */,  C_ERROR
+	/* 60 */,  C_ERROR
+	/* 61 */,  C_ERROR
+	/* 62 */,  C_ERROR
+	/* 63 */,  C_ERROR
+	/* 64 */,  C_ERROR
+	/* 65 */,  C_ERROR
+	/* 66 */,  C_ERROR
+	/* 67 */,  C_ERROR
+	/* 68 */,  C_ERROR
+	/* 69 */,  C_ERROR
+	/* 6A */,  C_ERROR
+	/* 6B */,  C_ERROR
+	/* 6C */,  C_ERROR
+	/* 6D */,  C_ERROR
+	/* 6E */,  C_ERROR
+	/* 6F */,  C_ERROR
+	/* 70 */,  C_ERROR
+	/* 71 */,  C_ERROR
+	/* 72 */,  C_ERROR
+	/* 73 */,  C_ERROR
+	/* 74 */,  C_ERROR
+	/* 75 */,  C_ERROR
+	/* 76 */,  C_ERROR
+	/* 77 */,  C_ERROR
+	/* 78 */,  C_ERROR
+	/* 79 */,  C_ERROR
+	/* 7A */,  C_ERROR
+	/* 7B */,  C_ERROR
+	/* 7C */,  C_ERROR
+	/* 7D */,  C_ERROR
+	/* 7E */,  C_ERROR
+	/* 7F */,  C_ERROR
 	/* 80 */,  C_DATA66
 	/* 81 */,  C_DATA66
 	/* 82 */,  C_DATA66
@@ -450,15 +450,15 @@ static DWORD table_0F[256] =
 	/* A3 */,  C_MODRM
 	/* A4 */,  C_MODRM+C_DATA1
 	/* A5 */,  C_MODRM
-	/* A6 */,  -1
-	/* A7 */,  -1
+	/* A6 */,  C_ERROR
+	/* A7 */,  C_ERROR
 	/* A8 */,  0
 	/* A9 */,  0
 	/* AA */,  0
 	/* AB */,  C_MODRM
 	/* AC */,  C_MODRM+C_DATA1
 	/* AD */,  C_MODRM
-	/* AE */,  -1
+	/* AE */,  C_ERROR
 	/* AF */,  C_MODRM
 	/* B0 */,  C_MODRM
 	/* B1 */,  C_MODRM
@@ -468,8 +468,8 @@ static DWORD table_0F[256] =
 	/* B5 */,  C_MODRM
 	/* B6 */,  C_MODRM
 	/* B7 */,  C_MODRM
-	/* B8 */,  -1
-	/* B9 */,  -1
+	/* B8 */,  C_ERROR
+	/* B9 */,  C_ERROR
 	/* BA */,  C_MODRM+C_DATA1
 	/* BB */,  C_MODRM
 	/* BC */,  C_MODRM
@@ -478,12 +478,12 @@ static DWORD table_0F[256] =
 	/* BF */,  C_MODRM
 	/* C0 */,  C_MODRM
 	/* C1 */,  C_MODRM
-	/* C2 */,  -1
-	/* C3 */,  -1
-	/* C4 */,  -1
-	/* C5 */,  -1
-	/* C6 */,  -1
-	/* C7 */,  -1
+	/* C2 */,  C_ERROR
+	/* C3 */,  C_ERROR
+	/* C4 */,  C_ERROR
+	/* C5 */,  C_ERROR
+	/* C6 */,  C_ERROR
+	/* C7 */,  C_ERROR
 	/* C8 */,  0
 	/* C9 */,  0
 	/* CA */,  0
@@ -492,54 +492,54 @@ static DWORD table_0F[256] =
 	/* CD */,  0
 	/* CE */,  0
 	/* CF */,  0
-	/* D0 */,  -1
-	/* D1 */,  -1
-	/* D2 */,  -1
-	/* D3 */,  -1
-	/* D4 */,  -1
-	/* D5 */,  -1
-	/* D6 */,  -1
-	/* D7 */,  -1
-	/* D8 */,  -1
-	/* D9 */,  -1
-	/* DA */,  -1
-	/* DB */,  -1
-	/* DC */,  -1
-	/* DD */,  -1
-	/* DE */,  -1
-	/* DF */,  -1
-	/* E0 */,  -1
-	/* E1 */,  -1
-	/* E2 */,  -1
-	/* E3 */,  -1
-	/* E4 */,  -1
-	/* E5 */,  -1
-	/* E6 */,  -1
-	/* E7 */,  -1
-	/* E8 */,  -1
-	/* E9 */,  -1
-	/* EA */,  -1
-	/* EB */,  -1
-	/* EC */,  -1
-	/* ED */,  -1
-	/* EE */,  -1
-	/* EF */,  -1
-	/* F0 */,  -1
-	/* F1 */,  -1
-	/* F2 */,  -1
-	/* F3 */,  -1
-	/* F4 */,  -1
-	/* F5 */,  -1
-	/* F6 */,  -1
-	/* F7 */,  -1
-	/* F8 */,  -1
-	/* F9 */,  -1
-	/* FA */,  -1
-	/* FB */,  -1
-	/* FC */,  -1
-	/* FD */,  -1
-	/* FE */,  -1
-	/* FF */,  -1
+	/* D0 */,  C_ERROR
+	/* D1 */,  C_ERROR
+	/* D2 */,  C_ERROR
+	/* D3 */,  C_ERROR
+	/* D4 */,  C_ERROR
+	/* D5 */,  C_ERROR
+	/* D6 */,  C_ERROR
+	/* D7 */,  C_ERROR
+	/* D8 */,  C_ERROR
+	/* D9 */,  C_ERROR
+	/* DA */,  C_ERROR
+	/* DB */,  C_ERROR
+	/* DC */,  C_ERROR
+	/* DD */,  C_ERROR
+	/* DE */,  C_ERROR
+	/* DF */,  C_ERROR
+	/* E0 */,  C_ERROR
+	/* E1 */,  C_ERROR
+	/* E2 */,  C_ERROR
+	/* E3 */,  C_ERROR
+	/* E4 */,  C_ERROR
+	/* E5 */,  C_ERROR
+	/* E6 */,  C_ERROR
+	/* E7 */,  C_ERROR
+	/* E8 */,  C_ERROR
+	/* E9 */,  C_ERROR
+	/* EA */,  C_ERROR
+	/* EB */,  C_ERROR
+	/* EC */,  C_ERROR
+	/* ED */,  C_ERROR
+	/* EE */,  C_ERROR
+	/* EF */,  C_ERROR
+	/* F0 */,  C_ERROR
+	/* F1 */,  C_ERROR
+	/* F2 */,  C_ERROR
+	/* F3 */,  C_ERROR
+	/* F4 */,  C_ERROR
+	/* F5 */,  C_ERROR
+	/* F6 */,  C_ERROR
+	/* F7 */,  C_ERROR
+	/* F8 */,  C_ERROR
+	/* F9 */,  C_ERROR
+	/* FA */,  C_ERROR
+	/* FB */,  C_ERROR
+	/* FC */,  C_ERROR
+	/* FD */,  C_ERROR
+	/* FE */,  C_ERROR
+	/* FF */,  C_ERROR
 }; // table_0F
 
 

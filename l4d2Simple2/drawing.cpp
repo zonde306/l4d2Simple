@@ -252,8 +252,8 @@ void CDrawing::CreateObjects()
 
 	LOCK_PRESENT();
 
-	ImGui::GetIO().DisplaySize.x = m_iScreenWidth;
-	ImGui::GetIO().DisplaySize.y = m_iScreenHeight;
+	ImGui::GetIO().DisplaySize.x = static_cast<float>(m_iScreenWidth);
+	ImGui::GetIO().DisplaySize.y = static_cast<float>(m_iScreenHeight);
 
 	m_imDrawList = new ImDrawList(ImGui::GetDrawListSharedData());
 
@@ -264,8 +264,8 @@ void CDrawing::CreateObjects()
 	fontPath += XorStr("\\Fonts\\msyhl.ttc");
 
 	// Utils::log("font %s loading...", fontPath.c_str());
-	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), m_iFontSize, nullptr, m_imFonts.GetGlyphRangesChinese());
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), m_iFontSize, nullptr, m_imFonts.GetGlyphRangesChinese());
+	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
 
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
@@ -904,7 +904,8 @@ void CDrawing::RenderText(int x, int y, D3DCOLOR color, bool centered, const cha
 
 	LOCK_ENDSCENE();
 
-	m_vStringList.emplace_back(x, y, buffer, color, (centered ? D3DFONT_CENTERED : 0));
+	m_vStringList.emplace_back(static_cast<float>(x), static_cast<float>(y),
+		buffer, color, (centered ? D3DFONT_CENTERED : 0));
 
 	UNLOCK_ENDSCENE();
 }
@@ -921,7 +922,8 @@ void CDrawing::RenderText(int x, int y, D3DCOLOR color, bool centered, const wch
 
 	LOCK_ENDSCENE();
 
-	m_vStringListW.emplace_back(x, y, buffer, color, (centered ? D3DFONT_CENTERED : 0));
+	m_vStringListW.emplace_back(static_cast<float>(x), static_cast<float>(y),
+		buffer, color, (centered ? D3DFONT_CENTERED : 0));
 
 	UNLOCK_ENDSCENE();
 }
@@ -938,7 +940,8 @@ void CDrawing::RenderText2(int x, int y, D3DCOLOR color, bool centered, const ch
 
 	LOCK_ENDSCENE();
 
-	m_vSimpleStringList.emplace_back(x, y, text, color, (centered ? D3DFONT_CENTERED : 0));
+	m_vSimpleStringList.emplace_back(static_cast<float>(x), static_cast<float>(y),
+		text, color, (centered ? D3DFONT_CENTERED : 0));
 
 	UNLOCK_ENDSCENE();
 }
@@ -947,7 +950,8 @@ void CDrawing::DrawPoint(int x, int y, D3DCOLOR color)
 {
 	LOCK_PRESENT();
 
-	m_imDrawList->AddRectFilled(ImVec2(x, y), ImVec2(x + 1, y + 1), D3DCOLOR_IMGUI(color));
+	m_imDrawList->AddRectFilled(ImVec2(static_cast<float>(x), static_cast<float>(y)),
+		ImVec2(static_cast<float>(x + 1), static_cast<float>(y + 1)), D3DCOLOR_IMGUI(color));
 
 	UNLOCK_PRESENT();
 }
@@ -956,7 +960,8 @@ void CDrawing::DrawLine(int x1, int y1, int x2, int y2, D3DCOLOR color)
 {
 	LOCK_PRESENT();
 
-	m_imDrawList->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), D3DCOLOR_IMGUI(color));
+	m_imDrawList->AddLine(ImVec2(static_cast<float>(x1), static_cast<float>(y1)),
+		ImVec2(static_cast<float>(x2), static_cast<float>(y2)), D3DCOLOR_IMGUI(color));
 
 	UNLOCK_PRESENT();
 }
@@ -965,7 +970,8 @@ void CDrawing::DrawRect(int x, int y, int w, int h, D3DCOLOR color)
 {
 	LOCK_PRESENT();
 
-	m_imDrawList->AddRect(ImVec2(x, y), ImVec2(x + w, y + h), D3DCOLOR_IMGUI(color));
+	m_imDrawList->AddRect(ImVec2(static_cast<float>(x), static_cast<float>(y)),
+		ImVec2(static_cast<float>(x + w), static_cast<float>(y + h)), D3DCOLOR_IMGUI(color));
 
 	UNLOCK_PRESENT();
 }
@@ -974,7 +980,8 @@ void CDrawing::DrawCircle(int x, int y, int r, D3DCOLOR color, int resolution)
 {
 	LOCK_PRESENT();
 	
-	m_imDrawList->AddCircle(ImVec2(x, y), r, D3DCOLOR_IMGUI(color), resolution);
+	m_imDrawList->AddCircle(ImVec2(static_cast<float>(x), static_cast<float>(y)),
+		static_cast<float>(r), D3DCOLOR_IMGUI(color), resolution);
 
 	UNLOCK_PRESENT();
 }
@@ -983,7 +990,8 @@ void CDrawing::DrawRectFilled(int x, int y, int w, int h, D3DCOLOR color)
 {
 	LOCK_PRESENT();
 
-	m_imDrawList->AddRectFilled(ImVec2(x, y), ImVec2(x + w, y + h), D3DCOLOR_IMGUI(color));
+	m_imDrawList->AddRectFilled(ImVec2(static_cast<float>(x), static_cast<float>(y)),
+		ImVec2(static_cast<float>(x + w), static_cast<float>(y + h)), D3DCOLOR_IMGUI(color));
 
 	UNLOCK_PRESENT();
 }
@@ -992,7 +1000,8 @@ void CDrawing::DrawCircleFilled(int x, int y, int r, D3DCOLOR color, int resolut
 {
 	LOCK_PRESENT();
 
-	m_imDrawList->AddCircleFilled(ImVec2(x, y), r, D3DCOLOR_IMGUI(color), resolution);
+	m_imDrawList->AddCircleFilled(ImVec2(static_cast<float>(x), static_cast<float>(y)),
+		static_cast<float>(r), D3DCOLOR_IMGUI(color), resolution);
 
 	UNLOCK_PRESENT();
 }
@@ -1044,8 +1053,8 @@ void CDrawing::DrawText(int x, int y, D3DCOLOR color, bool centered, const char 
 
 	if (centered)
 	{
-		x -= textSize.x / 2;
-		y -= textSize.y / 2;
+		x -= static_cast<int>(textSize.x / 2);
+		y -= static_cast<int>(textSize.y / 2);
 	}
 
 	LOCK_PRESENT();
@@ -1057,7 +1066,8 @@ void CDrawing::DrawText(int x, int y, D3DCOLOR color, bool centered, const char 
 
 	try
 	{
-		m_imDrawList->AddText(font, font->FontSize, ImVec2(x, y), D3DCOLOR_IMGUI(color), buffer);
+		m_imDrawList->AddText(font, font->FontSize, ImVec2(static_cast<float>(x), static_cast<float>(y)),
+			D3DCOLOR_IMGUI(color), buffer);
 	}
 	catch (...)
 	{
@@ -1081,5 +1091,5 @@ std::pair<int, int> CDrawing::GetDrawTextSize(const char * text, ...)
 
 	ImFont* font = m_imFonts.Fonts[0];
 	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, buffer);
-	return std::make_pair(textSize.x, textSize.y);
+	return std::make_pair(static_cast<int>(textSize.x), static_cast<int>(textSize.y));
 }
