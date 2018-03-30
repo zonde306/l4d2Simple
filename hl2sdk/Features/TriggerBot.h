@@ -20,6 +20,7 @@ private:	// 菜单项
 	bool m_bCrosshairs = false;
 	bool m_bNonWitch = true;
 	bool m_bBlockFriendlyFire = true;
+	bool m_bAimPosition = false;
 
 	bool m_bTraceHead = false;
 	bool m_bTraceSilent = false;
@@ -32,6 +33,7 @@ private:
 	CBasePlayer* m_pAimTarget = nullptr;
 	int m_iHitBox = 0;
 	int m_iHitGroup = 0;
+	Vector m_vecAimOrigin;
 };
 
 extern CTriggerBot* g_pTriggerBot;

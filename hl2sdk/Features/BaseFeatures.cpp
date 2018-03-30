@@ -9,7 +9,7 @@ CBaseFeatures::CBaseFeatures()
 
 CBaseFeatures::~CBaseFeatures()
 {
-	g_pClientHook->_GameHook.erase(g_pClientHook->_GameHook.begin() + m_iHookIndex);
+	// g_pClientHook->_GameHook.erase(g_pClientHook->_GameHook.begin() + m_iHookIndex);
 }
 
 void CBaseFeatures::OnConnect()

@@ -76,7 +76,10 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 	m_vecPunch = local->GetPunch();
 
 	if (m_bNoVisRecoil)
-		local->GetPunch().SetZero();
+	{
+		local->GetPunch().x = 0.0f;
+		local->GetPunch().y = 0.0f;
+	}
 }
 
 void CViewManager::OnMenuDrawing()

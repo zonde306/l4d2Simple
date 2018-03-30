@@ -107,7 +107,7 @@ void CBunnyHop::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("AutoBunnyHop Allow"), &m_bAcitve);
 
 	if (m_pszAutoBhopMode == nullptr)
-		m_pszAutoBhopMode = m_arrAutoBhopModeList[0].c_str();
+		m_pszAutoBhopMode = m_arrAutoBhopModeList[2].c_str();
 
 	if (ImGui::BeginCombo(XorStr("AutoBhop"), m_pszAutoBhopMode))
 	{

@@ -99,6 +99,7 @@ void CTriggerBot::OnMenuDrawing()
 	// ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
 	ImGui::Checkbox(XorStr("Block Friendly Fire"), &m_bBlockFriendlyFire);
 	ImGui::Checkbox(XorStr("Trigger No Witchs"), &m_bNonWitch);
+	ImGui::Checkbox(XorStr("Trigger Position"), &m_bAimPosition);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
@@ -114,15 +115,14 @@ void CTriggerBot::OnMenuDrawing()
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 {
-	if (!m_bCrosshairs)
+	if (!m_bCrosshairs && !m_bAimPosition)
 		return;
-
-	D3DCOLOR color = CDrawing::WHITE;
-
+	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr)
 		return;
 
+	D3DCOLOR color = CDrawing::WHITE;
 	if (m_pAimTarget == nullptr)
 	{
 		color = CDrawing::LAWNGREEN;
@@ -139,15 +139,28 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
 	}
 
-	int width, height;
-	g_pInterface->Engine->GetScreenSize(width, height);
-	width /= 2;
-	height /= 2;
+	if (m_bCrosshairs)
+	{
+		int width, height;
+		g_pInterface->Engine->GetScreenSize(width, height);
+		width /= 2;
+		height /= 2;
 
-	// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
-	// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
-	g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
-	g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
+		// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
+		// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
+		g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
+		g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
+	}
+
+	if (m_bAimPosition)
+	{
+		Vector screen;
+		if (math::WorldToScreenEx(m_vecAimOrigin, screen))
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				color, true, XorStr("O"));
+		}
+	}
 }
 
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
@@ -174,6 +187,8 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 		m_pAimTarget = nullptr;
 		return nullptr;
 	}
+
+	m_vecAimOrigin = trace.end;
 
 	if (trace.m_pEnt == player || !IsValidTarget(reinterpret_cast<CBasePlayer*>(trace.m_pEnt)))
 	{

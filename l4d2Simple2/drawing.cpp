@@ -140,6 +140,7 @@ void CDrawing::ReleaseObjects()
 		m_imDrawList = nullptr;
 	}
 
+	m_imFonts.TexID = NULL;
 	m_imFonts.Clear();
 	ImGui::GetIO().Fonts->Clear();
 
@@ -266,7 +267,7 @@ void CDrawing::CreateObjects()
 	// Utils::log("font %s loading...", fontPath.c_str());
 	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
 	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-
+	
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
 	m_imFonts.GetTexDataAsRGBA32(&pixel_data, &width, &height, &bytes_per_pixel);
@@ -519,14 +520,17 @@ CDrawing::CDrawing() : m_bInEndScene(false), m_bInPresent(false), m_pDevice(null
 CDrawing::~CDrawing()
 {
 	ReleaseObjects();
+	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
 void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 {
 	m_pDevice = device;
 	m_iFontSize = fontSize;
-	CreateObjects();
 	ImGui_ImplDX9_Init(g_hGameWindow, device);
+
+	CreateObjects();
+
 	g_pfnOldWndProcHandler = (WNDPROC)SetWindowLongPtrA(g_hGameWindow, GWL_WNDPROC, (LONG_PTR)ImGui_ImplWin32_WndProcHandler);
 
 	Utils::log(XorStr("CDrawing Initialization..."));
@@ -535,6 +539,7 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 void CDrawing::OnLostDevice()
 {
 	ReleaseObjects();
+	ImGui_ImplDX9_InvalidateDeviceObjects();
 
 	LOCK_ENDSCENE();
 
@@ -553,8 +558,6 @@ void CDrawing::OnLostDevice()
 	*/
 
 	UNLOCK_ENDSCENE();
-
-	ImGui_ImplDX9_InvalidateDeviceObjects();
 }
 
 void CDrawing::OnResetDevice()
@@ -1048,7 +1051,7 @@ void CDrawing::DrawText(int x, int y, D3DCOLOR color, bool centered, const char 
 
 	va_end(ap);
 	
-	ImFont* font = m_imFonts.Fonts[0];
+	ImFont* font = m_imFonts.Fonts.back();
 	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, buffer);
 
 	if (centered)
@@ -1089,7 +1092,7 @@ std::pair<int, int> CDrawing::GetDrawTextSize(const char * text, ...)
 
 	va_end(ap);
 
-	ImFont* font = m_imFonts.Fonts[0];
+	ImFont* font = m_imFonts.Fonts.back();
 	ImVec2 textSize = font->CalcTextSizeA(font->FontSize, FLT_MAX, 0.0f, buffer);
 	return std::make_pair(static_cast<int>(textSize.x), static_cast<int>(textSize.y));
 }
