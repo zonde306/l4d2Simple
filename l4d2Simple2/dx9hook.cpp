@@ -322,6 +322,8 @@ bool CDirectX9Hook::SetupFirstHook()
 	oCreateQuery = reinterpret_cast<FnCreateQuery>(m_pHookCreateQuery->GetTrampoline());
 
 	m_bIsFirstHooked = true;
+	ReleaseDevice();
+
 	Utils::log(XorStr("Setup DirectX Hook 1st."));
 	return true;
 }

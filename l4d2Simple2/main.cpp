@@ -10,16 +10,27 @@
 #include "speedhack.h"
 #include "../hl2sdk/interfaces.h"
 #include "../hl2sdk/hook.h"
-
 // #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+
+#ifdef _DEBUG
+#include <DbgHelp.h>
+#pragma comment(lib, "dbghelp")
+#endif
 
 // 需要在 StartCheats 里把它设置成游戏窗口
 // 例如：g_hGameWindow = FindWindowA("Valve001", "Left 4 Dead 2");
 HWND g_hGameWindow = nullptr;
 
+#ifdef _DEBUG
+// 异常处理
+LPTOP_LEVEL_EXCEPTION_FILTER g_pfnOldExceptFilter = nullptr;
+LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS);
+#endif
+
 DWORD WINAPI StartCheats(LPVOID);
 void CreateDebugConsole();
 HWND CheckTopWindow();
+
 
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 {
@@ -71,8 +82,11 @@ DWORD WINAPI StartCheats(LPVOID module)
 	}
 
 	Utils::g_hCurrentWindow = g_hGameWindow;
-
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
+
+#ifdef _DEBUG
+	g_pfnOldExceptFilter = SetUnhandledExceptionFilter(Hooked_UnhandledExceptionFilter);
+#endif
 	
 	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
 	g_pSpeedModifier->Init();
@@ -100,8 +114,8 @@ void CreateDebugConsole()
 	HMENU hMenu = GetSystemMenu(hwnd, FALSE);
 	if (hMenu) DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
 
-	freopen(XorStr("CONIN$"), XorStr("r"), stdin);
-	freopen(XorStr("CONOUT$"), XorStr("w"), stdout);
+	freopen(XorStr("CONIN$"), "r", stdin);
+	freopen(XorStr("CONOUT$"), "w", stdout);
 }
 
 HWND CheckTopWindow()
@@ -127,3 +141,32 @@ HWND CheckTopWindow()
 	std::cout << XorStr("Found: ") << title << ' ' << '(' << classname << ')' << std::endl;
 	return topWindow;
 }
+
+#ifdef _DEBUG
+LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
+{
+	if (!IsDebuggerPresent())
+	{
+		HANDLE file = CreateFileA((Utils::g_sModulePath + XorStr("crash_dump.dmp")).c_str(),
+			GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		if (file != NULL && file != INVALID_HANDLE_VALUE)
+		{
+			MINIDUMP_EXCEPTION_INFORMATION mdei;
+			mdei.ThreadId = GetCurrentThreadId();
+			mdei.ExceptionPointers = pExceptionInfo;
+			mdei.ClientPointers = NULL;
+
+			MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, MiniDumpWithFullMemory,
+				(pExceptionInfo != nullptr ? &mdei : NULL), NULL, NULL);
+
+			CloseHandle(file);
+		}
+	}
+
+	if (g_pfnOldExceptFilter != nullptr)
+		return g_pfnOldExceptFilter(pExceptionInfo);
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif

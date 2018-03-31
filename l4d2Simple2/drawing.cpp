@@ -141,8 +141,8 @@ void CDrawing::ReleaseObjects()
 	}
 
 	m_imFonts.TexID = NULL;
-	// m_imFonts.Clear();
-	// ImGui::GetIO().Fonts->Clear();
+	m_imFonts.Clear();
+	ImGui::GetIO().Fonts->Clear();
 
 	UNLOCK_PRESENT();
 
@@ -264,12 +264,9 @@ void CDrawing::CreateObjects()
 	std::string fontPath(systemPath);
 	fontPath += XorStr("\\Fonts\\msyhl.ttc");
 
-	if (m_imFonts.Fonts.size() <= 1)
-	{
-		// Utils::log("font %s loading...", fontPath.c_str());
-		m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-	}
+	// Utils::log("font %s loading...", fontPath.c_str());
+	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
 
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
@@ -544,17 +541,10 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 
 void CDrawing::OnLostDevice()
 {
-	ReleaseObjects();
 	ImGui_ImplDX9_InvalidateDeviceObjects();
+	ReleaseObjects();
 
 	LOCK_ENDSCENE();
-
-	m_vDrawList.clear();
-	m_vStringList.clear();
-	m_vStringListW.clear();
-	m_vTopStringList.clear();
-	m_vSimpleStringList.clear();
-	m_bTopStringDrawing = false;
 
 	/*
 	m_pDefaultFont->OnLostDevice();
@@ -563,13 +553,20 @@ void CDrawing::OnLostDevice()
 	m_pTextSprite->OnLostDevice();
 	*/
 
+	m_vDrawList.clear();
+	m_vStringList.clear();
+	m_vStringListW.clear();
+	m_vTopStringList.clear();
+	m_vSimpleStringList.clear();
+	m_bTopStringDrawing = false;
+
 	UNLOCK_ENDSCENE();
 }
 
 void CDrawing::OnResetDevice()
 {
-	ImGui_ImplDX9_CreateDeviceObjects();
 	CreateObjects();
+	ImGui_ImplDX9_CreateDeviceObjects();
 
 	LOCK_ENDSCENE();
 
@@ -589,6 +586,7 @@ void CDrawing::OnBeginEndScene()
 	LOCK_ENDSCENE();
 	
 	m_pStateBlock->Capture();
+	// m_pDevice->BeginStateBlock();
 
 	m_pDevice->SetTexture(0, nullptr);
 	m_pDevice->SetPixelShader(nullptr);
@@ -615,6 +613,7 @@ void CDrawing::OnBeginEndScene()
 	m_pDevice->SetRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_INVDESTALPHA);
 	m_pDevice->SetRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_ONE);
 
+	// m_pDevice->EndStateBlock(&m_pStateBlock);
 	m_bInEndScene = true;
 
 	UNLOCK_ENDSCENE();
