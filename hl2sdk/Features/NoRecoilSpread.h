@@ -28,17 +28,15 @@ private:
 	bool m_bNoVisRecoil = true;
 	bool m_bRapidFire = true;
 	bool m_bSilentNoSpread = true;
-
-	bool m_bRecoilCrosshair = false;
-	bool m_bSpreadCrosshair = false;
+	bool m_bRealAngles = false;
 
 private:
-	bool m_bApplySilentFrame = false;
-	bool m_bApplySilentByFire = false;
+	bool m_bSilentFrame = false;
+	bool m_bSilentByFire = false;
 	QAngle m_vecSilentAngles;
 
 private:
-	QAngle m_vecAngles;
+	QAngle m_vecAngles = INVALID_VECTOR;
 	float m_fSideMove = 0.0f;
 	float m_fForwardMove = 0.0f;
 	float m_fUpMove = 0.0f;
@@ -46,6 +44,9 @@ private:
 private:
 	Vector m_vecPunch;
 	Vector m_vecSpread;
+	QAngle m_vecViewAngles;
+	bool m_bHasFiring = false;
+	bool m_bHasSilent = false;
 
 private:
 	bool m_bRapidIgnore = true;

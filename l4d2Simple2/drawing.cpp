@@ -141,8 +141,8 @@ void CDrawing::ReleaseObjects()
 	}
 
 	m_imFonts.TexID = NULL;
-	m_imFonts.Clear();
-	ImGui::GetIO().Fonts->Clear();
+	// m_imFonts.Clear();
+	// ImGui::GetIO().Fonts->Clear();
 
 	UNLOCK_PRESENT();
 
@@ -264,10 +264,13 @@ void CDrawing::CreateObjects()
 	std::string fontPath(systemPath);
 	fontPath += XorStr("\\Fonts\\msyhl.ttc");
 
-	// Utils::log("font %s loading...", fontPath.c_str());
-	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-	
+	if (m_imFonts.Fonts.size() <= 1)
+	{
+		// Utils::log("font %s loading...", fontPath.c_str());
+		m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
+		ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
+	}
+
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
 	m_imFonts.GetTexDataAsRGBA32(&pixel_data, &width, &height, &bytes_per_pixel);
@@ -521,6 +524,9 @@ CDrawing::~CDrawing()
 {
 	ReleaseObjects();
 	ImGui_ImplDX9_InvalidateDeviceObjects();
+
+	m_imFonts.Clear();
+	ImGui::GetIO().Fonts->Clear();
 }
 
 void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)

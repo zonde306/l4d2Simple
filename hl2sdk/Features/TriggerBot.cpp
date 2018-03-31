@@ -172,7 +172,7 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 
 	Ray_t ray;
 	Vector startPosition = player->GetEyePosition();
-	Vector endPosition = eyeAngles.Forward().Scale(3500.0f) + startPosition;
+	Vector endPosition = startPosition + eyeAngles.Forward().Scale(3500.0f);
 	ray.Init(startPosition, endPosition);
 
 	trace_t trace;
