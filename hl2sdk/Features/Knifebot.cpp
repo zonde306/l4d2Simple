@@ -72,8 +72,13 @@ void CKnifeBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Auto Melee"), &m_bAutoFire);
+	IMGUI_TIPS("手持近战武器时自动攻击敌人。");
+
 	ImGui::Checkbox(XorStr("Auto Shove"), &m_bAutoShove);
+	IMGUI_TIPS("当敌人接近时自动推开/抓。");
+
 	ImGui::Checkbox(XorStr("Melee Faster"), &m_bFastMelee);
+	IMGUI_TIPS("近战武器速砍，按住 R 启动。");
 
 	ImGui::Separator();
 	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 50.0f, XorStr("%.0f"));

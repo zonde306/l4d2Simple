@@ -1,4 +1,4 @@
-#include "BunnyHop.h"
+﻿#include "BunnyHop.h"
 #include "../hook.h"
 #include <iostream>
 
@@ -105,6 +105,7 @@ void CBunnyHop::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("AutoBunnyHop Allow"), &m_bAcitve);
+	IMGUI_TIPS("自动连跳，不选上时下面的东西无效。");
 
 	if (m_pszAutoBhopMode == nullptr)
 		m_pszAutoBhopMode = m_arrAutoBhopModeList[2].c_str();

@@ -95,16 +95,37 @@ void CVisualDrop::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Tier1 Weapon"), &m_bTier1);
+	IMGUI_TIPS("显示 T1 武器，例如单喷和冲锋枪。");
+
 	ImGui::Checkbox(XorStr("Tier2 Weapon"), &m_bTier2);
+	IMGUI_TIPS("显示 T2 武器，例如步枪/连喷/狙击。");
+
 	ImGui::Checkbox(XorStr("Tier3 Weapon"), &m_bTier3);
+	IMGUI_TIPS("显示 T3 武器，例如机枪和榴弹。");
+
 	ImGui::Checkbox(XorStr("Melee Weapon"), &m_bMelee);
+	IMGUI_TIPS("显示近战武器，非官方的近战武器可能显示不出来。");
+
 	ImGui::Checkbox(XorStr("Medical"), &m_bAidKit);
+	IMGUI_TIPS("显示医疗品，例如包/药/针/电击器。");
+
 	ImGui::Checkbox(XorStr("Grenade"), &m_bGrenade);
+	IMGUI_TIPS("显示投资武器，例如火瓶/土雷/胆汁。");
+
 	ImGui::Checkbox(XorStr("Ammo/Upgrade"), &m_bAmmoUpgrade);
+	IMGUI_TIPS("显示子弹和武器升级，例如子弹堆/燃烧子弹/高爆子弹/激光。");
+
 	ImGui::Checkbox(XorStr("Carry"), &m_bCarry);
+	IMGUI_TIPS("显示可携带道具，例如油桶/煤气罐/氧气瓶/烟花。");
+
 	ImGui::Checkbox(XorStr("Projectile"), &m_bProjectile);
+	IMGUI_TIPS("显示飞行物，但目前好像没效果。");
+
 	ImGui::Checkbox(XorStr("Deadbody"), &m_bDeadbody);
+	IMGUI_TIPS("显示生还者尸体，用于电击器救队友。");
+
 	ImGui::SliderFloat(XorStr("Visual Max Distance"), &m_fMaxDistance, 500.0f, 3000.0f, XorStr("%.0f"));
+	IMGUI_TIPS("显示物品的范围。");
 
 	ImGui::TreePop();
 }

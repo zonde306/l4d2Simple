@@ -199,19 +199,42 @@ void CVisualPlayer::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Left alignment"), &m_bDrawToLeft);
+	IMGUI_TIPS("玩家信息左对齐，不选则为右对齐。");
+
 	ImGui::Checkbox(XorStr("Player Box"), &m_bBox);
+	IMGUI_TIPS("玩家或普感方框。");
+
 	ImGui::Checkbox(XorStr("Player Head"), &m_bHeadBox);
+	IMGUI_TIPS("玩家或普感头部位置。");
+
 	ImGui::Checkbox(XorStr("Player Skeleton"), &m_bBone);
+	IMGUI_TIPS("玩家或普感绘制骨骼，目前有 bug 不能用。");
+
 	ImGui::Checkbox(XorStr("Player Name"), &m_bName);
+	IMGUI_TIPS("玩家显示名字。");
+
 	ImGui::Checkbox(XorStr("Player Health"), &m_bHealth);
+	IMGUI_TIPS("玩家显示血量。");
+
 	ImGui::Checkbox(XorStr("Player Distance"), &m_bDistance);
+	IMGUI_TIPS("玩家显示距离。");
+
 	ImGui::Checkbox(XorStr("Player Weapon"), &m_bWeapon);
+	IMGUI_TIPS("玩家显示武器和弹药。");
+
 	ImGui::Checkbox(XorStr("Player Character"), &m_bCharacter);
+	IMGUI_TIPS("玩家显示角色，例如 Nick, Bill, Smoker 之类的。");
+
 	ImGui::Checkbox(XorStr("Player Chams"), &m_bChams);
+	IMGUI_TIPS("玩家透视和上色。");
+
 	ImGui::Checkbox(XorStr("My Spectator"), &m_bSpectator);
+	IMGUI_TIPS("显示当前观察者。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Player Barrel"), &m_bBarrel);
+	IMGUI_TIPS("显示玩家瞄准的位置。");
+
 	ImGui::SliderFloat(XorStr("Barrel Distance"), &m_fBarrelDistance, 100.0f, 3000.0f, XorStr("%.0f"));
 
 	ImGui::TreePop();

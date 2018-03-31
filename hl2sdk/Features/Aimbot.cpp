@@ -81,21 +81,36 @@ void CAimBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("AutoAim Allow"), &m_bActive);
+	IMGUI_TIPS("自动瞄准。");
+
 	ImGui::Checkbox(XorStr("AutoAim Initiative"), &m_bOnFire);
-	// ImGui::Checkbox(XorStr("AutoAim No Spread"), &m_bAntiSpread);
-	// ImGui::Checkbox(XorStr("AutoAim No Recoil"), &m_bAntiPunch);
+	IMGUI_TIPS("开枪时才会自动瞄准。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Silent Aim"), &m_bSilent);
+	IMGUI_TIPS("自己看不到自动瞄准，建议开启。");
+
 	ImGui::Checkbox(XorStr("Perfect Silent"), &m_bPerfectSilent);
+	IMGUI_TIPS("观察者看不到自动瞄准，建议开启。");
+
 	ImGui::Checkbox(XorStr("Visible inspection"), &m_bVisible);
+	IMGUI_TIPS("可见检查，看不见的敌人不瞄准。");
+
 	ImGui::Checkbox(XorStr("Ignore allies"), &m_bNonFriendly);
+	IMGUI_TIPS("自动瞄准不瞄准队友。");
+
 	ImGui::Checkbox(XorStr("Ignore Witchs"), &m_bNonWitch);
+	IMGUI_TIPS("自动瞄准不瞄准 Witch。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Distance priority"), &m_bDistance);
+	IMGUI_TIPS("优先选择最接距离近的目标，如果不开启则优先选择最接近准星的目标。");
+
 	ImGui::SliderFloat(XorStr("Aimbot Fov"), &m_fAimFov, 1.0f, 360.0f, XorStr("%.0f"));
+	IMGUI_TIPS("自动瞄准范围（半径，从准星位置开始）");
+
 	ImGui::SliderFloat(XorStr("Aimbot Distance"), &m_fAimDist, 1.0f, 5000.0f, XorStr("%.0f"));
+	IMGUI_TIPS("自动瞄准范围（距离）");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("AutoAim Range"), &m_bShowRange);

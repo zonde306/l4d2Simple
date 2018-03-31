@@ -43,3 +43,5 @@ public:
 private:
 	size_t m_iHookIndex;
 };
+
+#define IMGUI_TIPS(_text)	if (ImGui::IsItemHovered()) ImGui::SetTooltip(XorStr(u8##_text))

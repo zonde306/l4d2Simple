@@ -96,10 +96,20 @@ void CViewManager::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("No Recoil"), &m_bNoRecoil);
+	IMGUI_TIPS("无后坐力。");
+
 	ImGui::Checkbox(XorStr("No Visual Recoil"), &m_bNoVisRecoil);
+	IMGUI_TIPS("无后屏幕坐力。");
+
 	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
+	IMGUI_TIPS("子弹无扩散（提升射击精度）。");
+
 	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);
+	IMGUI_TIPS("手枪/狙击枪连射（按住开枪键）。");
+
 	ImGui::Checkbox(XorStr("Spread/Recoil Silent"), &m_bSilentNoSpread);
+	IMGUI_TIPS("无后坐力/子弹无扩散 防止被观察者看出来。");
+
 	ImGui::Checkbox(XorStr("Real Angles"), &m_bRealAngles);
 
 	ImGui::TreePop();

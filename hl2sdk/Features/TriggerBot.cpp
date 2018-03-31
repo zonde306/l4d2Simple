@@ -94,20 +94,30 @@ void CTriggerBot::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Trigger Allow"), &m_bActive);
+	IMGUI_TIPS("自动开枪。");
+
 	ImGui::Checkbox(XorStr("Trigger Crosshairs"), &m_bCrosshairs);
-	// ImGui::Checkbox(XorStr("Trigger No Spread"), &m_bAntiSpread);
-	// ImGui::Checkbox(XorStr("Trigger No Recoil"), &m_bAntiPunch);
 	ImGui::Checkbox(XorStr("Block Friendly Fire"), &m_bBlockFriendlyFire);
+	IMGUI_TIPS("防止黑枪，瞄准队友时禁止开枪。");
+
 	ImGui::Checkbox(XorStr("Trigger No Witchs"), &m_bNonWitch);
+	IMGUI_TIPS("自动开枪不会射击队友。");
+
 	ImGui::Checkbox(XorStr("Trigger Position"), &m_bAimPosition);
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
+	IMGUI_TIPS("自动开枪时射击头部，用于 猎头者 模式。");
+
 	ImGui::Checkbox(XorStr("Track Silent"), &m_bTraceSilent);
+	IMGUI_TIPS("自动开枪时射击头部防止被观察者发现。");
+
 	ImGui::SliderFloat(XorStr("Track FOV"), &m_fTraceFov, 1.0f, 90.0f, ("%.1f"));
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
+	IMGUI_TIPS("自动开枪尝试跟随敌人。");
+
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 
 	ImGui::TreePop();
