@@ -1,5 +1,4 @@
 #pragma once
-
 #include <string>
 #include <array>
 #include <cstdarg>
@@ -86,12 +85,25 @@ public:
 	}
 };
 
+END_NAMESPACE
+
+#define _USE_NEW_XORSTR_
+
+#ifdef _USE_NEW_XORSTR_
+#include "../ADVobfuscator/Log.h"
+#include "../ADVobfuscator/MetaString.h"
+#endif
+
+
 #ifdef _DEBUG
 #define XorStr(s)	s
 #define xs(_s)		_s
+#elif defined(_USE_NEW_XORSTR_)
+#define XorStr(s)	OBFUSCATED(s)
+#define xs(_s)		XorStr(_s)
 #else
 #define XorStr(s)	(XorCompileTime::XorString<sizeof(s) - 1, __COUNTER__>(s, std::make_index_sequence<sizeof(s) - 1>()).decrypt())
 #define xs(_s)		XorStr(_s)
+
 #endif
 
-END_NAMESPACE

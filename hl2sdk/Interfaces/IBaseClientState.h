@@ -3,6 +3,7 @@
 #include "../Structs/handle.h"
 #include "../Utils/checksum_crc.h"
 #include "../Utils/utlvector.h"
+#include "../../l4d2Simple2/xorstr.h"
 
 class KeyValues;
 class NET_Tick;
@@ -275,7 +276,7 @@ public:                                         \
 	bool WriteToBuffer(bf_write &buffer);       \
 	const char *ToString() const { return ""; } \
 	int GetType() const { return 0; }     \
-	const char *GetName() const { return #msgtype; }
+	const char *GetName() const { return XorStr(#msgtype); }
 
 #define DECLARE_NET_MESSAGE(name)     \
 	DECLARE_BASE_MESSAGE(NET_##name); \

@@ -195,6 +195,15 @@
     <ClInclude Include="..\..\l4d2Simple\imgui\stb_rect_pack.h" />
     <ClInclude Include="..\..\l4d2Simple\imgui\stb_textedit.h" />
     <ClInclude Include="..\..\l4d2Simple\imgui\stb_truetype.h" />
+    <ClInclude Include="..\ADVobfuscator\Indexes.h" />
+    <ClInclude Include="..\ADVobfuscator\Inline.h" />
+    <ClInclude Include="..\ADVobfuscator\Log.h" />
+    <ClInclude Include="..\ADVobfuscator\MetaFSM.h" />
+    <ClInclude Include="..\ADVobfuscator\MetaRandom.h" />
+    <ClInclude Include="..\ADVobfuscator\MetaString.h" />
+    <ClInclude Include="..\ADVobfuscator\ObfuscatedCall.h" />
+    <ClInclude Include="..\ADVobfuscator\ObfuscatedCallWithPredicate.h" />
+    <ClInclude Include="..\ADVobfuscator\Unroller.h" />
     <ClInclude Include="..\d3dfont\D3DFont.h" />
     <ClInclude Include="..\detours\detourxs.h" />
     <ClInclude Include="..\detours\opcodes.h" />

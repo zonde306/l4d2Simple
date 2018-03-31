@@ -34,7 +34,7 @@ typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
 typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
 typedef int(__cdecl* FnSetPredictionRandomSeed)(int);
-typedef float(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
+typedef void(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
 
 // 导出函数
 typedef void(__cdecl* FnRandomSeed)(int iSeed);

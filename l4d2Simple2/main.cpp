@@ -31,7 +31,6 @@ DWORD WINAPI StartCheats(LPVOID);
 void CreateDebugConsole();
 HWND CheckTopWindow();
 
-
 BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 {
 	if (reason == DLL_PROCESS_ATTACH)

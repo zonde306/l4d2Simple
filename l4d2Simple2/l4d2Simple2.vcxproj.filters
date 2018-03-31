@@ -43,6 +43,9 @@
     <Filter Include="ImGui\opengl">
       <UniqueIdentifier>{4c6b216f-df04-4cc7-a171-34c656e82f16}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ADVobfuscator">
+      <UniqueIdentifier>{0503812a-a0cc-4cd8-9129-00401b3257ad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -517,6 +520,33 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Features\DropVisual.h">
       <Filter>hl2sdk\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\Indexes.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\Inline.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\Log.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\MetaFSM.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\MetaRandom.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\MetaString.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\ObfuscatedCall.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\ObfuscatedCallWithPredicate.h">
+      <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ADVobfuscator\Unroller.h">
+      <Filter>ADVobfuscator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

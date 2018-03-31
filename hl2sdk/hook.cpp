@@ -1046,7 +1046,6 @@ CBasePlayer * CClientPrediction::GetLocalPlayer()
 	return (reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(g_pInterface->Engine->GetLocalPlayer())));
 }
 
-#pragma optimize("", off)
 std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon* weapon)
 {
 	if (weapon == nullptr || weapon->GetWeaponData()->iMaxClip1 <= 0)
@@ -1060,15 +1059,14 @@ std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon
 	float spread = weapon->GetSpread();
 
 	float horizontal = 0.0f, vertical = 0.0f;
-	horizontal = g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
-	// __asm fstp horizontal;
+	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
+	__asm fstp horizontal;
 
-	vertical = g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
-	// __asm fstp vertical;
+	g_pClientHook->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
+	__asm fstp vertical;
 
 	weapon->GetSpread() = oldSpread;
 	*m_pSpreadRandomSeed = oldSeed;
 
 	return std::make_pair(horizontal, vertical);
 }
-#pragma optimize("", on)
