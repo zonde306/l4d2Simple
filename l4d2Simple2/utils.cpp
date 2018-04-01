@@ -21,9 +21,30 @@ void Utils::init(HINSTANCE inst)
 	g_hInstance = inst;
 
 	char buffer[MAX_PATH];
-	GetModuleFileNameA(g_hInstance, buffer, MAX_PATH);
+	if (GetModuleFileNameA(g_hInstance, buffer, MAX_PATH) != 0)
+		GetModuleFileNameA(GetModuleHandleA(NULL), buffer, MAX_PATH);
+
 	std::string tmp = buffer;
-	g_sModulePath = tmp.substr(0, tmp.find('\\'));
+	g_sModulePath = tmp.substr(0, tmp.rfind('\\'));
+}
+
+std::string Utils::BuildPath(const char * text, ...)
+{
+	va_list ap;
+	va_start(ap, text);
+
+	char buffer[MAX_PATH];
+	buffer[0] = '\\';
+	buffer[1] = '\0';
+
+	if(text[0] != '\\')
+		vsprintf_s(&(buffer[1]), MAX_PATH - 1, text, ap);
+	else
+		vsprintf_s(buffer, text, ap);
+
+	va_end(ap);
+
+	return g_sModulePath + buffer;
 }
 
 void Utils::log(const char * text, ...)
@@ -36,8 +57,10 @@ void Utils::log(const char * text, ...)
 
 	va_end(ap);
 
-	std::cout << text << std::endl;
-	OutputDebugStringA(text);
+	strcat_s(buffer, "\r\n");
+
+	std::cout << buffer << std::endl;
+	OutputDebugStringA(buffer);
 }
 
 void Utils::logToFile(const char * text, ...)
@@ -50,8 +73,10 @@ void Utils::logToFile(const char * text, ...)
 
 	va_end(ap);
 
-	std::cout << '[' << getDateTime() << ']' << text << std::endl;
-	OutputDebugStringA(text);
+	strcat_s(buffer, "\r\n");
+
+	std::cout << '[' << GetDateTime() << ']' << buffer << std::endl;
+	OutputDebugStringA(buffer);
 }
 
 void Utils::logError(const char * text, ...)
@@ -64,8 +89,10 @@ void Utils::logError(const char * text, ...)
 
 	va_end(ap);
 
-	std::cout << '[' << getDateTime() << ']' << text << std::endl;
-	OutputDebugStringA(text);
+	strcat_s(buffer, "\r\n");
+
+	std::cout << '[' << GetDateTime() << ']' << buffer << std::endl;
+	OutputDebugStringA(buffer);
 }
 
 void Utils::log2()
@@ -83,10 +110,10 @@ void Utils::printInfo(const char * text, ...)
 
 	va_end(ap);
 
-	g_pDrawing->PrintInfo(CDrawing::WHITE, text);
+	g_pDrawing->PrintInfo(CDrawing::WHITE, buffer);
 }
 
-std::string Utils::getTime()
+std::string Utils::GetTime()
 {
 	tm timeInfo;
 	time_t t = time(nullptr);
@@ -97,7 +124,7 @@ std::string Utils::getTime()
 	return ss.str();
 }
 
-std::string Utils::getDate()
+std::string Utils::GetDate()
 {
 	tm timeInfo;
 	time_t t = time(nullptr);
@@ -108,7 +135,7 @@ std::string Utils::getDate()
 	return ss.str();
 }
 
-std::string Utils::getWeek()
+std::string Utils::GetWeek()
 {
 	tm timeInfo;
 	time_t t = time(nullptr);
@@ -140,7 +167,7 @@ std::string Utils::getWeek()
 	return XorStr("Unknown");
 }
 
-std::string Utils::getDateTime()
+std::string Utils::GetDateTime()
 {
 	tm timeInfo;
 	time_t t = time(nullptr);
@@ -152,7 +179,7 @@ std::string Utils::getDateTime()
 	return ss.str();
 }
 
-int Utils::getCpuUsage()
+int Utils::GetCpuUsage()
 {
 	//cpu数量
 	static int processor_count_ = -1;

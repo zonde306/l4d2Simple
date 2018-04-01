@@ -46,9 +46,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	// 在不是开枪的情况下不需要调整后坐力和扩散
-	if (weapon->GetWeaponData()->iMaxClip1 <= 0 || !canFire || !m_bHasFiring)
+	if (!weapon->IsFireGun() || !canFire || !m_bHasFiring)
 	{
-		m_bHasSilent = !(*bSendPacket);
+		// m_bHasSilent = !(*bSendPacket);
 		return;
 	}
 
@@ -113,6 +113,27 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Real Angles"), &m_bRealAngles);
 
 	ImGui::TreePop();
+}
+
+void CViewManager::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("aimhelper_recoil")) == data.end())
+		return;
+	
+	m_bNoRecoil = data.at(XorStr("aimhelper_recoil")).at(0) == '1';
+	m_bNoVisRecoil = data.at(XorStr("aimhelper_visual_recoil")).at(0) == '1';
+	m_bNoSpread = data.at(XorStr("aimhelper_spread")).at(0) == '1';
+	m_bRapidFire = data.at(XorStr("aimhelper_rapid_fire")).at(0) == '1';
+	m_bSilentNoSpread = data.at(XorStr("aimhelper_silent")).at(0) == '1';
+}
+
+void CViewManager::OnConfigSave(config_type & data)
+{
+	data[XorStr("aimhelper_recoil")] = std::to_string(m_bNoRecoil);
+	data[XorStr("aimhelper_visual_recoil")] = std::to_string(m_bNoVisRecoil);
+	data[XorStr("aimhelper_spread")] = std::to_string(m_bNoSpread);
+	data[XorStr("aimhelper_rapid_fire")] = std::to_string(m_bRapidFire);
+	data[XorStr("aimhelper_silent")] = std::to_string(m_bSilentNoSpread);
 }
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)

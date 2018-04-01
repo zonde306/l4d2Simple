@@ -12,6 +12,7 @@ namespace Utils
 	
 	// 初始化
 	void init(HINSTANCE inst);
+	std::string BuildPath(const char* text, ...);
 
 	// 记录日志
 	void log(const char* text, ...);
@@ -26,13 +27,13 @@ namespace Utils
 	void printInfo(const char* text, ...);
 
 	// 获取系统时间
-	std::string getTime();
-	std::string getDate();
-	std::string getWeek();
-	std::string getDateTime();
+	std::string GetTime();
+	std::string GetDate();
+	std::string GetWeek();
+	std::string GetDateTime();
 
 	// 获取系统信息
-	int getCpuUsage();
+	int GetCpuUsage();
 
 	// 字符串格式转换
 	std::string g2u(const std::string& strGBK);

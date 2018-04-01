@@ -24,7 +24,6 @@ CAimBot* g_pAimbot = nullptr;
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
 
-
 CAimBot::CAimBot() : CBaseFeatures::CBaseFeatures()
 {
 }
@@ -117,6 +116,38 @@ void CAimBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("AutoAim Angles"), &m_bShowAngles);
 
 	ImGui::TreePop();
+}
+
+
+void CAimBot::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("aimbot_enable")) == data.end())
+		return;
+
+	m_bActive = data.at(XorStr("aimbot_enable")).at(0) == '1';
+	m_bOnFire = data.at(XorStr("aimbot_only_shot")).at(0) == '1';
+	m_bSilent = data.at(XorStr("aimbot_silent")).at(0) == '1';
+	m_bPerfectSilent = data.at(XorStr("aimbot_perfect_silent")).at(0) == '1';
+	m_bVisible = data.at(XorStr("aimbot_visible")).at(0) == '1';
+	m_bNonFriendly = data.at(XorStr("aimbot_non_friendly")).at(0) == '1';
+	m_bNonWitch = data.at(XorStr("aimbot_non_witch")).at(0) == '1';
+	m_bDistance = data.at(XorStr("aimbot_distance_priority")).at(0) == '1';
+	m_fAimFov = static_cast<float>(atof(data.at(XorStr("aimbot_fov")).c_str()));
+	m_fAimDist = static_cast<float>(atof(data.at(XorStr("aimbot_distance")).c_str()));
+}
+
+void CAimBot::OnConfigSave(config_type & data)
+{
+	data[XorStr("aimbot_enable")] = std::to_string(m_bActive);
+	data[XorStr("aimbot_only_shot")] = std::to_string(m_bOnFire);
+	data[XorStr("aimbot_silent")] = std::to_string(m_bSilent);
+	data[XorStr("aimbot_perfect_silent")] = std::to_string(m_bPerfectSilent);
+	data[XorStr("aimbot_visible")] = std::to_string(m_bVisible);
+	data[XorStr("aimbot_non_friendly")] = std::to_string(m_bNonFriendly);
+	data[XorStr("aimbot_non_witch")] = std::to_string(m_bNonWitch);
+	data[XorStr("aimbot_distance_priority")] = std::to_string(m_bDistance);
+	data[XorStr("aimbot_fov")] = std::to_string(m_fAimFov);
+	data[XorStr("aimbot_distance")] = std::to_string(m_fAimDist);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)

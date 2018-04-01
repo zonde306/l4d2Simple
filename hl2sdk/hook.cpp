@@ -15,6 +15,7 @@
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
 #include <memory>
+#include <fstream>
 
 std::unique_ptr<CClientHook> g_pClientHook;
 std::unique_ptr<CClientPrediction> g_pClientPrediction;
@@ -201,29 +202,104 @@ bool CClientHook::Init()
 		g_pHookGameEvent->InstallHook();
 	}
 
-	// 初始化功能
-	{
-		if (!g_pBunnyHop)
-			g_pBunnyHop = new CBunnyHop();
-		if (!g_pSpeedHacker)
-			g_pSpeedHacker = new CSpeedHacker();
-		if (!g_pTriggerBot)
-			g_pTriggerBot = new CTriggerBot();
-		if (!g_pAimbot)
-			g_pAimbot = new CAimBot();
-		if (!g_pKnifeBot)
-			g_pKnifeBot = new CKnifeBot();
-		if (!g_pVisualPlayer)
-			g_pVisualPlayer = new CVisualPlayer();
-		if (!g_pVisualDrop)
-			g_pVisualDrop = new CVisualDrop();
-
-		// 这个要排在最后，否则没有效果
-		if (!g_pViewManager)
-			g_pViewManager = new CViewManager();
-	}
+	InitFeature();
+	// LoadConfig();
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
+}
+
+void CClientHook::InitFeature()
+{
+	if (!g_pBunnyHop)
+		g_pBunnyHop = new CBunnyHop();
+	if (!g_pSpeedHacker)
+		g_pSpeedHacker = new CSpeedHacker();
+	if (!g_pTriggerBot)
+		g_pTriggerBot = new CTriggerBot();
+	if (!g_pAimbot)
+		g_pAimbot = new CAimBot();
+	if (!g_pKnifeBot)
+		g_pKnifeBot = new CKnifeBot();
+	if (!g_pVisualPlayer)
+		g_pVisualPlayer = new CVisualPlayer();
+	if (!g_pVisualDrop)
+		g_pVisualDrop = new CVisualDrop();
+
+	// 这个要排在最后，否则没有效果
+	if (!g_pViewManager)
+		g_pViewManager = new CViewManager();
+}
+
+void CClientHook::LoadConfig()
+{
+	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::in|std::ios::beg);
+	if (file.bad() || !file.is_open())
+		return;
+
+	std::string line;
+	char buffer[255];
+	bool isInConfig = false;
+	std::string key, value;
+	CBaseFeatures::config_type config;
+
+	while (file.good() && !file.eof())
+	{
+		file.getline(buffer, 255);
+		if (buffer[0] == '\0' || buffer[0] == ';')
+			continue;
+
+		if (buffer[0] == '/' && buffer[1] == '/')
+			continue;
+
+		line = Utils::Trim(buffer, XorStr(" \r\n\t"));
+
+		if (line[0] == '[')
+		{
+			if (!isInConfig && line == XorStr("[Config]"))
+				isInConfig = true;
+
+			continue;
+		}
+
+		size_t equal = line.find('=');
+		if (equal == std::string::npos)
+			continue;
+
+		key = Utils::Trim(line.substr(0, equal), XorStr(" \r\n\t\""));
+		value = Utils::Trim(line.substr(equal + 1), XorStr(" \r\n\t\""));
+		if (key.empty() || value.empty())
+			continue;
+
+		config.emplace(key, value);
+	}
+
+	file.close();
+	if (config.empty())
+		return;
+
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnConfigLoading(config);
+}
+
+void CClientHook::SaveConfig()
+{
+	CBaseFeatures::config_type config;
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnConfigSave(config);
+
+	if (config.empty())
+		return;
+
+	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::out|std::ios::beg|std::ios::trunc|std::ios::in);
+	if (file.bad() || !file.is_open())
+		return;
+
+	file << XorStr("[Config]") << std::endl;
+	
+	for (const auto& option : config)
+		file << option.first << " = " << option.second << std::endl;
+
+	file.close();
 }
 
 #define DECL_DESTORY_DETOUR(_name)		if(_name && _name->Created())\
@@ -527,24 +603,27 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 
 	/*
+	// 修复随机数种子为 0 的问题
+	cmd->random_seed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+
 	g_pClientHook->bCreateMoveFinish = true;
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
 	{
-	hasFirstEnter = false;
-	Utils::log(XorStr("Hook CreateMoveShared Success."));
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook CreateMoveShared Success."));
 	}
-	#endif
+#endif
 
 	if (cmd == nullptr || cmd->command_number == 0)
-	return false;
+		return false;
 
 	g_pClientPrediction->StartPrediction(cmd);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
-	inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
+		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
 
@@ -630,7 +709,10 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					g_ServerConVar.clear();
 
 					for (const auto& inst : g_pClientHook->_GameHook)
+					{
 						inst->OnDisconnect();
+						g_pClientHook->SaveConfig();
+					}
 				}
 			}
 		}
@@ -703,6 +785,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarNotFound;
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
+
+		Utils::log(XorStr("[GCV] query %s, not found."), gcv->m_szCvarName);
 	}
 	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY) || blockQuery)
 	{
@@ -710,6 +794,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
+
+		Utils::log(XorStr("[GCV] query %s, protected."), gcv->m_szCvarName);
 	}
 	else if (cvar->IsFlagSet(FCVAR_NEVER_AS_STRING))
 	{
@@ -717,6 +803,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 		strcpy_s(resultBuffer, XorStr("FCVAR_NEVER_AS_STRING"));
 		returnMsg.m_szCvarValue = resultBuffer;
+
+		Utils::log(XorStr("[GCV] query %s, never as string."), gcv->m_szCvarName);
 	}
 	else
 	{
@@ -742,6 +830,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 			strcpy_s(resultBuffer, cvar->GetDefault());
 			returnMsg.m_szCvarValue = resultBuffer;
 		}
+
+		Utils::log(XorStr("[GCV] query %s, got %s, returns %s."), gcv->m_szCvarName, cvar->GetString(), resultBuffer);
 	}
 
 	// 返回给服务器
@@ -781,12 +871,16 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 			// g_ServerConVar.try_emplace(cvar.name, cvar.value);
 		}
 
+		/*
 		// 某些 ConVar 会导致玩家无法正常游戏
 		// 在这里防止这些 ConVar 被更改
 		if (!_stricmp(cvar.name, XorStr("sv_pure")) || !_stricmp(cvar.name, XorStr("sv_consistency")) ||
 			!_stricmp(cvar.name, XorStr("sv_allow_wait_command")) ||
 			!_stricmp(cvar.name, XorStr("addons_eclipse_content")))
 			blockSetting = true;
+		*/
+
+		Utils::log(XorStr("[SCV] set %s to %s."), cvar.name, cvar.value);
 	}
 
 	if (!blockSetting)
@@ -815,12 +909,16 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 			blockExecute = true;
 	}
 
+	/*
 	// 屏蔽某些坑人的 Command
 	if (!_stricmp(sc->m_szCommand, XorStr("bind")) || !_stricmp(sc->m_szCommand, XorStr("sv_pure")) ||
 		!_stricmp(sc->m_szCommand, XorStr("sv_consistency")) ||
 		!_stricmp(sc->m_szCommand, XorStr("sv_allow_wait_command")) ||
 		!_stricmp(sc->m_szCommand, XorStr("addons_eclipse_content")))
 		blockExecute = true;
+	*/
+
+	Utils::log(XorStr("[SC] exec %s."), sc->m_szCommand);
 
 	if (!blockExecute)
 		g_pClientHook->oProccessStringCmd(_ecx, sc);
@@ -976,6 +1074,7 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 
 	// 设置随机数种子
 	*m_pPredictionRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+	// *m_pPredictionRandomSeed = cmd->random_seed;
 
 	// 设置需要预测的时间（帧）
 	g_pInterface->GlobalVars->curtime = GetServerTime();
@@ -1048,7 +1147,7 @@ CBasePlayer * CClientPrediction::GetLocalPlayer()
 
 std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon* weapon)
 {
-	if (weapon == nullptr || weapon->GetWeaponData()->iMaxClip1 <= 0)
+	if (weapon == nullptr || !weapon->IsFireGun())
 		return std::make_pair(0.0f, 0.0f);
 
 	int oldSeed = *m_pSpreadRandomSeed;
@@ -1069,4 +1168,17 @@ std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon
 	*m_pSpreadRandomSeed = oldSeed;
 
 	return std::make_pair(horizontal, vertical);
+}
+
+float CClientPrediction::GetCurrentTime(CUserCmd * cmd)
+{
+	static int tick = 0;
+	static CUserCmd* lastCommand = nullptr;
+	if (lastCommand == nullptr || lastCommand->hasbeenpredicted)
+		tick = GetLocalPlayer()->GetTickBase();
+	else
+		++tick;
+
+	lastCommand = cmd;
+	return tick * g_pInterface->GlobalVars->interval_per_tick;
 }

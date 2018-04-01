@@ -130,6 +130,37 @@ void CVisualDrop::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
+void CVisualDrop::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("itemesp_t1")) == data.end())
+		return;
+	
+	m_bTier1 = data.at(XorStr("itemesp_t1")).at(0) == '1';
+	m_bTier2 = data.at(XorStr("itemesp_t2")).at(0) == '1';
+	m_bTier3 = data.at(XorStr("itemesp_t3")).at(0) == '1';
+	m_bMelee = data.at(XorStr("itemesp_melee")).at(0) == '1';
+	m_bAidKit = data.at(XorStr("itemesp_aid_kit")).at(0) == '1';
+	m_bGrenade = data.at(XorStr("itemesp_grenade")).at(0) == '1';
+	m_bAmmoUpgrade = data.at(XorStr("itemesp_upgrade_ammo")).at(0) == '1';
+	m_bCarry = data.at(XorStr("itemesp_carry")).at(0) == '1';
+	m_bProjectile = data.at(XorStr("itemesp_projectile")).at(0) == '1';
+	m_bDeadbody = data.at(XorStr("itemesp_deadbody")).at(0) == '1';
+}
+
+void CVisualDrop::OnConfigSave(config_type & data)
+{
+	data[XorStr("itemesp_t1")] = std::to_string(m_bTier1);
+	data[XorStr("itemesp_t2")] = std::to_string(m_bTier2);
+	data[XorStr("itemesp_t3")] = std::to_string(m_bTier3);
+	data[XorStr("itemesp_melee")] = std::to_string(m_bMelee);
+	data[XorStr("itemesp_aid_kit")] = std::to_string(m_bAidKit);
+	data[XorStr("itemesp_grenade")] = std::to_string(m_bGrenade);
+	data[XorStr("itemesp_upgrade_ammo")] = std::to_string(m_bAmmoUpgrade);
+	data[XorStr("itemesp_carry")] = std::to_string(m_bCarry);
+	data[XorStr("itemesp_projectile")] = std::to_string(m_bProjectile);
+	data[XorStr("itemesp_deadbody")] = std::to_string(m_bDeadbody);
+}
+
 void CVisualDrop::DrawWeaponSpawn(CBaseWeapon * weapon, const Vector & screen)
 {
 	if (!CanDrawWeapon(weapon))

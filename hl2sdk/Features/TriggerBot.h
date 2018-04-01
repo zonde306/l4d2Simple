@@ -11,6 +11,9 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
+
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 	static bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);

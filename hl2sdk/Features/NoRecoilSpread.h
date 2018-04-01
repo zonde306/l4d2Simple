@@ -12,6 +12,9 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode);
 
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
+
 	bool ApplySilentAngles(const QAngle& viewAngles, bool withFire = true);
 
 	bool StartSilent(CUserCmd* cmd);

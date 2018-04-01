@@ -42,20 +42,41 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (player == nullptr || !player->IsAlive() || player->GetTeam() == 3)
 		return;
 
-	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (!HasValidWeapon(weapon))
-		return;
-
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	GetAimTarget(viewAngles);
 
-	if (m_pAimTarget == nullptr || m_pAimTarget->GetTeam() == player->GetTeam())
+	CBaseWeapon* weapon = player->GetActiveWeapon();
+	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
 		return;
+
+	// 非玩家生还者是免疫僵尸攻击的
+	// 而且他们还会和玩家抢东西(抢包抢药抢武器)
+	// 例如 c6m3, c6m1 的一代生还者
+	if (m_pAimTarget->GetTeam() == 2)
+	{
+		CBasePlayer* attacker = m_pAimTarget->GetAttacker();
+		if (attacker == nullptr || !attacker->IsAlive())
+			return;
+
+		// 生还者被控时被队友射击受伤的会是特感
+		// 所以这里应该瞄准的是特感
+		if(math::GetVectorDistance(m_pAimTarget->GetAbsOrigin(), attacker->GetAbsOrigin(), true) <= 50.0f)
+			m_pAimTarget = attacker;
+	}
 
 	if (m_pAimTarget->GetClassID() == ET_WITCH)
 	{
+		// Witch 在被惊扰后被攻击不会转移目标，除非点燃它
 		if (m_bNonWitch || m_pAimTarget->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+			return;
+
+		// 检查是否会点燃 Witch, 防止意外转移目标
+		// m_upgradeBitVec, 1=燃烧.2=高爆.4=激光
+		// m_nUpgradedPrimaryAmmoLoaded, 子弹数量
+		if (m_pAimTarget->GetNetProp<byte>(XorStr("DT_Infected"), XorStr("m_bIsBurning")) == 0 &&
+			(weapon->GetNetProp<DWORD>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec")) & 1) &&
+			weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded")) > 0)
 			return;
 	}
 
@@ -121,6 +142,35 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 
 	ImGui::TreePop();
+}
+
+void CTriggerBot::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("trigger_enable")) == data.end())
+		return;
+	
+	m_bActive = data.at(XorStr("trigger_enable")).at(0) == '1';
+	m_bCrosshairs = data.at(XorStr("trigger_crosshair")).at(0) == '1';
+	m_bBlockFriendlyFire = data.at(XorStr("trigger_non_friendly")).at(0) == '1';
+	m_bNonWitch = data.at(XorStr("trigger_non_witch")).at(0) == '1';
+	m_bTraceHead = data.at(XorStr("trigger_track_head")).at(0) == '1';
+	m_bTraceSilent = data.at(XorStr("trigger_track_silent")).at(0) == '1';
+	m_fTraceFov = static_cast<float>(atof(data.at(XorStr("trigger_track_fov")).c_str()));
+	m_bFollowEnemy = data.at(XorStr("trigger_follow")).at(0) == '1';
+	m_fFollowFov = static_cast<float>(atof(data.at(XorStr("trigger_follow_fov")).c_str()));
+}
+
+void CTriggerBot::OnConfigSave(config_type & data)
+{
+	data[XorStr("trigger_enable")] = std::to_string(m_bActive);
+	data[XorStr("trigger_crosshair")] = std::to_string(m_bCrosshairs);
+	data[XorStr("trigger_non_friendly")] = std::to_string(m_bBlockFriendlyFire);
+	data[XorStr("trigger_non_witch")] = std::to_string(m_bNonWitch);
+	data[XorStr("trigger_track_head")] = std::to_string(m_bTraceHead);
+	data[XorStr("trigger_track_silent")] = std::to_string(m_bTraceSilent);
+	data[XorStr("trigger_track_fov")] = std::to_string(m_fTraceFov);
+	data[XorStr("trigger_follow")] = std::to_string(m_bFollowEnemy);
+	data[XorStr("trigger_follow_fov")] = std::to_string(m_fFollowFov);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)

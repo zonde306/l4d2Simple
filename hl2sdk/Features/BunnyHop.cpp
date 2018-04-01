@@ -108,7 +108,7 @@ void CBunnyHop::OnMenuDrawing()
 	IMGUI_TIPS("自动连跳，不选上时下面的东西无效。");
 
 	if (m_pszAutoBhopMode == nullptr)
-		m_pszAutoBhopMode = m_arrAutoBhopModeList[2].c_str();
+		m_pszAutoBhopMode = m_arrAutoBhopModeList[m_iBhopMode].c_str();
 
 	if (ImGui::BeginCombo(XorStr("AutoBhop"), m_pszAutoBhopMode))
 	{
@@ -142,7 +142,7 @@ void CBunnyHop::OnMenuDrawing()
 	}
 
 	if (m_pszAutoStrafeMode == nullptr)
-		m_pszAutoStrafeMode = m_arrAutoStrafeModeList[0].c_str();
+		m_pszAutoStrafeMode = m_arrAutoStrafeModeList[m_iStrafeMode].c_str();
 
 	if (ImGui::BeginCombo(XorStr("AutoStrafe"), m_pszAutoStrafeMode))
 	{
@@ -177,6 +177,23 @@ void CBunnyHop::OnMenuDrawing()
 
 	// ImGui::End();
 	ImGui::TreePop();
+}
+
+void CBunnyHop::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("bunnyhop_enable")) == data.end())
+		return;
+	
+	m_bAcitve = data.at(XorStr("bunnyhop_enable")).at(0) == '1';
+	m_iBhopMode = atoi(data.at(XorStr("bunnyhop_mode")).c_str());
+	m_iStrafeMode = atoi(data.at(XorStr("bunnyhop_strafe")).c_str());
+}
+
+void CBunnyHop::OnConfigSave(config_type & data)
+{
+	data[XorStr("bunnyhop_enable")] = std::to_string(m_bAcitve);
+	data[XorStr("bunnyhop_mode")] = std::to_string(m_iBhopMode);
+	data[XorStr("bunnyhop_strafe")] = std::to_string(m_iStrafeMode);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)

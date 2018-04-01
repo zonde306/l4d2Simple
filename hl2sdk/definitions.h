@@ -51,6 +51,9 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define DECLARE_POINTER_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
 #define FORWARD_DECLARE_HANDLE(name) typedef struct name##__ *name
 
+#define TIME_TO_TICKS(dt)		((int)(0.5f + (float)(dt) / g_pInterface->GlobalVars->interval_per_tick))
+#define FORWARD_TRACK			(TIME_TO_TICKS(g_pNetChannelInfo->GetLatency(NetFlow_Incoming) + g_pNetChannelInfo->GetLatency(NetFlow_Outgoing)))
+
 // These defines are for client button presses
 // CUserCommand::buttons
 #define IN_ATTACK					(1 << 0)

@@ -14,6 +14,18 @@ void _OnMenuStateChanged(bool visible)
 {
 	g_pInterface->Surface->SetCursorAlwaysVisible(visible);
 	ImGui::GetIO().MouseDrawCursor = visible;
+
+	static bool isFirstEnter = true;
+
+	if (isFirstEnter && visible)
+	{
+		isFirstEnter = false;
+		g_pClientHook->LoadConfig();
+	}
+	else if (!visible)
+	{
+		g_pClientHook->SaveConfig();
+	}
 }
 
 void CBaseMenu::Init()

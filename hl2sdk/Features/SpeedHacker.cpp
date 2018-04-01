@@ -1,4 +1,6 @@
 ﻿#include "SpeedHacker.h"
+#include "../hook.h"
+#include "../definitions.h"
 #include "../../l4d2Simple2/speedhack.h"
 
 CSpeedHacker* g_pSpeedHacker = nullptr;
@@ -16,6 +18,9 @@ void CSpeedHacker::OnMenuDrawing()
 {
 	if (!ImGui::TreeNode(XorStr("SpeedHack")))
 		return;
+
+	ImGui::Checkbox(XorStr("Position Adjustment"), &m_bPositionAdjustment);
+	IMGUI_TIPS("tick 优化，一般情况下建议关闭。");
 
 	ImGui::Checkbox(XorStr("SpeedHack Active"), &m_bActive);
 	IMGUI_TIPS("加速，勾上后下面的东西才有效果。");
@@ -37,6 +42,9 @@ void CSpeedHacker::OnMenuDrawing()
 
 void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
 {
+	if (m_bPositionAdjustment)
+		RunPositionAdjustment(cmd);
+	
 	if (!m_bActive)
 		return;
 	
@@ -48,4 +56,65 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
 		g_pSpeedModifier->SetSpeed(m_fFireSpeed);
 	else
 		g_pSpeedModifier->SetSpeed(m_fOriginSpeed);
+}
+
+void CSpeedHacker::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("speedhack_enable")) == data.end())
+		return;
+	
+	m_bActive = data.at(XorStr("speedhack_enable")).at(0) == '1';
+	m_bPositionAdjustment = data.at(XorStr("speedhack_posadj")).at(0) == '1';
+	m_fOriginSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_default")).c_str()));
+	m_fUseSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_use")).c_str()));
+	m_fWalkSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_walk")).c_str()));
+	m_fFireSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_fire")).c_str()));
+}
+
+void CSpeedHacker::OnConfigSave(config_type & data)
+{
+	data[XorStr("speedhack_enable")] = std::to_string(m_bActive);
+	data[XorStr("speedhack_posadj")] = std::to_string(m_bPositionAdjustment);
+	data[XorStr("speedhack_default")] = std::to_string(m_fOriginSpeed);
+	data[XorStr("speedhack_use")] = std::to_string(m_fUseSpeed);
+	data[XorStr("speedhack_walk")] = std::to_string(m_fWalkSpeed);
+	data[XorStr("speedhack_fire")] = std::to_string(m_fFireSpeed);
+}
+
+void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr)
+		return;
+
+	static ConVar* cvar_cl_interp = g_pInterface->Cvar->FindVar(XorStr("cl_interp"));
+	static ConVar* cvar_cl_updaterate = g_pInterface->Cvar->FindVar(XorStr("cl_updaterate"));
+	static ConVar* cvar_sv_maxupdaterate = g_pInterface->Cvar->FindVar(XorStr("sv_maxupdaterate"));
+	static ConVar* cvar_sv_minupdaterate = g_pInterface->Cvar->FindVar(XorStr("sv_minupdaterate"));
+	static ConVar* cvar_cl_interp_ratio = g_pInterface->Cvar->FindVar(XorStr("cl_interp_ratio"));
+
+	float cl_interp = cvar_cl_interp->GetFloat();
+	int cl_updaterate = cvar_cl_updaterate->GetInt();
+	int sv_maxupdaterate = cvar_sv_maxupdaterate->GetInt();
+	int sv_minupdaterate = cvar_sv_minupdaterate->GetInt();
+	int cl_interp_ratio = cvar_cl_interp_ratio->GetInt();
+
+	if (sv_maxupdaterate <= cl_updaterate)
+		cl_updaterate = sv_maxupdaterate;
+	if (sv_minupdaterate > cl_updaterate)
+		cl_updaterate = sv_minupdaterate;
+
+	float new_interp = static_cast<float>(cl_interp_ratio / cl_updaterate);
+	if (new_interp > cl_interp)
+		cl_interp = new_interp;
+
+	float simulationTime = local->GetNetProp<float>(XorStr("DT_BasePlayer"), XorStr("m_flSimulationTime"));
+	// float animTime = local->GetNetProp<float>(XorStr("DT_BasePlayer"), XorStr("m_flAnimTime"));
+	// int tickDifference = static_cast<int>(0.5f + (simulationTime - animTime) / g_pInterface->GlobalVars->interval_per_tick);
+	int result = TIME_TO_TICKS(cl_interp) + TIME_TO_TICKS(simulationTime);
+	if ((result - cmd->tick_count) >= -50)
+	{
+		// 优化 tick
+		cmd->tick_count = result;
+	}
 }

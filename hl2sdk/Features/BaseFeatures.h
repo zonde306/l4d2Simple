@@ -40,6 +40,11 @@ public:
 	// 如果不打算修改原函数调用，需要返回 false
 	virtual bool OnFindMaterial(std::string&, std::string&);
 
+	// 配置文件
+	using config_type = std::map<std::string, std::string>;
+	virtual void OnConfigLoading(const config_type&);
+	virtual void OnConfigSave(config_type&);
+
 private:
 	size_t m_iHookIndex;
 };

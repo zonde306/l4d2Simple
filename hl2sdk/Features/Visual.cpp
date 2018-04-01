@@ -240,6 +240,43 @@ void CVisualPlayer::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
+void CVisualPlayer::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("playeresp_left_alignment")) == data.end())
+		return;
+	
+	m_bDrawToLeft = data.at(XorStr("playeresp_left_alignment")).at(0) == '1';
+	m_bBox = data.at(XorStr("playeresp_box")).at(0) == '1';
+	m_bHeadBox = data.at(XorStr("playeresp_head")).at(0) == '1';
+	m_bBone = data.at(XorStr("playeresp_bone")).at(0) == '1';
+	m_bName = data.at(XorStr("playeresp_name")).at(0) == '1';
+	m_bHealth = data.at(XorStr("playeresp_health")).at(0) == '1';
+	m_bDistance = data.at(XorStr("playeresp_distance")).at(0) == '1';
+	m_bWeapon = data.at(XorStr("playeresp_weapon")).at(0) == '1';
+	m_bCharacter = data.at(XorStr("playeresp_character")).at(0) == '1';
+	m_bChams = data.at(XorStr("playeresp_chams")).at(0) == '1';
+	m_bSpectator = data.at(XorStr("playeresp_spectator")).at(0) == '1';
+	m_bBarrel = data.at(XorStr("playeresp_barrel")).at(0) == '1';
+	m_fBarrelDistance = static_cast<float>(atof(data.at(XorStr("playeresp_barrel_distance")).c_str()));
+}
+
+void CVisualPlayer::OnConfigSave(config_type & data)
+{
+	data[XorStr("playeresp_left_alignment")] = std::to_string(m_bDrawToLeft);
+	data[XorStr("playeresp_box")] = std::to_string(m_bBox);
+	data[XorStr("playeresp_head")] = std::to_string(m_bHeadBox);
+	data[XorStr("playeresp_bone")] = std::to_string(m_bBone);
+	data[XorStr("playeresp_name")] = std::to_string(m_bName);
+	data[XorStr("playeresp_health")] = std::to_string(m_bHealth);
+	data[XorStr("playeresp_distance")] = std::to_string(m_bDistance);
+	data[XorStr("playeresp_weapon")] = std::to_string(m_bWeapon);
+	data[XorStr("playeresp_character")] = std::to_string(m_bCharacter);
+	data[XorStr("playeresp_chams")] = std::to_string(m_bChams);
+	data[XorStr("playeresp_spectator")] = std::to_string(m_bSpectator);
+	data[XorStr("playeresp_barrel")] = std::to_string(m_bBarrel);
+	data[XorStr("playeresp_barrel_distance")] = std::to_string(m_fBarrelDistance);
+}
+
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 {
 	if (!m_bBarrel || stage != FRAME_RENDER_START)

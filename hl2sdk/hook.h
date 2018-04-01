@@ -79,6 +79,11 @@ protected:
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
 
+public:
+	void InitFeature();
+	void LoadConfig();
+	void SaveConfig();
+
 private:
 	// 被 Hook 后的原函数
 	FnCL_Move oCL_Move = nullptr;
@@ -127,6 +132,7 @@ extern std::unique_ptr<CClientHook> g_pClientHook;
 
 #undef GetServerTime
 #undef GetLocalPlayer
+#undef GetCurrentTime
 class CBasePlayer;
 
 class CClientPrediction
@@ -140,6 +146,7 @@ public:
 	float GetServerTime();
 	CBasePlayer* GetLocalPlayer();
 	std::pair<float, float> GetWeaponSpread(int seed, CBaseWeapon* weapon);
+	float GetCurrentTime(CUserCmd* cmd);
 
 	inline int GetFlags() { return m_iFlags; };
 

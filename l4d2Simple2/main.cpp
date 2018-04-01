@@ -146,7 +146,7 @@ LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
 {
 	if (!IsDebuggerPresent())
 	{
-		HANDLE file = CreateFileA((Utils::g_sModulePath + XorStr("crash_dump.dmp")).c_str(),
+		HANDLE file = CreateFileA(Utils::BuildPath(XorStr("\\crash_dump.dmp")).c_str(),
 			GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		if (file != NULL && file != INVALID_HANDLE_VALUE)

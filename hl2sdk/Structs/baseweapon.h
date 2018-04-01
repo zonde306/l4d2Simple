@@ -70,4 +70,7 @@ public:
 
 	// 现在是否可以开枪
 	bool CanFire();
+
+	// 是否为枪械
+	bool IsFireGun();
 };

@@ -12,6 +12,9 @@ public:
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
 
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
+
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
 	bool IsTargetVisible(CBasePlayer* entity);
 	bool IsValidTarget(CBasePlayer* entity);

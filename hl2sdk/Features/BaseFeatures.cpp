@@ -82,6 +82,14 @@ bool CBaseFeatures::OnFindMaterial(std::string &, std::string &)
 	return false;
 }
 
+void CBaseFeatures::OnConfigLoading(const config_type &)
+{
+}
+
+void CBaseFeatures::OnConfigSave(config_type &)
+{
+}
+
 void CBaseFeatures::OnKeyInput(bool, ButtonCode_t, const char *)
 {
 }

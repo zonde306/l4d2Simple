@@ -87,6 +87,27 @@ void CKnifeBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
+void CKnifeBot::OnConfigLoading(const config_type & data)
+{
+	if (data.find(XorStr("knifebot_melee")) == data.end())
+		return;
+	
+	m_bAutoFire = data.at(XorStr("knifebot_melee")).at(0) == '1';
+	m_bAutoShove = data.at(XorStr("knifebot_shove")).at(0) == '1';
+	m_bFastMelee = data.at(XorStr("knifebot_fastmelee")).at(0) == '1';
+	m_fExtraMeleeRange = static_cast<float>(atof(data.at(XorStr("knifebot_melee_range")).c_str()));
+	m_fExtraShoveRange = static_cast<float>(atof(data.at(XorStr("knifebot_shove_range")).c_str()));
+}
+
+void CKnifeBot::OnConfigSave(config_type & data)
+{
+	data[XorStr("knifebot_melee")] = std::to_string(m_bAutoFire);
+	data[XorStr("knifebot_shove")] = std::to_string(m_bAutoShove);
+	data[XorStr("knifebot_fastmelee")] = std::to_string(m_bFastMelee);
+	data[XorStr("knifebot_melee_range")] = std::to_string(m_fExtraMeleeRange);
+	data[XorStr("knifebot_shove_range")] = std::to_string(m_fExtraShoveRange);
+}
+
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
 {
 	switch (m_eMeleeStage)

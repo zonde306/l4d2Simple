@@ -12,6 +12,9 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
 
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
+
 	bool HasTargetVisible(CBasePlayer* entity);
 
 public:

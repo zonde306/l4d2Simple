@@ -10,6 +10,9 @@ public:
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 	virtual void OnMenuDrawing() override;
 
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
+
 public:
 	void DrawWeaponSpawn(CBaseWeapon* weapon, const Vector& screen);
 	void DrawUpgradeSpawn(CBaseWeapon* weapon, const Vector& screen);
