@@ -14,6 +14,7 @@
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
+#include "../l4d2Simple2/config.h"
 #include <memory>
 #include <fstream>
 
@@ -232,6 +233,7 @@ void CClientHook::InitFeature()
 
 void CClientHook::LoadConfig()
 {
+	/*
 	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::in|std::ios::beg);
 	if (file.bad() || !file.is_open())
 		return;
@@ -276,6 +278,12 @@ void CClientHook::LoadConfig()
 	file.close();
 	if (config.empty())
 		return;
+	*/
+
+	CBaseFeatures::config_type config;
+	const std::string mainKeys = XorStr("Config");
+	for (auto it = g_pConfig->begin(mainKeys); it != g_pConfig->end(mainKeys); ++it)
+		config.emplace(it->first, it->second.m_sValue);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnConfigLoading(config);
@@ -287,6 +295,12 @@ void CClientHook::SaveConfig()
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnConfigSave(config);
 
+	const std::string mainKeys = XorStr("Config");
+	for (const auto& it : config)
+		g_pConfig->SetValue(mainKeys, it.first, it.second);
+
+	g_pConfig->SaveToFile();
+	/*
 	if (config.empty())
 		return;
 
@@ -300,6 +314,7 @@ void CClientHook::SaveConfig()
 		file << option.first << " = " << option.second << std::endl;
 
 	file.close();
+	*/
 }
 
 #define DECL_DESTORY_DETOUR(_name)		if(_name && _name->Created())\

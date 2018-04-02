@@ -2,6 +2,7 @@
 #include "../hook.h"
 #include "../definitions.h"
 #include "../../l4d2Simple2/speedhack.h"
+#include "../../l4d2Simple2/config.h"
 
 CSpeedHacker* g_pSpeedHacker = nullptr;
 
@@ -60,25 +61,26 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
 
 void CSpeedHacker::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("speedhack_enable")) == data.end())
-		return;
+	const std::string mainKeys = XorStr("SpeedHacks");
 	
-	m_bActive = data.at(XorStr("speedhack_enable")).at(0) == '1';
-	m_bPositionAdjustment = data.at(XorStr("speedhack_posadj")).at(0) == '1';
-	m_fOriginSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_default")).c_str()));
-	m_fUseSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_use")).c_str()));
-	m_fWalkSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_walk")).c_str()));
-	m_fFireSpeed = static_cast<float>(atof(data.at(XorStr("speedhack_fire")).c_str()));
+	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_enable"), m_bActive);
+	m_bPositionAdjustment = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
+	m_fOriginSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
+	m_fUseSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
+	m_fWalkSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
+	m_fFireSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
 }
 
 void CSpeedHacker::OnConfigSave(config_type & data)
 {
-	data[XorStr("speedhack_enable")] = std::to_string(m_bActive);
-	data[XorStr("speedhack_posadj")] = std::to_string(m_bPositionAdjustment);
-	data[XorStr("speedhack_default")] = std::to_string(m_fOriginSpeed);
-	data[XorStr("speedhack_use")] = std::to_string(m_fUseSpeed);
-	data[XorStr("speedhack_walk")] = std::to_string(m_fWalkSpeed);
-	data[XorStr("speedhack_fire")] = std::to_string(m_fFireSpeed);
+	const std::string mainKeys = XorStr("SpeedHacks");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_enable"), m_bActive);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
 }
 
 void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)

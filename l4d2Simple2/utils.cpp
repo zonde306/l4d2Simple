@@ -21,7 +21,7 @@ void Utils::init(HINSTANCE inst)
 	g_hInstance = inst;
 
 	char buffer[MAX_PATH];
-	if (GetModuleFileNameA(g_hInstance, buffer, MAX_PATH) != 0)
+	if (GetModuleFileNameA(g_hInstance, buffer, MAX_PATH) == 0)
 		GetModuleFileNameA(GetModuleHandleA(NULL), buffer, MAX_PATH);
 
 	std::string tmp = buffer;

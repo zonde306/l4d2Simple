@@ -8,6 +8,7 @@
 #include "xorstr.h"
 #include "menu.h"
 #include "speedhack.h"
+#include "config.h"
 #include "../hl2sdk/interfaces.h"
 #include "../hl2sdk/hook.h"
 // #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
@@ -60,6 +61,7 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 		g_pClientHook->Shutdown();
 		g_pDirextXHook->Shutdown();
 		g_pSpeedModifier->Shutdown();
+		g_pConfig->CloseFile();
 	}
 
 	return TRUE;
@@ -87,6 +89,9 @@ DWORD WINAPI StartCheats(LPVOID module)
 	g_pfnOldExceptFilter = SetUnhandledExceptionFilter(Hooked_UnhandledExceptionFilter);
 #endif
 	
+	g_pConfig = std::make_unique<CProfile>();
+	g_pConfig->OpenFile(Utils::BuildPath(XorStr("setting.ini")));
+
 	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
 	g_pSpeedModifier->Init();
 

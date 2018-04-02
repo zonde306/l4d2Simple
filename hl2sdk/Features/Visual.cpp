@@ -1,6 +1,7 @@
 ﻿#include "Visual.h"
 #include "../Utils/math.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 #include <sstream>
 
 CVisualPlayer* g_pVisualPlayer = nullptr;
@@ -242,39 +243,40 @@ void CVisualPlayer::OnMenuDrawing()
 
 void CVisualPlayer::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("playeresp_left_alignment")) == data.end())
-		return;
+	const std::string mainKeys = XorStr("PlayerVisual");
 	
-	m_bDrawToLeft = data.at(XorStr("playeresp_left_alignment")).at(0) == '1';
-	m_bBox = data.at(XorStr("playeresp_box")).at(0) == '1';
-	m_bHeadBox = data.at(XorStr("playeresp_head")).at(0) == '1';
-	m_bBone = data.at(XorStr("playeresp_bone")).at(0) == '1';
-	m_bName = data.at(XorStr("playeresp_name")).at(0) == '1';
-	m_bHealth = data.at(XorStr("playeresp_health")).at(0) == '1';
-	m_bDistance = data.at(XorStr("playeresp_distance")).at(0) == '1';
-	m_bWeapon = data.at(XorStr("playeresp_weapon")).at(0) == '1';
-	m_bCharacter = data.at(XorStr("playeresp_character")).at(0) == '1';
-	m_bChams = data.at(XorStr("playeresp_chams")).at(0) == '1';
-	m_bSpectator = data.at(XorStr("playeresp_spectator")).at(0) == '1';
-	m_bBarrel = data.at(XorStr("playeresp_barrel")).at(0) == '1';
-	m_fBarrelDistance = static_cast<float>(atof(data.at(XorStr("playeresp_barrel_distance")).c_str()));
+	m_bDrawToLeft = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
+	m_bBox = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_box"), m_bBox);
+	m_bHeadBox = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
+	m_bBone = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_bone"), m_bBone);
+	m_bName = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_name"), m_bName);
+	m_bHealth = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_health"), m_bHealth);
+	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_distance"), m_bDistance);
+	m_bWeapon = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
+	m_bCharacter = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_character"), m_bCharacter);
+	m_bChams = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_chams"), m_bChams);
+	m_bSpectator = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
+	m_bBarrel = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
+	m_fBarrelDistance = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
 {
-	data[XorStr("playeresp_left_alignment")] = std::to_string(m_bDrawToLeft);
-	data[XorStr("playeresp_box")] = std::to_string(m_bBox);
-	data[XorStr("playeresp_head")] = std::to_string(m_bHeadBox);
-	data[XorStr("playeresp_bone")] = std::to_string(m_bBone);
-	data[XorStr("playeresp_name")] = std::to_string(m_bName);
-	data[XorStr("playeresp_health")] = std::to_string(m_bHealth);
-	data[XorStr("playeresp_distance")] = std::to_string(m_bDistance);
-	data[XorStr("playeresp_weapon")] = std::to_string(m_bWeapon);
-	data[XorStr("playeresp_character")] = std::to_string(m_bCharacter);
-	data[XorStr("playeresp_chams")] = std::to_string(m_bChams);
-	data[XorStr("playeresp_spectator")] = std::to_string(m_bSpectator);
-	data[XorStr("playeresp_barrel")] = std::to_string(m_bBarrel);
-	data[XorStr("playeresp_barrel_distance")] = std::to_string(m_fBarrelDistance);
+	const std::string mainKeys = XorStr("PlayerVisual");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_box"), m_bBox);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_bone"), m_bBone);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_name"), m_bName);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_health"), m_bHealth);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_distance"), m_bDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_character"), m_bCharacter);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_chams"), m_bChams);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)

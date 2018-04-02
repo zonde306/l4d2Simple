@@ -1,6 +1,7 @@
 ﻿#include "NoRecoilSpread.h"
 #include "../Utils/math.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 
 CViewManager* g_pViewManager = nullptr;
 
@@ -117,23 +118,24 @@ void CViewManager::OnMenuDrawing()
 
 void CViewManager::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("aimhelper_recoil")) == data.end())
-		return;
+	const std::string mainKeys = XorStr("AimHelper");
 	
-	m_bNoRecoil = data.at(XorStr("aimhelper_recoil")).at(0) == '1';
-	m_bNoVisRecoil = data.at(XorStr("aimhelper_visual_recoil")).at(0) == '1';
-	m_bNoSpread = data.at(XorStr("aimhelper_spread")).at(0) == '1';
-	m_bRapidFire = data.at(XorStr("aimhelper_rapid_fire")).at(0) == '1';
-	m_bSilentNoSpread = data.at(XorStr("aimhelper_silent")).at(0) == '1';
+	m_bNoRecoil = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
+	m_bNoVisRecoil = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
+	m_bNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
+	m_bRapidFire = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
+	m_bSilentNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 }
 
 void CViewManager::OnConfigSave(config_type & data)
 {
-	data[XorStr("aimhelper_recoil")] = std::to_string(m_bNoRecoil);
-	data[XorStr("aimhelper_visual_recoil")] = std::to_string(m_bNoVisRecoil);
-	data[XorStr("aimhelper_spread")] = std::to_string(m_bNoSpread);
-	data[XorStr("aimhelper_rapid_fire")] = std::to_string(m_bRapidFire);
-	data[XorStr("aimhelper_silent")] = std::to_string(m_bSilentNoSpread);
+	const std::string mainKeys = XorStr("AimHelper");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 }
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)

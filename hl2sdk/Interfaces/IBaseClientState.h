@@ -276,7 +276,7 @@ public:                                         \
 	bool WriteToBuffer(bf_write &buffer);       \
 	const char *ToString() const { return ""; } \
 	int GetType() const { return 0; }     \
-	const char *GetName() const { return XorStr(#msgtype); }
+	const char *GetName() const { /*return XorStr(#msgtype);*/ return ""; }
 
 #define DECLARE_NET_MESSAGE(name)     \
 	DECLARE_BASE_MESSAGE(NET_##name); \

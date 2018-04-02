@@ -3,6 +3,7 @@
 #include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 
 CTriggerBot* g_pTriggerBot = nullptr;
 
@@ -39,12 +40,15 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive() || player->GetTeam() == 3)
+	if (player == nullptr)
 		return;
 
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	GetAimTarget(viewAngles);
+
+	if (!player->IsAlive() || player->GetAttacker() != nullptr || player->IsHangingFromLedge())
+		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
 	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
@@ -146,31 +150,32 @@ void CTriggerBot::OnMenuDrawing()
 
 void CTriggerBot::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("trigger_enable")) == data.end())
-		return;
+	const std::string mainKeys = XorStr("Triggerbots");
 	
-	m_bActive = data.at(XorStr("trigger_enable")).at(0) == '1';
-	m_bCrosshairs = data.at(XorStr("trigger_crosshair")).at(0) == '1';
-	m_bBlockFriendlyFire = data.at(XorStr("trigger_non_friendly")).at(0) == '1';
-	m_bNonWitch = data.at(XorStr("trigger_non_witch")).at(0) == '1';
-	m_bTraceHead = data.at(XorStr("trigger_track_head")).at(0) == '1';
-	m_bTraceSilent = data.at(XorStr("trigger_track_silent")).at(0) == '1';
-	m_fTraceFov = static_cast<float>(atof(data.at(XorStr("trigger_track_fov")).c_str()));
-	m_bFollowEnemy = data.at(XorStr("trigger_follow")).at(0) == '1';
-	m_fFollowFov = static_cast<float>(atof(data.at(XorStr("trigger_follow_fov")).c_str()));
+	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_enable"), m_bActive);
+	m_bCrosshairs = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
+	m_bBlockFriendlyFire = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
+	m_bNonWitch = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
+	m_bTraceHead = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
+	m_bTraceSilent = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
+	m_fTraceFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
+	m_bFollowEnemy = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
+	m_fFollowFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
 {
-	data[XorStr("trigger_enable")] = std::to_string(m_bActive);
-	data[XorStr("trigger_crosshair")] = std::to_string(m_bCrosshairs);
-	data[XorStr("trigger_non_friendly")] = std::to_string(m_bBlockFriendlyFire);
-	data[XorStr("trigger_non_witch")] = std::to_string(m_bNonWitch);
-	data[XorStr("trigger_track_head")] = std::to_string(m_bTraceHead);
-	data[XorStr("trigger_track_silent")] = std::to_string(m_bTraceSilent);
-	data[XorStr("trigger_track_fov")] = std::to_string(m_fTraceFov);
-	data[XorStr("trigger_follow")] = std::to_string(m_bFollowEnemy);
-	data[XorStr("trigger_follow_fov")] = std::to_string(m_fFollowFov);
+	const std::string mainKeys = XorStr("Triggerbots");
+
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_enable"), m_bActive);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)

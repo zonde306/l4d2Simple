@@ -231,6 +231,9 @@
     <ClCompile Include="..\hl2sdk\Features\DropVisual.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="config.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -547,6 +550,9 @@
     </ClInclude>
     <ClInclude Include="..\ADVobfuscator\Unroller.h">
       <Filter>ADVobfuscator</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

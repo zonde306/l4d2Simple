@@ -1,6 +1,7 @@
 ﻿#include "DropVisual.h"
 #include "../hook.h"
 #include "../Utils/math.h"
+#include "../../l4d2Simple2/config.h"
 
 CVisualDrop* g_pVisualDrop = nullptr;
 
@@ -132,33 +133,34 @@ void CVisualDrop::OnMenuDrawing()
 
 void CVisualDrop::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("itemesp_t1")) == data.end())
-		return;
-	
-	m_bTier1 = data.at(XorStr("itemesp_t1")).at(0) == '1';
-	m_bTier2 = data.at(XorStr("itemesp_t2")).at(0) == '1';
-	m_bTier3 = data.at(XorStr("itemesp_t3")).at(0) == '1';
-	m_bMelee = data.at(XorStr("itemesp_melee")).at(0) == '1';
-	m_bAidKit = data.at(XorStr("itemesp_aid_kit")).at(0) == '1';
-	m_bGrenade = data.at(XorStr("itemesp_grenade")).at(0) == '1';
-	m_bAmmoUpgrade = data.at(XorStr("itemesp_upgrade_ammo")).at(0) == '1';
-	m_bCarry = data.at(XorStr("itemesp_carry")).at(0) == '1';
-	m_bProjectile = data.at(XorStr("itemesp_projectile")).at(0) == '1';
-	m_bDeadbody = data.at(XorStr("itemesp_deadbody")).at(0) == '1';
+	const std::string mainKeys = XorStr("ItemVisual");
+
+	m_bTier1 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t1"), m_bTier1);
+	m_bTier2 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t2"), m_bTier2);
+	m_bTier3 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t3"), m_bTier3);
+	m_bMelee = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_melee"), m_bMelee);
+	m_bAidKit = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
+	m_bGrenade = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
+	m_bAmmoUpgrade = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
+	m_bCarry = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_carry"), m_bCarry);
+	m_bProjectile = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
+	m_bDeadbody = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
 }
 
 void CVisualDrop::OnConfigSave(config_type & data)
 {
-	data[XorStr("itemesp_t1")] = std::to_string(m_bTier1);
-	data[XorStr("itemesp_t2")] = std::to_string(m_bTier2);
-	data[XorStr("itemesp_t3")] = std::to_string(m_bTier3);
-	data[XorStr("itemesp_melee")] = std::to_string(m_bMelee);
-	data[XorStr("itemesp_aid_kit")] = std::to_string(m_bAidKit);
-	data[XorStr("itemesp_grenade")] = std::to_string(m_bGrenade);
-	data[XorStr("itemesp_upgrade_ammo")] = std::to_string(m_bAmmoUpgrade);
-	data[XorStr("itemesp_carry")] = std::to_string(m_bCarry);
-	data[XorStr("itemesp_projectile")] = std::to_string(m_bProjectile);
-	data[XorStr("itemesp_deadbody")] = std::to_string(m_bDeadbody);
+	const std::string mainKeys = XorStr("ItemVisual");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t1"), m_bTier1);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t2"), m_bTier2);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t3"), m_bTier3);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_melee"), m_bMelee);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_carry"), m_bCarry);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
+	g_pConfig->SetValue(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
 }
 
 void CVisualDrop::DrawWeaponSpawn(CBaseWeapon * weapon, const Vector & screen)

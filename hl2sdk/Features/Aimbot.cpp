@@ -3,6 +3,7 @@
 #include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 
 CAimBot* g_pAimbot = nullptr;
 
@@ -48,7 +49,9 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 	}
 
-	FindTarget(cmd->viewangles);
+	if(!IsValidTarget(m_pAimTarget))
+		FindTarget(cmd->viewangles);
+
 	if (m_pAimTarget == nullptr)
 	{
 		m_bRunAutoAim = false;
@@ -118,36 +121,36 @@ void CAimBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-
 void CAimBot::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("aimbot_enable")) == data.end())
-		return;
-
-	m_bActive = data.at(XorStr("aimbot_enable")).at(0) == '1';
-	m_bOnFire = data.at(XorStr("aimbot_only_shot")).at(0) == '1';
-	m_bSilent = data.at(XorStr("aimbot_silent")).at(0) == '1';
-	m_bPerfectSilent = data.at(XorStr("aimbot_perfect_silent")).at(0) == '1';
-	m_bVisible = data.at(XorStr("aimbot_visible")).at(0) == '1';
-	m_bNonFriendly = data.at(XorStr("aimbot_non_friendly")).at(0) == '1';
-	m_bNonWitch = data.at(XorStr("aimbot_non_witch")).at(0) == '1';
-	m_bDistance = data.at(XorStr("aimbot_distance_priority")).at(0) == '1';
-	m_fAimFov = static_cast<float>(atof(data.at(XorStr("aimbot_fov")).c_str()));
-	m_fAimDist = static_cast<float>(atof(data.at(XorStr("aimbot_distance")).c_str()));
+	const std::string mainKeys = XorStr("Aimbot");
+	
+	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_enable"), m_bActive);
+	m_bOnFire = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
+	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_silent"), m_bSilent);
+	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
+	m_bVisible = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_visible"), m_bVisible);
+	m_bNonFriendly = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
+	m_bNonWitch = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
+	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
+	m_fAimFov = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
+	m_fAimDist = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
 {
-	data[XorStr("aimbot_enable")] = std::to_string(m_bActive);
-	data[XorStr("aimbot_only_shot")] = std::to_string(m_bOnFire);
-	data[XorStr("aimbot_silent")] = std::to_string(m_bSilent);
-	data[XorStr("aimbot_perfect_silent")] = std::to_string(m_bPerfectSilent);
-	data[XorStr("aimbot_visible")] = std::to_string(m_bVisible);
-	data[XorStr("aimbot_non_friendly")] = std::to_string(m_bNonFriendly);
-	data[XorStr("aimbot_non_witch")] = std::to_string(m_bNonWitch);
-	data[XorStr("aimbot_distance_priority")] = std::to_string(m_bDistance);
-	data[XorStr("aimbot_fov")] = std::to_string(m_fAimFov);
-	data[XorStr("aimbot_distance")] = std::to_string(m_fAimDist);
+	const std::string mainKeys = XorStr("Aimbot");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_enable"), m_bActive);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_silent"), m_bSilent);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_visible"), m_bVisible);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
@@ -199,7 +202,11 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 
 	float minFov = 361.0f, minDistance = 65535.0f;
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-	int maxClient = g_pInterface->Engine->GetMaxClients();
+
+	// 特感和普感是同一个阵营的
+	if (local->GetTeam() == 3)
+		maxEntity = 64;
+
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
@@ -229,7 +236,8 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			}
 		}
 
-		if (i >= maxClient && m_pAimTarget != nullptr)
+		// 如果已经选择了玩家敌人，则不需要再去选择普感敌人
+		if (i > 64 && m_pAimTarget != nullptr)
 			break;
 	}
 
@@ -265,8 +273,18 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity)
 
 bool CAimBot::IsValidTarget(CBasePlayer * entity)
 {
-	if (entity == nullptr || !entity->IsAlive())
+	if (entity == nullptr)
 		return false;
+	
+	try
+	{
+		if (!entity->IsAlive())
+			return false;
+	}
+	catch (...)
+	{
+		return false;
+	}
 
 	if (m_bNonFriendly)
 	{
@@ -323,7 +341,7 @@ bool CAimBot::CanRunAimbot(CBasePlayer * entity)
 	}
 
 	CBaseWeapon* weapon = entity->GetActiveWeapon();
-	if (!HasValidWeapon(weapon))
+	if (weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
 		return false;
 
 	return true;
@@ -333,7 +351,7 @@ Vector CAimBot::GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CB
 {
 	Ray_t ray;
 	CTraceFilter filter;
-	ray.Init(eyePosition, m_vecAimAngles.Forward().Scale(1500.0f) + eyePosition);
+	ray.Init(eyePosition, eyePosition + m_vecAimAngles.Forward().Scale(1500.0f));
 	filter.pSkip1 = local;
 
 	trace_t trace;

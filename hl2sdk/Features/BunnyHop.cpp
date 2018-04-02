@@ -1,5 +1,6 @@
 ﻿#include "BunnyHop.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 #include <iostream>
 
 #ifndef M_PI
@@ -181,19 +182,20 @@ void CBunnyHop::OnMenuDrawing()
 
 void CBunnyHop::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("bunnyhop_enable")) == data.end())
-		return;
-	
-	m_bAcitve = data.at(XorStr("bunnyhop_enable")).at(0) == '1';
-	m_iBhopMode = atoi(data.at(XorStr("bunnyhop_mode")).c_str());
-	m_iStrafeMode = atoi(data.at(XorStr("bunnyhop_strafe")).c_str());
+	const std::string mainKeys = XorStr("BunnyHop");
+
+	m_bAcitve = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	m_iBhopMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
+	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
 }
 
 void CBunnyHop::OnConfigSave(config_type & data)
 {
-	data[XorStr("bunnyhop_enable")] = std::to_string(m_bAcitve);
-	data[XorStr("bunnyhop_mode")] = std::to_string(m_iBhopMode);
-	data[XorStr("bunnyhop_strafe")] = std::to_string(m_iStrafeMode);
+	const std::string mainKeys = XorStr("BunnyHop");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)

@@ -181,6 +181,7 @@
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="config.cpp" />
     <ClCompile Include="drawing.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="speedhack.cpp" />
@@ -288,6 +289,7 @@
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />
+    <ClInclude Include="config.h" />
     <ClInclude Include="drawing.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="speedhack.h" />

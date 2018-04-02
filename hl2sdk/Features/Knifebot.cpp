@@ -1,6 +1,7 @@
 ﻿#include "Knifebot.h"
 #include "../Utils/math.h"
 #include "../hook.h"
+#include "../../l4d2Simple2/config.h"
 
 CKnifeBot* g_pKnifeBot = nullptr;
 
@@ -89,23 +90,24 @@ void CKnifeBot::OnMenuDrawing()
 
 void CKnifeBot::OnConfigLoading(const config_type & data)
 {
-	if (data.find(XorStr("knifebot_melee")) == data.end())
-		return;
+	const std::string mainKeys = XorStr("Knifebot");
 	
-	m_bAutoFire = data.at(XorStr("knifebot_melee")).at(0) == '1';
-	m_bAutoShove = data.at(XorStr("knifebot_shove")).at(0) == '1';
-	m_bFastMelee = data.at(XorStr("knifebot_fastmelee")).at(0) == '1';
-	m_fExtraMeleeRange = static_cast<float>(atof(data.at(XorStr("knifebot_melee_range")).c_str()));
-	m_fExtraShoveRange = static_cast<float>(atof(data.at(XorStr("knifebot_shove_range")).c_str()));
+	m_bAutoFire = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
+	m_bAutoShove = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
+	m_bFastMelee = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
+	m_fExtraMeleeRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
+	m_fExtraShoveRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
 }
 
 void CKnifeBot::OnConfigSave(config_type & data)
 {
-	data[XorStr("knifebot_melee")] = std::to_string(m_bAutoFire);
-	data[XorStr("knifebot_shove")] = std::to_string(m_bAutoShove);
-	data[XorStr("knifebot_fastmelee")] = std::to_string(m_bFastMelee);
-	data[XorStr("knifebot_melee_range")] = std::to_string(m_fExtraMeleeRange);
-	data[XorStr("knifebot_shove_range")] = std::to_string(m_fExtraShoveRange);
+	const std::string mainKeys = XorStr("Knifebot");
+	
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
