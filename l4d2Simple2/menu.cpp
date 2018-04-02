@@ -64,6 +64,7 @@ void CBaseMenu::OnPresent()
 			g_pConfig->GetFloat(mainKeys, XorStr("mainwindow_h"), 300.0f)));
 	}
 
+	ImGui::PushFont(g_pDrawing->m_imFonts.Fonts.back());
 	ImGui::Text(XorStr("Version: 1.0 | Created by zonde306"));
 	ImGui::Text(XorStr(u8"此辅助免费且开源，如果你是通过购买获得，说明你被骗了。"));
 	// ImGui::GetIO().MouseDrawCursor = true;
@@ -167,6 +168,7 @@ void CBaseMenu::OnPresent()
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_w"), window.x);
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_h"), window.y);
 
+	ImGui::PopFont();
 	ImGui::End();
 
 	/*

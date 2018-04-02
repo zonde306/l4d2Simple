@@ -79,6 +79,7 @@ public:
 private:
 	std::fstream m_File;
 	MainKeyValueType m_KeyValue;
+	std::string m_sFileName;
 };
 
 extern std::unique_ptr<CProfile> g_pConfig;

@@ -24,14 +24,19 @@ CProfile::~CProfile()
 
 bool CProfile::OpenFile(const std::string & path)
 {
+	m_sFileName = path;
 	if (m_File.is_open())
 		CloseFile();
 	
 	m_File.open(path, std::ios::in|std::ios::out|std::ios::beg);
 	if (m_File.bad() || !m_File.is_open())
+	{
+		m_File.open(path, std::ios::out|std::ios::beg|std::ios::trunc);
 		return false;
-
+	}
+	
 	m_KeyValue.clear();
+	m_File.seekg(std::ios::beg);
 
 	char buffer[255];
 	std::string line, key, value, mainKey;
@@ -101,20 +106,6 @@ bool CProfile::CloseFile()
 	if (!m_File.is_open())
 		return false;
 	
-	m_File.seekp(std::ios::beg);
-
-	for (const auto& mk : m_KeyValue)
-	{
-		m_File << '[' << mk.first << ']' << std::endl;
-		
-		for (const auto& kv : mk.second)
-		{
-			m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
-		}
-
-		m_File << std::endl;
-	}
-
 	m_File.close();
 	return true;
 }
@@ -124,6 +115,19 @@ bool CProfile::SaveToFile()
 	if (!m_File.is_open())
 		return false;
 	
+	m_File.seekp(std::ios::beg);
+	for (const auto& mk : m_KeyValue)
+	{
+		m_File << '[' << mk.first << ']' << std::endl;
+
+		for (const auto& kv : mk.second)
+		{
+			m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
+		}
+
+		m_File << std::endl;
+	}
+
 	m_File.flush();
 	return true;
 }

@@ -58,6 +58,7 @@ void CDirectX9Hook::Init()
 	if (m_bIsSecondHooked || m_bIsFirstHooked)
 		return;
 
+	// m_pOriginDevice = *reinterpret_cast<IDirect3DDevice9**>(Utils::FindPattern(XorStr("shaderapidx9.dll"), SIG_MOV_DIRECT_PTR) + 1);
 	while (!m_bSuccessCreated)
 	{
 		if (!CreateDevice())
@@ -315,11 +316,13 @@ bool CDirectX9Hook::SetupFirstHook()
 	m_pHookEndScene = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 42), Hooked_EndScene);
 	oEndScene = reinterpret_cast<FnEndScene>(m_pHookEndScene->GetTrampoline());
 
+	/*
 	m_pHookDrawIndexedPrimitive = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 82), Hooked_DrawIndexedPrimitive);
 	oDrawIndexedPrimitive = reinterpret_cast<FnDrawIndexedPrimitive>(m_pHookDrawIndexedPrimitive->GetTrampoline());
 
 	m_pHookCreateQuery = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 118), Hooked_CreateQuery);
 	oCreateQuery = reinterpret_cast<FnCreateQuery>(m_pHookCreateQuery->GetTrampoline());
+	*/
 
 	m_bIsFirstHooked = true;
 	ReleaseDevice();

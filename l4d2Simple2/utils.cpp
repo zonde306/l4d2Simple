@@ -59,7 +59,7 @@ void Utils::log(const char * text, ...)
 
 	strcat_s(buffer, "\r\n");
 
-	std::cout << buffer << std::endl;
+	std::cout << buffer;
 	OutputDebugStringA(buffer);
 }
 
@@ -75,7 +75,7 @@ void Utils::logToFile(const char * text, ...)
 
 	strcat_s(buffer, "\r\n");
 
-	std::cout << '[' << GetDateTime() << ']' << buffer << std::endl;
+	std::cout << '[' << GetDateTime() << ']' << buffer;
 	OutputDebugStringA(buffer);
 }
 
@@ -91,7 +91,7 @@ void Utils::logError(const char * text, ...)
 
 	strcat_s(buffer, "\r\n");
 
-	std::cout << '[' << GetDateTime() << ']' << buffer << std::endl;
+	std::cout << '[' << GetDateTime() << ']' << buffer;
 	OutputDebugStringA(buffer);
 }
 
