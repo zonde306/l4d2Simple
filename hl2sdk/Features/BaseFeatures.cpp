@@ -45,17 +45,17 @@ void CBaseFeatures::OnFrameStageNotify(ClientFrameStage_t)
 {
 }
 
-bool CBaseFeatures::OnProcessGetCvarValue(SVC_GetCvarValue *, std::string&)
+bool CBaseFeatures::OnProcessGetCvarValue(const std::string&, std::string&)
 {
 	return true;
 }
 
-bool CBaseFeatures::OnProcessSetConVar(NET_SetConVar *)
+bool CBaseFeatures::OnProcessSetConVar(const std::string&, std::string&)
 {
 	return true;
 }
 
-bool CBaseFeatures::OnProcessClientCommand(NET_StringCmd *)
+bool CBaseFeatures::OnProcessClientCommand(const std::string&)
 {
 	return true;
 }

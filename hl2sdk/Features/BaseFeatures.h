@@ -32,9 +32,9 @@ public:
 	// 如果不打算阻止原函数，则需要返回 true
 	virtual bool OnSendMove();
 	virtual bool OnUserMessage(int, bf_read);
-	virtual bool OnProcessGetCvarValue(SVC_GetCvarValue*, std::string&);
-	virtual bool OnProcessSetConVar(NET_SetConVar*);
-	virtual bool OnProcessClientCommand(NET_StringCmd*);
+	virtual bool OnProcessGetCvarValue(const std::string&, std::string&);
+	virtual bool OnProcessSetConVar(const std::string&, std::string&);
+	virtual bool OnProcessClientCommand(const std::string&);
 
 	// 返回 true 使用修改后的参数来调用原函数
 	// 如果不打算修改原函数调用，需要返回 false

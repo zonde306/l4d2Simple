@@ -186,6 +186,10 @@ bool CBaseWeapon::CanFire()
 	if (GetClip() == 0)
 		return false;
 
+	int weaponId = GetWeaponID();
+	if (IsShotgun(weaponId))
+		return true;
+
 	return (GetPrimaryAttackDelay() <= 0.0f);
 }
 

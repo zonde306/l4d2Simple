@@ -132,6 +132,7 @@
     <ClCompile Include="..\detours\detourxs.cpp" />
     <ClCompile Include="..\detours\splice.cpp" />
     <ClCompile Include="..\hl2sdk\Features\Aimbot.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\AntiAntiCheat.cpp" />
     <ClCompile Include="..\hl2sdk\Features\BaseFeatures.cpp" />
     <ClCompile Include="..\hl2sdk\Features\BunnyHop.cpp" />
     <ClCompile Include="..\hl2sdk\Features\DropVisual.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="..\detours\splice.h" />
     <ClInclude Include="..\hl2sdk\definitions.h" />
     <ClInclude Include="..\hl2sdk\Features\Aimbot.h" />
+    <ClInclude Include="..\hl2sdk\Features\AntiAntiCheat.h" />
     <ClInclude Include="..\hl2sdk\Features\BaseFeatures.h" />
     <ClInclude Include="..\hl2sdk\Features\BunnyHop.h" />
     <ClInclude Include="..\hl2sdk\Features\DropVisual.h" />

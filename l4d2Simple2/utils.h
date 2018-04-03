@@ -1,7 +1,10 @@
 ﻿#pragma once
+#include "xorstr.h"
 #include <Windows.h>
 #include <string>
 #include <vector>
+
+#define TRIM_INVALID_CHAR	XorStr(" \r\n\t")
 
 namespace Utils
 {
@@ -58,8 +61,8 @@ namespace Utils
 	inline T WriteMemory(T value, Arg... offset);
 
 	// 字符串处理
-	std::vector<std::string> Split(const std::string& s, const std::string& delim);
-	std::string Trim(const std::string& s, const std::string& delim);
+	std::vector<std::string> Split(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
+	std::string Trim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
 
 	// 虚函数相关
 	PVOID GetVirtualFunction(PVOID inst, DWORD index);

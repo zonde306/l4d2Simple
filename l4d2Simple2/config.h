@@ -34,7 +34,6 @@ public:
 	float GetFloat(const std::string& mainKeys, const std::string& keys, float def = 0.0f);
 	bool GetBoolean(const std::string& mainKeys, const std::string& keys, bool def = false);
 
-public:
 	struct _KeyValues
 	{
 	public:
@@ -60,6 +59,12 @@ public:
 
 	using KeyValueType = std::map<std::string, _KeyValues>;
 	using MainKeyValueType = std::map<std::string, KeyValueType>;
+
+	KeyValueType& GetMainKey(const std::string& mainKeys);
+	static size_t ParseKeyValue(const std::string& text);
+	static std::pair<std::string, std::string> ParseKeyValueEx(const std::string& text);
+
+public:
 	using iterator = MainKeyValueType::iterator;
 	using const_iterator = MainKeyValueType::const_iterator;
 

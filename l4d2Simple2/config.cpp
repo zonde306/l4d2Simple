@@ -80,12 +80,18 @@ bool CProfile::OpenFile(const std::string & path)
 		if (mainKey.empty())
 			continue;
 
-		here = line.find('=');
-		if (here == std::string::npos)
-			continue;
-
-		key = line.substr(0, here);
-		value = line.substr(here + 1);
+		here = ParseKeyValue(line);
+		if (here != std::string::npos)
+		{
+			key = line.substr(0, here);
+			value = line.substr(here + 1);
+		}
+		else
+		{
+			key = line;
+			value.clear();
+		}
+		
 		key = Utils::Trim(key, XorStr(" \t\r\n"));
 		value = Utils::Trim(value, XorStr(" \t\r\n"));
 
@@ -118,11 +124,22 @@ bool CProfile::SaveToFile()
 	m_File.seekp(std::ios::beg);
 	for (const auto& mk : m_KeyValue)
 	{
+		if (mk.first.empty() || mk.second.empty())
+			continue;
+		
 		m_File << '[' << mk.first << ']' << std::endl;
 
 		for (const auto& kv : mk.second)
 		{
-			m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
+			if (kv.first.empty())
+				continue;
+			
+			if(kv.second.m_sValue.empty())
+				m_File << kv.first << std::endl;
+			else if(kv.first.find('=') != std::string::npos || kv.second.m_sValue.find('=') != std::string::npos)
+				m_File << '\"' << kv.first << "\" = \"" << kv.second.m_sValue << '\"' << std::endl;
+			else
+				m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
 		}
 
 		m_File << std::endl;
@@ -223,6 +240,38 @@ bool CProfile::GetBoolean(const std::string & mainKeys, const std::string & keys
 	}
 	
 	return (m_KeyValue[mainKeys][keys].m_iValue > 0);
+}
+
+typename CProfile::KeyValueType& CProfile::GetMainKey(const std::string & mainKeys)
+{
+	return m_KeyValue[mainKeys];
+}
+
+size_t CProfile::ParseKeyValue(const std::string & text)
+{
+	bool inGroup = false;
+	for (size_t i = 0; i < text.length(); ++i)
+	{
+		if (text[i] == '"')
+			inGroup = !inGroup;
+
+		if (inGroup)
+			continue;
+
+		if (text[i] == '=')
+			return i;
+	}
+
+	return std::string::npos;
+}
+
+std::pair<std::string, std::string> CProfile::ParseKeyValueEx(const std::string & text)
+{
+	size_t trim = ParseKeyValue(text);
+	if (trim == std::string::npos)
+		return std::make_pair(text, "");
+
+	return std::make_pair(Utils::Trim(text.substr(0, trim)), Utils::Trim(text.substr(trim + 1)));
 }
 
 typename CProfile::iterator CProfile::begin()

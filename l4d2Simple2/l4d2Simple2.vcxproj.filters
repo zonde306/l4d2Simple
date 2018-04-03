@@ -234,6 +234,9 @@
     <ClCompile Include="config.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\AntiAntiCheat.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -553,6 +556,9 @@
     </ClInclude>
     <ClInclude Include="config.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\AntiAntiCheat.h">
+      <Filter>hl2sdk\Features</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -11,6 +11,7 @@
 #include "./Features/Knifebot.h"
 #include "./Features/Visual.h"
 #include "./Features/DropVisual.h"
+#include "./Features/AntiAntiCheat.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -225,6 +226,8 @@ void CClientHook::InitFeature()
 		g_pVisualPlayer = new CVisualPlayer();
 	if (!g_pVisualDrop)
 		g_pVisualDrop = new CVisualDrop();
+	if (!g_pAntiAntiCheat)
+		g_pAntiAntiCheat = new CAntiAntiCheat();
 
 	// 这个要排在最后，否则没有效果
 	if (!g_pViewManager)
@@ -772,7 +775,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
 		tmpValue.clear();
-		if (!inst->OnProcessGetCvarValue(gcv, tmpValue))
+		if (!inst->OnProcessGetCvarValue(gcv->m_szCvarName, tmpValue))
 			blockQuery = true;
 		else if (!tmpValue.empty())
 			newResult = std::move(tmpValue);
@@ -869,15 +872,21 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 	}
 #endif
 
-	bool blockSetting = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
-	{
-		if (!inst->OnProcessSetConVar(scv))
-			blockSetting = true;
-	}
+	decltype(scv->m_ConVars) newCvarList;
 
-	for (const auto& cvar : scv->m_ConVars)
+	for (auto& cvar : scv->m_ConVars)
 	{
+		bool blockSetting = false;
+		std::string newValue = cvar.value;
+		for (const auto& inst : g_pClientHook->_GameHook)
+		{
+			if (!inst->OnProcessSetConVar(cvar.name, newValue))
+				blockSetting = true;
+		}
+		
+		if (!blockSetting && !newValue.empty())
+			strcpy_s(cvar.value, newValue.c_str());
+
 		// 纪录从服务器发送的 ConVar
 		// 等服务器查询时把它返回
 		if (cvar.name[0] != '\0')
@@ -885,6 +894,9 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 			g_ServerConVar[cvar.name] = cvar.value;
 			// g_ServerConVar.try_emplace(cvar.name, cvar.value);
 		}
+
+		if (!blockSetting)
+			newCvarList.AddToTail(cvar);
 
 		/*
 		// 某些 ConVar 会导致玩家无法正常游戏
@@ -898,7 +910,7 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 		Utils::log(XorStr("[SCV] set %s to %s."), cvar.name, cvar.value);
 	}
 
-	if (!blockSetting)
+	if (!newCvarList.IsEmpty())
 		g_pClientHook->oProcessSetConVar(_ecx, scv);
 
 	return true;
@@ -920,7 +932,7 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	bool blockExecute = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnProcessClientCommand(sc))
+		if (!inst->OnProcessClientCommand(sc->m_szCommand))
 			blockExecute = true;
 	}
 
