@@ -29,30 +29,16 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (weapon == nullptr)
 		return;
 
-	bool canFire = weapon->CanFire();
-	m_bHasFiring = !!(cmd->buttons & IN_ATTACK);
-
-	if (m_bSilentFrame)
-	{
-		StartSilent(cmd);
-		cmd->viewangles = m_vecSilentAngles;
-		*bSendPacket = false;
-	}
-	else if(!m_bSilentByFire || !canFire)
-	{
-		FinishSilent(cmd);
-		*bSendPacket = true;
-		m_bSilentByFire = false;
-	}
-	
 	if (m_bRapidFire)
 		RunRapidFire(cmd, local, weapon);
 
-	// 在不是开枪的情况下不需要调整后坐力和扩散
+	bool canFire = weapon->CanFire();
+	RunSilentAngles(cmd, bSendPacket, canFire);
+
+	m_bHasFiring = !!(cmd->buttons & IN_ATTACK);
 	if (weapon->IsFireGun() && canFire && m_bHasFiring)
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
 
-	m_bSilentFrame = false;
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
 
@@ -114,6 +100,7 @@ void CViewManager::OnMenuDrawing()
 	IMGUI_TIPS("无后坐力/子弹无扩散 防止被观察者看出来。");
 
 	ImGui::Checkbox(XorStr("Real Angles"), &m_bRealAngles);
+	IMGUI_TIPS("调试用，显示真正的角度。");
 
 	ImGui::TreePop();
 }
@@ -127,6 +114,7 @@ void CViewManager::OnConfigLoading(const config_type & data)
 	m_bNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
 	m_bRapidFire = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
 	m_bSilentNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
+	m_bRealAngles = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
 }
 
 void CViewManager::OnConfigSave(config_type & data)
@@ -138,6 +126,7 @@ void CViewManager::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
 }
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)
@@ -164,10 +153,22 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 		static_cast<int>(screen.x - 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
 }
 
-bool CViewManager::ApplySilentAngles(const QAngle & viewAngles, bool withFire)
+bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
 {
-	m_bSilentFrame = true;
-	m_bSilentByFire = withFire;
+	if (m_bSilentFire || m_bSilentOnce)
+		return false;
+
+	m_bSilentOnce = true;
+	m_vecSilentAngles = viewAngles;
+	return true;
+}
+
+bool CViewManager::ApplySilentFire(const QAngle & viewAngles)
+{
+	if (m_bSilentFire || m_bSilentOnce)
+		return false;
+
+	m_bSilentFire = true;
 	m_vecSilentAngles = viewAngles;
 	return true;
 }
@@ -262,5 +263,44 @@ void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* 
 	else
 	{
 		m_bRapidIgnore = false;
+	}
+}
+
+void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFire)
+{
+	if (!(*bSendPacket))
+		return;
+
+	if (m_bSilentFire)
+	{
+		if (canFire && m_bHasFiring && m_vecSilentAngles.IsValid())
+		{
+			StartSilent(cmd);
+			cmd->viewangles = m_vecSilentAngles;
+			*bSendPacket = false;
+		}
+		else
+		{
+			FinishSilent(cmd);
+			m_bSilentFire = false;
+			m_vecSilentAngles.Invalidate();
+		}
+	}
+	else if (m_bSilentOnce)
+	{
+		if (m_vecSilentAngles.IsValid())
+		{
+			if (!m_bOldAngleStored)
+				StartSilent(cmd);
+
+			cmd->viewangles = m_vecSilentAngles;
+			*bSendPacket = false;
+		}
+		else
+		{
+			m_bSilentOnce = false;
+			FinishSilent(cmd);
+			m_vecSilentAngles.Invalidate();
+		}
 	}
 }

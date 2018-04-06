@@ -108,7 +108,10 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
 		{
-			g_pViewManager->ApplySilentAngles(aimAngles);
+			if(m_bTraceSilent)
+				g_pViewManager->ApplySilentFire(aimAngles);
+			else
+				g_pInterface->Engine->SetViewAngles(aimAngles);
 		}
 	}
 }
@@ -144,6 +147,7 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("自动开枪尝试跟随敌人。");
 
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("自动开枪尝试跟随敌人范围。");
 
 	ImGui::TreePop();
 }

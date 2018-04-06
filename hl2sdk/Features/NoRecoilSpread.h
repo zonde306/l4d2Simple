@@ -15,7 +15,9 @@ public:
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
 
-	bool ApplySilentAngles(const QAngle& viewAngles, bool withFire = true);
+	bool ApplySilentAngles(const QAngle& viewAngles);
+	bool ApplySilentFire(const QAngle& viewAngles);
+
 	void RunNoRecoilSpread(CUserCmd* cmd, CBaseWeapon* weapon, bool* bSendPacket);
 
 	bool StartSilent(CUserCmd* cmd);
@@ -25,6 +27,7 @@ public:
 	void RemoveRecoil(CUserCmd* cmd);
 
 	void RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon);
+	void RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFire);
 
 private:
 	bool m_bNoSpread = true;
@@ -35,15 +38,16 @@ private:
 	bool m_bRealAngles = false;
 
 private:
-	bool m_bSilentFrame = false;
-	bool m_bSilentByFire = false;
-	QAngle m_vecSilentAngles;
+	bool m_bSilentFire = false;
+	bool m_bSilentOnce = false;
+	QAngle m_vecSilentAngles = INVALID_VECTOR;
 
 private:
 	QAngle m_vecAngles = INVALID_VECTOR;
 	float m_fSideMove = 0.0f;
 	float m_fForwardMove = 0.0f;
 	float m_fUpMove = 0.0f;
+	bool m_bOldAngleStored = false;
 
 private:
 	Vector m_vecPunch;

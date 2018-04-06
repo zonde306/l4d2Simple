@@ -68,7 +68,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	if (m_bPerfectSilent)
-		g_pViewManager->ApplySilentAngles(m_vecAimAngles);
+		g_pViewManager->ApplySilentFire(m_vecAimAngles);
 	else if (m_bSilent)
 		cmd->viewangles = m_vecAimAngles;
 	else
@@ -116,7 +116,10 @@ void CAimBot::OnMenuDrawing()
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("AutoAim Range"), &m_bShowRange);
+	IMGUI_TIPS("待修复。");
+
 	ImGui::Checkbox(XorStr("AutoAim Angles"), &m_bShowAngles);
+	IMGUI_TIPS("显示瞄准的位置。");
 
 	ImGui::TreePop();
 }
@@ -135,6 +138,8 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
 	m_fAimFov = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
 	m_fAimDist = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
+	m_bShowRange = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
+	m_bShowAngles = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -151,6 +156,8 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
