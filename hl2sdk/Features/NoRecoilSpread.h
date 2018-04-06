@@ -16,6 +16,7 @@ public:
 	virtual void OnConfigSave(config_type& data) override;
 
 	bool ApplySilentAngles(const QAngle& viewAngles, bool withFire = true);
+	void RunNoRecoilSpread(CUserCmd* cmd, CBaseWeapon* weapon, bool* bSendPacket);
 
 	bool StartSilent(CUserCmd* cmd);
 	bool FinishSilent(CUserCmd* cmd);
@@ -50,6 +51,7 @@ private:
 	QAngle m_vecViewAngles;
 	bool m_bHasFiring = false;
 	bool m_bHasSilent = false;
+	int m_iPacketBlocked = 0;
 
 private:
 	bool m_bRapidIgnore = true;

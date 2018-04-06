@@ -282,3 +282,49 @@ bool CAntiAntiCheat::FindMatchString2(const std::string & source, const std::pai
 {
 	return FindMatchString(source, match.first, caseSensitive);
 }
+
+template<typename T>
+inline void CAntiAntiCheat::CreateMenuList(const std::string& name, std::vector<T>& set,
+	std::function<std::string(T)> display,
+	std::function<void(typename std::vector<T>::iterator&, std::string)> change)
+{
+	if (!ImGui::TreeNode(name.c_str()))
+		return;
+
+	ImGui::BeginChild(("_" + name).c_str(), ImVec2(0.0f, 0.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+	for (auto it = set.begin(); it != set.end(); )
+	{
+		std::string disName = display(*it);
+		if (disName.empty())
+			continue;
+
+		if (m_szFilterText[0] != '\0' && disName.find(m_szFilterText) == std::string::npos)
+			continue;
+
+		bool deleted = false;
+		ImGui::Selectable(disName.c_str());
+
+		// 右键菜单
+		if (ImGui::BeginPopupContextItem())
+		{
+			deleted = ImGui::Selectable(XorStr("delete"));
+
+			if (ImGui::Selectable(XorStr("copy")))
+				ImGui::SetClipboardText(disName.c_str());
+
+			if (ImGui::Selectable(XorStr("paste")))
+				change(it, ImGui::GetClipboardText());
+
+			ImGui::EndPopup();
+		}
+
+		if (deleted)
+			it = set.erase(it);
+		else
+			++it;
+	}
+
+	ImGui::EndChild();
+	ImGui::TreePop();
+}

@@ -9,6 +9,7 @@
 #include "menu.h"
 #include "speedhack.h"
 #include "config.h"
+#include "console.h"
 #include "../hl2sdk/interfaces.h"
 #include "../hl2sdk/hook.h"
 // #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
@@ -84,6 +85,9 @@ DWORD WINAPI StartCheats(LPVOID module)
 
 	Utils::g_hCurrentWindow = g_hGameWindow;
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
+
+	g_pConsole = std::make_unique<CConsole>();
+	g_pConsole->Init();
 
 #ifdef _DEBUG
 	g_pfnOldExceptFilter = SetUnhandledExceptionFilter(Hooked_UnhandledExceptionFilter);

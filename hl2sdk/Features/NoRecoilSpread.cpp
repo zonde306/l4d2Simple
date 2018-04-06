@@ -6,6 +6,8 @@
 CViewManager* g_pViewManager = nullptr;
 
 #define IsSingleWeapon(_id)			(_id == Weapon_Pistol || _id == Weapon_ShotgunPump || _id == Weapon_ShotgunAuto || _id == Weapon_SniperHunting || _id == Weapon_ShotgunChrome || _id == Weapon_SniperMilitary || _id == Weapon_ShotgunSpas || _id == Weapon_PistolMagnum || _id == Weapon_SniperAWP || _id == Weapon_SniperScout)
+#define NUM_NEW_COMMAND_BITS		4
+#define MAX_NEW_COMMANDS			((1 << NUM_NEW_COMMAND_BITS)-1)
 
 CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
@@ -47,29 +49,29 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	// 在不是开枪的情况下不需要调整后坐力和扩散
-	if (!weapon->IsFireGun() || !canFire || !m_bHasFiring)
-	{
-		// m_bHasSilent = !(*bSendPacket);
-		return;
-	}
-
-	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon);
-	m_vecSpread.x = spread.first;
-	m_vecSpread.y = spread.second;
-	// m_vecSpread.z = 0.0f;
-
-	if (m_bNoRecoil)
-		RemoveRecoil(cmd);
-
-	if (m_bNoSpread)
-		RemoveSpread(cmd);
-
-	if (m_bSilentNoSpread)
-		*bSendPacket = false;
+	if (weapon->IsFireGun() && canFire && m_bHasFiring)
+		RunNoRecoilSpread(cmd, weapon, bSendPacket);
 
 	m_bSilentFrame = false;
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
+
+	if (!(*bSendPacket))
+	{
+		++m_iPacketBlocked;
+
+		// 修复命令被丢弃的问题
+		// bSendPacket 设置为 false 超过上限会导致命令被丢弃
+		if (m_iPacketBlocked > MAX_NEW_COMMANDS)
+		{
+			*bSendPacket = true;
+			m_iPacketBlocked = 0;
+			Utils::log(XorStr("Warring: choked commands out of range"));
+		}
+	}
+
+	if (*bSendPacket && m_iPacketBlocked != 0)
+		m_iPacketBlocked = 0;
 }
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -168,6 +170,23 @@ bool CViewManager::ApplySilentAngles(const QAngle & viewAngles, bool withFire)
 	m_bSilentByFire = withFire;
 	m_vecSilentAngles = viewAngles;
 	return true;
+}
+
+void CViewManager::RunNoRecoilSpread(CUserCmd * cmd, CBaseWeapon* weapon, bool* bSendPacket)
+{
+	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon);
+	m_vecSpread.x = spread.first;
+	m_vecSpread.y = spread.second;
+	// m_vecSpread.z = 0.0f;
+
+	if (m_bNoRecoil)
+		RemoveRecoil(cmd);
+
+	if (m_bNoSpread)
+		RemoveSpread(cmd);
+
+	if (m_bSilentNoSpread)
+		*bSendPacket = false;
 }
 
 bool CViewManager::StartSilent(CUserCmd * cmd)

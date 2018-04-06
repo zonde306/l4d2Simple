@@ -187,7 +187,9 @@ bool CBaseWeapon::CanFire()
 		return false;
 
 	int weaponId = GetWeaponID();
-	if (IsShotgun(weaponId))
+
+	// 霰弹枪再填装的时候如果弹夹内有子弹也可以开枪的
+	if (IsShotgun(weaponId) && IsReloading())
 		return true;
 
 	return (GetPrimaryAttackDelay() <= 0.0f);

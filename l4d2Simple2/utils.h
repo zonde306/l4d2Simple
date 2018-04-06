@@ -63,6 +63,14 @@ namespace Utils
 	// 字符串处理
 	std::vector<std::string> Split(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
 	std::string Trim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
+	size_t Search(const std::string& s, const std::string& p, bool caseSensitive = true);
+
+	//查找字符串
+	int FindingString(const char* lpszSour, const char* lpszFind, int nStart = 0);
+	//带通配符的字符串匹配
+	bool MatchingString(const char* lpszSour, const char* lpszMatch, bool bMatchCase = true);
+	//多重匹配
+	bool MultiMatching(const char* lpszSour, const char* lpszMatch, int nMatchLogic = 0, bool bRetReversed = 0, bool bMatchCase = true);
 
 	// 虚函数相关
 	PVOID GetVirtualFunction(PVOID inst, DWORD index);
