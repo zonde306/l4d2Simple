@@ -58,14 +58,25 @@ void CDirectX9Hook::Init()
 	if (m_bIsSecondHooked || m_bIsFirstHooked)
 		return;
 
-	// m_pOriginDevice = *reinterpret_cast<IDirect3DDevice9**>(Utils::FindPattern(XorStr("shaderapidx9.dll"), SIG_MOV_DIRECT_PTR) + 1);
-	while (!m_bSuccessCreated)
+	D3DCAPS9 caps;
+	m_pOriginDevice = **reinterpret_cast<IDirect3DDevice9***>(Utils::FindPattern(XorStr("shaderapidx9.dll"), SIG_MOV_DIRECT_PTR) + 1);
+	
+	if (m_pOriginDevice != nullptr && m_pOriginDevice->GetDeviceCaps(&caps))
 	{
-		if (!CreateDevice())
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		Utils::log(XorStr("CDirectX9Hook.Init -> m_pOriginDevice = 0x%X"), m_pOriginDevice);
+		SetupSecondHook(m_pOriginDevice);
+	}
+	else
+	{
+		while (!m_bSuccessCreated)
+		{
+			if (!CreateDevice())
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		}
+
+		SetupFirstHook();
 	}
 
-	SetupFirstHook();
 	Utils::log(XorStr("CDirectX9Hook Initialization..."));
 }
 
@@ -304,7 +315,7 @@ bool CDirectX9Hook::ReleaseDevice()
 
 bool CDirectX9Hook::SetupFirstHook()
 {
-	if (!m_bSuccessCreated || m_bIsSecondHooked || m_bIsFirstHooked || m_pOriginDevice != nullptr)
+	if (!m_bSuccessCreated || m_bIsSecondHooked || m_bIsFirstHooked || m_pDevice == nullptr)
 		return false;
 
 	m_pHookReset = std::make_unique<DetourXS>(Utils::GetVirtualFunction(m_pDevice, 16), Hooked_Reset);
@@ -325,7 +336,7 @@ bool CDirectX9Hook::SetupFirstHook()
 	*/
 
 	m_bIsFirstHooked = true;
-	ReleaseDevice();
+	// ReleaseDevice();
 
 	Utils::log(XorStr("Setup DirectX Hook 1st."));
 	return true;
@@ -335,6 +346,9 @@ bool CDirectX9Hook::SetupSecondHook(IDirect3DDevice9* device)
 {
 	if (m_bIsSecondHooked)
 		return false;
+
+	if (device != nullptr)
+		Utils::log(XorStr("CDirectX9Hook.SetupSecondHook -> device = 0x%X"), device);
 
 	if (m_bSuccessCreated)
 		ReleaseDevice();
@@ -380,4 +394,94 @@ bool CDirectX9Hook::CheckHookStatus(IDirect3DDevice9 * device)
 	}
 
 	return doInit;
+}
+
+#define GUARD (PAGE_GUARD | PAGE_NOCACHE | PAGE_WRITECOMBINE)
+#define READABLE (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_READONLY | PAGE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOPY)
+
+IDirect3DDevice9* CDirectX9Hook::FindDevicePointer(IDirect3DDevice9* device)
+{
+	DWORD* pTable = *reinterpret_cast<DWORD**>(device);
+
+	D3DCAPS9 caps;
+
+	LPDIRECT3DDEVICE9 pDevice;
+
+	DWORD * pTempTable,
+		dwAddress,
+		dwMatchCount,
+		pMatchedTables[150];
+
+	MEMORY_BASIC_INFORMATION info;
+
+	pDevice = NULL;
+	dwMatchCount = 0;
+
+	for (int iLoop = 0; iLoop < 2; iLoop++)
+	{
+		dwAddress = 0;
+
+		while (pDevice == NULL)
+		{
+			if (VirtualQuery((LPCVOID)dwAddress, &info, sizeof(info)) == 0)
+			{
+				if (GetLastError() == ERROR_INVALID_PARAMETER)
+					break;
+
+				continue;
+			}
+			
+			if (!(info.AllocationProtect & READABLE) && info.State == MEM_COMMIT && !(info.Protect & GUARD))
+			{
+				// If this is the first loop, store all copies of the vtable
+				if (iLoop == 0)
+				{
+					for (DWORD i = dwAddress; i < dwAddress + info.RegionSize - 4; i += 2)
+					{
+						pTempTable = (DWORD*)i;
+
+						for (DWORD k = 0; k < 42; k++)
+						{
+							if (pTempTable[k] == pTable[k])
+							{
+								if (k == 41 && dwMatchCount < 150)
+									pMatchedTables[dwMatchCount++] = i;
+							}
+							else
+								break;
+						}
+					}
+				}
+				else
+				{
+					// Search for all pointers to the collected vtables
+					for (DWORD i = dwAddress; i < dwAddress + info.RegionSize - 4; i += 2)
+					{
+						for (DWORD k = 0; k < dwMatchCount; k++)
+						{
+							// If this a pointer to the table
+							if (pMatchedTables[k] == *(DWORD*)i)
+							{
+								pDevice = (LPDIRECT3DDEVICE9)i;
+
+								// If it is a valid device and not a random pointer
+								if (pDevice->GetDeviceCaps(&caps) == D3D_OK)
+								{
+									i = dwAddress + info.RegionSize;
+									break;
+								}
+								else
+									pDevice = NULL;
+							}
+						}
+					}
+
+				}
+			}
+
+			dwAddress += info.RegionSize;
+		}
+	}
+
+	return pDevice;
 }

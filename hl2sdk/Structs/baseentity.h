@@ -95,7 +95,8 @@ inline T & CBaseEntity::GetNetProp(const std::string & table, const std::string 
 		throw std::runtime_error(ss.str().c_str());
 	}
 
-	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (sizeof(T) * element));
+	// NetProp 强制 4 字节对齐
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (element * 4));
 }
 
 template<typename T>
@@ -124,7 +125,8 @@ inline T & CBaseEntity::GetNetProp2(const std::string & table, const std::string
 		offset += offset2;
 	*/
 
-	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset + offset2) + (sizeof(T) * element));
+	// NetProp 强制 4 字节对齐
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset + offset2) + (element * 4));
 }
 
 template<typename T, typename ...P>
@@ -145,7 +147,8 @@ inline T & CBaseEntity::GetNetPropEx(const std::string & table, const std::strin
 		throw std::runtime_error(ss.str().c_str());
 	}
 
-	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (sizeof(T) * element));
+	// NetProp 强制 4 字节对齐
+	return *reinterpret_cast<T*>((reinterpret_cast<DWORD>(this) + offset) + (element * 4));
 }
 
 template<typename T>

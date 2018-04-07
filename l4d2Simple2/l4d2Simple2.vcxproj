@@ -155,6 +155,7 @@
     <ClCompile Include="..\hl2sdk\Interfaces\IVPanel.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\baseentity.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\baseplayer.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\baseplayerresource.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\baseweapon.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\bitbuffer.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\color.cpp" />
@@ -263,6 +264,7 @@
     <ClInclude Include="..\hl2sdk\Interfaces\IVPanel.h" />
     <ClInclude Include="..\hl2sdk\Structs\baseentity.h" />
     <ClInclude Include="..\hl2sdk\Structs\baseplayer.h" />
+    <ClInclude Include="..\hl2sdk\Structs\baseplayerresource.h" />
     <ClInclude Include="..\hl2sdk\Structs\baseweapon.h" />
     <ClInclude Include="..\hl2sdk\Structs\bitbuffer.h" />
     <ClInclude Include="..\hl2sdk\Structs\clientclass.h" />

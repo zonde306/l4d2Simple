@@ -240,6 +240,9 @@
     <ClCompile Include="console.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\baseplayerresource.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -565,6 +568,9 @@
     </ClInclude>
     <ClInclude Include="console.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\baseplayerresource.h">
+      <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

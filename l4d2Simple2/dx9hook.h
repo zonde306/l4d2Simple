@@ -41,6 +41,7 @@ protected:
 
 private:
 	bool CheckHookStatus(IDirect3DDevice9* device);
+	IDirect3DDevice9* FindDevicePointer(IDirect3DDevice9* device);
 
 public:
 	FnDrawIndexedPrimitive oDrawIndexedPrimitive;

@@ -3,6 +3,7 @@
 #include "./Utils/math.h"
 #include "./Utils/checksum_md5.h"
 #include "./Structs/convar.h"
+#include "./Structs/baseplayerresource.h"
 #include "./Features/BunnyHop.h"
 #include "./Features/SpeedHacker.h"
 #include "./Features/TriggerBot.h"
@@ -584,11 +585,6 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 
 	g_pClientPrediction->FinishPrediction();
 
-	// 修复移动不正确
-	QAngle viewAngles;
-	g_pInterface->Engine->GetViewAngles(viewAngles);
-	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
-
 	// 手动进行 CRC 验证
 	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
 	verified->m_cmd = *cmd;
@@ -617,6 +613,16 @@ void CClientHook::InstallClientModeHook(IClientMode * pointer)
 bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _edx, float flInputSampleTime, CUserCmd* cmd)
 {
 	g_pClientHook->InstallClientModeHook(_ecx);
+
+	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
+	if (player != nullptr && player->IsAlive())
+	{
+		// 修复无法移动的 bug
+		player->GetFlags() &= ~(FL_FROZEN | FL_FREEZING);
+
+		// 修复 hud 消失的 bug
+		player->GetNetProp<WORD>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
+	}
 
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 
@@ -713,6 +719,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					isConnected = true;
 					g_tpPlayingTimer = time(nullptr);
 					// g_ServerConVar.clear();
+					g_pPlayerResource = nullptr;
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnConnect();
@@ -725,6 +732,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					isConnected = false;
 					g_tpPlayingTimer = 0;
 					g_ServerConVar.clear();
+					g_pPlayerResource = nullptr;
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 					{
@@ -1147,7 +1155,6 @@ bool CClientPrediction::FinishPrediction()
 
 	// 修复预测后产生的错误
 	player->GetFlags() = m_iFlags;
-	player->GetNetProp<WORD>(XorStr("DT_BasePlayer"), XorStr("m_iHideHUD")) = 0;
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;

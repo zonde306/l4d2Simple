@@ -33,9 +33,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	bool canFire = weapon->CanFire();
+	m_bHasFiring = !!(cmd->buttons & IN_ATTACK);
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
-	m_bHasFiring = !!(cmd->buttons & IN_ATTACK);
 	if (weapon->IsFireGun() && canFire && m_bHasFiring)
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
 
@@ -58,6 +58,28 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	if (*bSendPacket && m_iPacketBlocked != 0)
 		m_iPacketBlocked = 0;
+
+	// 修复移动不正确
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
+
+	if (m_bFakeAngleBug && m_bHasFiring)
+	{
+		static int lastChocked = 0;
+		if (lastChocked >= 5)
+		{
+			*bSendPacket = true;
+			lastChocked = 0;
+		}
+		else
+		{
+			*bSendPacket = false;
+			lastChocked += 1;
+		}
+		
+		cmd->viewangles.x = cmd->viewangles.y = -logf(-1.0f);
+	}
 }
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -102,6 +124,9 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Real Angles"), &m_bRealAngles);
 	IMGUI_TIPS("调试用，显示真正的角度。");
 
+	ImGui::Checkbox(XorStr("chocked exploit"), &m_bFakeAngleBug);
+	IMGUI_TIPS("炸服用，开启后按住鼠标左键(开枪)启动，用后记得手动 disconnect，否则会卡住。");
+
 	ImGui::TreePop();
 }
 
@@ -127,6 +152,16 @@ void CViewManager::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
+}
+
+void CViewManager::OnConnect()
+{
+	m_bFakeAngleBug = false;
+}
+
+void CViewManager::OnDisconnect()
+{
+	m_bFakeAngleBug = false;
 }
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)

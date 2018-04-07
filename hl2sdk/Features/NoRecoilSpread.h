@@ -14,6 +14,8 @@ public:
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConnect() override;
+	virtual void OnDisconnect() override;
 
 	bool ApplySilentAngles(const QAngle& viewAngles);
 	bool ApplySilentFire(const QAngle& viewAngles);
@@ -36,6 +38,7 @@ private:
 	bool m_bRapidFire = true;
 	bool m_bSilentNoSpread = true;
 	bool m_bRealAngles = false;
+	bool m_bFakeAngleBug = false;
 
 private:
 	bool m_bSilentFire = false;
