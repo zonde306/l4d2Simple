@@ -50,7 +50,6 @@ private:
 	float m_fSideMove = 0.0f;
 	float m_fForwardMove = 0.0f;
 	float m_fUpMove = 0.0f;
-	bool m_bOldAngleStored = false;
 
 private:
 	Vector m_vecPunch;

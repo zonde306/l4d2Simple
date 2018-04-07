@@ -325,11 +325,10 @@ void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFir
 	{
 		if (m_vecSilentAngles.IsValid())
 		{
-			if (!m_bOldAngleStored)
-				StartSilent(cmd);
-
+			StartSilent(cmd);
 			cmd->viewangles = m_vecSilentAngles;
 			*bSendPacket = false;
+			m_vecSilentAngles.Invalidate();
 		}
 		else
 		{
