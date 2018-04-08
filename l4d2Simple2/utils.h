@@ -12,10 +12,20 @@ namespace Utils
 	extern HINSTANCE g_hInstance;
 	extern std::string g_sModulePath;
 	extern HWND g_hCurrentWindow;
+	extern DWORD g_iSelfStart;
+	extern DWORD g_iSelfEnd;
 	
 	// 初始化
 	void init(HINSTANCE inst);
+
+	// 获取当前 dll 目录
 	std::string BuildPath(const char* text, ...);
+
+	// 检查指针是否超出了当前 dll 的范围
+	bool FarProc(LPVOID address);
+
+	// 检查指针是否超出了范围
+	bool FarProcEx(LPVOID address, DWORD start, DWORD end);
 
 	// 记录日志
 	void log(const char* text, ...);
@@ -27,7 +37,7 @@ namespace Utils
 	void log2();
 
 	// 在左上角提示信息
-	void printInfo(const char* text, ...);
+	void PrintInfo(const char* text, ...);
 
 	// 获取系统时间
 	std::string GetTime();

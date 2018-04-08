@@ -1,8 +1,14 @@
 #include "speedhack.h"
 #include "xorstr.h"
+#include "utils.h"
 #include <imgui.h>
+#include <intrin.h>
 
 #pragma comment(lib, "Winmm")
+#pragma intrinsic(_ReturnAddress)
+
+// #define _CHECK_SPEED
+// #define _CHECK_CALLER
 
 std::unique_ptr<CSpeedModifier> g_pSpeedModifier;
 #define GET_ORIGINAL_FUNC(_fn)		reinterpret_cast<Fn##_fn>(g_pSpeedModifier->m_p##_fn->trampoline);
@@ -11,8 +17,16 @@ std::unique_ptr<CSpeedModifier> g_pSpeedModifier;
 static DWORD WINAPI Hooked_GetTickCount()
 {
 	DWORD nowTick = reinterpret_cast<FnGetTickCount>(g_pSpeedModifier->m_pGetTickCount->trampoline)();
+
+#ifdef _CHECK_SPEED
 	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
 		return nowTick;
+#endif
+
+#ifdef _CHECK_CALLER
+	if (!Utils::FarProc(_ReturnAddress()))
+		return nowTick;
+#endif
 
 	DWORD result = 0;
 	static DWORD iLastFakeTick = 0;
@@ -35,8 +49,16 @@ static DWORD WINAPI Hooked_GetTickCount()
 static ULONGLONG WINAPI Hooked_GetTickCount64()
 {
 	ULONGLONG nowTick = reinterpret_cast<FnGetTickCount64>(g_pSpeedModifier->m_pGetTickCount64->trampoline)();
+
+#ifdef _CHECK_SPEED
 	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
 		return nowTick;
+#endif
+
+#ifdef _CHECK_CALLER
+	if (!Utils::FarProc(_ReturnAddress()))
+		return nowTick;
+#endif
 
 	ULONGLONG result = 0;
 	static ULONGLONG iLastFakeTick = 0;
@@ -59,8 +81,16 @@ static ULONGLONG WINAPI Hooked_GetTickCount64()
 static DWORD WINAPI Hooked_TimeGetTime()
 {
 	DWORD nowTick = reinterpret_cast<FnTimeGetTime>(g_pSpeedModifier->m_pTimeGetTime->trampoline)();
+
+#ifdef _CHECK_SPEED
 	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
 		return nowTick;
+#endif
+
+#ifdef _CHECK_CALLER
+	if (!Utils::FarProc(_ReturnAddress()))
+		return nowTick;
+#endif
 
 	DWORD result = 0;
 	static DWORD iLastFakeTick = 0;
@@ -85,8 +115,15 @@ static BOOL WINAPI Hooked_QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCo
 	if (!reinterpret_cast<FnQueryPerformanceCounter>(g_pSpeedModifier->m_pQueryPerformanceCounter->trampoline)(lpPerformanceCount))
 		return FALSE;
 
+#ifdef _CHECK_SPEED
 	if (g_pSpeedModifier->m_fSpeed <= 0.0f || g_pSpeedModifier->m_fSpeed == 1.0f)
 		return TRUE;
+#endif
+
+#ifdef _CHECK_CALLER
+	if (!Utils::FarProc(_ReturnAddress()))
+		return TRUE;
+#endif
 
 	static LARGE_INTEGER iLastFakeTick = { 0 };
 	static LARGE_INTEGER iLastRealTick = { 0 };

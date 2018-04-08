@@ -17,17 +17,24 @@
 
 HINSTANCE Utils::g_hInstance = NULL;
 std::string Utils::g_sModulePath = "";
+DWORD Utils::g_iSelfStart;
+DWORD Utils::g_iSelfEnd;
 
 void Utils::init(HINSTANCE inst)
 {
 	g_hInstance = inst;
 
 	char buffer[MAX_PATH];
-	if (GetModuleFileNameA(g_hInstance, buffer, MAX_PATH) == 0)
+	if (GetModuleFileNameA(inst, buffer, MAX_PATH) == 0)
 		GetModuleFileNameA(GetModuleHandleA(NULL), buffer, MAX_PATH);
 
 	std::string tmp = buffer;
 	g_sModulePath = tmp.substr(0, tmp.rfind('\\'));
+
+	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)inst;
+	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)inst) + pDOSHeader->e_lfanew);
+	g_iSelfStart = pNTHeaders->OptionalHeader.ImageBase;
+	g_iSelfEnd = pNTHeaders->OptionalHeader.ImageBase + pNTHeaders->OptionalHeader.SizeOfImage;
 }
 
 std::string Utils::BuildPath(const char * text, ...)
@@ -47,6 +54,19 @@ std::string Utils::BuildPath(const char * text, ...)
 	va_end(ap);
 
 	return g_sModulePath + buffer;
+}
+
+bool Utils::FarProc(LPVOID address)
+{
+	return FarProcEx(address, g_iSelfStart, g_iSelfEnd);
+}
+
+bool Utils::FarProcEx(LPVOID address, DWORD start, DWORD end)
+{
+	if (address == nullptr)
+		return false;
+
+	return (((DWORD)address < start) || ((DWORD)address > end));
 }
 
 void Utils::log(const char * text, ...)
@@ -104,7 +124,7 @@ void Utils::log2()
 	std::cout << std::endl;
 }
 
-void Utils::printInfo(const char * text, ...)
+void Utils::PrintInfo(const char * text, ...)
 {
 	va_list ap;
 	va_start(ap, text);
