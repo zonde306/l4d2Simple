@@ -94,10 +94,14 @@ void CBaseFeatures::OnKeyInput(bool, ButtonCode_t, const char *)
 {
 }
 
-void CBaseFeatures::OnGameEvent(IGameEvent *)
+void CBaseFeatures::OnGameEventClient(IGameEvent *)
 {
 }
 
 void CBaseFeatures::OnRenderView(CViewSetup &)
+{
+}
+
+void CBaseFeatures::OnGameEvent(IGameEvent *, bool)
 {
 }

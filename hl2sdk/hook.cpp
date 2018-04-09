@@ -202,6 +202,7 @@ bool CClientHook::Init()
 	{
 		g_pHookGameEvent = std::make_unique<CVmtHook>(g_pInterface->GameEvent);
 		oFireEventClientSide = reinterpret_cast<FnFireEventClientSide>(g_pHookGameEvent->HookFunction(indexes::FireEventClientSide, Hooked_FireEventClientSide));
+		oFireEvent = reinterpret_cast<FnFireEvent>(g_pHookGameEvent->HookFunction(indexes::FireEvent, Hooked_FireEvent));
 		g_pHookGameEvent->InstallHook();
 	}
 
@@ -996,8 +997,8 @@ void __fastcall CClientHook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 		inst->OnSceneEnd();
 }
 
-IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LPVOID _edx, char const* pMaterialName,
-	const char* pTextureGroupName, bool complain, const char* pComplainPrefix)
+IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LPVOID _edx,
+	char const* pMaterialName, const char* pTextureGroupName, bool complain, const char* pComplainPrefix)
 {
 	std::string copyMaterialName, copyTextureGroupName;
 	std::string newMaterialName, newTextureGroupName;
@@ -1039,7 +1040,7 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 	return g_pClientHook->oFindMaterial(_ecx, pMaterialName, pTextureGroupName, complain, pComplainPrefix);
 }
 
-int CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, ButtonCode_t keynum, const char* pszCurrentBinding)
+int __fastcall CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, ButtonCode_t keynum, const char* pszCurrentBinding)
 {
 	int result = g_pClientHook->oKeyInput(_ecx, down, keynum, pszCurrentBinding);
 
@@ -1063,7 +1064,7 @@ bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx
 	bool result = g_pClientHook->oFireEventClientSide(_ecx, event);
 
 	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnGameEvent(event);
+		inst->OnGameEventClient(event);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1077,12 +1078,31 @@ bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx
 	return result;
 }
 
-void CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx, const CViewSetup& view, int nClearFlags, int whatToDraw)
+void __fastcall CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx, const CViewSetup& view, int nClearFlags, int whatToDraw)
 {
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnRenderView(const_cast<CViewSetup&>(view));
 	
 	g_pClientHook->oRenderView(_ecx, view, nClearFlags, whatToDraw);
+}
+
+bool __fastcall CClientHook::Hooked_FireEvent(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event, bool bDontBroadcast)
+{
+	bool result = g_pClientHook->oFireEvent(_ecx, event, bDontBroadcast);
+
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnGameEvent(event, bDontBroadcast);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook FireEvent Success."));
+	}
+#endif
+
+	return result;
 }
 
 void CClientPrediction::Init()

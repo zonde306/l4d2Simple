@@ -26,6 +26,7 @@ typedef IMaterial*(__thiscall* FnFindMaterial)(IMaterialSystem*, char const*, co
 typedef int(__thiscall* FnKeyInput)(IClientMode*, int, ButtonCode_t, const char*);
 typedef bool(__thiscall* FnFireEventClientSide)(IGameEventManager2*, IGameEvent*);
 typedef void(__thiscall* FnRenderView)(IBaseClientDll*, const CViewSetup&, int, int);
+typedef bool(__thiscall* FnFireEvent)(IGameEventManager2*, IGameEvent*, bool);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -75,6 +76,7 @@ protected:
 	static int __fastcall Hooked_KeyInput(IClientMode*, LPVOID, int, ButtonCode_t, const char*);
 	static bool __fastcall Hooked_FireEventClientSide(IGameEventManager2*, LPVOID, IGameEvent*);
 	static void __fastcall Hooked_RenderView(IBaseClientDll*, LPVOID, const CViewSetup&, int, int);
+	static bool __fastcall Hooked_FireEvent(IGameEventManager2*, LPVOID, IGameEvent*, bool);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -104,6 +106,7 @@ private:
 	FnKeyInput oKeyInput = nullptr;
 	FnFireEventClientSide oFireEventClientSide = nullptr;
 	FnRenderView oRenderView = nullptr;
+	FnFireEvent oFireEvent = nullptr;
 
 public:
 	bool* bSendPacket;
