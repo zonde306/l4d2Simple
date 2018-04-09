@@ -28,6 +28,7 @@ public:
 	virtual void OnGameEventClient(IGameEvent*);
 	virtual void OnRenderView(CViewSetup&);
 	virtual void OnGameEvent(IGameEvent*, bool);
+	virtual void OnDrawModel(DrawModelState_t&, ModelRenderInfo_t&, matrix3x4_t*);
 
 	// 以下函数返回 false 阻止调用原函数
 	// 如果不打算阻止原函数，则需要返回 true

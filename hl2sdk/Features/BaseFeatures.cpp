@@ -105,3 +105,7 @@ void CBaseFeatures::OnRenderView(CViewSetup &)
 void CBaseFeatures::OnGameEvent(IGameEvent *, bool)
 {
 }
+
+void CBaseFeatures::OnDrawModel(DrawModelState_t &, ModelRenderInfo_t &, matrix3x4_t *)
+{
+}

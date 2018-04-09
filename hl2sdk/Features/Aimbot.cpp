@@ -49,6 +49,8 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 	}
 
+	// QAngle viewAngles;
+	// g_pInterface->Engine->GetViewAngles(viewAngles);
 	if(!IsValidTarget(m_pAimTarget))
 		FindTarget(cmd->viewangles);
 

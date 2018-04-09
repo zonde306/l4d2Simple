@@ -136,6 +136,7 @@
     <ClCompile Include="..\hl2sdk\Features\BaseFeatures.cpp" />
     <ClCompile Include="..\hl2sdk\Features\BunnyHop.cpp" />
     <ClCompile Include="..\hl2sdk\Features\DropVisual.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\HackvsHack.cpp" />
     <ClCompile Include="..\hl2sdk\Features\Knifebot.cpp" />
     <ClCompile Include="..\hl2sdk\Features\NoRecoilSpread.cpp" />
     <ClCompile Include="..\hl2sdk\Features\SpeedHacker.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="..\hl2sdk\Features\BaseFeatures.h" />
     <ClInclude Include="..\hl2sdk\Features\BunnyHop.h" />
     <ClInclude Include="..\hl2sdk\Features\DropVisual.h" />
+    <ClInclude Include="..\hl2sdk\Features\HackvsHack.h" />
     <ClInclude Include="..\hl2sdk\Features\Knifebot.h" />
     <ClInclude Include="..\hl2sdk\Features\NoRecoilSpread.h" />
     <ClInclude Include="..\hl2sdk\Features\SpeedHacker.h" />

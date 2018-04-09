@@ -43,9 +43,9 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (player == nullptr)
 		return;
 
-	QAngle viewAngles;
-	g_pInterface->Engine->GetViewAngles(viewAngles);
-	GetAimTarget(viewAngles);
+	// QAngle viewAngles;
+	// g_pInterface->Engine->GetViewAngles(viewAngles);
+	GetAimTarget(cmd->viewangles);
 
 	if (!player->IsAlive() || player->GetAttacker() != nullptr || player->IsHangingFromLedge())
 		return;

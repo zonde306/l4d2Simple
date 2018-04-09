@@ -27,6 +27,7 @@ typedef int(__thiscall* FnKeyInput)(IClientMode*, int, ButtonCode_t, const char*
 typedef bool(__thiscall* FnFireEventClientSide)(IGameEventManager2*, IGameEvent*);
 typedef void(__thiscall* FnRenderView)(IBaseClientDll*, const CViewSetup&, int, int);
 typedef bool(__thiscall* FnFireEvent)(IGameEventManager2*, IGameEvent*, bool);
+typedef void(__thiscall* FnDrawModelExecute)(IVModelRender*, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -77,6 +78,7 @@ protected:
 	static bool __fastcall Hooked_FireEventClientSide(IGameEventManager2*, LPVOID, IGameEvent*);
 	static void __fastcall Hooked_RenderView(IBaseClientDll*, LPVOID, const CViewSetup&, int, int);
 	static bool __fastcall Hooked_FireEvent(IGameEventManager2*, LPVOID, IGameEvent*, bool);
+	static void __fastcall Hooked_DrawModelExecute(IVModelRender*, LPVOID, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -107,6 +109,7 @@ private:
 	FnFireEventClientSide oFireEventClientSide = nullptr;
 	FnRenderView oRenderView = nullptr;
 	FnFireEvent oFireEvent = nullptr;
+	FnDrawModelExecute oDrawModelExecute = nullptr;
 
 public:
 	bool* bSendPacket;

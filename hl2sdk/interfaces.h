@@ -19,7 +19,6 @@
 #include "./Interfaces/IPrediction.h"
 #include "./Interfaces/IRenderView.h"
 #include "./Interfaces/IEngineVGui.h"
-#include "./Interfaces/IVModelRender.h"
 #include "./Interfaces/INetChannelInfo.h"
 #include "./Interfaces/IBaseFileSystem.h"
 #include "./Interfaces/ILocalize.h"

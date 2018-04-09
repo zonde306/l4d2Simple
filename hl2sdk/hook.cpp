@@ -13,6 +13,7 @@
 #include "./Features/Visual.h"
 #include "./Features/DropVisual.h"
 #include "./Features/AntiAntiCheat.h"
+#include "./Features/HackvsHack.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -54,7 +55,8 @@ extern time_t g_tpGameTimer;
 
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
-g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent;
+	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
+	g_pHookModelRender;
 
 CClientHook::~CClientHook()
 {
@@ -206,10 +208,18 @@ bool CClientHook::Init()
 		g_pHookGameEvent->InstallHook();
 	}
 
+	if (g_pInterface->ModelRender != nullptr && !g_pHookModelRender)
+	{
+		g_pHookModelRender = std::make_unique<CVmtHook>(g_pInterface->ModelRender);
+		oDrawModelExecute = reinterpret_cast<FnDrawModelExecute>(g_pHookModelRender->HookFunction(indexes::DrawModelExecute, Hooked_DrawModelExecute));
+		g_pHookModelRender->InstallHook();
+	}
+
 	InitFeature();
 	// LoadConfig();
 
-	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction && g_pHookRenderView && g_pHookMaterialSystem);
+	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction &&
+		g_pHookRenderView && g_pHookMaterialSystem && g_pHookModelRender);
 }
 
 void CClientHook::InitFeature()
@@ -230,6 +240,8 @@ void CClientHook::InitFeature()
 		g_pVisualDrop = new CVisualDrop();
 	if (!g_pAntiAntiCheat)
 		g_pAntiAntiCheat = new CAntiAntiCheat();
+	if (!g_pHackVsHack)
+		g_pHackVsHack = new CHackVSHack();
 
 	// 这个要排在最后，否则没有效果
 	if (!g_pViewManager)
@@ -1082,7 +1094,16 @@ void __fastcall CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx
 {
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnRenderView(const_cast<CViewSetup&>(view));
-	
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook RenderView Success."));
+	}
+#endif
+
 	g_pClientHook->oRenderView(_ecx, view, nClearFlags, whatToDraw);
 }
 
@@ -1103,6 +1124,24 @@ bool __fastcall CClientHook::Hooked_FireEvent(IGameEventManager2* _ecx, LPVOID _
 #endif
 
 	return result;
+}
+
+void __fastcall CClientHook::Hooked_DrawModelExecute(IVModelRender* _ecx, LPVOID _edx,
+	const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
+{
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnDrawModel(const_cast<DrawModelState_t&>(state), const_cast<ModelRenderInfo_t&>(pInfo), pCustomBoneToWorld);
+	
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook DrawModelExecute Success."));
+	}
+#endif
+
+	g_pClientHook->oDrawModelExecute(_ecx, state, pInfo, pCustomBoneToWorld);
 }
 
 void CClientPrediction::Init()
