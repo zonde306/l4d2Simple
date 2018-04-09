@@ -37,6 +37,9 @@ typedef void(__cdecl* FnCL_Move)(float, bool);
 typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
 typedef int(__cdecl* FnSetPredictionRandomSeed)(int);
 typedef void(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
+typedef void(__cdecl* FnTraceLine2)(const Vector&, const Vector&, unsigned int, const IHandleEntity*, int, trace_t*);
+typedef void(__cdecl* FnTraceLine)(const Vector&, const Vector&, unsigned int, ITraceFilter*, trace_t*);
+typedef void(__cdecl* FnClipTraceToPlayers)(const Vector&, const Vector&, unsigned int, ITraceFilter*, trace_t*);
 
 // 导出函数
 typedef void(__cdecl* FnRandomSeed)(int iSeed);
@@ -121,6 +124,9 @@ public:
 	FnWriteUsercmd WriteUserCmd;
 	FnSharedRandomFloat SharedRandomFloat;
 	FnSetPredictionRandomSeed SetPredictionRandomSeed;
+	FnTraceLine2 TraceLine2;
+	FnTraceLine TraceLine;
+	FnClipTraceToPlayers ClipTraceToPlayers;
 
 	// 通过导出表得到的函数
 	FnRandomSeed RandomSeed;

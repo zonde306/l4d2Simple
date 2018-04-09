@@ -48,6 +48,9 @@ extern time_t g_tpGameTimer;
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
 #define SIG_RANDOM_SEED				XorStr("A3 ? ? ? ? 5D C3 55")
+#define SIG_TRACE_LINE2				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 6C 56 8B 43 08")
+#define SIG_TRACE_LINE				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 5C 56 8B 43 08")
+#define SIG_CLIP_TRACE_PLAYER		XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 57 8B 53 14")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
@@ -114,6 +117,15 @@ bool CClientHook::Init()
 
 	SetPredictionRandomSeed = reinterpret_cast<FnSetPredictionRandomSeed>(Utils::FindPattern(XorStr("client.dll"), SIG_SET_RANDOM_SEED));
 	PRINT_OFFSET(XorStr("SetPredictionRandomSeed"), SetPredictionRandomSeed);
+
+	TraceLine2 = reinterpret_cast<FnTraceLine2>(Utils::FindPattern(XorStr("client.dll"), SIG_TRACE_LINE2));
+	PRINT_OFFSET(XorStr("TraceLine2"), TraceLine2);
+
+	TraceLine = reinterpret_cast<FnTraceLine>(Utils::FindPattern(XorStr("client.dll"), SIG_TRACE_LINE));
+	PRINT_OFFSET(XorStr("TraceLine"), TraceLine);
+
+	ClipTraceToPlayers = reinterpret_cast<FnClipTraceToPlayers>(Utils::FindPattern(XorStr("client.dll"), SIG_CLIP_TRACE_PLAYER));
+	PRINT_OFFSET(XorStr("ClipTraceToPlayers"), ClipTraceToPlayers);
 
 	g_pClientPrediction = std::make_unique<CClientPrediction>();
 	g_pClientPrediction->Init();

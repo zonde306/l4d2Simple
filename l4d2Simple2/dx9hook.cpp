@@ -61,7 +61,7 @@ void CDirectX9Hook::Init()
 	D3DCAPS9 caps;
 	m_pOriginDevice = **reinterpret_cast<IDirect3DDevice9***>(Utils::FindPattern(XorStr("shaderapidx9.dll"), SIG_MOV_DIRECT_PTR) + 1);
 	
-	if (m_pOriginDevice != nullptr && m_pOriginDevice->GetDeviceCaps(&caps))
+	if (m_pOriginDevice != nullptr && m_pOriginDevice->GetDeviceCaps(&caps) == D3D_OK)
 	{
 		Utils::log(XorStr("CDirectX9Hook.Init -> m_pOriginDevice = 0x%X"), m_pOriginDevice);
 		SetupSecondHook(m_pOriginDevice);

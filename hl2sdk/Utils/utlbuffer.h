@@ -1,8 +1,10 @@
 #pragma once
 #include "../definitions.h"
+#include "../Structs/netprop.h"
 #include "utlmemory.h"
 #include <Windows.h>
 
+/*
 typedef enum _fieldtypes
 {
 	FIELD_VOID = 0,			// No type or value
@@ -100,13 +102,8 @@ struct datamap_t
 
 	int					m_nPackedSize;
 	void	*m_pOptimizedDataMap;
-
-	/*
-#if defined( _DEBUG )
-	bool				bValidityChecked;
-#endif // _DEBUG
-	*/
 };
+*/
 
 class CByteswap
 {

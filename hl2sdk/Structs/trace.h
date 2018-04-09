@@ -21,7 +21,6 @@ public:
 	float w;
 };
 
-
 struct Ray_t
 {
 	VectorAligned  m_Start;    // starting point, centered within the extents
@@ -29,8 +28,8 @@ struct Ray_t
 	VectorAligned  m_StartOffset;    // Add this to m_Start to get the actual ray start
 	VectorAligned  m_Extents;    // Describes an axis aligned box extruded along a ray
 
-								 // 要不要都可以的
-								 // const matrix3x4_t *m_pWorldAxisTransform;
+	// 没有这个东西的
+	// const matrix3x4_t *m_pWorldAxisTransform;
 
 	bool    m_IsRay;    // are the extents zero?
 	bool    m_IsSwept;    // is delta != 0?
@@ -63,6 +62,7 @@ struct cplane_t
 
 struct trace_t
 {
+public:	// CBaseTrace
 	Vector start;
 	Vector end;
 	cplane_t plane;
@@ -71,10 +71,16 @@ struct trace_t
 	WORD dispFlags;
 	bool allsolid;
 	bool startSolid;
+
+public:	// CGameTrace
 	float fractionLeftSolid;
 	csurface_t surface;
 	int hitGroup;
 	short physicsBone;
+
+	// 好像没有这个的
+	// unsigned short worldSurfaceIndex;
+
 	CBaseEntity* m_pEnt;
 	int hitbox;
 };

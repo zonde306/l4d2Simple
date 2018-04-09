@@ -33,7 +33,7 @@ void CBaseMenu::Init()
 {
 	// g_pDirextXHook->m_vfnDrawIndexedPrimitive.emplace_back(Hooked_DrawIndexedPrimitive);
 	// g_pDirextXHook->AddHook_DrawIndexedPrimitive(Hooked_DrawIndexedPrimitive);
-	ImGui::StyleColorsDark();
+	// ImGui::StyleColorsDark();
 	g_tpGameTimer = time(nullptr);
 	g_tpPlayingTimer = 0;
 }
