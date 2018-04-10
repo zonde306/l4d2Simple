@@ -31,7 +31,7 @@ extern std::map<std::string, int> g_mPropOffset;
 #define DECL_NETPROP_OFFSET_RET(_table,_name,_type)	DECL_NETPROP_OFFSET(_table, _name); return DECL_NETPROP_GET(_type);
 
 
-class CBaseEntity : protected IClientEntity
+class CBaseEntity : public IClientEntity
 {
 public:	// NetProp
 	template<typename T>

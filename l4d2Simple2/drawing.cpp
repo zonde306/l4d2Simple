@@ -521,7 +521,6 @@ CDrawing::~CDrawing()
 {
 	ReleaseObjects();
 	ImGui_ImplDX9_Shutdown();
-	ImGui::DestroyContext();
 
 	m_imFonts.Clear();
 	ImGui::GetIO().Fonts->Clear();
@@ -532,7 +531,6 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 	m_pDevice = device;
 	m_iFontSize = fontSize;
 
-	ImGui::CreateContext();
 	ImGui_ImplDX9_Init(g_hGameWindow, device);
 	// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::StyleColorsDark();

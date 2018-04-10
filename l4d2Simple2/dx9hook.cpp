@@ -51,6 +51,8 @@ CDirectX9Hook::~CDirectX9Hook()
 		m_pVMTHook->UninstallHook();
 		m_pVMTHook.reset();
 	}
+
+	// ImGui::DestroyContext();
 }
 
 void CDirectX9Hook::Init()
@@ -77,6 +79,7 @@ void CDirectX9Hook::Init()
 		SetupFirstHook();
 	}
 
+	ImGui::CreateContext();
 	Utils::log(XorStr("CDirectX9Hook Initialization..."));
 }
 
