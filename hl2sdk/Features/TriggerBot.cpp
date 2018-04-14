@@ -47,19 +47,17 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
 	GetAimTarget(cmd->viewangles);
 
-	if (!player->IsAlive() || player->GetAttacker() != nullptr || player->IsHangingFromLedge())
+	if (!player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge())
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
 	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
 		return;
 
-	// 非玩家生还者是免疫僵尸攻击的
-	// 而且他们还会和玩家抢东西(抢包抢药抢武器)
-	// 例如 c6m3, c6m1 的一代生还者
+	// 检查队友是否被控
 	if (m_pAimTarget->GetTeam() == 2)
 	{
-		CBasePlayer* attacker = m_pAimTarget->GetAttacker();
+		CBasePlayer* attacker = m_pAimTarget->GetCurrentAttacker();
 		if (attacker == nullptr || !attacker->IsAlive())
 			return;
 
@@ -69,13 +67,25 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			m_pAimTarget = attacker;
 	}
 
+	// 打蹲下未愤怒 Witch 的头可以造成硬直效果
+	// 这个用于辅助瞄准头部
+	bool canWitchHeadshot = false;
 	if (m_pAimTarget->GetClassID() == ET_WITCH)
 	{
+		float angry = m_pAimTarget->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage"));
+
+		// 主动攻击蹲下的 Witch
+		if (angry <= 0.0f && m_pAimTarget->GetSequence() == 4 && (cmd->buttons & IN_ATTACK))
+		{
+			// 蹲妹爆头可以打出硬直
+			canWitchHeadshot = true;
+		}
+
 		// Witch 在被惊扰后被攻击不会转移目标，除非点燃它
-		if (m_bNonWitch || m_pAimTarget->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+		if (!canWitchHeadshot && (m_bNonWitch || angry < 1.0f))
 			return;
 
-		// 检查是否会点燃 Witch, 防止意外转移目标
+		// 检查是否会点燃 Witch, 防止意外
 		// m_upgradeBitVec, 1=燃烧.2=高爆.4=激光
 		// m_nUpgradedPrimaryAmmoLoaded, 子弹数量
 		if (m_pAimTarget->GetNetProp<byte>(XorStr("DT_Infected"), XorStr("m_bIsBurning")) == 0 &&
@@ -85,7 +95,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	if (m_bBlockFriendlyFire && m_pAimTarget->GetTeam() == player->GetTeam() &&
-		!player->IsIncapacitated() && player->GetAttacker() == nullptr)
+		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
 	{
 		cmd->buttons &= ~IN_ATTACK;
 		return;
@@ -103,12 +113,12 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		}
 	}
 
-	if (m_bTraceHead)
+	if (m_bTraceHead || canWitchHeadshot)
 	{
 		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
 		{
-			if(m_bTraceSilent)
+			if(m_bTraceSilent || canWitchHeadshot)
 				g_pViewManager->ApplySilentFire(aimAngles);
 			else
 				g_pInterface->Engine->SetViewAngles(aimAngles);
@@ -132,13 +142,14 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("自动开枪不会射击队友。");
 
 	ImGui::Checkbox(XorStr("Trigger Position"), &m_bAimPosition);
+	IMGUI_TIPS("显示瞄准的位置，调试用。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
 	IMGUI_TIPS("自动开枪时射击头部，用于 猎头者 模式。");
 
 	ImGui::Checkbox(XorStr("Track Silent"), &m_bTraceSilent);
-	IMGUI_TIPS("自动开枪时射击头部防止被观察者发现。");
+	IMGUI_TIPS("自动开枪时射击头部防止被观察者发现。\n建议开启，因为不开是打不准的。");
 
 	ImGui::SliderFloat(XorStr("Track FOV"), &m_fTraceFov, 1.0f, 90.0f, ("%.1f"));
 

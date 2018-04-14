@@ -48,10 +48,10 @@ public:
 	int GetAmmo(int ammoType);
 
 	// 获取当前控制者 (生还者被特感控)
-	CBasePlayer* GetAttacker();
+	CBasePlayer* GetCurrentAttacker();
 
 	// 获取当前的被控制者 (感染者控制的生还者)
-	CBasePlayer* GetVictim();
+	CBasePlayer* GetCurrentVictim();
 
 	// 是否站在地上
 	bool IsOnGround();
@@ -61,4 +61,16 @@ public:
 
 	// 是否为黑白状态 (生还者再次倒下就会死亡)
 	bool IsDying();
+
+	// 获取角色名，例如：Nick, Bill, Hunter, Tank, Witch, Infected
+	std::string GetCharacterName();
+
+	// 获取感染者类型
+	ZombieClass_t GetZombieType();
+
+	// 检查玩家类型
+	bool IsSurvivor();
+	bool IsSpecialInfected();
+	bool IsCommonInfected();
+	bool IsWitch();
 };

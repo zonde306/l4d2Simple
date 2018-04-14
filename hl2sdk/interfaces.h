@@ -38,7 +38,7 @@ public:
 	IEngineTrace* Trace;
 	IClientEntityList* EntList;
 	ICvar* Cvar;
-	IGameEvent* GameEvent;
+	IGameEventManager2* GameEvent;
 	CGlobalVarsBase* GlobalVars;
 	IInput* Input;
 	ISurface* Surface;

@@ -2,11 +2,13 @@
 #include "BaseFeatures.h"
 #include <vector>
 
+class CGEL_AntiAntiCheat;
 class CAntiAntiCheat : public CBaseFeatures
 {
 public:
 	CAntiAntiCheat();
 	~CAntiAntiCheat();
+	friend CGEL_AntiAntiCheat;
 
 	virtual void OnMenuDrawing() override;
 	virtual bool OnUserMessage(int msgid, bf_read msgdata);
@@ -16,6 +18,7 @@ public:
 
 	virtual void OnConfigLoading(const config_type& data);
 	virtual void OnConfigSave(config_type& data);
+	virtual void OnConnect() override;
 
 	// 搜索字符串用到的函数
 	// source 为被搜索的字符串
@@ -31,12 +34,27 @@ private:
 		std::function<void(typename std::vector<T>::iterator&, std::string)> change);
 
 private:
+	bool m_bBlockCRCCheck = true;
+
+private:
 	std::vector<int> m_BlockUserMessage;
 	std::vector<std::pair<std::string, std::string>> m_BlockQuery, m_BlockSetting;
 	std::vector<std::string> m_BlockExecute;
 
 	char m_szFilterText[255];
 	char m_szRenameText[255];
+	CGEL_AntiAntiCheat* m_pEventListener;
 };
 
 extern CAntiAntiCheat* g_pAntiAntiCheat;
+
+class CGEL_AntiAntiCheat : public IGameEventListener2
+{
+public:
+	friend CAntiAntiCheat;
+
+	virtual void FireGameEvent(IGameEvent *event) override;
+
+private:
+	CAntiAntiCheat* m_pParent = nullptr;
+};

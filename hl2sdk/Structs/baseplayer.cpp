@@ -101,7 +101,7 @@ int CBasePlayer::GetAmmo(int ammoType)
 	return *reinterpret_cast<WORD*>(reinterpret_cast<DWORD>(this) + offset + (ammoType * 4));
 }
 
-CBasePlayer * CBasePlayer::GetAttacker()
+CBasePlayer * CBasePlayer::GetCurrentAttacker()
 {
 	static int tongueOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_tongueOwner"));
 	static int rideOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_jockeyAttacker"));
@@ -136,7 +136,7 @@ finish_check_handle:
 	return reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 }
 
-CBasePlayer * CBasePlayer::GetVictim()
+CBasePlayer * CBasePlayer::GetCurrentVictim()
 {
 	static int tongueOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_tongueVictim"));
 	static int rideOffset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_jockeyVictim"));
@@ -207,6 +207,100 @@ bool CBasePlayer::IsDying()
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_bIsOnThirdStrike"));
 	Assert_NetProp(offset);
 	return (DECL_NETPROP_GET(byte) != 0);
+}
+
+std::string CBasePlayer::GetCharacterName()
+{
+	int classId = GetClassID();
+	std::string buffer;
+
+	switch (classId)
+	{
+	case ET_SMOKER:
+		buffer = XorStr("Smoker");
+		break;
+	case ET_BOOMER:
+		buffer = XorStr("Boomer");
+		break;
+	case ET_HUNTER:
+		buffer = XorStr("Hunter");
+		break;
+	case ET_SPITTER:
+		buffer = XorStr("Spitter");
+		break;
+	case ET_JOCKEY:
+		buffer = XorStr("Jockey");
+		break;
+	case ET_CHARGER:
+		buffer = XorStr("Charger");
+		break;
+	case ET_WITCH:
+		buffer = XorStr("Witch");
+		break;
+	case ET_TANK:
+		buffer = XorStr("Tank");
+		break;
+	case ET_SURVIVORBOT:
+	case ET_CTERRORPLAYER:
+		// const char* models = entity->GetNetProp<const char*>(XorStr("DT_BasePlayer"), XorStr("m_ModelName"));
+		const model_t* models = GetModel();
+		if (models->name[0] != 'm' || models->name[7] != 's' || models->name[17] != 's')
+			break;
+
+		if (models->name[26] == 'g')			// models/survivors/survivor_gambler.mdl
+			buffer = XorStr("Nick");		// 西装
+		else if (models->name[26] == 'p')		// models/survivors/survivor_producer.mdl
+			buffer = XorStr("Rochelle");	// 黑妹
+		else if (models->name[26] == 'c')		// models/survivors/survivor_coach.mdl
+			buffer = XorStr("Coach");		// 黑胖
+		else if (models->name[26] == 'n')		// models/survivors/survivor_namvet.mdl
+			buffer = XorStr("Bill");		// 老头
+		else if (models->name[26] == 't')		// models/survivors/survivor_teenangst.mdl
+			buffer = XorStr("Zoey");		// 萌妹
+		else if (models->name[26] == 'b')		// models/survivors/survivor_biker.mdl
+			buffer = XorStr("Francis");		// 背心
+		else if (models->name[26] == 'm')
+		{
+			if (models->name[27] == 'e')		// models/survivors/survivor_mechanic.mdl
+				buffer = XorStr("Ellis");	// 帽子
+			else if (models->name[27] == 'a')	// models/survivors/survivor_manager.mdl
+				buffer = XorStr("Louis");	// 光头
+		}
+
+		break;
+	}
+
+	return buffer;
+}
+
+ZombieClass_t CBasePlayer::GetZombieType()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
+	Assert_NetProp(offset);
+	return static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));
+}
+
+bool CBasePlayer::IsSurvivor()
+{
+	int classId = GetClassID();
+	return (classId == ET_CTERRORPLAYER || classId == ET_SURVIVORBOT);
+}
+
+bool CBasePlayer::IsSpecialInfected()
+{
+	int classId = GetClassID();
+	return (classId == ET_BOOMER || classId == ET_SMOKER || classId == ET_HUNTER || classId == ET_SPITTER ||
+		classId == ET_JOCKEY || classId == ET_CHARGER || classId == ET_TANK);
+}
+
+bool CBasePlayer::IsCommonInfected()
+{
+	return (GetClassID() == ET_INFECTED);
+}
+
+bool CBasePlayer::IsWitch()
+{
+	return (GetClassID() == ET_WITCH);
 }
 
 bool CBasePlayer::IsAlive()

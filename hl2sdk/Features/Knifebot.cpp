@@ -42,7 +42,9 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bFastMelee && team == 2 && (cmd->buttons & IN_RELOAD))
 	{
-		if (RunFastMelee(cmd, weaponId, nextAttack, serverTime))
+		RunFastMelee(cmd, weaponId, nextAttack, serverTime);
+
+		if(!weapon->IsReloading())
 			return;
 	}
 
@@ -82,8 +84,11 @@ void CKnifeBot::OnMenuDrawing()
 	IMGUI_TIPS("近战武器速砍，按住 R 启动。");
 
 	ImGui::Separator();
-	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 50.0f, XorStr("%.0f"));
-	ImGui::SliderFloat(XorStr("Auto Shove Range"), &m_fExtraShoveRange, 0.0f, 50.0f, XorStr("%.0f"));
+	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 100.0f, XorStr("%.0f"));
+	IMGUI_TIPS("近战武器攻击范围预测。");
+
+	ImGui::SliderFloat(XorStr("Auto Shove Range"), &m_fExtraShoveRange, 0.0f, 100.0f, XorStr("%.0f"));
+	IMGUI_TIPS("右键(推/抓)范围预测。");
 
 	ImGui::TreePop();
 }
@@ -161,7 +166,7 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 		m_eMeleeStage = FMS_None;
 	}
 
-	return false;
+	return (m_iMeleeTick > 0);
 }
 
 bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)

@@ -24,7 +24,7 @@ void CClientInterface::Init()
 	Trace = GetPointer<IEngineTrace>(XorStr("engine.dll"), XorStr("EngineTraceClient"));
 	EntList = GetPointer<IClientEntityList>(XorStr("client.dll"), XorStr("VClientEntityList"));
 	Cvar = GetPointer<ICvar>(XorStr("vstdlib.dll"), XorStr("VEngineCvar"));
-	GameEvent = GetPointer<IGameEvent>(XorStr("engine.dll"), XorStr("GAMEEVENTSMANAGER002"));
+	GameEvent = GetPointer<IGameEventManager2>(XorStr("engine.dll"), XorStr("GAMEEVENTSMANAGER002"));
 	Surface = GetPointer<ISurface>(XorStr("vguimatsurface.dll"), XorStr("VGUI_Surface"));
 	DebugOverlay = GetPointer<IVDebugOverlay>(XorStr("engine.dll"), XorStr("VDebugOverlay"));
 	Panel = GetPointer<IVPanel>(XorStr("vgui2.dll"), XorStr("VGUI_Panel"));

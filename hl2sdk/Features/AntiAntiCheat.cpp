@@ -4,13 +4,24 @@
 #include <cctype>
 
 CAntiAntiCheat* g_pAntiAntiCheat = nullptr;
+#define FCVAR_REMOVE	(FCVAR_CHEAT|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOT_CONNECTED|FCVAR_SERVER_CAN_EXECUTE)
+#define FCVAR_SETTING	(FCVAR_SERVER_CANNOT_QUERY)
 
 CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 {
+	m_pEventListener = new CGEL_AntiAntiCheat();
+	m_pEventListener->m_pParent = this;
+
+	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
+	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
+	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
 }
 
 CAntiAntiCheat::~CAntiAntiCheat()
 {
+	g_pInterface->GameEvent->RemoveListener(m_pEventListener);
+	delete m_pEventListener;
+	
 	CBaseFeatures::~CBaseFeatures();
 }
 
@@ -18,6 +29,9 @@ void CAntiAntiCheat::OnMenuDrawing()
 {
 	if (!ImGui::TreeNode(XorStr("Anti Anti Cheat")))
 		return;
+
+	ImGui::Checkbox(XorStr("No CRC Check"), &m_bBlockCRCCheck);
+	IMGUI_TIPS("屏蔽 CRC 检查，如果不是必须禁用则开启。");
 
 	// 过滤器
 	ImGui::InputText(XorStr("aacFilter"), m_szFilterText, 255);
@@ -169,6 +183,8 @@ bool CAntiAntiCheat::OnProcessClientCommand(const std::string& cmd)
 
 void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 {
+	m_bBlockCRCCheck = g_pConfig->GetBoolean(XorStr("AntiAntiCheat"), XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	
 	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiQuery")))
 	{
 		m_BlockQuery.emplace_back(it.first, it.second.m_sValue);
@@ -214,6 +230,31 @@ void CAntiAntiCheat::OnConfigSave(config_type & data)
 	for (const auto& it : m_BlockUserMessage)
 	{
 		g_pConfig->SetValue(mainKeys, std::to_string(it), "");
+	}
+
+	g_pConfig->SetValue(XorStr("AntiAntiCheat"), XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+}
+
+void CAntiAntiCheat::OnConnect()
+{
+	if (!m_bBlockCRCCheck)
+		return;
+
+	static ConVar* sv_consistency = g_pInterface->Cvar->FindVar(XorStr("sv_consistency"));
+	static ConVar* sv_pure = g_pInterface->Cvar->FindVar(XorStr("sv_pure"));
+	if (sv_consistency != nullptr)
+	{
+		if (sv_consistency->IsFlagSet(FCVAR_REMOVE))
+			sv_consistency->RemoveFlags(FCVAR_REMOVE);
+		
+		sv_consistency->SetValue(0);
+	}
+	if (sv_pure != nullptr)
+	{
+		if (sv_pure->IsFlagSet(FCVAR_REMOVE))
+			sv_pure->RemoveFlags(FCVAR_REMOVE);
+		
+		sv_pure->SetValue(0);
 	}
 }
 
@@ -327,4 +368,30 @@ inline void CAntiAntiCheat::CreateMenuList(const std::string& name, std::vector<
 
 	ImGui::EndChild();
 	ImGui::TreePop();
+}
+
+void CGEL_AntiAntiCheat::FireGameEvent(IGameEvent * event)
+{
+	if (!m_pParent->m_bBlockCRCCheck)
+		return;
+	
+	if (g_pInterface->Engine->GetPlayerForUserID(event->GetInt(XorStr("userid"))) != g_pInterface->Engine->GetLocalPlayer())
+		return;
+
+	static ConVar* sv_consistency = g_pInterface->Cvar->FindVar(XorStr("sv_consistency"));
+	static ConVar* sv_pure = g_pInterface->Cvar->FindVar(XorStr("sv_pure"));
+	if (sv_consistency != nullptr)
+	{
+		if (sv_consistency->IsFlagSet(FCVAR_REMOVE))
+			sv_consistency->RemoveFlags(FCVAR_REMOVE);
+
+		sv_consistency->SetValue(0);
+	}
+	if (sv_pure != nullptr)
+	{
+		if (sv_pure->IsFlagSet(FCVAR_REMOVE))
+			sv_pure->RemoveFlags(FCVAR_REMOVE);
+
+		sv_pure->SetValue(0);
+	}
 }

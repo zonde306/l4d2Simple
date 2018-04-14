@@ -14,6 +14,7 @@
 #include "./Features/DropVisual.h"
 #include "./Features/AntiAntiCheat.h"
 #include "./Features/HackvsHack.h"
+#include "./Features/EventLogger.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -254,6 +255,8 @@ void CClientHook::InitFeature()
 		g_pAntiAntiCheat = new CAntiAntiCheat();
 	if (!g_pHackVsHack)
 		g_pHackVsHack = new CHackVSHack();
+	if (!g_pEventLogger)
+		g_pEventLogger = new CEventLogger();
 
 	// 这个要排在最后，否则没有效果
 	if (!g_pViewManager)
