@@ -244,6 +244,9 @@ std::string CBasePlayer::GetCharacterName()
 	case ET_CTERRORPLAYER:
 		// const char* models = entity->GetNetProp<const char*>(XorStr("DT_BasePlayer"), XorStr("m_ModelName"));
 		const model_t* models = GetModel();
+		if (models == nullptr || models->name[0] == '\0')
+			break;
+
 		if (models->name[0] != 'm' || models->name[7] != 's' || models->name[17] != 's')
 			break;
 
@@ -275,6 +278,12 @@ std::string CBasePlayer::GetCharacterName()
 
 ZombieClass_t CBasePlayer::GetZombieType()
 {
+	int classId = GetClassID();
+	if (classId == ET_WITCH)
+		return ZC_WITCH;
+	if (classId == ET_INFECTED)
+		return ZC_COMMON;
+	
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
 	Assert_NetProp(offset);
 	return static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));

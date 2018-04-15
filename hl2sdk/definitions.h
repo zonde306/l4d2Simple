@@ -659,6 +659,8 @@ enum EntityType_t
 // CTerrorPlayer::m_zombieClass
 enum ZombieClass_t
 {
+	ZC_COMMON = 0,			// 普感
+	ZC_INFECTED = 0,		// 同上
 	ZC_SMOKER = 1,			// 舌头
 	ZC_BOOMER = 2,			// 胖子
 	ZC_HUNTER = 3,			// 猎人
