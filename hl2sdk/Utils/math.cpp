@@ -66,6 +66,7 @@ QAngle math::CalculateAim(const Vector & origin, const Vector & target)
 
 float math::GetAnglesFieldOfView(const QAngle & myAngles, const QAngle & aimAngles)
 {
+	/*
 	static auto getFov = [](float orgViewX, float orgViewY, float ViewX, float ViewY, float& fovX, float& fovY) -> void
 	{
 		fovX = std::abs(orgViewX - ViewX);
@@ -90,6 +91,11 @@ float math::GetAnglesFieldOfView(const QAngle & myAngles, const QAngle & aimAngl
 	Vector toHim(0.0f, 0.0f, 0.0f);
 	getFov(myAngles.x, myAngles.y, aimAngles.x, aimAngles.y, toHim.x, toHim.y);
 	return getDistance(toHim.x, toHim.y);
+	*/
+
+	Vector vAngles = myAngles.Forward();
+	Vector vAimAngles = aimAngles.Forward();
+	return RAD2DEG(acos(vAngles.Dot(vAimAngles) / vAngles.LengthSqr()));
 }
 
 float math::GetVectorDistance(const Vector & origin1, const Vector & origin2, bool squared)

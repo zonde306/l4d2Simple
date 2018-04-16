@@ -43,6 +43,9 @@ private:
 	CBasePlayer* m_pAimTarget = nullptr;
 	QAngle m_vecAimAngles;
 	bool m_bRunAutoAim = false;
+
+	float m_fTargetFov = 0.0f;
+	float m_fTargetDistance = 0.0f;
 };
 
 extern CAimBot* g_pAimbot;

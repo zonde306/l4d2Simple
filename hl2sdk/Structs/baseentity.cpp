@@ -84,13 +84,13 @@ Vector CBaseEntity::GetHitboxOrigin(int hitbox)
 			return INVALID_VECTOR;
 		}
 
-		if ((set = hdr->GetHitboxSet(0)) == nullptr)
+		if ((set = hdr->pHitboxSet(0)) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.GetHitboxSet Failed."));
 			return INVALID_VECTOR;
 		}
 
-		if ((hitboxMat = set->GetHitbox(hitbox)) == nullptr)
+		if ((hitboxMat = set->pHitbox(hitbox)) == nullptr)
 		{
 			Utils::log(XorStr("GetHitboxOrigin.GetHitbox Failed."));
 			return INVALID_VECTOR;

@@ -4,8 +4,21 @@
 #include "../interfaces.h"
 #include "../hook.h"
 #include "../../l4d2Simple2/config.h"
+#include <cmath>
 
 CAimBot* g_pAimbot = nullptr;
+
+#ifndef M_PI
+#define M_PI	3.14159265358979323846
+#define M_PI_F	((float)M_PI)
+#endif
+
+#ifndef RAD2DEG
+#define RAD2DEG(x)  ((float)(x) * (float)(180.f / M_PI_F))
+#define RadiansToDegrees RAD2DEG
+#define DEG2RAD(x)  ((float)(x) * (float)(M_PI_F / 180.f))
+#define DegreesToRadians DEG2RAD
+#endif
 
 #define IsSubMachinegun(_id)		(_id == WeaponId_SubMachinegun || _id == WeaponId_Silenced || _id == WeaponId_MP5)
 #define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
@@ -51,7 +64,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	// QAngle viewAngles;
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
-	if(!IsValidTarget(m_pAimTarget))
+	if(!IsValidTarget(m_pAimTarget) || !(cmd->buttons & IN_ATTACK))
 		FindTarget(cmd->viewangles);
 
 	if (m_pAimTarget == nullptr)
@@ -167,15 +180,36 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 	if (!m_bShowRange)
 		return;
 
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr)
+		return;
+
 	int width = 0, height = 0;
 	g_pInterface->Engine->GetScreenSize(width, height);
+
+	int myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iFOV"));
+	if (myFov == 0)
+	{
+		static ConVar* cl_fov = g_pInterface->Cvar->FindVar(XorStr("cl_fov"));
+		if (cl_fov != nullptr)
+			myFov = cl_fov->GetInt();
+		else
+			myFov = 90;
+		// myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iDefaultFOV"));
+	}
+
+	float radius = (std::tanf(DEG2RAD(m_fAimFov) / 2) / std::tanf(DEG2RAD(myFov) / 2) * width);
+
 	width /= 2;
 	height /= 2;
 
 	if(m_bRunAutoAim)
-		g_pDrawing->DrawCircle(width, height, static_cast<int>(m_fAimFov), CDrawing::GREEN, 8);
+		g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::GREEN);
 	else
-		g_pDrawing->DrawCircle(width, height, static_cast<int>(m_fAimFov), CDrawing::WHITE, 8);
+		g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::WHITE);
+
+	g_pDrawing->DrawText(width, height - 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
+	g_pDrawing->DrawText(width, height - 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
 }
 
 void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -209,7 +243,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 	
 	Vector myEyePosition = local->GetEyePosition();
 
-	float minFov = 361.0f, minDistance = 65535.0f;
+	float minFov = m_fAimFov + 1.0f, minDistance = m_fAimDist + 1.0f;
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 
 	// 特感和普感是同一个阵营的
@@ -233,6 +267,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			{
 				m_pAimTarget = entity;
 				minDistance = dist;
+				minFov = fov;
 			}
 		}
 		else
@@ -241,6 +276,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			if (dist <= m_fAimDist && fov < minFov)
 			{
 				m_pAimTarget = entity;
+				minDistance = dist;
 				minFov = fov;
 			}
 		}
@@ -250,6 +286,8 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			break;
 	}
 
+	m_fTargetFov = minFov;
+	m_fTargetDistance = minDistance;
 	return m_pAimTarget;
 }
 
