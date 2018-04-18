@@ -24,9 +24,13 @@ private:	// 菜单项
 	bool m_bNonWitch = true;
 	bool m_bBlockFriendlyFire = true;
 	bool m_bAimPosition = false;
+	bool m_bVelExt = true;
+	bool m_bForwardtrack = false;
 
 	bool m_bTraceHead = false;
-	bool m_bTraceSilent = false;
+	bool m_bTraceSilent = true;
+	bool m_bTraceVelExt = true;
+	bool m_bTraceForwardtrack = false;
 	float m_fTraceFov = 9.0f;
 
 	bool m_bFollowEnemy = false;

@@ -84,6 +84,13 @@ void CKnifeBot::OnMenuDrawing()
 	IMGUI_TIPS("近战武器速砍，按住 R 启动。");
 
 	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Melee Velocity Extrapolate"), &m_bVelExt);
+	IMGUI_TIPS("速度预测，可以提升精度。");
+
+	ImGui::Checkbox(XorStr("Melee Forwardtrack"), &m_bForwardtrack);
+	IMGUI_TIPS("速度延迟预测，需要开启上面的才能用。");
+
+	ImGui::Separator();
 	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 100.0f, XorStr("%.0f"));
 	IMGUI_TIPS("近战武器攻击范围预测。");
 
@@ -102,6 +109,8 @@ void CKnifeBot::OnConfigLoading(const config_type & data)
 	m_bFastMelee = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
 	m_fExtraMeleeRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
 	m_fExtraShoveRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
+	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
+	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
 }
 
 void CKnifeBot::OnConfigSave(config_type & data)
@@ -113,6 +122,8 @@ void CKnifeBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
@@ -214,7 +225,10 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 	float swingRange = (team == 3 ? cvClawRange->GetFloat() : cvShoveRange->GetFloat());
 	float meleeRange = cvMeleeRange->GetFloat();
+
 	Vector myEyePosition = local->GetEyePosition();
+	if (m_bVelExt)
+		myEyePosition = math::VelocityExtrapolate(myEyePosition, local->GetVelocity(), m_bForwardtrack);
 
 	swingRange += m_fExtraShoveRange;
 	meleeRange += m_fExtraMeleeRange;
@@ -228,6 +242,9 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		Vector aimPosition = entity->GetHeadOrigin();
 		if (!HasEnemyVisible(entity, aimPosition))
 			continue;
+
+		if (m_bVelExt)
+			aimPosition = math::VelocityExtrapolate(aimPosition, entity->GetVelocity(), m_bForwardtrack);
 
 		int classId = entity->GetClassID();
 		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);

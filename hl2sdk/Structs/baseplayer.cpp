@@ -314,7 +314,7 @@ bool CBasePlayer::IsWitch()
 
 bool CBasePlayer::IsAlive()
 {
-	if (IsDormant())
+	if (this == nullptr || IsDormant())
 		return false;
 	
 	static int lifeOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_lifeState"));

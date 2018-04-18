@@ -73,7 +73,15 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 	}
 
-	m_vecAimAngles = math::CalculateAim(local->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+	Vector myEyeOrigin = local->GetEyePosition();
+	Vector aimHeadOrigin = m_pAimTarget->GetHeadOrigin();
+	if (m_bVelExt)
+	{
+		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, local->GetVelocity(), m_bForwardtrack);
+		aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bForwardtrack);
+	}
+
+	m_vecAimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
 	// m_vecAimAngles = (m_pAimTarget->GetHeadOrigin() - local->GetEyePosition()).Normalize().toAngles();
 
 	if (!m_vecAimAngles.IsValid())
@@ -120,6 +128,13 @@ void CAimBot::OnMenuDrawing()
 	IMGUI_TIPS("自动瞄准不瞄准 Witch。");
 
 	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Velocity Extrapolate"), &m_bVelExt);
+	IMGUI_TIPS("速度预测，开启以提高精度。");
+
+	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
+	IMGUI_TIPS("速度延迟预测，开启以提高精度，需要先开启上面那个才会运行。");
+
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Distance priority"), &m_bDistance);
 	IMGUI_TIPS("优先选择最接距离近的目标，如果不开启则优先选择最接近准星的目标。");
 
@@ -131,7 +146,7 @@ void CAimBot::OnMenuDrawing()
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("AutoAim Range"), &m_bShowRange);
-	IMGUI_TIPS("待修复。");
+	IMGUI_TIPS("自动瞄准范围。");
 
 	ImGui::Checkbox(XorStr("AutoAim Angles"), &m_bShowAngles);
 	IMGUI_TIPS("显示瞄准的位置。");
@@ -153,8 +168,10 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
 	m_fAimFov = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
 	m_fAimDist = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
-	m_bShowRange = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
-	m_bShowAngles = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
+	m_bShowRange = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
+	m_bShowAngles = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
+	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
+	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -173,6 +190,8 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)

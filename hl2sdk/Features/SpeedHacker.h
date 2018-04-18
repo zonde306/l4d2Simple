@@ -17,6 +17,7 @@ public:
 	void RunPositionAdjustment(CUserCmd* cmd);
 	void RunBacktracking(CUserCmd* cmd);
 	void RecordBacktracking(CUserCmd* cmd);
+	void RunForwardtrack(CUserCmd* cmd);
 
 private:
 	float m_fOriginSpeed = 1.0f;
@@ -26,6 +27,7 @@ private:
 	bool m_bActive = false;
 	bool m_bPositionAdjustment = false;
 	bool m_bBacktrack = false;
+	bool m_bForwardtrack = false;
 
 private:
 	struct _Backtrack

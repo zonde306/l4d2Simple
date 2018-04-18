@@ -21,6 +21,8 @@ private:
 	bool m_bAutoFire = false;
 	bool m_bAutoShove = false;
 	bool m_bFastMelee = true;
+	bool m_bVelExt = true;
+	bool m_bForwardtrack = false;
 
 	float m_fExtraShoveRange = 0.0f;
 	float m_fExtraMeleeRange = 0.0f;

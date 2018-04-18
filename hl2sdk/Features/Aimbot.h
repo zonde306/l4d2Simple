@@ -35,6 +35,8 @@ private:	// 菜单项
 	bool m_bNonWitch = true;
 	bool m_bShowRange = false;
 	bool m_bShowAngles = false;
+	bool m_bVelExt = true;
+	bool m_bForwardtrack = false;
 
 	float m_fAimFov = 30.0f;
 	float m_fAimDist = 3000.0f;

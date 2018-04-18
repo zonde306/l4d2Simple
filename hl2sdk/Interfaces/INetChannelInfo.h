@@ -17,6 +17,15 @@
 #define SUBCHANNEL_WAITING	2 // sbuchannel sent data, waiting for ACK
 #define SUBCHANNEL_DIRTY	3   // subchannel is marked as dirty during changelevel
 
+/**
+* Network flow directions.
+*/
+enum NetFlow
+{
+	NetFlow_Outgoing = 0,	/**< Outgoing traffic */
+	NetFlow_Incoming,		/**< Incoming traffic */
+	NetFlow_Both,			/**< Both values added together */
+};
 
 class INetChannelInfo
 {

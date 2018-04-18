@@ -104,9 +104,14 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	// 开枪
 	cmd->buttons |= IN_ATTACK;
 
+	Vector myEyeOrigin = player->GetEyePosition();
+	if (m_bTraceVelExt)
+		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, player->GetVelocity(), m_bForwardtrack);
+
 	if (m_bFollowEnemy)
 	{
-		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHitboxOrigin(m_iHitBox));
+		Vector aimOrigin = m_pAimTarget->GetHitboxOrigin(m_iHitBox);
+		QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimOrigin);
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
 		{
 			g_pInterface->Engine->SetViewAngles(aimAngles);
@@ -115,7 +120,11 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	if (m_bTraceHead || canWitchHeadshot)
 	{
-		QAngle aimAngles = math::CalculateAim(player->GetEyePosition(), m_pAimTarget->GetHeadOrigin());
+		Vector aimHeadOrigin = m_pAimTarget->GetHeadOrigin();
+		if (m_bTraceVelExt)
+			aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bTraceForwardtrack);
+		
+		QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
 		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
 		{
 			if(m_bTraceSilent || canWitchHeadshot)
@@ -135,6 +144,8 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("自动开枪。");
 
 	ImGui::Checkbox(XorStr("Trigger Crosshairs"), &m_bCrosshairs);
+	IMGUI_TIPS("显示一个准星，根据瞄准的敌人切换不同的颜色。");
+
 	ImGui::Checkbox(XorStr("Block Friendly Fire"), &m_bBlockFriendlyFire);
 	IMGUI_TIPS("防止黑枪，瞄准队友时禁止开枪。");
 
@@ -145,13 +156,27 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("显示瞄准的位置，调试用。");
 
 	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Trigger Velocity Extrapolate"), &m_bVelExt);
+	IMGUI_TIPS("自动开枪速度预测。");
+
+	ImGui::Checkbox(XorStr("Trigger Forwardtrack"), &m_bForwardtrack);
+	IMGUI_TIPS("自动开枪速度延迟预测。");
+
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
 	IMGUI_TIPS("自动开枪时射击头部，用于 猎头者 模式。");
 
 	ImGui::Checkbox(XorStr("Track Silent"), &m_bTraceSilent);
 	IMGUI_TIPS("自动开枪时射击头部防止被观察者发现。\n建议开启，因为不开是打不准的。");
 
+	ImGui::Checkbox(XorStr("Track Velocity Extrapolate"), &m_bTraceVelExt);
+	IMGUI_TIPS("自动开枪时射击头部速度预测。");
+
+	ImGui::Checkbox(XorStr("Track Forwardtrack"), &m_bTraceForwardtrack);
+	IMGUI_TIPS("自动开枪时射击头部速度延迟预测。");
+
 	ImGui::SliderFloat(XorStr("Track FOV"), &m_fTraceFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("瞄准头部范围限制。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
@@ -176,6 +201,10 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_fTraceFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
 	m_bFollowEnemy = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
 	m_fFollowFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
+	m_bTraceVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
+	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_velext"), m_bVelExt);
+	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
+	m_bTraceForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -191,6 +220,10 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_velext"), m_bVelExt);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -252,6 +285,9 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 
 	Ray_t ray;
 	Vector startPosition = player->GetEyePosition();
+	if (m_bVelExt)
+		startPosition = math::VelocityExtrapolate(startPosition, player->GetVelocity(), m_bForwardtrack);
+
 	Vector endPosition = startPosition + eyeAngles.Forward().Scale(3500.0f);
 	ray.Init(startPosition, endPosition);
 

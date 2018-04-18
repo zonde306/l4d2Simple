@@ -27,6 +27,9 @@ void CSpeedHacker::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Backtracking"), &m_bBacktrack);
 	IMGUI_TIPS("另一种 tick 优化，在之前最好的 tick 里面选择一个合适现在的。\n一般情况下建议关闭，除非 triggerbot/aimbot 出现了问题。");
 
+	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
+	IMGUI_TIPS("tick 优化，使用速度延迟预测需要这个功能。\n三种 tick 优化做的是同一种事情(方法不同)，只能选一个。");
+
 	ImGui::Checkbox(XorStr("SpeedHack Active"), &m_bActive);
 	IMGUI_TIPS("加速，勾上后下面的东西才有效果。");
 
@@ -55,6 +58,9 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
 	if (m_bBacktrack)
 		RunBacktracking(cmd);
 
+	if (m_bForwardtrack)
+		RunForwardtrack(cmd);
+
 	if (!m_bActive)
 		return;
 	
@@ -79,6 +85,7 @@ void CSpeedHacker::OnConfigLoading(const config_type & data)
 	m_fUseSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
 	m_fWalkSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	m_fFireSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
+	m_bForwardtrack = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
 }
 
 void CSpeedHacker::OnConfigSave(config_type & data)
@@ -92,6 +99,7 @@ void CSpeedHacker::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
 }
 
 void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
@@ -194,6 +202,15 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 			m_iBacktrackingTarget = i;
 		}
 	}
+}
+
+void CSpeedHacker::RunForwardtrack(CUserCmd * cmd)
+{
+	INetChannelInfo* netChan = g_pInterface->Engine->GetNetChannelInfo();
+	if (netChan == nullptr)
+		return;
+
+	cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
 }
 
 CSpeedHacker::_Backtrack::_Backtrack(int tickCount, const Vector & origin) :

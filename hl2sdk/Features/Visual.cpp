@@ -371,7 +371,7 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
-		mstudiobone_t* bone = hdr->GetBone(i);
+		mstudiobone_t* bone = hdr->pBone(i);
 		if (bone == nullptr || !(bone->flags & BONE_USED_BY_HITBOX) ||
 			bone->parent < 0 || bone->parent >= hdr->numbones)
 			continue;

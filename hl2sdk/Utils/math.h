@@ -40,4 +40,5 @@ namespace math
 	Vector DoEnemyCircle(const Vector &vecDelta, float *flRotation = nullptr);
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	float DotProduct(const Vector & a, const Vector & b);
+	Vector VelocityExtrapolate(const Vector& origin, const Vector& velocity, bool forwardtrack = false);
 };
