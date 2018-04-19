@@ -584,6 +584,9 @@
     <ClInclude Include="..\hl2sdk\Features\EventLogger.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineSound.h">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">

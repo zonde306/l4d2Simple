@@ -79,7 +79,12 @@ bool CBaseFeatures::OnSendMove()
 
 bool CBaseFeatures::OnFindMaterial(std::string &, std::string &)
 {
-	return false;
+	return true;
+}
+
+bool CBaseFeatures::OnEmitSound(std::string &, int &, int &, float &, SoundLevel_t &, int &, int &, Vector &, Vector &, bool &, float &)
+{
+	return true;
 }
 
 void CBaseFeatures::OnConfigLoading(const config_type &)

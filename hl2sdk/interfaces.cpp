@@ -40,6 +40,7 @@ void CClientInterface::Init()
 	StringTable = GetPointer<INetworkStringTableContainer>(XorStr("engine.dll"), XorStr("VEngineClientStringTable"));
 	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
 	MaterialSystem = GetPointer<IMaterialSystem>(XorStr("materialsystem.dll"), XorStr("VMaterialSystem"));
+	Sound = GetPointer<IEngineSound>(XorStr("engine.dll"), XorStr("IEngineSoundClient"));
 
 	std::stringstream ss;
 

@@ -244,6 +244,7 @@
     <ClInclude Include="..\hl2sdk\Interfaces\ICollideable.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\ICvar.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineClient.h" />
+    <ClInclude Include="..\hl2sdk\Interfaces\IEngineSound.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineTrace.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineVGui.h" />
     <ClInclude Include="..\hl2sdk\Interfaces\IGameEvent.h" />

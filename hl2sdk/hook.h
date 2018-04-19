@@ -28,6 +28,7 @@ typedef bool(__thiscall* FnFireEventClientSide)(IGameEventManager2*, IGameEvent*
 typedef void(__thiscall* FnRenderView)(IBaseClientDll*, const CViewSetup&, int, int);
 typedef bool(__thiscall* FnFireEvent)(IGameEventManager2*, IGameEvent*, bool);
 typedef void(__thiscall* FnDrawModelExecute)(IVModelRender*, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
+typedef void(__thiscall* FnEmitSound)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -82,6 +83,7 @@ protected:
 	static void __fastcall Hooked_RenderView(IBaseClientDll*, LPVOID, const CViewSetup&, int, int);
 	static bool __fastcall Hooked_FireEvent(IGameEventManager2*, LPVOID, IGameEvent*, bool);
 	static void __fastcall Hooked_DrawModelExecute(IVModelRender*, LPVOID, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
+	static void __fastcall Hooked_EmitSound(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -113,6 +115,7 @@ private:
 	FnRenderView oRenderView = nullptr;
 	FnFireEvent oFireEvent = nullptr;
 	FnDrawModelExecute oDrawModelExecute = nullptr;
+	FnEmitSound oEmitSound = nullptr;
 
 public:
 	bool* bSendPacket;

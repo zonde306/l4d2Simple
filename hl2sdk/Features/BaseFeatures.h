@@ -42,6 +42,10 @@ public:
 	// 如果不打算修改原函数调用，需要返回 false
 	virtual bool OnFindMaterial(std::string&, std::string&);
 
+	// 返回 true 使用修改后的参数来调用原函数
+	// 如果不打算修改原函数调用，需要返回 false
+	virtual bool OnEmitSound(std::string&, int&, int&, float&, SoundLevel_t&, int&, int&, Vector&, Vector&, bool&, float&);
+
 	// 配置文件
 	using config_type = std::map<std::string, std::string>;
 	virtual void OnConfigLoading(const config_type&);

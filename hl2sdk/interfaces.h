@@ -24,6 +24,7 @@
 #include "./Interfaces/ILocalize.h"
 #include "./Interfaces/INetworkStringTable.h"
 #include "./Interfaces/IUniformRandomStream.h"
+#include "./Interfaces/IEngineSound.h"
 #include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
@@ -59,6 +60,7 @@ public:
 	IClientMode* ClientMode;
 	IVRenderView* RenderView;
 	IMaterialSystem* MaterialSystem;
+	IEngineSound* Sound;
 
 	std::unique_ptr<CNetVars> NetProp;
 

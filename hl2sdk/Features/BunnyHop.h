@@ -27,10 +27,14 @@ protected:
 	void DoExtraAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
 	void DoFullAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
 
+	void DoEdgeJump(CUserCmd* pCmd, int flags);
+
 private:
 	bool m_bShowMenu = false;
 	bool m_bAcitve = true;
 	bool m_bAutoStrafe = false;
+	bool m_bEdgeJump = false;
+
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;
 	size_t m_iBhopMode = 2;

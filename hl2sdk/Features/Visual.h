@@ -11,6 +11,7 @@ public:
 	virtual void OnSceneEnd() override;
 	virtual void OnMenuDrawing() override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
+	virtual bool OnFindMaterial(std::string& materialName, std::string& textureGroupName) override;
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
@@ -59,6 +60,10 @@ private:
 
 	bool m_bBarrel = false;
 	float m_fBarrelDistance = 1500.0f;
+
+	bool m_bNoVomit = true;
+	bool m_bCleanVision = true;
+	bool m_bCleanGhost = true;
 
 private:
 	HFont m_hSurfaceFont = 0;

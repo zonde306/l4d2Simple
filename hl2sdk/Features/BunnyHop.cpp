@@ -87,6 +87,9 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			break;
 		}
 	}
+
+	if (m_bEdgeJump && (pCmd->buttons & IN_FORWARD))
+		DoEdgeJump(pCmd, flags);
 }
 
 void CBunnyHop::OnMenuDrawing()
@@ -176,6 +179,9 @@ void CBunnyHop::OnMenuDrawing()
 		ImGui::EndCombo();
 	}
 
+	ImGui::Checkbox(XorStr("Edge Jump"), &m_bEdgeJump);
+	IMGUI_TIPS("到达边缘时自动起跳，需要按住 W 键。");
+
 	// ImGui::End();
 	ImGui::TreePop();
 }
@@ -187,6 +193,7 @@ void CBunnyHop::OnConfigLoading(const config_type & data)
 	m_bAcitve = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
 	m_iBhopMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
 	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
+	m_bEdgeJump = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 }
 
 void CBunnyHop::OnConfigSave(config_type & data)
@@ -196,6 +203,7 @@ void CBunnyHop::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
@@ -382,4 +390,33 @@ void CBunnyHop::DoFullAutoStrafe(CBasePlayer * player, CUserCmd * pCmd, int flag
 	float sidespeed = sideSpeed->GetFloat();
 	pCmd->sidemove = (anglesdiff > 0.0f ? -sidespeed : sidespeed);
 	pCmd->viewangles.y = normalize(pCmd->viewangles.y - anglesdiff);
+}
+
+void CBunnyHop::DoEdgeJump(CUserCmd * pCmd, int flags)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive() || !(flags & FL_ONGROUND) || (pCmd->buttons & IN_JUMP))
+		return;
+
+	Ray_t ray;
+	Vector origin = local->GetAbsOrigin();
+	ray.Init(origin, origin + Vector(0, 0, -32));
+
+	CTraceFilter filter;
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CBunnyHop.DoEdgeJump.TraceRay Error."));
+		return;
+	}
+
+	if (trace.fraction == 1.0f)
+		pCmd->buttons |= IN_JUMP;
 }

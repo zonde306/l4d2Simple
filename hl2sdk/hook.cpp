@@ -60,7 +60,7 @@ extern time_t g_tpGameTimer;
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
-	g_pHookModelRender;
+	g_pHookModelRender, g_pHookEngineSound;
 
 CClientHook::~CClientHook()
 {
@@ -102,7 +102,7 @@ bool CClientHook::Init()
 	}
 
 	oCL_Move = reinterpret_cast<FnCL_Move>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_MOVE));
-	PRINT_OFFSET(XorStr("oCL_SendMove"), oCL_Move);
+	PRINT_OFFSET(XorStr("oCL_Move"), oCL_Move);
 
 	WriteUserCmd = reinterpret_cast<FnWriteUsercmd>(Utils::FindPattern(XorStr("client.dll"), SIG_WRITE_USERCMD));
 	PRINT_OFFSET(XorStr("WriteUserCmd"), WriteUserCmd);
@@ -135,7 +135,7 @@ bool CClientHook::Init()
 	{
 		oCL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
 
-		PRINT_OFFSET(XorStr("CL_Move"), oCL_SendMove);
+		PRINT_OFFSET(XorStr("CL_SendMove"), oCL_SendMove);
 
 		if (oCL_SendMove != nullptr)
 		{
@@ -226,6 +226,13 @@ bool CClientHook::Init()
 		g_pHookModelRender = std::make_unique<CVmtHook>(g_pInterface->ModelRender);
 		oDrawModelExecute = reinterpret_cast<FnDrawModelExecute>(g_pHookModelRender->HookFunction(indexes::DrawModelExecute, Hooked_DrawModelExecute));
 		g_pHookModelRender->InstallHook();
+	}
+
+	if (g_pInterface->Sound != nullptr && !g_pHookEngineSound)
+	{
+		g_pHookEngineSound = std::make_unique<CVmtHook>(g_pInterface->Sound);
+		oEmitSound = reinterpret_cast<FnEmitSound>(g_pHookEngineSound->HookFunction(indexes::EmitSound, Hooked_EmitSound));
+		g_pHookEngineSound->InstallHook();
 	}
 
 	InitFeature();
@@ -1027,25 +1034,17 @@ void __fastcall CClientHook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LPVOID _edx,
 	char const* pMaterialName, const char* pTextureGroupName, bool complain, const char* pComplainPrefix)
 {
+	bool blockMaterial = false;
 	std::string copyMaterialName, copyTextureGroupName;
-	std::string newMaterialName, newTextureGroupName;
+	if (pMaterialName != nullptr)
+		copyMaterialName = pMaterialName;
+	if (pTextureGroupName != nullptr)
+		copyTextureGroupName = pTextureGroupName;
+
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
-		if (pMaterialName != nullptr)
-			copyMaterialName = pMaterialName;
-		else
-			copyMaterialName.clear();
-
-		if (pTextureGroupName != nullptr)
-			copyTextureGroupName = pTextureGroupName;
-		else
-			copyTextureGroupName.clear();
-
-		if (inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
-		{
-			newMaterialName = copyMaterialName;
-			newTextureGroupName = copyTextureGroupName;
-		}
+		if (!inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
+			blockMaterial = true;
 	}
 
 #ifdef _DEBUG
@@ -1057,14 +1056,12 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 	}
 #endif
 
-	if (!newMaterialName.empty())
-	{
-		return g_pClientHook->oFindMaterial(_ecx, newMaterialName.c_str(),
-			(newTextureGroupName.empty() ? nullptr : newTextureGroupName.c_str()),
-			complain, pComplainPrefix);
-	}
+	if (blockMaterial)
+		return nullptr;
 
-	return g_pClientHook->oFindMaterial(_ecx, pMaterialName, pTextureGroupName, complain, pComplainPrefix);
+	return g_pClientHook->oFindMaterial(_ecx, copyMaterialName.c_str(),
+		copyTextureGroupName.empty() ? nullptr : copyTextureGroupName.c_str(),
+		complain, pComplainPrefix);
 }
 
 int __fastcall CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int down, ButtonCode_t keynum, const char* pszCurrentBinding)
@@ -1157,6 +1154,47 @@ void __fastcall CClientHook::Hooked_DrawModelExecute(IVModelRender* _ecx, LPVOID
 #endif
 
 	g_pClientHook->oDrawModelExecute(_ecx, state, pInfo, pCustomBoneToWorld);
+}
+
+void __fastcall CClientHook::Hooked_EmitSound(IEngineSound* _ecx, LPVOID _edx, IRecipientFilter& filter, int iEntIndex,
+	int iChannel, const char* pSample, float flVolume, SoundLevel_t iSoundlevel, int iFlags, int iPitch,
+	const Vector* pOrigin, const Vector* pDirection, CUtlVector<Vector>* pUtlVecOrigins,
+	bool bUpdatePositions, float soundtime, int speakerentity)
+{
+	bool blockSound = false;
+	std::string copySample;
+	Vector copyOrigin = INVALID_VECTOR, copyDirection = INVALID_VECTOR;
+	if (pSample != nullptr)
+		copySample = pSample;
+	if (pOrigin != nullptr)
+		copyOrigin = *pOrigin;
+	if (pDirection != nullptr)
+		copyDirection = *pDirection;
+
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundlevel, iFlags, iPitch,
+			copyOrigin, copyDirection, bUpdatePositions, soundtime))
+			blockSound = true;
+	}
+	
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook EmitSound Success."));
+	}
+#endif
+
+	if (blockSound)
+		return;
+
+	g_pClientHook->oEmitSound(_ecx, filter, iEntIndex, iChannel, copySample.c_str(),
+		flVolume, iSoundlevel, iFlags, iPitch,
+		copyOrigin.IsValid() ? &copyOrigin : nullptr,
+		copyDirection.IsValid() ? &copyDirection : nullptr,
+		pUtlVecOrigins, bUpdatePositions, soundtime, speakerentity);
 }
 
 void CClientPrediction::Init()

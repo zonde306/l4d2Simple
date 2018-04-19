@@ -237,6 +237,17 @@ void CVisualPlayer::OnMenuDrawing()
 	IMGUI_TIPS("显示玩家瞄准的位置。");
 
 	ImGui::SliderFloat(XorStr("Barrel Distance"), &m_fBarrelDistance, 100.0f, 3000.0f, XorStr("%.0f"));
+	IMGUI_TIPS("显示玩家瞄准的位置线条长度。");
+
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("No Vomit Effect"), &m_bNoVomit);
+	IMGUI_TIPS("去除胆子屏幕效果。");
+
+	ImGui::Checkbox(XorStr("No Infected Vision"), &m_bCleanVision);
+	IMGUI_TIPS("去除特感黄色屏幕。");
+
+	ImGui::Checkbox(XorStr("No Ghost Vision"), &m_bCleanGhost);
+	IMGUI_TIPS("去除灵魂特感蓝色屏幕。");
 
 	ImGui::TreePop();
 }
@@ -258,6 +269,9 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_bSpectator = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
 	m_bBarrel = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
 	m_fBarrelDistance = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
+	m_bNoVomit = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
+	m_bCleanVision = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
+	m_bCleanGhost = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -277,6 +291,9 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -307,6 +324,20 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 		else
 			g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, endPosition, 255, 128, 0, false, duration);
 	}
+}
+
+bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & textureGroupName)
+{
+	if ((m_bNoVomit && materialName.find("vomitscreensplash") != std::string::npos) ||
+		(m_bCleanVision && materialName.find("flashlight001_infected") != std::string::npos) ||
+		(m_bCleanGhost && materialName.find("flashlight001_ghost") != std::string::npos))
+	{
+		// 替换成透明的材质
+		materialName = XorStr("dev/clearalpha");
+		textureGroupName.clear();
+	}
+
+	return true;
 }
 
 bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)

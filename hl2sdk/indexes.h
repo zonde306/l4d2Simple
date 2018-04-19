@@ -176,4 +176,7 @@ namespace indexes
 	// IGameEvent
 	const int FireEvent = 7;
 	const int FireEventClientSide = 8;
+
+	// EngineSound
+	const int EmitSound = 5;
 };

@@ -14,7 +14,7 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 
 	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
 	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
+	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
 }
 
 CAntiAntiCheat::~CAntiAntiCheat()
@@ -32,6 +32,14 @@ void CAntiAntiCheat::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No CRC Check"), &m_bBlockCRCCheck);
 	IMGUI_TIPS("屏蔽 CRC 检查，如果不是必须禁用则开启。");
+
+	ImGui::Checkbox(XorStr("No Null Sound"), &m_bBlockNullSound);
+	IMGUI_TIPS("屏蔽无效声音，可以防止服务器通过声音让客户端卡死。");
+
+	ImGui::Checkbox(XorStr("No Heartbeat Loop"), &m_bNoHeartbeat);
+	IMGUI_TIPS("屏蔽生还者黑白时的心跳声。");
+
+	ImGui::Separator();
 
 	// 过滤器
 	ImGui::InputText(XorStr("aacFilter"), m_szFilterText, 255);
@@ -181,10 +189,27 @@ bool CAntiAntiCheat::OnProcessClientCommand(const std::string& cmd)
 	return false;
 }
 
+bool CAntiAntiCheat::OnEmitSound(std::string & sample, int & entity, int & channel, float & volume, SoundLevel_t & level, int & flags, int & pitch, Vector & origin, Vector & direction, bool & updatePosition, float & soundTime)
+{
+	const auto stopSound = [&]() -> void
+	{
+		flags = (SND_STOP|SND_STOP_LOOPING);
+		pitch = -1;
+		volume = -1.0f;
+		sample.clear();
+	};
+	
+	if (m_bBlockNullSound && sample.find("null") != std::string::npos)
+		stopSound();
+	
+	if(m_bNoHeartbeat && sample.find("heartbeatloop") != std::string::npos)
+		stopSound();
+
+	return true;
+}
+
 void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 {
-	m_bBlockCRCCheck = g_pConfig->GetBoolean(XorStr("AntiAntiCheat"), XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
-	
 	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiQuery")))
 	{
 		m_BlockQuery.emplace_back(it.first, it.second.m_sValue);
@@ -204,6 +229,11 @@ void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 	{
 		m_BlockUserMessage.emplace_back(atoi(it.first.c_str()));
 	}
+
+	const std::string mainKeys = XorStr("AntiAntiCheat");
+	m_bBlockCRCCheck = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	m_bBlockNullSound = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
+	m_bNoHeartbeat = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
 }
 
 void CAntiAntiCheat::OnConfigSave(config_type & data)
@@ -232,7 +262,10 @@ void CAntiAntiCheat::OnConfigSave(config_type & data)
 		g_pConfig->SetValue(mainKeys, std::to_string(it), "");
 	}
 
-	g_pConfig->SetValue(XorStr("AntiAntiCheat"), XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	mainKeys = XorStr("AntiAntiCheat");
+	g_pConfig->SetValue(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	g_pConfig->SetValue(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
+	g_pConfig->SetValue(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
 }
 
 void CAntiAntiCheat::OnConnect()

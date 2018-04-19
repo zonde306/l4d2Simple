@@ -11,13 +11,16 @@ public:
 	friend CGEL_AntiAntiCheat;
 
 	virtual void OnMenuDrawing() override;
-	virtual bool OnUserMessage(int msgid, bf_read msgdata);
-	virtual bool OnProcessGetCvarValue(const std::string& cvars, std::string& result);
-	virtual bool OnProcessSetConVar(const std::string& cvars, std::string& value);
-	virtual bool OnProcessClientCommand(const std::string& cmd);
+	virtual bool OnUserMessage(int msgid, bf_read msgdata) override;
+	virtual bool OnProcessGetCvarValue(const std::string& cvars, std::string& result) override;
+	virtual bool OnProcessSetConVar(const std::string& cvars, std::string& value) override;
+	virtual bool OnProcessClientCommand(const std::string& cmd) override;
+	virtual bool OnEmitSound(std::string& sample, int& entity, int& channel, float& volume,
+		SoundLevel_t& level, int& flags, int& pitch, Vector& origin, Vector& direction,
+		bool& updatePosition, float& soundTime) override;
 
-	virtual void OnConfigLoading(const config_type& data);
-	virtual void OnConfigSave(config_type& data);
+	virtual void OnConfigLoading(const config_type& data) override;
+	virtual void OnConfigSave(config_type& data) override;
 	virtual void OnConnect() override;
 
 	// 搜索字符串用到的函数
@@ -35,6 +38,8 @@ private:
 
 private:
 	bool m_bBlockCRCCheck = true;
+	bool m_bBlockNullSound = true;
+	bool m_bNoHeartbeat = true;
 
 private:
 	std::vector<int> m_BlockUserMessage;
