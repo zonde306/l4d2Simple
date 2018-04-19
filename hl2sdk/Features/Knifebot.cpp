@@ -48,6 +48,9 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 			return;
 	}
 
+	if (cmd->buttons & IN_ATTACK)
+		return;
+
 	CheckMeleeAttack(cmd->viewangles);
 
 	if (m_bAutoFire && m_bCanMeleeAttack && team == 2)

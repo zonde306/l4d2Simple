@@ -248,10 +248,10 @@ void CClientHook::InitFeature()
 		g_pBunnyHop = new CBunnyHop();
 	if (!g_pSpeedHacker)
 		g_pSpeedHacker = new CSpeedHacker();
-	if (!g_pTriggerBot)
-		g_pTriggerBot = new CTriggerBot();
 	if (!g_pAimbot)
 		g_pAimbot = new CAimBot();
+	if (!g_pTriggerBot)
+		g_pTriggerBot = new CTriggerBot();
 	if (!g_pKnifeBot)
 		g_pKnifeBot = new CKnifeBot();
 	if (!g_pVisualPlayer)
