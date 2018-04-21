@@ -34,6 +34,7 @@ private:
 	bool m_bAcitve = true;
 	bool m_bAutoStrafe = false;
 	bool m_bEdgeJump = false;
+	float m_fEdgeJumpSpeed = 150.0f;
 
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;

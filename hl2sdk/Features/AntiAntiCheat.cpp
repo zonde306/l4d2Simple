@@ -365,7 +365,12 @@ inline void CAntiAntiCheat::CreateMenuList(const std::string& name, std::vector<
 	if (!ImGui::TreeNode(name.c_str()))
 		return;
 
-	ImGui::BeginChild(("_" + name).c_str(), ImVec2(0.0f, 0.0f), true, ImGuiWindowFlags_HorizontalScrollbar);
+	size_t length = set.size();
+	if (length > 9)
+		length = 9;
+
+	length *= g_pDrawing->GetDrawTextSize(name.c_str()).second;
+	ImGui::BeginChild(("_" + name).c_str(), ImVec2(0.0f, static_cast<float>(length)), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 	for (auto it = set.begin(); it != set.end(); )
 	{

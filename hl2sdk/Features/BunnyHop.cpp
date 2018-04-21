@@ -179,8 +179,12 @@ void CBunnyHop::OnMenuDrawing()
 		ImGui::EndCombo();
 	}
 
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Edge Jump"), &m_bEdgeJump);
 	IMGUI_TIPS("到达边缘时自动起跳，需要按住 W 键。");
+
+	ImGui::SliderFloat(XorStr("EdgeJump MinSpeed"), &m_fEdgeJumpSpeed, 0.0f, 220.0f, XorStr("%.0f"));
+	IMGUI_TIPS("边缘时起跳需要的最小速度。");
 
 	// ImGui::End();
 	ImGui::TreePop();
@@ -194,6 +198,7 @@ void CBunnyHop::OnConfigLoading(const config_type & data)
 	m_iBhopMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
 	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
 	m_bEdgeJump = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	m_fEdgeJumpSpeed = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
 }
 
 void CBunnyHop::OnConfigSave(config_type & data)
@@ -204,6 +209,7 @@ void CBunnyHop::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
@@ -395,7 +401,8 @@ void CBunnyHop::DoFullAutoStrafe(CBasePlayer * player, CUserCmd * pCmd, int flag
 void CBunnyHop::DoEdgeJump(CUserCmd * pCmd, int flags)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || !local->IsAlive() || !(flags & FL_ONGROUND) || (pCmd->buttons & IN_JUMP))
+	if (local == nullptr || !local->IsAlive() || !(flags & FL_ONGROUND) || (pCmd->buttons & IN_JUMP) ||
+		local->GetVelocity().Length() < m_fEdgeJumpSpeed)
 		return;
 
 	Ray_t ray;
