@@ -76,9 +76,8 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		{
 			*bSendPacket = false;
 			lastChocked += 1;
+			cmd->viewangles.x = cmd->viewangles.y = -logf(-1.0f);
 		}
-		
-		cmd->viewangles.x = cmd->viewangles.y = -logf(-1.0f);
 	}
 }
 
@@ -125,7 +124,7 @@ void CViewManager::OnMenuDrawing()
 	IMGUI_TIPS("调试用，显示真正的角度。");
 
 	ImGui::Checkbox(XorStr("chocked exploit"), &m_bFakeAngleBug);
-	IMGUI_TIPS("炸服用，开启后按住鼠标左键(开枪)启动，用后记得手动 disconnect，否则会卡住。");
+	IMGUI_TIPS("炸服用，开启后按住鼠标左键(开枪)启动。用后记得手动 disconnect，否则会卡住。\n最好是拿枪有子弹时用，否则可能会导致游戏无响应。");
 
 	ImGui::TreePop();
 }
