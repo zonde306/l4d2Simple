@@ -169,6 +169,7 @@ namespace indexes
 
 	// INetChannelInfo/CNetChan
 	const int SendDatagram = 188;
+	const int SendNetMsg = 41;
 
 	// RenderView
 	const int RenderViewSetColorModulation = 1;

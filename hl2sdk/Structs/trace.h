@@ -83,6 +83,11 @@ public:	// CGameTrace
 
 	CBaseEntity* m_pEnt;
 	int hitbox;
+
+	inline bool DidHit() const
+	{
+		return (fraction < 1.0f || allsolid || startSolid);
+	}
 };
 
 enum TraceType_t

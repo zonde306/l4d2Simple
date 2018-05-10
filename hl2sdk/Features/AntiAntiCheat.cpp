@@ -208,6 +208,22 @@ bool CAntiAntiCheat::OnEmitSound(std::string & sample, int & entity, int & chann
 	return true;
 }
 
+bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool & bVoice)
+{
+	int msg_id = msg.GetType();
+
+	// 禁止服务器检查客户端文件 CRC32
+	// 这是另一种 sv_pure 绕过
+	if (m_bBlockCRCCheck && msg_id == 14)
+		return false;
+
+	// 修复服务器发送不正确的语音数据导致客户端卡顿
+	if (m_bBlockNullSound && msg_id == 10)
+		bVoice = true;
+	
+	return true;
+}
+
 void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 {
 	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiQuery")))

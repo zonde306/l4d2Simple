@@ -87,6 +87,11 @@ bool CBaseFeatures::OnEmitSound(std::string &, int &, int &, float &, SoundLevel
 	return true;
 }
 
+bool CBaseFeatures::OnSendNetMsg(INetMessage &, bool &, bool &)
+{
+	return true;
+}
+
 void CBaseFeatures::OnConfigLoading(const config_type &)
 {
 }

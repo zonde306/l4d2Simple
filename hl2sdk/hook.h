@@ -29,6 +29,7 @@ typedef void(__thiscall* FnRenderView)(IBaseClientDll*, const CViewSetup&, int, 
 typedef bool(__thiscall* FnFireEvent)(IGameEventManager2*, IGameEvent*, bool);
 typedef void(__thiscall* FnDrawModelExecute)(IVModelRender*, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
 typedef void(__thiscall* FnEmitSound)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
+typedef bool(__thiscall* FnSendNetMsg)(INetChannel*, INetMessage&, bool, bool);
 
 // 非虚函数
 typedef void(__thiscall* FnStartDrawing)(ISurface*);
@@ -84,6 +85,7 @@ protected:
 	static bool __fastcall Hooked_FireEvent(IGameEventManager2*, LPVOID, IGameEvent*, bool);
 	static void __fastcall Hooked_DrawModelExecute(IVModelRender*, LPVOID, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
 	static void __fastcall Hooked_EmitSound(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
+	static bool __fastcall Hooked_SendNetMsg(INetChannel*, LPVOID, INetMessage&, bool, bool);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -120,6 +122,7 @@ private:
 public:
 	bool* bSendPacket;
 	FnFindMaterial oFindMaterial = nullptr;
+	FnSendNetMsg oSendNetMsg = nullptr;
 
 	// 搜索特征码得到的函数
 	FnStartDrawing StartDrawing;
@@ -162,6 +165,10 @@ public:
 	CBasePlayer* GetLocalPlayer();
 	std::pair<float, float> GetWeaponSpread(int seed, CBaseWeapon* weapon);
 	float GetCurrentTime(CUserCmd* cmd);
+
+	// 改名字
+	// 游戏自带的 setinfo name 和 name 并不能动态改名
+	void SetName(const char* name, ...);
 
 	inline int GetFlags() { return m_iFlags; };
 

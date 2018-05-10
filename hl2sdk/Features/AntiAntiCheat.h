@@ -18,6 +18,7 @@ public:
 	virtual bool OnEmitSound(std::string& sample, int& entity, int& channel, float& volume,
 		SoundLevel_t& level, int& flags, int& pitch, Vector& origin, Vector& direction,
 		bool& updatePosition, float& soundTime) override;
+	virtual bool OnSendNetMsg(INetMessage& msg, bool& bForceReliable, bool& bVoice) override;
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;

@@ -243,6 +243,8 @@ void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
 	CBasePlayer* hitEntity = nullptr;
 	Vector eyePosition = local->GetEyePosition();
 	Vector aimPosition = GetAimPosition(local, eyePosition, &hitEntity);
+	if (!aimPosition.IsValid())
+		return;
 
 	g_pInterface->DebugOverlay->AddLineOverlay(eyePosition, aimPosition, 64, 128, 128, true, 0.1f);
 
@@ -429,7 +431,7 @@ Vector CAimBot::GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CB
 	catch (...)
 	{
 		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
-		return false;
+		return INVALID_VECTOR;
 	}
 
 	if (hitEntity != nullptr)

@@ -1,6 +1,7 @@
 ﻿#include "math.h"
 #include "../interfaces.h"
 #include "../../l4d2Simple2/dx9hook.h"
+#include "../Structs/baseplayer.h"
 #include <cmath>
 
 #ifndef M_PI
@@ -695,4 +696,205 @@ Vector math::VelocityExtrapolate(const Vector & origin, const Vector & velocity,
 	}
 	
 	return origin + (velocity * (g_pInterface->GlobalVars->interval_per_tick * tick));
+}
+
+void math::VectorRotate(const Vector & in1, const matrix3x4_t & in2, Vector & out)
+{
+	out[0] = DotProduct(in1, in2[0]);
+	out[1] = DotProduct(in1, in2[1]);
+	out[2] = DotProduct(in1, in2[2]);
+}
+
+void math::VectorRotate(const Vector & in1, const QAngle & in2, Vector & out)
+{
+	matrix3x4_t matRotate;
+	AngleMatrix(in2, matRotate);
+	VectorRotate(in1, matRotate, out);
+}
+
+void math::AngleMatrix(const QAngle & angles, matrix3x4_t & matrix)
+{
+	float sr, sp, sy, cr, cp, cy;
+	SinCos(DEG2RAD(angles[YAW]), &sy, &cy);
+	SinCos(DEG2RAD(angles[PITCH]), &sp, &cp);
+	SinCos(DEG2RAD(angles[ROLL]), &sr, &cr);
+
+	// matrix = (YAW * PITCH) * ROLL
+	matrix[0][0] = cp * cy;
+	matrix[1][0] = cp * sy;
+	matrix[2][0] = -sp;
+
+	float crcy = cr * cy;
+	float crsy = cr * sy;
+	float srcy = sr * cy;
+	float srsy = sr * sy;
+	matrix[0][1] = sp * srcy - crsy;
+	matrix[1][1] = sp * srsy + crcy;
+	matrix[2][1] = sr * cp;
+
+	matrix[0][2] = (sp*crcy + srsy);
+	matrix[1][2] = (sp*crsy - srcy);
+	matrix[2][2] = cr * cp;
+
+	matrix[0][3] = 0.0f;
+	matrix[1][3] = 0.0f;
+	matrix[2][3] = 0.0f;
+}
+
+//credits to http://www.scratchapixel.com/ for the nice explanation of the algorithm and
+//An Efficient and Robust Ray–Box Intersection Algorithm, Amy Williams et al. 2004.
+//for inventing it :D
+bool math::IntersectRayWithAABB(const Vector& origin, const Vector& dir, const Vector& min, const Vector& max)
+{
+	float tmin, tmax, tymin, tymax, tzmin, tzmax;
+	
+	if (dir.x >= 0)
+	{
+		tmin = (min.x - origin.x) / dir.x;
+		tmax = (max.x - origin.x) / dir.x;
+	}
+	else
+	{
+		tmin = (max.x - origin.x) / dir.x;
+		tmax = (min.x - origin.x) / dir.x;
+	}
+
+	if (dir.y >= 0)
+	{
+		tymin = (min.y - origin.y) / dir.y;
+		tymax = (max.y - origin.y) / dir.y;
+	}
+	else
+	{
+		tymin = (max.y - origin.y) / dir.y;
+		tymax = (min.y - origin.y) / dir.y;
+	}
+
+	if (tmin > tymax || tymin > tmax)
+		return false;
+
+	if (tymin > tmin)
+		tmin = tymin;
+
+	if (tymax < tmax)
+		tmax = tymax;
+
+	if (dir.z >= 0)
+	{
+		tzmin = (min.z - origin.z) / dir.z;
+		tzmax = (max.z - origin.z) / dir.z;
+	}
+	else
+	{
+		tzmin = (max.z - origin.z) / dir.z;
+		tzmax = (min.z - origin.z) / dir.z;
+	}
+
+	if (tmin > tzmax || tzmin > tmax)
+		return false;
+
+	//behind us
+	if (tmin < 0 || tmax < 0)
+		return false;
+
+	return true;
+}
+
+#define SMALL_NUM 0.0f
+bool math::DoesIntersectCapsule(const Vector & eyePos, const Vector & myDir, const Vector & capsuleA, const Vector & capsuleB, float radius)
+{
+	const static auto dist_Segment_to_Segment = [](const Vector& s1, const Vector& s2, const Vector& k1, const Vector& k2) -> float
+	{
+		Vector   u = s2 - s1;
+		Vector   v = k2 - k1;
+		Vector   w = s1 - k1;
+		float    a = u.Dot(u);
+		float    b = u.Dot(v);
+		float    c = v.Dot(v);
+		float    d = u.Dot(w);
+		float    e = v.Dot(w);
+		float    D = a * c - b * b;
+		float    sc, sN, sD = D;
+		float    tc, tN, tD = D;
+
+		if (D < SMALL_NUM)
+		{
+			sN = 0.0;
+			sD = 1.0;
+			tN = e;
+			tD = c;
+		}
+		else
+		{
+			sN = (b*e - c * d);
+			tN = (a*e - b * d);
+			if (sN < 0.0)
+			{
+				sN = 0.0;
+				tN = e;
+				tD = c;
+			}
+			else if (sN > sD)
+			{
+				sN = sD;
+				tN = e + b;
+				tD = c;
+			}
+		}
+
+		if (tN < 0.0)
+		{
+			tN = 0.0;
+
+			if (-d < 0.0)
+				sN = 0.0;
+			else if (-d > a)
+				sN = sD;
+			else {
+				sN = -d;
+				sD = a;
+			}
+		}
+		else if (tN > tD)
+		{
+			tN = tD;
+
+			if ((-d + b) < 0.0)
+				sN = 0;
+			else if ((-d + b) > a)
+				sN = sD;
+			else {
+				sN = (-d + b);
+				sD = a;
+			}
+		}
+
+		sc = (abs(sN) < SMALL_NUM ? 0.0 : sN / sD);
+		tc = (abs(tN) < SMALL_NUM ? 0.0 : tN / tD);
+
+		Vector  dP = w + (u * sc) - (v * tc);
+		return dP.Length();
+	};
+
+	Vector end = eyePos + (myDir * 8192.0f);
+	auto dist = dist_Segment_to_Segment(eyePos, end, capsuleA, capsuleB);
+	return dist < radius;
+}
+
+bool math::InsersectRayWithOBB(CBasePlayer * local, CBasePlayer * target, mstudiobbox_t * hitbox, const QAngle & viewangles)
+{
+	matrix3x4_t boneMatrix[128];
+	if (!target->SetupBones(boneMatrix, 128, BONE_USED_BY_HITBOX, g_pInterface->GlobalVars->curtime))
+		return false;
+	
+	Vector ray_start = local->GetEyePosition();
+	Vector direction = ray_start.toAngles();
+	matrix3x4_t BoneMatrix = boneMatrix[hitbox->bone];
+
+	//Transform ray into model space of hitbox so we only have to deal with an AABB instead of OBB
+	Vector ray_trans, dir_trans;
+	VectorTransform(ray_start, BoneMatrix, ray_trans);
+	VectorRotate(direction, BoneMatrix, dir_trans); //only rotate direction vector! no translation!
+
+	return IntersectRayWithAABB(ray_trans, dir_trans, hitbox->bbmin, hitbox->bbmax);
 }

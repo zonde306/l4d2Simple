@@ -21,6 +21,7 @@ class Vector
 public:
 	Vector(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f);
 	Vector(const QAngle& angles);
+	Vector(const vec_t* v);
 
 	void Invalidate();
 	bool IsValid() const;
@@ -50,6 +51,9 @@ public:
 
 	// 向量和欧拉角之间的转换
 	QAngle toAngles() const;
+
+	vec_t DistTo(const Vector& vOther) const;
+	vec_t DistToSqr(const Vector& vOther) const;
 
 #ifdef ALLOW_CAST_POINTER
 	// 某些情况下可能需要
@@ -100,6 +104,7 @@ public:
 	void Invalidate();
 	bool IsValid() const;
 	bool IsZero(float tolerance = 1e-6f) const;
+	void Init(vec_t x = 0.0f, vec_t y = 0.0f, vec_t z = 0.0f);
 
 	// 向量和欧拉角之间的转换
 	Vector Forward() const;

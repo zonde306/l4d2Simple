@@ -44,6 +44,10 @@ Vector::Vector(const QAngle & angles)
 	z = angles.z;
 }
 
+Vector::Vector(const vec_t * v) : x(v[0]), y(v[1]), z(v[2])
+{
+}
+
 void Vector::Invalidate()
 {
 	x = y = z = VEC_T_NAN;
@@ -136,6 +140,16 @@ QAngle Vector::toAngles() const
 	}
 
 	return QAngle(pitch, yaw, 0.0f);
+}
+
+vec_t Vector::DistTo(const Vector & vOther) const
+{
+	return (*this - vOther).Length();
+}
+
+vec_t Vector::DistToSqr(const Vector & vOther) const
+{
+	return (*this - vOther).LengthSqr();
 }
 
 #ifdef ALLOW_CAST_POINTER
@@ -306,6 +320,13 @@ bool QAngle::IsValid() const
 bool QAngle::IsZero(float tolerance) const
 {
 	return (x > -tolerance && x < tolerance && y > -tolerance && y < tolerance && z > -tolerance && z < tolerance);
+}
+
+void QAngle::Init(vec_t x, vec_t y, vec_t z)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
 }
 
 Vector QAngle::Forward() const

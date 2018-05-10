@@ -1,10 +1,12 @@
-#pragma once
+﻿#pragma once
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "../Interfaces/IVModelInfo.h"
 #include "../../l4d2Simple2/vector.h"
 #include "../Structs/matrix.h"
 #include "../Structs/usercmd.h"
+
+class CBasePlayer;
 
 namespace math
 {
@@ -41,4 +43,17 @@ namespace math
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	float DotProduct(const Vector & a, const Vector & b);
 	Vector VelocityExtrapolate(const Vector& origin, const Vector& velocity, bool forwardtrack = false);
+
+	void VectorRotate(const Vector &in1, const matrix3x4_t& in2, Vector &out);
+	void VectorRotate(const Vector &in1, const QAngle &in2, Vector &out);
+	void AngleMatrix(const QAngle &angles, matrix3x4_t& matrix);
+
+	// Ray 到 AABB 相交检测
+	bool IntersectRayWithAABB(const Vector& origin, const Vector& dir, const Vector& min, const Vector& max);
+
+	// Ray 到 Capsule 相交检测
+	bool DoesIntersectCapsule(const Vector& eyePos, const Vector& myDir, const Vector& capsuleA, const Vector& capsuleB, float radius);
+
+	// Ray 到 OBB 相交检测
+	bool InsersectRayWithOBB(CBasePlayer* local, CBasePlayer* target, mstudiobbox_t* hitbox, const QAngle& viewangles);
 };

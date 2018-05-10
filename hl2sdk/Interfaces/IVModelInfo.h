@@ -367,7 +367,10 @@ struct mstudiobbox_t
 	Vector				bbmin;				// bounding box
 	Vector				bbmax;
 	int					szhitboxnameindex;	// offset to the name of the hitbox.
-	int					unused[8];
+	// int					unused[8];
+	int					m_iPad01[3];
+	float				radius;
+	int					m_iPad02[4];
 
 	const char* pszHitboxName()
 	{

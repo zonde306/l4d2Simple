@@ -338,7 +338,7 @@ public:
 	DECLARE_NET_MESSAGE(SetConVar);
 
 	int	GetGroup() const { return INetChannelInfo::STRINGCMD; }
-
+	
 	NET_SetConVar() {}
 	NET_SetConVar(const char * name, const char * value)
 	{
@@ -358,6 +358,16 @@ public:
 
 	CUtlVector<cvar_t> m_ConVars;
 };
+
+inline bool NET_SetConVar::ReadFromBuffer(bf_read& buffer)
+{
+	return false;
+}
+
+inline bool NET_SetConVar::WriteToBuffer(bf_write& buffer)
+{
+	return false;
+}
 
 class SVC_GetCvarValue : public CNetMessage
 {

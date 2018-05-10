@@ -575,7 +575,7 @@ Vector CVisualPlayer::GetSeePosition(CBasePlayer * player, const Vector & eyePos
 	catch (...)
 	{
 		Utils::log(XorStr("CKnifeBot.HasEnemyVisible.TraceRay Error."));
-		return false;
+		return INVALID_VECTOR;
 	}
 
 	return trace.end;

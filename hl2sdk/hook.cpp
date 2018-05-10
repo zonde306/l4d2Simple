@@ -60,7 +60,7 @@ extern time_t g_tpGameTimer;
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
-	g_pHookModelRender, g_pHookEngineSound;
+	g_pHookModelRender, g_pHookEngineSound, g_pHookNetChannel;
 
 CClientHook::~CClientHook()
 {
@@ -235,11 +235,18 @@ bool CClientHook::Init()
 		g_pHookEngineSound->InstallHook();
 	}
 
+	if (g_pInterface->NetChannel != nullptr && !g_pHookNetChannel)
+	{
+		g_pHookNetChannel = std::make_unique<CVmtHook>(g_pInterface->NetChannel);
+		oSendNetMsg = reinterpret_cast<FnSendNetMsg>(g_pHookNetChannel->HookFunction(indexes::SendNetMsg, Hooked_SendNetMsg));
+		g_pHookNetChannel->InstallHook();
+	}
+
 	InitFeature();
 	// LoadConfig();
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction &&
-		g_pHookRenderView && g_pHookMaterialSystem && g_pHookModelRender);
+		g_pHookRenderView && g_pHookMaterialSystem && g_pHookModelRender && g_pHookNetChannel);
 }
 
 void CClientHook::InitFeature()
@@ -1197,6 +1204,30 @@ void __fastcall CClientHook::Hooked_EmitSound(IEngineSound* _ecx, LPVOID _edx, I
 		pUtlVecOrigins, bUpdatePositions, soundtime, speakerentity);
 }
 
+bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, INetMessage& msg, bool bForceReliable, bool bVoice)
+{
+	bool blockNetMsg = false;
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		if (!inst->OnSendNetMsg(msg, bForceReliable, bVoice))
+			blockNetMsg = false;
+	}
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook SendNetMsg Success."));
+	}
+#endif
+	
+	if (blockNetMsg)
+		return false;
+
+	return g_pClientHook->oSendNetMsg(_ecx, msg, bForceReliable, bVoice);
+}
+
 void CClientPrediction::Init()
 {
 	m_pSpreadRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pClientHook->SharedRandomFloat) + 0x7);
@@ -1327,4 +1358,27 @@ float CClientPrediction::GetCurrentTime(CUserCmd * cmd)
 
 	lastCommand = cmd;
 	return tick * g_pInterface->GlobalVars->interval_per_tick;
+}
+
+void CClientPrediction::SetName(const char * name, ...)
+{
+	INetChannel* nci = reinterpret_cast<INetChannel*>(g_pInterface->Engine->GetNetChannelInfo());
+	if (nci == nullptr)
+		return;
+
+	char buffer[255];
+	
+	va_list ap;
+	va_start(ap, name);
+	vsprintf_s(buffer, name, ap);
+	va_end(ap);
+
+	// 要求服务端更新玩家名字
+	NET_SetConVar sendConVar(XorStr("name"), buffer);
+	sendConVar.SetNetChannel(nci);
+
+	if (g_pClientHook->oSendNetMsg != nullptr)
+		g_pClientHook->oSendNetMsg(nci, sendConVar, false, false);
+	else
+		nci->SendNetMsg(sendConVar);
 }

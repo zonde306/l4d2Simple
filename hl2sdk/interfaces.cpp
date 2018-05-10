@@ -107,7 +107,6 @@ void CClientInterface::Init()
 	if (Engine != nullptr)
 	{
 		NetChannel = Engine->GetNetChannelInfo();
-
 		PRINT_OFFSET(XorStr("INetChannelInfo"), NetChannel);
 	}
 
