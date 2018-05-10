@@ -869,8 +869,8 @@ bool math::DoesIntersectCapsule(const Vector & eyePos, const Vector & myDir, con
 			}
 		}
 
-		sc = (abs(sN) < SMALL_NUM ? 0.0 : sN / sD);
-		tc = (abs(tN) < SMALL_NUM ? 0.0 : tN / tD);
+		sc = (abs(sN) < SMALL_NUM ? 0.0f : sN / sD);
+		tc = (abs(tN) < SMALL_NUM ? 0.0f : tN / tD);
 
 		Vector  dP = w + (u * sc) - (v * tc);
 		return dP.Length();

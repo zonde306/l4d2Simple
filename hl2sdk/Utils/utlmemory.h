@@ -281,7 +281,15 @@ public:
 	~CUtlMemoryConservative() { if (m_pMemory) free(m_pMemory); }
 
 	// Can we use this index?
-	bool IsIdxValid(int i) const { return (IsDebug()) ? (i >= 0 && i < NumAllocated()) : (i >= 0); }
+	bool IsIdxValid(int i) const
+	{
+#ifdef _DEBUG
+		return (i >= 0 && i < NumAllocated());
+#else
+		return (i >= 0);
+#endif
+		// return (IsDebug()) ? (i >= 0 && i < NumAllocated()) : (i >= 0);
+	}
 	static int InvalidIndex() { return -1; }
 
 	// Gets the base address
@@ -338,7 +346,7 @@ public:
 	// Makes sure we've got at least this much memory
 	void EnsureCapacity(int num)
 	{
-		size_t nSize = sizeof(T) * MAX(num, Count());
+		size_t nSize = sizeof(T) * max(num, Count());
 		ReAlloc(nSize);
 	}
 
@@ -665,7 +673,7 @@ inline bool CUtlMemory<T, I>::IsIdxValid(I i) const
 	// If we always cast 'i' and 'm_nAllocationCount' to unsigned then we can
 	// do our range checking with a single comparison instead of two. This gives
 	// a modest speedup in debug builds.
-	return (uint32)i < (uint32)m_nAllocationCount;
+	return (uint32_t)i < (uint32_t)m_nAllocationCount;
 }
 
 //-----------------------------------------------------------------------------

@@ -6,7 +6,7 @@
 
 #pragma once
 
-//---- Define assertion handler. Defaults to calling assert().
+//---- Define assertion handler. Defaults to calling Assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
 
 //---- Define attributes of all API symbols declarations, e.g. for DLL under Windows.
@@ -34,7 +34,7 @@
 //#define IMGUI_USE_BGRA_PACKED_COLOR
 
 //---- Implement STB libraries in a namespace to avoid linkage conflicts
-#define IMGUI_STB_NAMESPACE     ImGuiStb
+// #define IMGUI_STB_NAMESPACE     ImGuiStb
 
 //---- Define constructor and implicit cast operators to convert back<>forth from your math types and ImVec2/ImVec4.
 /*

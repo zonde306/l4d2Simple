@@ -162,7 +162,7 @@ template<typename T>
 inline T & CBaseEntity::GetNetPropCollision(const std::string & table, const std::string & prop, size_t element)
 {
 	// return GetNetProp2<T>(table, prop, XorStr("m_Collision"), element);
-	return return GetNetPropEx<T>(table, prop, element, XorStr("m_Collision"));
+	return GetNetPropEx<T>(table, prop, element, XorStr("m_Collision"));
 }
 
 template<typename ...T>
