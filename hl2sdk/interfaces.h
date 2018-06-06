@@ -25,6 +25,7 @@
 #include "./Interfaces/INetworkStringTable.h"
 #include "./Interfaces/IUniformRandomStream.h"
 #include "./Interfaces/IEngineSound.h"
+#include "./interfaces/IBaseClientState.h"
 #include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
@@ -53,14 +54,18 @@ public:
 	IInputSystem* InputSystem;
 	IEngineVGui* EngineVGui;
 	IVModelRender* ModelRender;
-	INetChannelInfo* NetChannel;
 	IBaseFileSystem* FileSystem;
 	ILocalize* Localize;
 	INetworkStringTableContainer* StringTable;
-	IClientMode* ClientMode;
 	IVRenderView* RenderView;
 	IMaterialSystem* MaterialSystem;
 	IEngineSound* Sound;
+
+	// 以下功能可能会随着连接服务器而改变，最好每次加入游戏后都重新获取一遍
+	// 最好不要直接使用这个，而是调用 IEngineClient::GetNetChannelInfo 然后转换类型
+	INetChannel* NetChannel;
+	CBaseClientState* ClientState;
+	IClientMode* ClientMode;
 
 	std::unique_ptr<CNetVars> NetProp;
 

@@ -11,11 +11,15 @@ std::unique_ptr<CClientInterface> g_pInterface;
 #define GET_VFUNC(_ptr,_off)	((*reinterpret_cast<PDWORD*>(_ptr))[_off])
 
 #define SIG_GET_CLIENTMODE		XorStr("8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? C3")
+#define SIG_GET_CLIENTSTATE		XorStr("A1 ? ? ? ? 83 C0 08 C3")
 #define SIG_MOVE_HELPER			XorStr("A1 ? ? ? ? 8B 10 8B 52 ? 81 C1")
 #define SIG_GLOBAL_VARS			XorStr("8B 0D ? ? ? ? D9 41 ? 8B 55 ? 8B 45")
 
 typedef IClientMode*(__cdecl *FnGetClientMode)();
-FnGetClientMode GetClientMode = nullptr;
+static FnGetClientMode GetClientMode = nullptr;
+
+typedef CBaseClientState*(__cdecl *FnGetClientState)();
+static FnGetClientState GetClientState = nullptr;
 
 void CClientInterface::Init()
 {
@@ -71,6 +75,12 @@ void CClientInterface::Init()
 	}
 	*/
 
+	GetClientMode = reinterpret_cast<FnGetClientMode>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLIENTMODE));
+	PRINT_OFFSET(XorStr("GetClientMode"), GetClientMode);
+	
+	GetClientState = reinterpret_cast<FnGetClientState>(Utils::FindPattern(XorStr("engine.dll"), SIG_GET_CLIENTSTATE));
+	PRINT_OFFSET(XorStr("GetClientState"), GetClientState);
+
 	GlobalVars = FindGlobalVars();
 	if (GlobalVars == nullptr)
 		GlobalVars = **reinterpret_cast<CGlobalVarsBase***>(Utils::FindPattern(XorStr("client.dll"), SIG_GLOBAL_VARS) + 1);
@@ -86,9 +96,11 @@ void CClientInterface::Init()
 		Input = **reinterpret_cast<IInput***>(funcStart + 0x28);
 		PRINT_OFFSET(XorStr("CInput"), Input);
 
-		GetClientMode = reinterpret_cast<FnGetClientMode>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLIENTMODE));
 		ClientMode = GetClientMode();
 		PRINT_OFFSET(XorStr("ClientMode"), ClientMode);
+
+		ClientState = GetClientState();
+		PRINT_OFFSET(XorStr("ClientState"), ClientState);
 
 		/*
 		funcStart = GET_VFUNC(GameMovement, indexes::PlaySwimSound);
@@ -106,8 +118,10 @@ void CClientInterface::Init()
 
 	if (Engine != nullptr)
 	{
-		NetChannel = Engine->GetNetChannelInfo();
-		PRINT_OFFSET(XorStr("INetChannelInfo"), NetChannel);
+		// 这个指针会在 CBaseClientState::FullConnect 里创建，在 CBaseClientState::Disconnect 里释放
+		// 创建时调用 NET_CreateNetChannel，释放时调用 INetChannel::Shutdown
+		NetChannel = reinterpret_cast<INetChannel*>(Engine->GetNetChannelInfo());
+		PRINT_OFFSET(XorStr("INetChannel"), NetChannel);
 	}
 
 	if (Cvar)

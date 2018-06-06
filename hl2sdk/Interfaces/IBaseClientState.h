@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "INetChannelInfo.h"
 #include "../Structs/handle.h"
 #include "../Utils/checksum_crc.h"
@@ -268,6 +268,12 @@ public:
 	
 	bool m_bRestrictServerCommands;	// If true, then the server is only allowed to execute commands marked with FCVAR_SERVER_CAN_EXECUTE on the client.
 	bool m_bRestrictClientCommands;	// If true, then IVEngineClient::ClientCmd is only allowed to execute commands marked with FCVAR_CLIENTCMD_CAN_EXECUTE on the client.
+};
+
+class CClientState : public IServerMessageHandler
+{
+public:
+
 };
 
 #define DECLARE_BASE_MESSAGE(msgtype)           \

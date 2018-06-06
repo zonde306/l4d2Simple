@@ -166,6 +166,15 @@ namespace indexes
 	const int ProcessCreateStringTable = 11;
 	const int ProcessUpdate = 12;
 	const int ProcessGetCvarValue = 28;
+	const int ConnectionClosing = 2;
+	const int ConnectionCrashed = 3;
+	const int FileRequested = 6;
+	const int FileReceived = 7;
+	const int FileDenied = 8;
+	const int RunFrame = 19;
+	const int FullConnect = 12;
+	const int Connect = 14;
+	const int Disconnect = 16;
 
 	// INetChannelInfo/CNetChan
 	const int SendDatagram = 188;

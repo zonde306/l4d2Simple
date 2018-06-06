@@ -52,12 +52,15 @@ extern time_t g_tpGameTimer;
 #define SIG_TRACE_LINE2				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 6C 56 8B 43 08")
 #define SIG_TRACE_LINE				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 5C 56 8B 43 08")
 #define SIG_CLIP_TRACE_PLAYER		XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 57 8B 53 14")
+#define SIG_SEND_NETMSG				XorStr("55 8B EC 56 8B F1 8D 8E ? ? ? ? E8 ? ? ? ? 85 C0 75 07 B0 01 5E 5D C2 0C 00 53")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
-static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove;
+static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove,
+	g_pDetourSendNetMsg;
+
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
 	g_pHookModelRender, g_pHookEngineSound, g_pHookNetChannel;
@@ -134,7 +137,6 @@ bool CClientHook::Init()
 	if (oCL_SendMove == nullptr || !g_pDetourCL_SendMove)
 	{
 		oCL_SendMove = reinterpret_cast<FnCL_SendMove>(Utils::FindPattern(XorStr("engine.dll"), SIG_CL_SENDMOVE));
-
 		PRINT_OFFSET(XorStr("CL_SendMove"), oCL_SendMove);
 
 		if (oCL_SendMove != nullptr)
@@ -144,10 +146,13 @@ bool CClientHook::Init()
 		}
 	}
 
+	// 在 Windows 平台有两个不同的 CClientState 类
+	// 一个继承了 CBaseClientState，并且它不包含 Process 开头的方法
+	// 另一个没有继承 CBaseClientState，它包含了 Process 开头的方法
+	// 这两个 CClientState 是不相关的，无法通过 CBaseClientState 来挂钩
 	if (oProcessSetConVar == nullptr || !g_pDetourProcessSetConVar)
 	{
 		oProcessSetConVar = reinterpret_cast<FnProcessSetConVar>(Utils::FindPattern(XorStr("engine.dll"), SIG_PROCCESS_SET_CONVAR));
-
 		PRINT_OFFSET(XorStr("CBaseClientState::ProcessSetConVar"), oProcessSetConVar);
 
 		if (oProcessSetConVar != nullptr)
@@ -160,7 +165,6 @@ bool CClientHook::Init()
 	if (oCreateMoveShared == nullptr || !g_pDetourCreateMove)
 	{
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(Utils::FindPattern(XorStr("client.dll"), SIG_CREATEMOVESHARED));
-
 		PRINT_OFFSET(XorStr("ClientModeShared::CreateMove"), oCreateMoveShared);
 
 		g_pDetourCreateMove = std::make_unique<DetourXS>(oCreateMoveShared, Hooked_CreateMoveShared);
@@ -235,18 +239,32 @@ bool CClientHook::Init()
 		g_pHookEngineSound->InstallHook();
 	}
 
+	/*
 	if (g_pInterface->NetChannel != nullptr && !g_pHookNetChannel)
 	{
 		g_pHookNetChannel = std::make_unique<CVmtHook>(g_pInterface->NetChannel);
 		oSendNetMsg = reinterpret_cast<FnSendNetMsg>(g_pHookNetChannel->HookFunction(indexes::SendNetMsg, Hooked_SendNetMsg));
 		g_pHookNetChannel->InstallHook();
 	}
+	*/
+
+	if (oSendNetMsg == nullptr || !g_pDetourSendNetMsg)
+	{
+		oSendNetMsg = reinterpret_cast<FnSendNetMsg>(Utils::FindPattern(XorStr("engine.dll"), SIG_SEND_NETMSG));
+		PRINT_OFFSET(XorStr("CNetChan::SendNetMsg"), oSendNetMsg);
+
+		if (oSendNetMsg != nullptr)
+		{
+			g_pDetourSendNetMsg = std::make_unique<DetourXS>(oSendNetMsg, Hooked_SendNetMsg);
+			oSendNetMsg = reinterpret_cast<FnSendNetMsg>(g_pDetourSendNetMsg->GetTrampoline());
+		}
+	}
 
 	InitFeature();
 	// LoadConfig();
 
 	return (g_pHookClient && g_pHookPanel && g_pHookVGui && g_pHookPrediction &&
-		g_pHookRenderView && g_pHookMaterialSystem && g_pHookModelRender && g_pHookNetChannel);
+		g_pHookRenderView && g_pHookMaterialSystem && g_pHookModelRender);
 }
 
 void CClientHook::InitFeature()
@@ -645,6 +663,7 @@ void CClientHook::InstallClientModeHook(IClientMode * pointer)
 			g_pDetourCreateMove.reset();
 		}
 
+		g_pInterface->ClientMode = pointer;
 		g_pHookClientMode = std::make_unique<CVmtHook>(pointer);
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pHookClientMode->HookFunction(indexes::SharedCreateMove, Hooked_CreateMoveShared));
 		oKeyInput = reinterpret_cast<FnKeyInput>(g_pHookClientMode->HookFunction(indexes::KeyInput, Hooked_KeyInput));
@@ -1206,6 +1225,9 @@ void __fastcall CClientHook::Hooked_EmitSound(IEngineSound* _ecx, LPVOID _edx, I
 
 bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, INetMessage& msg, bool bForceReliable, bool bVoice)
 {
+	if (g_pInterface->NetChannel != _ecx)
+		g_pInterface->NetChannel = _ecx;
+	
 	bool blockNetMsg = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
@@ -1225,6 +1247,7 @@ bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, I
 	if (blockNetMsg)
 		return false;
 
+	// 这个会每次连接都会分配新的指针，无法使用 VMT 进行挂钩
 	return g_pClientHook->oSendNetMsg(_ecx, msg, bForceReliable, bVoice);
 }
 
