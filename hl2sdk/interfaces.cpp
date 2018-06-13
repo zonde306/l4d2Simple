@@ -45,6 +45,7 @@ void CClientInterface::Init()
 	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
 	MaterialSystem = GetPointer<IMaterialSystem>(XorStr("materialsystem.dll"), XorStr("VMaterialSystem"));
 	Sound = GetPointer<IEngineSound>(XorStr("engine.dll"), XorStr("IEngineSoundClient"));
+	KeyValueSystem = GetPointer<IKeyValuesSystem>(XorStr("engine.dll"), XorStr("KeyValuesSystem"));
 
 	std::stringstream ss;
 

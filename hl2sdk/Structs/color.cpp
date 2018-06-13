@@ -1,4 +1,4 @@
-#include "color.h"
+﻿#include "color.h"
 
 
 // set the color
@@ -7,7 +7,7 @@
 // b - blue component (0-255)
 // a - alpha component, controls transparency (0 - transparent, 255 - opaque);
 
-inline void Color::SetColor(int _r, int _g, int _b, int _a)
+void Color::SetColor(int _r, int _g, int _b, int _a)
 {
 	_color[0] = (unsigned char)_r;
 	_color[1] = (unsigned char)_g;
@@ -15,7 +15,7 @@ inline void Color::SetColor(int _r, int _g, int _b, int _a)
 	_color[3] = (unsigned char)_a;
 }
 
-inline void Color::GetColor(int & _r, int & _g, int & _b, int & _a) const
+void Color::GetColor(int & _r, int & _g, int & _b, int & _a) const
 {
 	_r = _color[0];
 	_g = _color[1];
@@ -23,7 +23,7 @@ inline void Color::GetColor(int & _r, int & _g, int & _b, int & _a) const
 	_a = _color[3];
 }
 
-inline void Color::getFloatArray(float * arr) const
+void Color::getFloatArray(float * arr) const
 {
 
 	arr[0] = (float)r() / (float)255;
@@ -34,7 +34,7 @@ inline void Color::getFloatArray(float * arr) const
 	return;
 }
 
-inline float * Color::Base()
+float * Color::Base()
 {
 	float clr[3];
 
@@ -45,7 +45,7 @@ inline float * Color::Base()
 	return &clr[0];
 }
 
-inline float Color::Hue() const
+float Color::Hue() const
 {
 	if (_color[0] == _color[1] && _color[1] == _color[2])
 	{
@@ -82,7 +82,7 @@ inline float Color::Hue() const
 	return hue;
 }
 
-inline float Color::Saturation() const
+float Color::Saturation() const
 {
 	float r = _color[0] / 255.0f;
 	float g = _color[1] / 255.0f;
@@ -103,7 +103,7 @@ inline float Color::Saturation() const
 	return s;
 }
 
-inline float Color::Brightness() const
+float Color::Brightness() const
 {
 	float r = _color[0] / 255.0f;
 	float g = _color[1] / 255.0f;
@@ -114,7 +114,7 @@ inline float Color::Brightness() const
 	return (max + min) / 2;
 }
 
-inline Color Color::FromHSB(float hue, float saturation, float brightness)
+Color Color::FromHSB(float hue, float saturation, float brightness)
 {
 	float h = hue == 1.0f ? 0 : hue * 6.0f;
 	float f = h - (int)h;

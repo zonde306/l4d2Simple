@@ -1,4 +1,4 @@
-#include "utlbuffer.h"
+﻿#include "utlbuffer.h"
 #include <cstdio>
 #include <cstdint>
 
@@ -737,6 +737,13 @@ void CUtlBuffer::GetLine(char* pLine, int nMaxChars)
 		pLine[nMaxChars - 1] = 0;
 		SeekGet(SEEK_CURRENT, nLen - 1 - nMaxChars);
 	}
+}
+
+int64_t CUtlBuffer::GetInt64()
+{
+	int64_t i;
+	GetType(i, "%lld");
+	return i;
 }
 
 
@@ -1481,7 +1488,7 @@ void CUtlBuffer::PutString(const char* pString)
 // This version of PutString converts \ to \\ and " to \", etc.
 // It also places " at the beginning and end of the string
 //-----------------------------------------------------------------------------
-inline void CUtlBuffer::PutDelimitedCharInternal(CUtlCharConversion *pConv, char c)
+void CUtlBuffer::PutDelimitedCharInternal(CUtlCharConversion *pConv, char c)
 {
 	int l = pConv->GetConversionLength(c);
 	if (l == 0)
@@ -1883,7 +1890,7 @@ char * CUtlInplaceBuffer::InplaceGetLinePtr(void)
 //-----------------------------------------------------------------------------
 // Where am I writing?
 //-----------------------------------------------------------------------------
-inline unsigned char CUtlBuffer::GetFlags() const
+unsigned char CUtlBuffer::GetFlags() const
 {
 	return m_Flags;
 }
@@ -1891,7 +1898,7 @@ inline unsigned char CUtlBuffer::GetFlags() const
 //-----------------------------------------------------------------------------
 // 
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::IsExternallyAllocated() const
+bool CUtlBuffer::IsExternallyAllocated() const
 {
 	return m_Memory.IsExternallyAllocated();
 }
@@ -1900,7 +1907,7 @@ inline bool CUtlBuffer::IsExternallyAllocated() const
 //-----------------------------------------------------------------------------
 // Clears out the buffer; frees memory
 //-----------------------------------------------------------------------------
-inline void CUtlBuffer::Clear()
+void CUtlBuffer::Clear()
 {
 	m_Get = 0;
 	m_Put = 0;
@@ -1910,7 +1917,7 @@ inline void CUtlBuffer::Clear()
 	AddNullTermination();
 }
 
-inline void CUtlBuffer::Purge()
+void CUtlBuffer::Purge()
 {
 	m_Get = 0;
 	m_Put = 0;
@@ -1921,63 +1928,63 @@ inline void CUtlBuffer::Purge()
 }
 
 
-inline char CUtlBuffer::GetChar()
+char CUtlBuffer::GetChar()
 {
 	char c;
 	GetType(c, "%c");
 	return c;
 }
 
-inline unsigned char CUtlBuffer::GetUnsignedChar()
+unsigned char CUtlBuffer::GetUnsignedChar()
 {
 	unsigned char c;
 	GetType(c, "%u");
 	return c;
 }
 
-inline short CUtlBuffer::GetShort()
+short CUtlBuffer::GetShort()
 {
 	short s;
 	GetType(s, "%d");
 	return s;
 }
 
-inline unsigned short CUtlBuffer::GetUnsignedShort()
+unsigned short CUtlBuffer::GetUnsignedShort()
 {
 	unsigned short s;
 	GetType(s, "%u");
 	return s;
 }
 
-inline int CUtlBuffer::GetInt()
+int CUtlBuffer::GetInt()
 {
 	int i;
 	GetType(i, "%d");
 	return i;
 }
 
-inline int CUtlBuffer::GetIntHex()
+int CUtlBuffer::GetIntHex()
 {
 	int i;
 	GetType(i, "%x");
 	return i;
 }
 
-inline unsigned int CUtlBuffer::GetUnsignedInt()
+unsigned int CUtlBuffer::GetUnsignedInt()
 {
 	unsigned int u;
 	GetType(u, "%u");
 	return u;
 }
 
-inline float CUtlBuffer::GetFloat()
+float CUtlBuffer::GetFloat()
 {
 	float f;
 	GetType(f, "%f");
 	return f;
 }
 
-inline double CUtlBuffer::GetDouble()
+double CUtlBuffer::GetDouble()
 {
 	double d;
 	GetType(d, "%f");
@@ -1987,7 +1994,7 @@ inline double CUtlBuffer::GetDouble()
 #undef GetObject
 
 template <typename T>
-inline void CUtlBuffer::GetObjects(T *dest, int count)
+void CUtlBuffer::GetObjects(T *dest, int count)
 {
 	for (int i = 0; i < count; ++i, ++dest)
 	{
@@ -1997,7 +2004,7 @@ inline void CUtlBuffer::GetObjects(T *dest, int count)
 
 
 
-inline void CUtlBuffer::PutChar(char c)
+void CUtlBuffer::PutChar(char c)
 {
 	if (WasLastCharacterCR())
 	{
@@ -2007,43 +2014,43 @@ inline void CUtlBuffer::PutChar(char c)
 	PutTypeBin(c);
 }
 
-inline void CUtlBuffer::PutUnsignedChar(unsigned char c)
+void CUtlBuffer::PutUnsignedChar(unsigned char c)
 {
 	PutType(c, "%u");
 }
 
-inline void  CUtlBuffer::PutShort(short s)
+void  CUtlBuffer::PutShort(short s)
 {
 	PutType(s, "%d");
 }
 
-inline void CUtlBuffer::PutUnsignedShort(unsigned short s)
+void CUtlBuffer::PutUnsignedShort(unsigned short s)
 {
 	PutType(s, "%u");
 }
 
-inline void CUtlBuffer::PutInt(int i)
+void CUtlBuffer::PutInt(int i)
 {
 	PutType(i, "%d");
 }
 
-inline void CUtlBuffer::PutUnsignedInt(unsigned int u)
+void CUtlBuffer::PutUnsignedInt(unsigned int u)
 {
 	PutType(u, "%u");
 }
 
-inline void CUtlBuffer::PutFloat(float f)
+void CUtlBuffer::PutFloat(float f)
 {
 	PutType(f, "%f");
 }
 
-inline void CUtlBuffer::PutDouble(double d)
+void CUtlBuffer::PutDouble(double d)
 {
 	PutType(d, "%f");
 }
 
 template <typename T>
-inline void CUtlBuffer::PutObjects(T *src, int count)
+void CUtlBuffer::PutObjects(T *src, int count)
 {
 	for (int i = 0; i < count; ++i, ++src)
 	{
@@ -2054,7 +2061,7 @@ inline void CUtlBuffer::PutObjects(T *src, int count)
 //-----------------------------------------------------------------------------
 // What am I reading?
 //-----------------------------------------------------------------------------
-inline void* CUtlBuffer::PeekPut(int offset)
+void* CUtlBuffer::PeekPut(int offset)
 {
 	return &m_Memory[m_Put + offset - m_nOffset];
 }
@@ -2062,7 +2069,7 @@ inline void* CUtlBuffer::PeekPut(int offset)
 //-----------------------------------------------------------------------------
 // What am I reading?
 //-----------------------------------------------------------------------------
-inline const void* CUtlBuffer::PeekGet(int offset) const
+const void* CUtlBuffer::PeekGet(int offset) const
 {
 	return &m_Memory[m_Get + offset - m_nOffset];
 }
@@ -2070,7 +2077,7 @@ inline const void* CUtlBuffer::PeekGet(int offset) const
 //-----------------------------------------------------------------------------
 // Where am I writing?
 //-----------------------------------------------------------------------------
-inline int CUtlBuffer::TellPut() const
+int CUtlBuffer::TellPut() const
 {
 	return m_Put;
 }
@@ -2078,7 +2085,7 @@ inline int CUtlBuffer::TellPut() const
 //-----------------------------------------------------------------------------
 // Where am I reading?
 //-----------------------------------------------------------------------------
-inline int CUtlBuffer::TellGet() const
+int CUtlBuffer::TellGet() const
 {
 	return m_Get;
 }
@@ -2086,7 +2093,7 @@ inline int CUtlBuffer::TellGet() const
 //-----------------------------------------------------------------------------
 // What's the most I've ever written?
 //-----------------------------------------------------------------------------
-inline int CUtlBuffer::TellMaxPut() const
+int CUtlBuffer::TellMaxPut() const
 {
 	return m_nMaxPut;
 }
@@ -2094,17 +2101,17 @@ inline int CUtlBuffer::TellMaxPut() const
 //-----------------------------------------------------------------------------
 // Buffer base and size
 //-----------------------------------------------------------------------------
-inline const void* CUtlBuffer::Base() const
+const void* CUtlBuffer::Base() const
 {
 	return m_Memory.Base();
 }
 
-inline void* CUtlBuffer::Base()
+void* CUtlBuffer::Base()
 {
 	return m_Memory.Base();
 }
 
-inline int CUtlBuffer::Size() const
+int CUtlBuffer::Size() const
 {
 	return m_Memory.NumAllocated();
 }
@@ -2112,7 +2119,7 @@ inline int CUtlBuffer::Size() const
 //-----------------------------------------------------------------------------
 // Am I a text buffer?
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::IsText() const
+bool CUtlBuffer::IsText() const
 {
 	return (m_Flags & TEXT_BUFFER) != 0;
 }
@@ -2120,7 +2127,7 @@ inline bool CUtlBuffer::IsText() const
 //-----------------------------------------------------------------------------
 // Can I grow if I'm externally allocated?
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::IsGrowable() const
+bool CUtlBuffer::IsGrowable() const
 {
 	return (m_Flags & EXTERNAL_GROWABLE) != 0;
 }
@@ -2128,7 +2135,7 @@ inline bool CUtlBuffer::IsGrowable() const
 //-----------------------------------------------------------------------------
 // Do I contain carriage return/linefeeds? 
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::ContainsCRLF() const
+bool CUtlBuffer::ContainsCRLF() const
 {
 	return IsText() && ((m_Flags & CONTAINS_CRLF) != 0);
 }
@@ -2136,7 +2143,7 @@ inline bool CUtlBuffer::ContainsCRLF() const
 //-----------------------------------------------------------------------------
 // Am I read-only
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::IsReadOnly() const
+bool CUtlBuffer::IsReadOnly() const
 {
 	return (m_Flags & READ_ONLY) != 0;
 }
@@ -2144,14 +2151,14 @@ inline bool CUtlBuffer::IsReadOnly() const
 //-----------------------------------------------------------------------------
 // Methods to help with pretty-printing
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::WasLastCharacterCR()
+bool CUtlBuffer::WasLastCharacterCR()
 {
 	if (!IsText() || (TellPut() == 0))
 		return false;
 	return (*(const char *)PeekPut(-1) == '\n');
 }
 
-inline void CUtlBuffer::PutTabs()
+void CUtlBuffer::PutTabs()
 {
 	int nTabCount = (m_Flags & AUTO_TABS_DISABLED) ? 0 : m_nTab;
 	for (int i = nTabCount; --i >= 0; )
@@ -2163,7 +2170,7 @@ inline void CUtlBuffer::PutTabs()
 //-----------------------------------------------------------------------------
 // Am I valid? (overflow or underflow error), Once invalid it stays invalid
 //-----------------------------------------------------------------------------
-inline bool CUtlBuffer::IsValid() const
+bool CUtlBuffer::IsValid() const
 {
 	return m_Error == 0;
 }
@@ -2171,7 +2178,7 @@ inline bool CUtlBuffer::IsValid() const
 //-----------------------------------------------------------------------------
 // How many bytes remain to be read?
 //-----------------------------------------------------------------------------
-inline int CUtlBuffer::GetBytesRemaining() const
+int CUtlBuffer::GetBytesRemaining() const
 {
 	return m_nMaxPut - TellGet();
 }
@@ -2179,7 +2186,7 @@ inline int CUtlBuffer::GetBytesRemaining() const
 //-----------------------------------------------------------------------------
 // Temporarily disables pretty print
 //-----------------------------------------------------------------------------
-inline void CUtlBuffer::EnableTabs(bool bEnable)
+void CUtlBuffer::EnableTabs(bool bEnable)
 {
 	if (bEnable)
 	{
@@ -2192,7 +2199,7 @@ inline void CUtlBuffer::EnableTabs(bool bEnable)
 }
 
 template <typename T>
-inline void CUtlBuffer::GetType(T &dest, const char *pszFmt)
+void CUtlBuffer::GetType(T &dest, const char *pszFmt)
 {
 	if (!IsText())
 	{
@@ -2207,7 +2214,7 @@ inline void CUtlBuffer::GetType(T &dest, const char *pszFmt)
 
 
 template <typename T>
-inline void CUtlBuffer::GetTypeBin(T &dest)
+void CUtlBuffer::GetTypeBin(T &dest)
 {
 	if (CheckGet(sizeof(T)))
 	{
@@ -2228,7 +2235,7 @@ inline void CUtlBuffer::GetTypeBin(T &dest)
 }
 
 template <>
-inline void CUtlBuffer::GetTypeBin< float >(float &dest)
+void CUtlBuffer::GetTypeBin< float >(float &dest)
 {
 	if (CheckGet(sizeof(float)))
 	{
@@ -2264,7 +2271,7 @@ inline void CUtlBuffer::GetTypeBin< float >(float &dest)
 //-----------------------------------------------------------------------------
 
 template <typename T>
-inline void CUtlBuffer::GetObject(T *dest)
+void CUtlBuffer::GetObject(T *dest)
 {
 	if (CheckGet(sizeof(T)))
 	{
@@ -2289,7 +2296,7 @@ inline void CUtlBuffer::GetObject(T *dest)
 //-----------------------------------------------------------------------------
 
 template <typename T>
-inline void CUtlBuffer::PutObject(T *src)
+void CUtlBuffer::PutObject(T *src)
 {
 	if (CheckPut(sizeof(T)))
 	{
@@ -2307,7 +2314,7 @@ inline void CUtlBuffer::PutObject(T *src)
 }
 
 template <typename T>
-inline void CUtlBuffer::PutTypeBin(T src)
+void CUtlBuffer::PutTypeBin(T src)
 {
 	if (CheckPut(sizeof(T)))
 	{
@@ -2325,7 +2332,7 @@ inline void CUtlBuffer::PutTypeBin(T src)
 }
 
 template <typename T>
-inline void CUtlBuffer::PutType(T src, const char *pszFmt)
+void CUtlBuffer::PutType(T src, const char *pszFmt)
 {
 	if (!IsText())
 	{
@@ -2340,12 +2347,12 @@ inline void CUtlBuffer::PutType(T src, const char *pszFmt)
 //-----------------------------------------------------------------------------
 // Push/pop pretty-printing tabs
 //-----------------------------------------------------------------------------
-inline void CUtlBuffer::PushTab()
+void CUtlBuffer::PushTab()
 {
 	++m_nTab;
 }
 
-inline void CUtlBuffer::PopTab()
+void CUtlBuffer::PopTab()
 {
 	if (--m_nTab < 0)
 	{

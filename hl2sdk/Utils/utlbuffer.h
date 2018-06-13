@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../definitions.h"
 #include "../Structs/netprop.h"
 #include "utlmemory.h"
@@ -505,6 +505,7 @@ public:
 	void			GetString(char* pString, int nMaxChars = 0);
 	void			Get(void* pMem, int size);
 	void			GetLine(char* pLine, int nMaxChars = 0);
+	int64_t			GetInt64();
 
 	// Used for getting objects that have a byteswap datadesc defined
 	template <typename T> void GetObjects(T *dest, int count = 1);
@@ -790,3 +791,6 @@ public:
 	//
 	char * InplaceGetLinePtr(void);
 };
+
+CUtlCharConversion *GetCStringCharConversion();
+CUtlCharConversion *GetNoEscCharConversion();

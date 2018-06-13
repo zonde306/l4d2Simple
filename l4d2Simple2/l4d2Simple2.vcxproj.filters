@@ -249,6 +249,9 @@
     <ClCompile Include="..\hl2sdk\Features\EventLogger.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\keyvalues.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -440,9 +443,6 @@
     <ClInclude Include="..\hl2sdk\Utils\checksum_crc.h">
       <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\hl2sdk\Structs\keyvalues.h">
-      <Filter>hl2sdk\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h">
       <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
@@ -586,6 +586,27 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Interfaces\IEngineSound.h">
       <Filter>hl2sdk\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlhash.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlqueue.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlsortvector.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\threadtools.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\keyvalues.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utllinkedlist.h">
+      <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlfixedmemory.h">
+      <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

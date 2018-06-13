@@ -26,6 +26,7 @@
 #include "./Interfaces/IUniformRandomStream.h"
 #include "./Interfaces/IEngineSound.h"
 #include "./interfaces/IBaseClientState.h"
+#include "./Interfaces/IKeyValuesSystem.h"
 #include "./Structs/netprop.h"
 #include <Windows.h>
 #include <string>
@@ -60,6 +61,7 @@ public:
 	IVRenderView* RenderView;
 	IMaterialSystem* MaterialSystem;
 	IEngineSound* Sound;
+	IKeyValuesSystem* KeyValueSystem;
 
 	// 以下功能可能会随着连接服务器而改变，最好每次加入游戏后都重新获取一遍
 	// 最好不要直接使用这个，而是调用 IEngineClient::GetNetChannelInfo 然后转换类型

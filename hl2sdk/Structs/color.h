@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 class Color
 {
@@ -22,9 +22,9 @@ public:
 	// g - green component (0-255)
 	// b - blue component (0-255)
 	// a - alpha component, controls transparency (0 - transparent, 255 - opaque);
-	inline void SetColor(int _r, int _g, int _b, int _a = 0);
+	void SetColor(int _r, int _g, int _b, int _a = 0);
 
-	inline void GetColor(int &_r, int &_g, int &_b, int &_a) const;
+	void GetColor(int &_r, int &_g, int &_b, int &_a) const;
 
 	inline void SetRawColor(int color32)
 	{
@@ -69,9 +69,9 @@ public:
 		return *this;
 	}
 
-	inline float* Base();
+	float* Base();
 
-	inline float Hue() const;
+	float Hue() const;
 
 	float Saturation() const;
 

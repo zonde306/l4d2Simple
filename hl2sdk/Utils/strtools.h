@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <Windows.h>
 #include <cstring>
 #include <cstdint>
@@ -369,7 +369,7 @@ bool V_GenerateUniqueName(char *name, int memsize, const char *prefix, const Nam
 	return true;
 }
 
-
+int64_t V_atoi64(const char *str);
 
 // NOTE: This is for backward compatability!
 // We need to DLL-export the Q methods in vstdlib but not link to them in other projects

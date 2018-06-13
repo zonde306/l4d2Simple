@@ -1,5 +1,6 @@
-#pragma once
+﻿#pragma once
 #include "../definitions.h"
+#include "../Utils/threadtools.h"
 #include <Windows.h>
 #include <cstdint>
 #include <cmath>
@@ -9,124 +10,6 @@
 
 #pragma warning(push)
 #pragma warning( disable:4251 )
-
-inline bool ThreadInterlockedAssignIf(long volatile *p, long value, long comperand)
-{
-	Assert((size_t)p % 4 == 0);
-	return (_InterlockedCompareExchange(p, value, comperand) == comperand);
-}
-
-inline long ThreadInterlockedExchange(long volatile *p, long value)
-{
-	Assert((size_t)p % 4 == 0);
-	return _InterlockedExchange(p, value);
-}
-
-class CThreadFastMutex
-{
-public:
-	CThreadFastMutex()
-		: m_ownerID(0),
-		m_depth(0)
-	{
-	}
-
-private:
-	FORCEINLINE bool TryLockInline(const uint32_t threadId) volatile
-	{
-		if (threadId != m_ownerID && !ThreadInterlockedAssignIf((volatile long *)&m_ownerID, (long)threadId, 0))
-			return false;
-
-		_ReadWriteBarrier();
-		++m_depth;
-		return true;
-	}
-
-	inline bool TryLock(const uint32_t threadId) volatile
-	{
-		return TryLockInline(threadId);
-	}
-
-	inline void Lock(const uint32_t threadId, unsigned nSpinSleepTime) volatile
-	{
-		while (!TryLock(threadId))
-			Sleep(nSpinSleepTime);
-	}
-
-public:
-	inline bool TryLock() volatile
-	{
-#ifdef _DEBUG_OUTPUT
-		if (m_depth == INT_MAX)
-			DebuggerBreak();
-
-		if (m_depth < 0)
-			DebuggerBreak();
-#endif
-		return TryLockInline(GetCurrentThreadId());
-	}
-
-#ifndef _DEBUG_OUTPUT 
-	FORCEINLINE
-#endif
-		void Lock(unsigned int nSpinSleepTime = 0) volatile
-	{
-		const uint32_t threadId = GetCurrentThreadId();
-
-		if (!TryLockInline(threadId))
-		{
-			SuspendThread(GetCurrentThread());
-			Lock(threadId, nSpinSleepTime);
-		}
-#ifdef _DEBUG_OUTPUT
-		if (m_ownerID != ThreadGetCurrentId())
-			DebuggerBreak();
-
-		if (m_depth == INT_MAX)
-			DebuggerBreak();
-
-		if (m_depth < 0)
-			DebuggerBreak();
-#endif
-	}
-
-#ifndef _DEBUG_OUTPUT
-	FORCEINLINE
-#endif
-	void Unlock() volatile
-	{
-#ifdef _DEBUG_OUTPUT
-		if (m_ownerID != ThreadGetCurrentId())
-			DebuggerBreak();
-
-		if (m_depth <= 0)
-			DebuggerBreak();
-#endif
-
-		--m_depth;
-		if (!m_depth)
-		{
-			_ReadWriteBarrier();
-			ThreadInterlockedExchange((long*)&m_ownerID, 0);
-		}
-	}
-
-#ifdef WIN32
-	inline bool TryLock() const volatile { return (const_cast<CThreadFastMutex *>(this))->TryLock(); }
-	inline void Lock(unsigned nSpinSleepTime = 1) const volatile { (const_cast<CThreadFastMutex *>(this))->Lock(nSpinSleepTime); }
-	inline void Unlock() const	volatile { (const_cast<CThreadFastMutex *>(this))->Unlock(); }
-#endif
-	// To match regular CThreadMutex:
-	inline bool AssertOwnedByCurrentThread() { return true; }
-	inline void SetTrace(bool) {}
-
-	inline uint32_t GetOwnerId() const { return m_ownerID; }
-	inline int	GetDepth() const { return m_depth; }
-private:
-	volatile uint32_t m_ownerID;
-	int				m_depth;
-};
-
 
 //-----------------------------------------------------------------------------
 // A generator of uniformly distributed random numbers

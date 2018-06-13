@@ -163,6 +163,7 @@
     <ClCompile Include="..\hl2sdk\Structs\color.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\convar.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\handle.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\keyvalues.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\matrix.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\netprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\recvprop.cpp" />
@@ -289,9 +290,15 @@
     <ClInclude Include="..\hl2sdk\Utils\checksum_sha1.h" />
     <ClInclude Include="..\hl2sdk\Utils\math.h" />
     <ClInclude Include="..\hl2sdk\Utils\strtools.h" />
+    <ClInclude Include="..\hl2sdk\Utils\threadtools.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlblockmemory.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlbuffer.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utlfixedmemory.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utlhash.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utllinkedlist.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlmemory.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utlqueue.h" />
+    <ClInclude Include="..\hl2sdk\Utils\utlsortvector.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlstring.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlvector.h" />
     <ClInclude Include="..\imgui\examples\directx9_example\imgui_impl_dx9.h" />

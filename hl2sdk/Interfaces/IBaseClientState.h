@@ -4,6 +4,7 @@
 #include "../Utils/checksum_crc.h"
 #include "../Utils/utlvector.h"
 #include "../../l4d2Simple2/xorstr.h"
+#include "../../l4d2Simple2/vector.h"
 
 class KeyValues;
 class NET_Tick;
@@ -38,6 +39,7 @@ class SVC_TempEntities;
 class SVC_Prefetch;
 
 typedef struct netpacket_s netpacket_t;
+#define MAX_USER_MSG_DATA 255
 
 class IConnectionlessPacketHandler
 {
@@ -492,3 +494,201 @@ private:
 	char		m_szHostNameBuffer[256];// name of current skybox 
 };
 
+class SVC_UserMessage : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(UserMessage);
+
+	SVC_UserMessage() { m_bReliable = false; }
+
+	int	GetGroup() const { return INetChannelInfo::USERMESSAGES; }
+
+public:
+	int			m_nMsgType;
+	int			m_nLength;	// data length in bits
+	bf_read		m_DataIn;
+	bf_write	m_DataOut;
+};
+
+class SVC_EntityMessage : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(EntityMessage);
+
+	SVC_EntityMessage() { m_bReliable = false; }
+
+	int	GetGroup() const { return INetChannelInfo::ENTMESSAGES; }
+
+public:
+	int			m_nEntityIndex;
+	int			m_nClassID;
+	int			m_nLength;	// data length in bits
+	bf_read		m_DataIn;
+	bf_write	m_DataOut;
+};
+
+class SVC_PacketEntities : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(PacketEntities);
+
+	int	GetGroup() const { return INetChannelInfo::ENTITIES; }
+
+public:
+
+	int			m_nMaxEntries;
+	int			m_nUpdatedEntries;
+	bool		m_bIsDelta;
+	bool		m_bUpdateBaseline;
+	int			m_nBaseline;
+	int			m_nDeltaFrom;
+	int			m_nLength;
+	bf_read		m_DataIn;
+	bf_write	m_DataOut;
+};
+
+class SVC_TempEntities : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(TempEntities);
+
+	SVC_TempEntities() { m_bReliable = false; }
+
+	int	GetGroup() const { return INetChannelInfo::EVENTS; }
+
+	int			m_nNumEntries;
+	int			m_nLength;
+	bf_read		m_DataIn;
+	bf_write	m_DataOut;
+};
+
+class SVC_GameEvent : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(GameEvent);
+
+	int	GetGroup() const { return INetChannelInfo::EVENTS; }
+
+public:
+	int			m_nLength;	// data length in bits
+	bf_read		m_DataIn;
+	bf_write	m_DataOut;
+};
+
+class SVC_BSPDecal : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(BSPDecal);
+
+public:
+	Vector		m_Pos;
+	int			m_nDecalTextureIndex;
+	int			m_nEntityIndex;
+	int			m_nModelIndex;
+	bool		m_bLowPriority;
+};
+
+class SVC_CrosshairAngle : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(CrosshairAngle);
+
+	SVC_CrosshairAngle() {}
+	SVC_CrosshairAngle(QAngle angle) { m_Angle = angle; }
+
+public:
+	QAngle			m_Angle;
+};
+
+class SVC_FixAngle : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(FixAngle);
+
+	SVC_FixAngle() { m_bReliable = false; };
+	SVC_FixAngle(bool bRelative, QAngle angle)
+	{
+		m_bReliable = false; m_bRelative = bRelative; m_Angle = angle;
+	}
+
+public:
+	bool			m_bRelative;
+	QAngle			m_Angle;
+};
+
+class SVC_SetView : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(SetView);
+
+	SVC_SetView() {}
+	SVC_SetView(int entity) { m_nEntityIndex = entity; }
+
+public:
+	int				m_nEntityIndex;
+};
+
+class SVC_UpdateStringTable : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(UpdateStringTable);
+
+	int	GetGroup() const { return INetChannelInfo::STRINGTABLE; }
+
+public:
+	int				m_nTableID;	// table to be updated
+	int				m_nChangedEntries; // number of how many entries has changed
+	int				m_nLength;	// data length in bits
+	bf_read			m_DataIn;
+	bf_write		m_DataOut;
+};
+
+class SVC_SetPause : public CNetMessage
+{
+	DECLARE_SVC_MESSAGE(SetPause);
+
+	SVC_SetPause() {}
+	SVC_SetPause(bool state) { m_bPaused = state; }
+
+public:
+	bool		m_bPaused;		// true or false, what else
+};
+
+class CLC_FileCRCCheck : public CNetMessage
+{
+public:
+	DECLARE_CLC_MESSAGE(FileCRCCheck);
+
+	char		m_szPathID[MAX_PATH];
+	char		m_szFilename[MAX_PATH];
+	CRC32_t		m_CRC;
+};
+
+class NET_SignonState : public CNetMessage
+{
+	DECLARE_NET_MESSAGE(SignonState);
+
+	int	GetGroup() const { return INetChannelInfo::SIGNON; }
+
+	NET_SignonState() {};
+	NET_SignonState(int state, int spawncount) { m_nSignonState = state; m_nSpawnCount = spawncount; };
+
+public:
+	int			m_nSignonState;			// See SIGNONSTATE_ defines
+	int			m_nSpawnCount;			// server spawn count (session number)
+};
+
+class NET_Tick : public CNetMessage
+{
+	DECLARE_NET_MESSAGE(Tick);
+
+	NET_Tick()
+	{
+		m_bReliable = false;
+		m_flHostFrameTime = 0;
+		m_flHostFrameTimeStdDeviation = 0;
+	};
+
+	NET_Tick(int tick, float host_frametime, float host_frametime_stddeviation)
+	{
+		m_bReliable = false;
+		m_nTick = tick;
+		m_flHostFrameTime = host_frametime;
+		m_flHostFrameTimeStdDeviation = host_frametime_stddeviation;
+	};
+
+public:
+	int			m_nTick;
+	float		m_flHostFrameTime;
+	float		m_flHostFrameTimeStdDeviation;
+};
