@@ -33,6 +33,25 @@
 #include <sstream>
 #include <memory>
 
+// 搜索到的函数
+typedef void(__thiscall* FnStartDrawing)(ISurface* _this);
+typedef void(__thiscall* FnFinishDrawing)(ISurface* _this);
+typedef void(__cdecl* FnWriteUsercmd)(bf_write* buf, CUserCmd* to, CUserCmd* from);
+typedef int(__cdecl* FnSetPredictionRandomSeed)(int seed);
+typedef void(__cdecl* FnSharedRandomFloat)(const char* name, float min, float max, int slots);
+typedef void(__cdecl* FnTraceLine2)(const Vector& start, const Vector& end, unsigned int mask, const IHandleEntity* ignore, int collisionGroup, trace_t* result);
+typedef void(__cdecl* FnTraceLine)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
+typedef void(__cdecl* FnClipTraceToPlayers)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
+
+// 导出函数
+typedef void(__cdecl* FnRandomSeed)(int iSeed);
+typedef float(__cdecl* FnRandomFloat)(float flMinVal, float flMaxVal);
+typedef float(__cdecl* FnRandomFloatExp)(float flMinVal, float flMaxVal, float flExponent);
+typedef int(__cdecl* FnRandomInt)(int iMinVal, int iMaxVal);
+typedef float(__cdecl* FnRandomGaussianFloat)(float flMean, float flStdDev);
+typedef void(__cdecl* FnInstallUniformRandomStream)(IUniformRandomStream* pStream);
+typedef IKeyValuesSystem*(__cdecl* FnKeyValuesSystem)();
+
 class CClientInterface
 {
 public:
@@ -55,7 +74,7 @@ public:
 	IInputSystem* InputSystem;
 	IEngineVGui* EngineVGui;
 	IVModelRender* ModelRender;
-	IBaseFileSystem* FileSystem;
+	IFileSystem* FileSystem;
 	ILocalize* Localize;
 	INetworkStringTableContainer* StringTable;
 	IVRenderView* RenderView;
@@ -73,6 +92,26 @@ public:
 
 	// 初始化
 	void Init();
+
+public:
+	// 搜索特征码得到的函数
+	FnStartDrawing StartDrawing;
+	FnFinishDrawing FinishDrawing;
+	FnWriteUsercmd WriteUserCmd;
+	FnSharedRandomFloat SharedRandomFloat;
+	FnSetPredictionRandomSeed SetPredictionRandomSeed;
+	FnTraceLine2 TraceLine2;
+	FnTraceLine TraceLine;
+	FnClipTraceToPlayers ClipTraceToPlayers;
+
+	// 通过导出表得到的函数
+	FnRandomSeed RandomSeed;
+	FnRandomFloat RandomFloat;
+	FnRandomFloatExp RandomFloatExp;
+	FnRandomInt RandomInt;
+	FnRandomGaussianFloat RandomGaussianFloat;
+	FnInstallUniformRandomStream InstallUniformRandomStream;
+	FnKeyValuesSystem GetKeyValuesSystem;
 
 protected:
 	CGlobalVarsBase * FindGlobalVars();

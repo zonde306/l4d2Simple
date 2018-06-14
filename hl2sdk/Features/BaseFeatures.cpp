@@ -1,4 +1,4 @@
-#include "BaseFeatures.h"
+﻿#include "BaseFeatures.h"
 #include "../hook.h"
 
 CBaseFeatures::CBaseFeatures()

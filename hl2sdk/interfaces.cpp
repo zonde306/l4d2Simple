@@ -10,10 +10,20 @@ std::unique_ptr<CClientInterface> g_pInterface;
 
 #define GET_VFUNC(_ptr,_off)	((*reinterpret_cast<PDWORD*>(_ptr))[_off])
 
-#define SIG_GET_CLIENTMODE		XorStr("8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? C3")
-#define SIG_GET_CLIENTSTATE		XorStr("A1 ? ? ? ? 83 C0 08 C3")
-#define SIG_MOVE_HELPER			XorStr("A1 ? ? ? ? 8B 10 8B 52 ? 81 C1")
-#define SIG_GLOBAL_VARS			XorStr("8B 0D ? ? ? ? D9 41 ? 8B 55 ? 8B 45")
+#define SIG_GET_CLIENTMODE			XorStr("8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? C3")
+#define SIG_GET_CLIENTSTATE			XorStr("A1 ? ? ? ? 83 C0 08 C3")
+#define SIG_MOVE_HELPER				XorStr("A1 ? ? ? ? 8B 10 8B 52 ? 81 C1")
+#define SIG_GLOBAL_VARS				XorStr("8B 0D ? ? ? ? D9 41 ? 8B 55 ? 8B 45")
+#define SIG_WRITE_USERCMD			XorStr("55 8B EC A1 ? ? ? ? 83 78 30 00 53 8B 5D 10")
+#define SIG_START_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC 14 56 57 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 8B F9 80 3D")
+#define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 51 56 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 6A 00")
+#define SIG_SHARED_RANDOM_FLOAT		XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
+#define SIG_SET_RANDOM_SEED			XorStr("55 8B EC 8B 45 08 85 C0 75 0C")
+#define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
+#define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
+#define SIG_TRACE_LINE2				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 6C 56 8B 43 08")
+#define SIG_TRACE_LINE				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 5C 56 8B 43 08")
+#define SIG_CLIP_TRACE_PLAYER		XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 57 8B 53 14")
 
 typedef IClientMode*(__cdecl *FnGetClientMode)();
 static FnGetClientMode GetClientMode = nullptr;
@@ -39,7 +49,7 @@ void CClientInterface::Init()
 	InputSystem = GetPointer<IInputSystem>(XorStr("inputsystem.dll"), XorStr("InputSystemVersion"));
 	EngineVGui = GetPointer<IEngineVGui>(XorStr("engine.dll"), XorStr("VEngineVGui"));
 	ModelRender = GetPointer<IVModelRender>(XorStr("engine.dll"), XorStr("VEngineModel"));
-	FileSystem = GetPointer<IBaseFileSystem>(XorStr("engine.dll"), XorStr("VBaseFileSystem"));
+	FileSystem = GetPointer<IFileSystem>(XorStr("filesystem_stdio.dll"), XorStr("VFileSystem"));
 	Localize = GetPointer<ILocalize>(XorStr("localize.dll"), XorStr("Localize_"));
 	StringTable = GetPointer<INetworkStringTableContainer>(XorStr("engine.dll"), XorStr("VEngineClientStringTable"));
 	RenderView = GetPointer<IVRenderView>(XorStr("engine.dll"), XorStr("VEngineRenderView"));
@@ -132,6 +142,56 @@ void CClientInterface::Init()
 
 	MoveHelper = **reinterpret_cast<IMoveHelper***>(Utils::FindPattern(XorStr("client.dll"), SIG_MOVE_HELPER) + 1);
 	PRINT_OFFSET(XorStr("IMoveHelper"), MoveHelper);
+
+	HMODULE vstdlib = GetModuleHandleA(XorStr("vstdlib.dll"));
+	if (vstdlib != NULL)
+	{
+		RandomSeed = reinterpret_cast<FnRandomSeed>(GetProcAddress(vstdlib, XorStr("RandomSeed")));
+		RandomFloat = reinterpret_cast<FnRandomFloat>(GetProcAddress(vstdlib, XorStr("RandomFloat")));
+		RandomFloatExp = reinterpret_cast<FnRandomFloatExp>(GetProcAddress(vstdlib, XorStr("RandomFloatExp")));
+		RandomInt = reinterpret_cast<FnRandomInt>(GetProcAddress(vstdlib, XorStr("RandomInt")));
+		RandomGaussianFloat = reinterpret_cast<FnRandomGaussianFloat>(GetProcAddress(vstdlib, XorStr("RandomGaussianFloat")));
+		InstallUniformRandomStream = reinterpret_cast<FnInstallUniformRandomStream>(GetProcAddress(vstdlib, XorStr("InstallUniformRandomStream")));
+		GetKeyValuesSystem = reinterpret_cast<FnKeyValuesSystem>(GetProcAddress(vstdlib, XorStr("KeyValuesSystem")));
+
+		PRINT_OFFSET(XorStr("RandomSeed"), RandomSeed);
+		PRINT_OFFSET(XorStr("RandomFloat"), RandomFloat);
+		PRINT_OFFSET(XorStr("RandomFloatExp"), RandomFloatExp);
+		PRINT_OFFSET(XorStr("RandomInt"), RandomInt);
+		PRINT_OFFSET(XorStr("RandomGaussianFloat"), RandomGaussianFloat);
+		PRINT_OFFSET(XorStr("InstallUniformRandomStream"), InstallUniformRandomStream);
+		PRINT_OFFSET(XorStr("KeyValuesSystem"), GetKeyValuesSystem);
+	}
+
+	WriteUserCmd = reinterpret_cast<FnWriteUsercmd>(Utils::FindPattern(XorStr("client.dll"), SIG_WRITE_USERCMD));
+	PRINT_OFFSET(XorStr("WriteUserCmd"), WriteUserCmd);
+
+	StartDrawing = reinterpret_cast<FnStartDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_START_DRAWING));
+	PRINT_OFFSET(XorStr("StartDrawing"), StartDrawing);
+
+	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
+	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
+
+	SharedRandomFloat = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT));
+	PRINT_OFFSET(XorStr("SharedRandomFloat"), SharedRandomFloat);
+
+	SetPredictionRandomSeed = reinterpret_cast<FnSetPredictionRandomSeed>(Utils::FindPattern(XorStr("client.dll"), SIG_SET_RANDOM_SEED));
+	PRINT_OFFSET(XorStr("SetPredictionRandomSeed"), SetPredictionRandomSeed);
+
+	TraceLine2 = reinterpret_cast<FnTraceLine2>(Utils::FindPattern(XorStr("client.dll"), SIG_TRACE_LINE2));
+	PRINT_OFFSET(XorStr("TraceLine2"), TraceLine2);
+
+	TraceLine = reinterpret_cast<FnTraceLine>(Utils::FindPattern(XorStr("client.dll"), SIG_TRACE_LINE));
+	PRINT_OFFSET(XorStr("TraceLine"), TraceLine);
+
+	ClipTraceToPlayers = reinterpret_cast<FnClipTraceToPlayers>(Utils::FindPattern(XorStr("client.dll"), SIG_CLIP_TRACE_PLAYER));
+	PRINT_OFFSET(XorStr("ClipTraceToPlayers"), ClipTraceToPlayers);
+
+	if (GetKeyValuesSystem != nullptr && KeyValueSystem == nullptr)
+	{
+		KeyValueSystem = GetKeyValuesSystem();
+		PRINT_OFFSET(XorStr("KeyValueSystem"), KeyValueSystem);
+	}
 }
 
 CGlobalVarsBase * CClientInterface::FindGlobalVars()

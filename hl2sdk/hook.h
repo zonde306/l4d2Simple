@@ -32,24 +32,8 @@ typedef void(__thiscall* FnEmitSound)(IEngineSound*, IRecipientFilter&, int, int
 typedef bool(__thiscall* FnSendNetMsg)(INetChannel*, INetMessage&, bool, bool);
 
 // 非虚函数
-typedef void(__thiscall* FnStartDrawing)(ISurface*);
-typedef void(__thiscall* FnFinishDrawing)(ISurface*);
 typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
-typedef void(__cdecl* FnWriteUsercmd)(bf_write*, CUserCmd*, CUserCmd*);
-typedef int(__cdecl* FnSetPredictionRandomSeed)(int);
-typedef void(__cdecl* FnSharedRandomFloat)(const char*, float, float, int);
-typedef void(__cdecl* FnTraceLine2)(const Vector&, const Vector&, unsigned int, const IHandleEntity*, int, trace_t*);
-typedef void(__cdecl* FnTraceLine)(const Vector&, const Vector&, unsigned int, ITraceFilter*, trace_t*);
-typedef void(__cdecl* FnClipTraceToPlayers)(const Vector&, const Vector&, unsigned int, ITraceFilter*, trace_t*);
-
-// 导出函数
-typedef void(__cdecl* FnRandomSeed)(int iSeed);
-typedef float(__cdecl* FnRandomFloat)(float flMinVal, float flMaxVal);
-typedef float(__cdecl* FnRandomFloatExp)(float flMinVal, float flMaxVal, float flExponent);
-typedef int(__cdecl* FnRandomInt)(int iMinVal, int iMaxVal);
-typedef float(__cdecl* FnRandomGaussianFloat)(float flMean, float flStdDev);
-typedef void(__cdecl* FnInstallUniformRandomStream)(IUniformRandomStream* pStream);
 
 class CClientHook
 {
@@ -123,24 +107,6 @@ public:
 	bool* bSendPacket;
 	FnFindMaterial oFindMaterial = nullptr;
 	FnSendNetMsg oSendNetMsg = nullptr;
-
-	// 搜索特征码得到的函数
-	FnStartDrawing StartDrawing;
-	FnFinishDrawing FinishDrawing;
-	FnWriteUsercmd WriteUserCmd;
-	FnSharedRandomFloat SharedRandomFloat;
-	FnSetPredictionRandomSeed SetPredictionRandomSeed;
-	FnTraceLine2 TraceLine2;
-	FnTraceLine TraceLine;
-	FnClipTraceToPlayers ClipTraceToPlayers;
-
-	// 通过导出表得到的函数
-	FnRandomSeed RandomSeed;
-	FnRandomFloat RandomFloat;
-	FnRandomFloatExp RandomFloatExp;
-	FnRandomInt RandomInt;
-	FnRandomGaussianFloat RandomGaussianFloat;
-	FnInstallUniformRandomStream InstallUniformRandomStream;
 
 private:
 	bool bCreateMoveFinish = false;

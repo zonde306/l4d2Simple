@@ -297,7 +297,7 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 	{
 		// g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
 		// g_pClientHook->TraceLine2(startPosition, endPosition, MASK_SHOT, player, CG_PLAYER|CG_NPC|CG_DEBRIS|CG_VEHICLE, &trace);
-		g_pClientHook->TraceLine(startPosition, endPosition, MASK_SHOT, &filter, &trace);
+		g_pInterface->TraceLine(startPosition, endPosition, MASK_SHOT, &filter, &trace);
 	}
 	catch (...)
 	{
