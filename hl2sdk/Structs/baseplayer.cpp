@@ -89,9 +89,15 @@ int CBasePlayer::GetCrosshairID()
 
 bool CBasePlayer::IsGhost()
 {
+	/*
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_isGhost"));
 	Assert_NetProp(offset);
 	return (DECL_NETPROP_GET(byte) != 0);
+	*/
+
+	using FnIsGhost = bool(__thiscall*)(CBasePlayer*);
+	FnIsGhost IsGhost = Utils::GetVTableFunction<FnIsGhost>(this, indexes::IsGhost);
+	return IsGhost(this);
 }
 
 int CBasePlayer::GetAmmo(int ammoType)

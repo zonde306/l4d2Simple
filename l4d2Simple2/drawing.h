@@ -201,6 +201,8 @@ private:
 	CD3DFont* m_pFont;
 	ID3DXLine* m_pLine;
 	ID3DXSprite* m_pTextSprite;
+	// IDirect3DVertexDeclaration9* m_pVertexDeclaration;
+	// IDirect3DVertexShader9* m_pVertexShader;
 
 private:
 	ImDrawData m_imDrawData;

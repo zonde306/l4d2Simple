@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../definitions.h"
 #include "strtools.h"
 
@@ -275,7 +275,6 @@ public:
 #ifdef REMEMBER_ALLOC_SIZE_FOR_VALGRIND
 		m_nCurAllocSize = 0;
 #endif
-
 	}
 	CUtlMemoryConservative(T* pMemory, int numElements) { Assert(0); }
 	~CUtlMemoryConservative() { if (m_pMemory) free(m_pMemory); }
@@ -318,7 +317,7 @@ public:
 #ifdef REMEMBER_ALLOC_SIZE_FOR_VALGRIND
 		return m_nCurAllocSize;
 #else
-		return (m_pMemory) ? g_pMemAlloc->GetSize(m_pMemory) : 0;
+		return /*(m_pMemory) ? g_pMemAlloc->GetSize(m_pMemory) : */0;
 #endif
 	}
 
@@ -388,7 +387,6 @@ private:
 #ifdef REMEMBER_ALLOC_SIZE_FOR_VALGRIND
 	size_t m_nCurAllocSize;
 #endif
-
 };
 
 //-----------------------------------------------------------------------------

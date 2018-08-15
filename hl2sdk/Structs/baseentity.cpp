@@ -1,4 +1,4 @@
-#include "baseentity.h"
+﻿#include "baseentity.h"
 #include "../Utils/math.h"
 #include "../interfaces.h"
 #include "../indexes.h"

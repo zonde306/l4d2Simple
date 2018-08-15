@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 namespace indexes
 {
@@ -7,7 +7,7 @@ namespace indexes
 	const int CreateMove = 20;
 	const int FrameStageNotify = 34;
 	const int DispatchUserMessage = 35;
-	const int InKeyEvent = -1;
+	const int In_KeyEvent = 19;
 	const int HudProcessInput = 9;
 	const int HudUpdate = 10;
 	const int IN_IsKeyDown = 18;
@@ -119,6 +119,9 @@ namespace indexes
 	const int GetModel = 8;
 	const int GetWeaponID = 383;
 	const int RenderTableDrawModel = 9;
+	const int IsGhost = 240;
+	const int IsBot = 268;		// 这个函数没有实现
+	const int ViewPunch = 304;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

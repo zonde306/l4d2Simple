@@ -590,6 +590,8 @@ void CDrawing::OnBeginEndScene()
 	
 	m_pStateBlock->Capture();
 	// m_pDevice->BeginStateBlock();
+	// m_pDevice->GetVertexDeclaration(&m_pVertexDeclaration);
+	// m_pDevice->GetVertexShader(&m_pVertexShader);
 
 	m_pDevice->SetTexture(0, nullptr);
 	m_pDevice->SetPixelShader(nullptr);
@@ -657,6 +659,8 @@ void CDrawing::OnFinishEndScene()
 
 	// 将设备状态重置，防止原来的绘制出现问题
 	m_pStateBlock->Apply();
+	// m_pDevice->SetVertexDeclaration(m_pVertexDeclaration);
+	// m_pDevice->SetVertexShader(m_pVertexShader);
 
 	UNLOCK_ENDSCENE();
 }
