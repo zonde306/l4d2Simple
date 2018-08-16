@@ -126,6 +126,11 @@ namespace indexes
 	const int GetRenderTeamNumber = 81;
 	const int GetTeamNumber = 79;
 	const int GetTeam = 78;
+	const int CanAttack = 352;
+	const int OnSpawn = 355;
+	const int IsReadyToShove = 356;
+	const int CanPlayerJump = 358;
+	const int CanBeShoved = 359;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

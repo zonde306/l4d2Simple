@@ -15,12 +15,7 @@
 
 extern std::map<std::string, int> g_mPropOffset;
 
-#ifdef _DEBUG
-#define Assert_NetProp(_prop)				if(_prop == -1)\
-	throw std::runtime_error("Invalid NetProp Offset.")
-#else
-#define Assert_NetProp(_prop)		((void)0)
-#endif
+#define Assert_NetProp(_prop)		Assert(_prop)
 
 #define DECL_NETPROP_OFFSET(_table,_name)			static int offset = GetNetPropOffset(XorStr(_table), XorStr(_name));\
 	Assert_NetProp(offset)

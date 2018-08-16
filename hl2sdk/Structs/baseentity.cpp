@@ -161,6 +161,21 @@ int CBaseEntity::GetSequence()
 int CBaseEntity::GetTeam()
 {
 	using FnGetTeamNumber = int(__thiscall*)(CBaseEntity*);
+	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_iTeamNum"));
 	FnGetTeamNumber fn = Utils::GetVTableFunction<FnGetTeamNumber>(this, indexes::GetTeamNumber);
-	return fn(this);
+	Assert_NetProp(offset);
+
+	try
+	{
+		if (fn != nullptr)
+			return fn(this);
+
+		return DECL_NETPROP_GET(byte);
+	}
+	catch (...)
+	{
+
+	}
+
+	return 1;
 }
