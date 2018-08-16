@@ -354,14 +354,18 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 		return false;
 	}
 
-	if (m_bNonFriendly)
+	int team = entity->GetTeam();
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local != nullptr)
 	{
-		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-		if (local != nullptr)
-		{
-			if (entity->GetTeam() == local->GetTeam())
-				return false;
-		}
+		if (team == 4)
+			return false;
+
+		if (m_bNonFriendly && team == local->GetTeam())
+			return false;
+
+		if (team == 3 && entity->IsGhost())
+			return false;
 	}
 
 	if (m_bVisible)

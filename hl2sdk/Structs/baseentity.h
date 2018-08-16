@@ -81,6 +81,7 @@ public:
 	ClientClass* GetClientClass();
 	int GetClassID();
 	int GetSequence();
+	int GetTeam();
 };
 
 template<typename T>

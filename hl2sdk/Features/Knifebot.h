@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BaseFeatures.h"
 
 class CKnifeBot : public CBaseFeatures
@@ -25,7 +25,7 @@ private:
 	bool m_bForwardtrack = false;
 
 	float m_fExtraShoveRange = 0.0f;
-	float m_fExtraMeleeRange = 0.0f;
+	float m_fExtraMeleeRange = 9.0f;
 
 private:
 	enum FastMeleeStage_t

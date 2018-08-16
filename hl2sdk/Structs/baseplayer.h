@@ -10,7 +10,7 @@ public:
 	Vector GetEyePosition();
 	QAngle GetEyeAngles();
 	float GetFriction();
-	int GetTeam();
+	// int GetTeam();
 	Vector GetVelocity();
 	int GetHealth();
 	bool IsAlive();

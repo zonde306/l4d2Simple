@@ -242,6 +242,10 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		if (entity == nullptr || entity == local || !entity->IsAlive() || entity->GetTeam() == team)
 			continue;
 
+		int targetTeam = entity->GetTeam();
+		if (targetTeam == 4 || (targetTeam == 3 && entity->IsGhost()))
+			continue;
+
 		Vector aimPosition = entity->GetHeadOrigin();
 		if (!HasEnemyVisible(entity, aimPosition))
 			continue;

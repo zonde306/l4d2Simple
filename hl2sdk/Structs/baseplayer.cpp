@@ -37,12 +37,14 @@ float CBasePlayer::GetFriction()
 	return DECL_NETPROP_GET(float);
 }
 
+/*
 int CBasePlayer::GetTeam()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_iTeamNum"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(byte);
 }
+*/
 
 Vector CBasePlayer::GetVelocity()
 {

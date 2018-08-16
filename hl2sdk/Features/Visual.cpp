@@ -528,7 +528,8 @@ D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity)
 		return CDrawing::WHITE;
 
 	int classId = entity->GetClassID();
-	if (IsSurvivor(classId))
+	int team = entity->GetTeam();
+	if (IsSurvivor(classId) && team == 2)
 	{
 		if (entity->IsDying())
 			return CDrawing::WHITE;
@@ -537,9 +538,11 @@ D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity)
 
 		return CDrawing::SKYBLUE;
 	}
-	else if (classId == ET_TANK)
+	else if (classId == ET_TANK && team == 3)
+	{
 		return CDrawing::ORANGE;
-	else if (IsSpecialInfected(classId))
+	}
+	else if (IsSpecialInfected(classId) && team == 3)
 	{
 		if (entity->IsGhost())
 			return CDrawing::PURPLE;
@@ -554,7 +557,9 @@ D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity)
 		return CDrawing::PINK;
 	}
 	else if (classId == ET_INFECTED)
+	{
 		return CDrawing::YELLOW;
+	}
 
 	return CDrawing::GRAY;
 }

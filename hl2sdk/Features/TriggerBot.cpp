@@ -54,8 +54,13 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
 		return;
 
+	// 检查目标是否可以被攻击
+	int team = m_pAimTarget->GetTeam();
+	if (team == 4 || (team == 3 && m_pAimTarget->IsGhost()))
+		return;
+
 	// 检查队友是否被控
-	if (m_pAimTarget->GetTeam() == 2)
+	if (team == 2)
 	{
 		CBasePlayer* attacker = m_pAimTarget->GetCurrentAttacker();
 		if (attacker == nullptr || !attacker->IsAlive())
@@ -94,7 +99,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			return;
 	}
 
-	if (m_bBlockFriendlyFire && m_pAimTarget->GetTeam() == player->GetTeam() &&
+	if (m_bBlockFriendlyFire && team == player->GetTeam() &&
 		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
 	{
 		cmd->buttons &= ~IN_ATTACK;

@@ -122,6 +122,10 @@ namespace indexes
 	const int IsGhost = 240;
 	const int IsBot = 268;		// 这个函数没有实现
 	const int ViewPunch = 304;
+	const int InSameTeam = 82;
+	const int GetRenderTeamNumber = 81;
+	const int GetTeamNumber = 79;
+	const int GetTeam = 78;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

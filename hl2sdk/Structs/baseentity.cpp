@@ -157,3 +157,10 @@ int CBaseEntity::GetSequence()
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(WORD);
 }
+
+int CBaseEntity::GetTeam()
+{
+	using FnGetTeamNumber = int(__thiscall*)(CBaseEntity*);
+	FnGetTeamNumber fn = Utils::GetVTableFunction<FnGetTeamNumber>(this, indexes::GetTeamNumber);
+	return fn(this);
+}
