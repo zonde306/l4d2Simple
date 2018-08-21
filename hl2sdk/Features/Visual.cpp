@@ -86,7 +86,8 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 			continue;
 
 		// 是否为队友
-		bool friendly = (team == entity->GetTeam());
+		int targetTeam = entity->GetTeam();
+		bool friendly = ((team == 2 && targetTeam == 3) || (team == 3 && targetTeam == 2));
 		int classId = entity->GetClassID();
 		ss.str("");
 
@@ -143,7 +144,6 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		g_pDrawing->DrawText(static_cast<int>(eye.x), static_cast<int>(eye.y),
 			GetDrawColor(entity), true, ss.str().c_str());
 	}
-
 }
 
 void CVisualPlayer::OnSceneEnd()
@@ -529,25 +529,25 @@ D3DCOLOR CVisualPlayer::GetDrawColor(CBasePlayer * entity)
 
 	int classId = entity->GetClassID();
 	int team = entity->GetTeam();
-	if (IsSurvivor(classId) && team == 2)
-	{
-		if (entity->IsDying())
-			return CDrawing::WHITE;
-		if(entity->IsIncapacitated())
-			return CDrawing::DEEPSKYBLUE;
-
-		return CDrawing::SKYBLUE;
-	}
-	else if (classId == ET_TANK && team == 3)
-	{
-		return CDrawing::ORANGE;
-	}
-	else if (IsSpecialInfected(classId) && team == 3)
+	if (IsSpecialInfected(classId) || team == 3)
 	{
 		if (entity->IsGhost())
 			return CDrawing::PURPLE;
 
 		return CDrawing::RED;
+	}
+	else if (classId == ET_TANK/* && team == 3*/)
+	{
+		return CDrawing::ORANGE;
+	}
+	else if (IsSurvivor(classId) || team == 2)
+	{
+		if (entity->IsDying())
+			return CDrawing::WHITE;
+		if (entity->IsIncapacitated())
+			return CDrawing::DEEPSKYBLUE;
+
+		return CDrawing::SKYBLUE;
 	}
 	else if (classId == ET_WITCH)
 	{

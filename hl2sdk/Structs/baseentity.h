@@ -77,6 +77,8 @@ public:
 	int GetClassID();
 	int GetSequence();
 	int GetTeam();
+	bool IsPlayer();
+	bool IsNPC();
 };
 
 template<typename T>

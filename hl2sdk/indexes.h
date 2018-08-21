@@ -120,7 +120,7 @@ namespace indexes
 	const int GetWeaponID = 383;
 	const int RenderTableDrawModel = 9;
 	const int IsGhost = 240;
-	const int IsBot = 268;		// 这个函数没有实现
+	const int IsBot = 268;		// 这个函数没有实现(空函数)
 	const int ViewPunch = 304;
 	const int InSameTeam = 82;
 	const int GetRenderTeamNumber = 81;
@@ -131,6 +131,12 @@ namespace indexes
 	const int IsReadyToShove = 356;
 	const int CanPlayerJump = 358;
 	const int CanBeShoved = 359;
+	const int IsPlayer = 143;
+	const int IsBaseCombatCharacter = 144;
+	const int IsNPC = 148;		// 这个永远返回 0
+	const int IsNextBot = 149;	// Infected 和 Witch 会返回 1 的
+	const int EyePosition = 156;
+	const int EyeAngles = 157;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

@@ -4,13 +4,19 @@
 
 class CBaseWeapon;
 
+#define TEAM_UNKNOWN			0		// 没有队伍(正在连接)
+#define TEAM_SPECTATOR			1		// 观察者
+#define TEAM_SURVIVORS			2		// 生还者
+#define TEAM_INFECTED			3		// 感染者
+#define TEAM_L4D1_SURVIVORS		4		// 一代幸存者(免疫一切攻击)
+
 class CBasePlayer : public CBaseEntity
 {
 public:
 	Vector GetEyePosition();
 	QAngle GetEyeAngles();
 	float GetFriction();
-	// int GetTeam();
+	int GetTeam();
 	Vector GetVelocity();
 	int GetHealth();
 	bool IsAlive();

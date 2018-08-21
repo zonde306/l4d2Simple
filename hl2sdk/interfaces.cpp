@@ -24,6 +24,7 @@ std::unique_ptr<CClientInterface> g_pInterface;
 #define SIG_TRACE_LINE2				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 6C 56 8B 43 08")
 #define SIG_TRACE_LINE				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 5C 56 8B 43 08")
 #define SIG_CLIP_TRACE_PLAYER		XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 57 8B 53 14")
+#define SIG_RESOURCE_POINTER		XorStr("A1 ? ? ? ? 89 45 F4 85 C0")
 
 typedef IClientMode*(__cdecl *FnGetClientMode)();
 static FnGetClientMode GetClientMode = nullptr;
@@ -192,6 +193,9 @@ void CClientInterface::Init()
 		KeyValueSystem = GetKeyValuesSystem();
 		PRINT_OFFSET(XorStr("KeyValueSystem"), KeyValueSystem);
 	}
+
+	PlayerResource = *reinterpret_cast<CBasePlayerResource**>(Utils::FindPattern(XorStr("client.dll"), SIG_RESOURCE_POINTER) + 1);
+	PRINT_OFFSET(XorStr("TerrorPlayerResource"), PlayerResource);
 }
 
 CGlobalVarsBase * CClientInterface::FindGlobalVars()

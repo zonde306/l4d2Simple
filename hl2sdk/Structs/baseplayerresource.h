@@ -15,11 +15,19 @@ public:
 	bool IsConnected(int player);
 	bool IsGhost(int player);
 	bool IsListenHost(int player);
+	const char* GetName(int player);
+	int GetScore(int player);
+	int GetDeaths(int player);
+	int GetZombie(int player);
+	bool IsBot(int player);
 	
 	bool IsFinaleRound();
 	bool IsAnySurvivorLeftSafeArea();
 	bool IsTeamFrozen();
 	int GetRandomSeed();
+
+private:
+	LPVOID GetDataPointer();
 };
 
 // 不要直接使用这个，用 CBasePlayerResource::Get() 来获取指针

@@ -804,7 +804,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	*/
 
 	// 空字符串
-	char resultBuffer[256];
+	char resultBuffer[256], msgBuffer[255];
 	resultBuffer[0] = '\0';
 
 	CLC_RespondCvarValue returnMsg;
@@ -818,12 +818,20 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	{
 		// 服务器查询了一个不存在的 Cvar
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarNotFound;
+
+		// 这个其实是一个命令
+		if (g_pInterface->Cvar->FindCommand(gcv->m_szCvarName) != nullptr)
+			returnMsg.m_eStatusCode = eQueryCvarValueStatus_NotACvar;
+
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
 
 		Utils::log(XorStr("[GCV] query %s, not found."), gcv->m_szCvarName);
+
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, not found.\""), gcv->m_szCvarName);
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
-	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY) || blockQuery)
+	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY))
 	{
 		// 这玩意不可以查询
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
@@ -831,6 +839,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_szCvarValue = resultBuffer;
 
 		Utils::log(XorStr("[GCV] query %s, protected."), gcv->m_szCvarName);
+		
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, protected.\""), gcv->m_szCvarName);
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
 	else if (cvar->IsFlagSet(FCVAR_NEVER_AS_STRING))
 	{
@@ -840,6 +851,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_szCvarValue = resultBuffer;
 
 		Utils::log(XorStr("[GCV] query %s, never as string."), gcv->m_szCvarName);
+		
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, never as string.\""), gcv->m_szCvarName);
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
 	else
 	{
@@ -853,7 +867,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 			strcpy_s(resultBuffer, it->second.c_str());
 			returnMsg.m_szCvarValue = resultBuffer;
 		}
-		else if (!newResult.empty())
+		else if (!newResult.empty() && !blockQuery)
 		{
 			// 发送假的的 ConVar
 			strcpy_s(resultBuffer, newResult.c_str());
@@ -867,6 +881,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		}
 
 		Utils::log(XorStr("[GCV] query %s, got %s, returns %s."), gcv->m_szCvarName, cvar->GetString(), resultBuffer);
+		
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, got %s, returns %s.\""), gcv->m_szCvarName, cvar->GetString(), resultBuffer);
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
 
 	// 返回给服务器
@@ -889,6 +906,7 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 	}
 #endif
 
+	char msgBuffer[255];
 	decltype(scv->m_ConVars) newCvarList;
 
 	for (auto& cvar : scv->m_ConVars)
@@ -925,6 +943,9 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 		*/
 
 		Utils::log(XorStr("[SCV] set %s to %s."), cvar.name, cvar.value);
+
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] %s change to %s.\""), cvar.name, cvar.value);
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
 
 	if (!newCvarList.IsEmpty())
@@ -961,6 +982,10 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 		!_stricmp(sc->m_szCommand, XorStr("addons_eclipse_content")))
 		blockExecute = true;
 	*/
+
+	char msgBuffer[255];
+	sprintf_s(msgBuffer, XorStr("echo \"[AAC] execute %s.\""), sc->m_szCommand);
+	g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 
 	Utils::log(XorStr("[SC] exec %s."), sc->m_szCommand);
 

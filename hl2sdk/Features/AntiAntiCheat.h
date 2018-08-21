@@ -37,6 +37,8 @@ private:
 	void CreateMenuList(const std::string& name, std::vector<T>& set, std::function<std::string(T)> display,
 		std::function<void(typename std::vector<T>::iterator&, std::string)> change);
 
+	static bool MatchNotCaseSensitive(const char c1, const char c2);
+
 private:
 	bool m_bBlockCRCCheck = true;
 	bool m_bBlockNullSound = true;

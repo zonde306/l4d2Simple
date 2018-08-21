@@ -37,14 +37,12 @@ float CBasePlayer::GetFriction()
 	return DECL_NETPROP_GET(float);
 }
 
-/*
 int CBasePlayer::GetTeam()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_iTeamNum"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(byte);
 }
-*/
 
 Vector CBasePlayer::GetVelocity()
 {
@@ -279,6 +277,39 @@ std::string CBasePlayer::GetCharacterName()
 		}
 
 		break;
+	}
+
+	// 人类特感的 ClassID 总是被识别为生还者
+	if (buffer.empty())
+	{
+		ZombieClass_t zombie = GetZombieType();
+		switch (zombie)
+		{
+		case ZC_SMOKER:
+			buffer = XorStr("Smoker");
+			break;
+		case ZC_BOOMER:
+			buffer = XorStr("Boomer");
+			break;
+		case ZC_HUNTER:
+			buffer = XorStr("Hunter");
+			break;
+		case ZC_SPITTER:
+			buffer = XorStr("Spitter");
+			break;
+		case ZC_JOCKEY:
+			buffer = XorStr("Jockey");
+			break;
+		case ZC_CHARGER:
+			buffer = XorStr("Charger");
+			break;
+		case ZC_WITCH:
+			buffer = XorStr("Witch");
+			break;
+		case ZC_TANK:
+			buffer = XorStr("Tank");
+			break;
+		}
 	}
 
 	return buffer;

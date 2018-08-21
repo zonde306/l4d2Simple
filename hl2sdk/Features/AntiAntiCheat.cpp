@@ -83,7 +83,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		}
 	}
 
-	ImGui::Text(XorStr(u8"可以使用 ? 匹配单个字符，使用 * 匹配零个或多个字符。"));
+	// ImGui::Text(XorStr(u8"可以使用 ? 匹配单个字符，使用 * 匹配零个或多个字符。"));
 	ImGui::Separator();
 
 	CreateMenuList<std::pair<std::string, std::string>>(XorStr("Query"), m_BlockQuery,
@@ -149,8 +149,17 @@ bool CAntiAntiCheat::OnUserMessage(int msgid, bf_read msgdata)
 
 bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string & result)
 {
+	/*
 	auto it = std::find_if(m_BlockQuery.begin(), m_BlockQuery.end(),
 		std::bind(&CAntiAntiCheat::FindMatchString2, this, cvars, std::placeholders::_1, false));
+	*/
+
+	auto it = std::find_if(m_BlockQuery.begin(), m_BlockQuery.end(),
+		[&cvars](const std::pair<std::string, std::string>& each) -> bool
+	{
+		return std::equal(each.first.begin(), each.first.end(), cvars.begin(), cvars.end(),
+			CAntiAntiCheat::MatchNotCaseSensitive);
+	});
 
 	if (it == m_BlockQuery.end())
 		return true;
@@ -164,8 +173,17 @@ bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string
 
 bool CAntiAntiCheat::OnProcessSetConVar(const std::string& cvars, std::string& value)
 {
+	/*
 	auto it = std::find_if(m_BlockSetting.begin(), m_BlockSetting.end(),
 		std::bind(&CAntiAntiCheat::FindMatchString2, this, cvars, std::placeholders::_1, false));
+	*/
+
+	auto it = std::find_if(m_BlockSetting.begin(), m_BlockSetting.end(),
+		[&cvars](const std::pair<std::string, std::string>& each) -> bool
+	{
+		return std::equal(each.first.begin(), each.first.end(), cvars.begin(), cvars.end(),
+			CAntiAntiCheat::MatchNotCaseSensitive);
+	});
 
 	if (it == m_BlockSetting.end())
 		return true;
@@ -180,8 +198,17 @@ bool CAntiAntiCheat::OnProcessSetConVar(const std::string& cvars, std::string& v
 bool CAntiAntiCheat::OnProcessClientCommand(const std::string& cmd)
 {
 	// ConVar 有时候也会通过这个来修改的，所以需要将空格后的东西丢弃
+	/*
 	auto it = std::find_if(m_BlockExecute.begin(), m_BlockExecute.end(),
 		std::bind(&CAntiAntiCheat::FindMatchString, this, cmd.substr(0, cmd.find(' ')), std::placeholders::_1, false));
+	*/
+
+	auto it = std::find_if(m_BlockExecute.begin(), m_BlockExecute.end(),
+		[trimed = cmd.substr(0, cmd.find(' '))](const std::string& s) -> bool
+	{
+		return std::equal(s.begin(), s.end(), trimed.begin(), trimed.end(),
+			CAntiAntiCheat::MatchNotCaseSensitive);
+	});
 
 	if (it == m_BlockExecute.end())
 		return true;
@@ -371,6 +398,11 @@ bool CAntiAntiCheat::FindMatchString(const std::string & source, const std::stri
 bool CAntiAntiCheat::FindMatchString2(const std::string & source, const std::pair<std::string, std::string>& match, bool caseSensitive)
 {
 	return FindMatchString(source, match.first, caseSensitive);
+}
+
+bool CAntiAntiCheat::MatchNotCaseSensitive(const char c1, const char c2)
+{
+	return (std::tolower(c1) == std::tolower(c2));
 }
 
 template<typename T>

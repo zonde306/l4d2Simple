@@ -162,11 +162,12 @@ int CBaseEntity::GetTeam()
 {
 	using FnGetTeamNumber = int(__thiscall*)(CBaseEntity*);
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_iTeamNum"));
-	FnGetTeamNumber fn = Utils::GetVTableFunction<FnGetTeamNumber>(this, indexes::GetTeamNumber);
+	FnGetTeamNumber fn = nullptr;
 	Assert_NetProp(offset);
 
 	try
 	{
+		fn = Utils::GetVTableFunction<FnGetTeamNumber>(this, indexes::GetTeamNumber);
 		if (fn != nullptr)
 			return fn(this);
 
@@ -178,4 +179,24 @@ int CBaseEntity::GetTeam()
 	}
 
 	return 1;
+}
+
+bool CBaseEntity::IsPlayer()
+{
+	/*
+	int index = GetIndex();
+	if(index <= 0 || index > 32)
+		return false;
+	*/
+
+	using FnIsPlayer = bool(__thiscall*)(CBaseEntity*);
+	FnIsPlayer fn = Utils::GetVTableFunction<FnIsPlayer>(this, indexes::IsPlayer);
+	return fn(this);
+}
+
+bool CBaseEntity::IsNPC()
+{
+	using FnIsNextBot = bool(__thiscall*)(CBaseEntity*);
+	FnIsNextBot fn = Utils::GetVTableFunction<FnIsNextBot>(this, indexes::IsNextBot);
+	return fn(this);
 }

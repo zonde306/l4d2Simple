@@ -430,7 +430,6 @@ public:
 
 private:
 	char		m_szCommandBuffer[1024];	// buffer for received messages
-
 };
 
 class CLC_Move : public CNetMessage
