@@ -6,6 +6,8 @@
 
 CQuickTriggerEvent* g_pQTE = nullptr;
 #define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
+#define HITBOX_WITCH_CHEST			8
+#define ANIM_CHARGER_CHARGING		5
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
@@ -93,13 +95,13 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (!m_bHunter)
 					continue;
 				
-				/*
 				if (!player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")))
 					continue;
-				*/
 
+				/*
 				if (player->GetFlags() & FL_ONGROUND)
 					continue;
+				*/
 				
 				if (distance > m_fHunterDistance)
 					continue;
@@ -145,6 +147,9 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 						continue;
 				}
 				*/
+
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
+					continue;
 
 				if (distance > m_fChargerDistance)
 					continue;
@@ -205,7 +210,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			{
 				int weaponId = weapon->GetWeaponID();
 				if (canFire && IsShotgun(weaponId))
-					HandleShotSelfClear(local, player, cmd, distance);
+					HandleWitchCrown(local, player, cmd, distance);
 
 				break;
 			}
@@ -238,6 +243,12 @@ void CQuickTriggerEvent::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Perfect Silent"), &m_bPerfectSilent);
 	IMGUI_TIPS("观察者看不到自动瞄准，建议开启");
+
+	ImGui::SliderFloat(XorStr("Shove Range Extra"), &m_fShoveDstExtra, 1.0f, 300.0f, ("%.1f"));
+	IMGUI_TIPS("推预测范围");
+
+	ImGui::SliderFloat(XorStr("Melee Range Extra"), &m_fMeleeDstExtra, 1.0f, 300.0f, ("%.1f"));
+	IMGUI_TIPS("近战预测范围");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Smoker SelfClear"), &m_bVelExt);
@@ -302,6 +313,9 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_fChargerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
 	m_fWitchDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	m_fRockDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+
+	m_fShoveDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
+	m_fMeleeDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 }
 
 void CQuickTriggerEvent::OnConfigSave(config_type & data)
@@ -325,6 +339,8 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 }
 
 void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
@@ -342,7 +358,7 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	CBasePlayer * enemy, CUserCmd * cmd, float distance)
 {
 	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
-	if (distance > cvMeleeRange->GetFloat())
+	if (distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
 		return;
 
 	QAngle aimAngles = GetAimAngles(self, enemy);
@@ -362,7 +378,7 @@ void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
 	CBasePlayer * enemy, CUserCmd * cmd, float distance)
 {
 	static ConVar* cvShoveRange = g_pInterface->Cvar->FindVar(XorStr("z_gun_range"));
-	if (distance > cvShoveRange->GetFloat())
+	if (distance > cvShoveRange->GetFloat() + m_fShoveDstExtra)
 		return;
 
 	QAngle aimAngles = GetAimAngles(self, enemy);
@@ -374,10 +390,25 @@ void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
 }
 
 void CQuickTriggerEvent::HandleWitchCrown(CBasePlayer * self,
-	CBaseEntity * enemy, CUserCmd * cmd, float distance)
+	CBasePlayer * enemy, CUserCmd * cmd, float distance)
 {
-	if (distance <= 50.0f)
-		HandleShotSelfClear(self, reinterpret_cast<CBasePlayer*>(enemy), cmd, distance);
+	if (distance > 50.0f)
+		return;
+
+	Vector myEyeOrigin = self->GetEyePosition();
+	Vector aimHeadOrigin = enemy->GetHitboxOrigin(HITBOX_WITCH_CHEST);
+	if (m_bVelExt)
+	{
+		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, self->GetVelocity(), m_bLagExt);
+		aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, enemy->GetVelocity(), m_bLagExt);
+	}
+
+	QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
+	if (aimAngles.IsValid())
+	{
+		cmd->buttons |= IN_ATTACK;
+		SetAimAngles(cmd, aimAngles);
+	}
 }
 
 QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy)

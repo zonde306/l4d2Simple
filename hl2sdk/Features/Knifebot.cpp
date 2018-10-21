@@ -15,6 +15,8 @@ CKnifeBot* g_pKnifeBot = nullptr;
 #define HITBOX_SPITTER			4
 #define HITBOX_CHARGER			9
 #define HITBOX_WITCH			10
+#define ANIM_GRENADE_THORWING	4
+#define ANIM_GRENADE_THROWED	6
 
 CKnifeBot::CKnifeBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -62,7 +64,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 		}
 	}
 
-	if (m_bAutoShove && m_bCanShoveAttack)
+	if (m_bAutoShove && m_bCanShoveAttack && IsShoveReady(player, weapon))
 	{
 		if (weapon->GetSecondryAttackDelay() <= 0.0f)
 		{
@@ -207,6 +209,15 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 	}
 
 	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
+}
+
+bool CKnifeBot::IsShoveReady(CBasePlayer * player, CBaseWeapon * weapon)
+{
+	int sequence = weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
+	if (sequence == ANIM_GRENADE_THORWING || sequence == ANIM_GRENADE_THROWED)
+		return false;
+
+	return true;
 }
 
 bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)

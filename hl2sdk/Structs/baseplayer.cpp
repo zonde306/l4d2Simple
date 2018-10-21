@@ -478,7 +478,7 @@ bool CBasePlayer::CanShove()
 	if (weapon == nullptr)
 		return false;
 
-	return weapon->GetSecondryAttackDelay() == 0.0f;
+	return (weapon->GetSecondryAttackDelay() <= 0.0f);
 }
 
 std::pair<Vector, Vector> CBasePlayer::GetBoundingBox()

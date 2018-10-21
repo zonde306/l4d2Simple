@@ -16,6 +16,7 @@ public:
 	bool CheckMeleeAttack(const QAngle& myEyeAngles);
 	bool RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime);
 	bool HasEnemyVisible(CBasePlayer* entity, const Vector& position);
+	bool IsShoveReady(CBasePlayer* player, CBaseWeapon* weapon);
 
 private:
 	bool m_bAutoFire = false;

@@ -18,7 +18,7 @@ private:
 	void HandleShotSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 	void HandleMeleeSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 	void HandleShoveSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
-	void HandleWitchCrown(CBasePlayer* self, CBaseEntity* enemy, CUserCmd* cmd, float distance = -1.0f);
+	void HandleWitchCrown(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 
 	QAngle GetAimAngles(CBasePlayer * self, CBasePlayer * enemy);
 	void SetAimAngles(CUserCmd* cmd, QAngle& aimAngles);
@@ -44,6 +44,9 @@ private:
 	float m_fChargerDistance = 500.0f;
 	float m_fWitchDistance = 250.0f;
 	float m_fRockDistance = 350.0f;
+
+	float m_fShoveDstExtra = 25.0f;
+	float m_fMeleeDstExtra = 30.0f;
 };
 
 extern CQuickTriggerEvent* g_pQTE;

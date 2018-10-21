@@ -47,6 +47,7 @@ private:
 	bool m_bBlockNullSound = true;
 	bool m_bNoHeartbeat = true;
 	bool m_bPatchThirdPerson = false;
+	bool m_bLogConVarInfo = false;
 
 private:
 	std::vector<int> m_BlockUserMessage;

@@ -45,6 +45,9 @@ void CAntiAntiCheat::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Patch 3rdPerson Limit"), &m_bPatchThirdPerson);
 	IMGUI_TIPS("解除第三人称游戏模式限制。");
 
+	ImGui::Checkbox(XorStr("Log ConVar/Cmd Event"), &m_bLogConVarInfo);
+	IMGUI_TIPS("显示服务器发送/查询/执行的东西");
+
 	ImGui::Separator();
 
 	// 过滤器
@@ -155,7 +158,17 @@ bool CAntiAntiCheat::OnUserMessage(int msgid, bf_read msgdata)
 {
 	if (std::find(m_BlockUserMessage.begin(), m_BlockUserMessage.end(), msgid) !=
 		m_BlockUserMessage.end())
+	{
+		if (m_bLogConVarInfo)
+		{
+			char msgBuffer[255];
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] usermsg %d blocked (size %d).\""),
+				msgid, msgdata.m_nDataBytes);
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+
 		return false;
+	}
 	
 	return true;
 }
@@ -167,6 +180,7 @@ bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string
 		std::bind(&CAntiAntiCheat::FindMatchString2, this, cvars, std::placeholders::_1, false));
 	*/
 
+	char msgBuffer[255];
 	auto it = std::find_if(m_BlockQuery.begin(), m_BlockQuery.end(),
 		[&cvars](const std::pair<std::string, std::string>& each) -> bool
 	{
@@ -178,9 +192,25 @@ bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string
 		return true;
 	
 	if (it->second.empty())
+	{
+		if (m_bLogConVarInfo)
+		{
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s blocked.\""),
+				cvars.c_str());
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+		
 		return false;
+	}
 
 	result = it->second;
+	if (m_bLogConVarInfo)
+	{
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s returns %s.\""),
+			cvars.c_str(), result.c_str());
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+	}
+
 	return true;
 }
 
@@ -191,6 +221,7 @@ bool CAntiAntiCheat::OnProcessSetConVar(const std::string& cvars, std::string& v
 		std::bind(&CAntiAntiCheat::FindMatchString2, this, cvars, std::placeholders::_1, false));
 	*/
 
+	char msgBuffer[255];
 	auto it = std::find_if(m_BlockSetting.begin(), m_BlockSetting.end(),
 		[&cvars](const std::pair<std::string, std::string>& each) -> bool
 	{
@@ -202,9 +233,25 @@ bool CAntiAntiCheat::OnProcessSetConVar(const std::string& cvars, std::string& v
 		return true;
 
 	if (it->second.empty())
+	{
+		if (m_bLogConVarInfo)
+		{
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] set %s blocked.\""),
+				cvars.c_str());
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+		
 		return false;
+	}
 
 	value = it->second;
+	if (m_bLogConVarInfo)
+	{
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] set %s change to %s.\""),
+			cvars.c_str(), value.c_str());
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+	}
+
 	return true;
 }
 
@@ -226,6 +273,14 @@ bool CAntiAntiCheat::OnProcessClientCommand(const std::string& cmd)
 	if (it == m_BlockExecute.end())
 		return true;
 	
+	if (m_bLogConVarInfo)
+	{
+		char msgBuffer[255];
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] execute %s blocked.\""),
+			cmd.c_str());
+		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+	}
+
 	return false;
 }
 
@@ -291,7 +346,8 @@ void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 	m_bBlockNullSound = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
 	m_bNoHeartbeat = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
 	m_bPatchThirdPerson = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
-	
+	m_bLogConVarInfo = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
+
 	if(m_bPatchThirdPerson)
 		UpdatePatchThirdPerson(true);
 }
@@ -327,6 +383,7 @@ void CAntiAntiCheat::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
+	g_pConfig->SetValue(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
 }
 
 void CAntiAntiCheat::OnConnect()
