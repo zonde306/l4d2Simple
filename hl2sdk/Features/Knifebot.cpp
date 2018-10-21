@@ -239,7 +239,8 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (entity == nullptr || entity == local || !entity->IsAlive() || entity->GetTeam() == team)
+		if (entity == nullptr || entity == local || !entity->IsAlive() || entity->GetTeam() == team ||
+			entity->GetClassID() == ET_TankRock)
 			continue;
 
 		int targetTeam = entity->GetTeam();

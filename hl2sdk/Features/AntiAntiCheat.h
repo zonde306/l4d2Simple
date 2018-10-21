@@ -39,10 +39,14 @@ private:
 
 	static bool MatchNotCaseSensitive(const char c1, const char c2);
 
+	// 解除第三人称受到 mp_gamemode 的限制
+	void UpdatePatchThirdPerson(bool install);
+
 private:
 	bool m_bBlockCRCCheck = true;
 	bool m_bBlockNullSound = true;
 	bool m_bNoHeartbeat = true;
+	bool m_bPatchThirdPerson = false;
 
 private:
 	std::vector<int> m_BlockUserMessage;

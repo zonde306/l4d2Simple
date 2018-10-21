@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../Utils/utlvector.h"
 #include <Windows.h>
 

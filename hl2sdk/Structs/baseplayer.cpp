@@ -322,6 +322,8 @@ ZombieClass_t CBasePlayer::GetZombieType()
 		return ZC_WITCH;
 	if (classId == ET_INFECTED)
 		return ZC_COMMON;
+	if (classId == ET_TankRock)
+		return ZC_ROCK;
 	
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
 	Assert_NetProp(offset);
@@ -378,7 +380,8 @@ bool CBasePlayer::IsAlive()
 
 	// 特感
 	if (entityType == ET_BOOMER || entityType == ET_HUNTER || entityType == ET_SMOKER ||
-		entityType == ET_SPITTER || entityType == ET_JOCKEY || entityType == ET_CHARGER || entityType == ET_TANK)
+		entityType == ET_SPITTER || entityType == ET_JOCKEY || entityType == ET_CHARGER ||
+		entityType == ET_TANK)
 	{
 		if ((DECL_NETPROP_GET_EX(lifeOffset, byte) != LIFE_ALIVE) || GetHealth() <= 0 || IsGhost())
 			return false;
@@ -408,6 +411,9 @@ bool CBasePlayer::IsAlive()
 
 		return true;
 	}
+
+	if (entityType == ET_TankRock)
+		return true;
 
 	return false;
 }
@@ -464,6 +470,15 @@ std::string CBasePlayer::GetName()
 		return "";
 
 	return info.name;
+}
+
+bool CBasePlayer::CanShove()
+{
+	CBaseWeapon* weapon = GetActiveWeapon();
+	if (weapon == nullptr)
+		return false;
+
+	return weapon->GetSecondryAttackDelay() == 0.0f;
 }
 
 std::pair<Vector, Vector> CBasePlayer::GetBoundingBox()

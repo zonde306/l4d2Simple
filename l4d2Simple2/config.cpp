@@ -12,6 +12,7 @@ CProfile::CProfile()
 CProfile::CProfile(const std::string & path)
 {
 	OpenFile(path);
+	LoadFromFile();
 }
 
 CProfile::~CProfile()
@@ -22,17 +23,84 @@ CProfile::~CProfile()
 	m_KeyValue.clear();
 }
 
-bool CProfile::OpenFile(const std::string & path)
+bool CProfile::OpenFile(const std::string & path, bool write)
 {
+	if (path.empty())
+		return false;
+	
 	m_sFileName = path;
 	if (m_File.is_open())
 		CloseFile();
 	
-	m_File.open(path, std::ios::in|std::ios::out|std::ios::beg);
+	if(write)	// 必须使用 std::ios::trunc 才能改写文件，否则只能附加
+		m_File.open(path, std::ios::out|std::ios::beg|std::ios::trunc);
+	else
+		m_File.open(path, std::ios::in|std::ios::beg);
+
 	if (m_File.bad() || !m_File.is_open())
 	{
-		m_File.open(path, std::ios::out|std::ios::beg|std::ios::trunc);
+		// 文件不存在时创建新文件
+		m_File.open(path, std::ios::out|std::ios::in|std::ios::beg|std::ios::trunc);
+		m_bFileMode = true;
 		return false;
+	}
+	
+	m_bFileMode = write;
+	return true;
+}
+
+bool CProfile::CloseFile()
+{
+	if (!m_File.is_open())
+		return false;
+	
+	m_File.close();
+	return true;
+}
+
+bool CProfile::SaveToFile()
+{
+	if (!m_File.is_open() || !m_bFileMode)
+	{
+		// fstream 无法覆盖已有的内容，必须清空文件再写
+		CloseFile();
+		OpenFile(m_sFileName, true);
+	}
+
+	m_File.seekp(std::ios::beg);
+	for (const auto& mk : m_KeyValue)
+	{
+		if (mk.first.empty() || mk.second.empty())
+			continue;
+		
+		m_File << '[' << mk.first << ']' << std::endl;
+
+		for (const auto& kv : mk.second)
+		{
+			if (kv.first.empty())
+				continue;
+			
+			if(kv.second.m_sValue.empty())
+				m_File << kv.first << std::endl;
+			else if(kv.first.find('=') != std::string::npos || kv.second.m_sValue.find('=') != std::string::npos)
+				m_File << '\"' << kv.first << "\" = \"" << kv.second.m_sValue << '\"' << std::endl;
+			else
+				m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
+		}
+
+		m_File << std::endl;
+	}
+
+	m_File.flush();
+	return true;
+}
+
+bool CProfile::LoadFromFile()
+{
+	if (!m_File.is_open() || m_bFileMode)
+	{
+		CloseFile();
+		OpenFile(m_sFileName, false);
 	}
 	
 	m_KeyValue.clear();
@@ -65,12 +133,15 @@ bool CProfile::OpenFile(const std::string & path)
 		// 去除无效字符
 		line = Utils::Trim(line, XorStr(" \t\r\n"));
 
+		// 冒号注释
 		if (line.empty() || line[0] == ';')
 			continue;
 
+		// 双斜杠注释
 		if (line[0] == '/' && line[1] == '/')
 			continue;
 
+		// 主键
 		if (line[0] == '[' && line[line.length() - 1] == ']')
 		{
 			mainKey = line.substr(1, line.length() - 2);
@@ -80,6 +151,7 @@ bool CProfile::OpenFile(const std::string & path)
 		if (mainKey.empty())
 			continue;
 
+		// 子键
 		here = ParseKeyValue(line);
 		if (here != std::string::npos)
 		{
@@ -91,7 +163,7 @@ bool CProfile::OpenFile(const std::string & path)
 			key = line;
 			value.clear();
 		}
-		
+
 		key = Utils::Trim(key, XorStr(" \t\r\n"));
 		value = Utils::Trim(value, XorStr(" \t\r\n"));
 
@@ -103,50 +175,8 @@ bool CProfile::OpenFile(const std::string & path)
 
 		m_KeyValue[mainKey][key] = value;
 	}
-
-	return true;
-}
-
-bool CProfile::CloseFile()
-{
-	if (!m_File.is_open())
-		return false;
 	
-	m_File.close();
-	return true;
-}
-
-bool CProfile::SaveToFile()
-{
-	if (!m_File.is_open())
-		return false;
-	
-	m_File.seekp(std::ios::beg);
-	for (const auto& mk : m_KeyValue)
-	{
-		if (mk.first.empty() || mk.second.empty())
-			continue;
-		
-		m_File << '[' << mk.first << ']' << std::endl;
-
-		for (const auto& kv : mk.second)
-		{
-			if (kv.first.empty())
-				continue;
-			
-			if(kv.second.m_sValue.empty())
-				m_File << kv.first << std::endl;
-			else if(kv.first.find('=') != std::string::npos || kv.second.m_sValue.find('=') != std::string::npos)
-				m_File << '\"' << kv.first << "\" = \"" << kv.second.m_sValue << '\"' << std::endl;
-			else
-				m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
-		}
-
-		m_File << std::endl;
-	}
-
-	m_File.flush();
-	return true;
+	return !m_KeyValue.empty();
 }
 
 bool CProfile::HasMainKey(const std::string & mainKeys)

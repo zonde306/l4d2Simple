@@ -33,7 +33,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	bool canFire = weapon->CanFire();
-	m_bHasFiring = !!(cmd->buttons & IN_ATTACK);
+	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
 	if (weapon->IsFireGun() && canFire && m_bHasFiring)
@@ -64,7 +64,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
 
-	if (m_bFakeAngleBug && m_bHasFiring)
+	if (m_bFakeAngleBug && canFire && m_bHasFiring)
 	{
 		static int lastChocked = 0;
 		if (lastChocked >= 5)

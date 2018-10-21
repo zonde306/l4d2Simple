@@ -554,6 +554,7 @@ enum EntityType_t
 	ET_PlayerResource = 133,
 	ET_CSGameRulesProxy = 47,
 	ET_GameRulesProxy = 93,
+	ET_FogController = 75,
 
 	// 生还者
 	ET_CTERRORPLAYER = 231,
@@ -669,5 +670,6 @@ enum ZombieClass_t
 	ZC_CHARGER = 6,			// 牛
 	ZC_WITCH = 7,			// 萌妹
 	ZC_TANK = 8,			// 坦克
-	ZC_SURVIVORBOT = 9		// 生还者
+	ZC_SURVIVORBOT = 9,		// 生还者
+	ZC_ROCK = 10			// 坦克的石头
 };

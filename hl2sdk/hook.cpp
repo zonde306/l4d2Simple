@@ -15,6 +15,7 @@
 #include "./Features/AntiAntiCheat.h"
 #include "./Features/HackvsHack.h"
 #include "./Features/EventLogger.h"
+#include "./Features/QTE.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -237,6 +238,8 @@ void CClientHook::InitFeature()
 		g_pHackVsHack = new CHackVSHack();
 	if (!g_pEventLogger)
 		g_pEventLogger = new CEventLogger();
+	if (!g_pQTE)
+		g_pQTE = new CQuickTriggerEvent();
 
 	// 这个要排在最后，否则没有效果
 	if (!g_pViewManager)

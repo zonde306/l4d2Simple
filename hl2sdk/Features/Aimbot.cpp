@@ -346,7 +346,7 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 	
 	try
 	{
-		if (!entity->IsAlive())
+		if (!entity->IsAlive() || entity->GetClassID() == ET_TankRock)
 			return false;
 	}
 	catch (...)

@@ -27,6 +27,7 @@ public:
 	CBaseEntity* GetGroundEntity();
 	int GetWaterLevel();
 	std::string GetName();
+	bool CanShove();
 
 	// 获取 AABB 盒子
 	// first 为 min, second 为 max

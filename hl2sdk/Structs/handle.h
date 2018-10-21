@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define MAX_EDICT_BITS				11
 #define MAX_EDICTS					(1 << MAX_EDICT_BITS)
@@ -18,6 +18,13 @@ public:
 	virtual ~IHandleEntity() {}
 	virtual void SetRefEHandle(const CBaseHandle &handle) = 0;
 	virtual const CBaseHandle& GetRefEHandle() const = 0;
+
+	/*
+	inline operator IClientEntity*()
+	{
+		return reinterpret_cast<IClientEntity*>(this);
+	}
+	*/
 };
 
 class CBaseHandle

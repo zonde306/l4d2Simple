@@ -72,6 +72,9 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 					++totalSpectator;
 			}
 
+			if (m_bNoFog && entity->GetClassID() == ET_FogController)
+				entity->GetNetProp<BYTE>(XorStr("DT_FogController"), XorStr("m_fog.enable")) = 0;
+
 			continue;
 		}
 
@@ -249,6 +252,9 @@ void CVisualPlayer::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("No Ghost Vision"), &m_bCleanGhost);
 	IMGUI_TIPS("去除灵魂特感蓝色屏幕。");
 
+	ImGui::Checkbox(XorStr("No Fog"), &m_bNoFog);
+	IMGUI_TIPS("去除灵魂特感蓝色屏幕。");
+
 	ImGui::TreePop();
 }
 
@@ -272,6 +278,7 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_bNoVomit = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
 	m_bCleanVision = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	m_bCleanGhost = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
+	m_bNoFog = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -294,6 +301,7 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)

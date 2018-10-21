@@ -56,7 +56,8 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	// 检查目标是否可以被攻击
 	int team = m_pAimTarget->GetTeam();
-	if (team == 4 || (team == 3 && m_pAimTarget->IsGhost()))
+	int classId = m_pAimTarget->GetClassID();
+	if (team == 4 || (team == 3 && classId != ET_TankRock && m_pAimTarget->IsGhost()))
 		return;
 
 	// 检查队友是否被控
@@ -75,7 +76,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	// 打蹲下未愤怒 Witch 的头可以造成硬直效果
 	// 这个用于辅助瞄准头部
 	bool canWitchHeadshot = false;
-	if (m_pAimTarget->GetClassID() == ET_WITCH)
+	if (classId == ET_WITCH)
 	{
 		float angry = m_pAimTarget->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage"));
 
@@ -108,6 +109,9 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	// 开枪
 	cmd->buttons |= IN_ATTACK;
+
+	if (classId == ET_TankRock)
+		return;
 
 	Vector myEyeOrigin = player->GetEyePosition();
 	if (m_bTraceVelExt)

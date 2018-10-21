@@ -7,6 +7,9 @@ CAntiAntiCheat* g_pAntiAntiCheat = nullptr;
 #define FCVAR_REMOVE	(FCVAR_CHEAT|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOT_CONNECTED|FCVAR_SERVER_CAN_EXECUTE)
 #define FCVAR_SETTING	(FCVAR_SERVER_CANNOT_QUERY)
 
+// 把 jz 改为 jmp
+#define SIG_PATCH_3RDPERSON		XorStr("74 28 6A 00 C7 86")
+
 CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 {
 	m_pEventListener = new CGEL_AntiAntiCheat();
@@ -38,6 +41,9 @@ void CAntiAntiCheat::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No Heartbeat Loop"), &m_bNoHeartbeat);
 	IMGUI_TIPS("屏蔽生还者黑白时的心跳声。");
+
+	ImGui::Checkbox(XorStr("Patch 3rdPerson Limit"), &m_bPatchThirdPerson);
+	IMGUI_TIPS("解除第三人称游戏模式限制。");
 
 	ImGui::Separator();
 
@@ -136,6 +142,13 @@ void CAntiAntiCheat::OnMenuDrawing()
 
 	if (changed)
 		m_szFilterText[0] = '\0';
+
+	static bool lastPatchState = false;
+	if (lastPatchState != m_bPatchThirdPerson)
+	{
+		lastPatchState = m_bPatchThirdPerson;
+		UpdatePatchThirdPerson(m_bPatchThirdPerson);
+	}
 }
 
 bool CAntiAntiCheat::OnUserMessage(int msgid, bf_read msgdata)
@@ -277,6 +290,10 @@ void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 	m_bBlockCRCCheck = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
 	m_bBlockNullSound = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
 	m_bNoHeartbeat = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
+	m_bPatchThirdPerson = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
+	
+	if(m_bPatchThirdPerson)
+		UpdatePatchThirdPerson(true);
 }
 
 void CAntiAntiCheat::OnConfigSave(config_type & data)
@@ -309,6 +326,7 @@ void CAntiAntiCheat::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
 	g_pConfig->SetValue(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
+	g_pConfig->SetValue(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
 }
 
 void CAntiAntiCheat::OnConnect()
@@ -403,6 +421,19 @@ bool CAntiAntiCheat::FindMatchString2(const std::string & source, const std::pai
 bool CAntiAntiCheat::MatchNotCaseSensitive(const char c1, const char c2)
 {
 	return (std::tolower(c1) == std::tolower(c2));
+}
+
+void CAntiAntiCheat::UpdatePatchThirdPerson(bool install)
+{
+	static PBYTE op = reinterpret_cast<PBYTE>(Utils::FindPattern(XorStr("client.dll"), SIG_PATCH_3RDPERSON));
+	if (op == nullptr)
+		return;
+
+	DWORD oldProtect = 0;
+	VirtualProtect(op, 1, PAGE_EXECUTE_READWRITE, &oldProtect);
+	*op = static_cast<BYTE>(install ? 0xEB : 0x74);		// 把 jz short loc_1012ABF7 改为 jmp short loc_1012ABF7
+	VirtualProtect(op, 1, oldProtect, &oldProtect);
+	g_pInterface->Engine->ClientCmd_Unrestricted(XorStr("echo \"[AAC] Patch CInput::CAM_ToThirdPersonShoulder Complete.\""));
 }
 
 template<typename T>

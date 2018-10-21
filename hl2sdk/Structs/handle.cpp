@@ -1,4 +1,4 @@
-#include "handle.h"
+﻿#include "handle.h"
 #include "../Interfaces/IClientEntityList.h"
 #include "../interfaces.h"
 
@@ -206,4 +206,3 @@ IHandleEntity * CBaseHandle::Get() const
 	
 	return g_pInterface->EntList->GetClientEntityFromHandle(*this);
 }
-

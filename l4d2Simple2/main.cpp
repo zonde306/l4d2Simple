@@ -95,6 +95,7 @@ DWORD WINAPI StartCheats(LPVOID module)
 	
 	g_pConfig = std::make_unique<CProfile>();
 	g_pConfig->OpenFile(Utils::BuildPath(XorStr("setting.ini")));
+	g_pConfig->LoadFromFile();
 
 	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
 	g_pSpeedModifier->Init();

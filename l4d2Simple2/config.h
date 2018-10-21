@@ -12,9 +12,10 @@ public:
 	~CProfile();
 
 	// 配置文件
-	bool OpenFile(const std::string& path);
+	bool OpenFile(const std::string& path, bool write = false);
 	bool CloseFile();
 	bool SaveToFile();
+	bool LoadFromFile();
 
 	// 寻找主键
 	bool HasMainKey(const std::string& mainKeys);
@@ -82,6 +83,7 @@ public:
 	const_iterator2 end(const std::string& mainKeys) const;
 
 private:
+	bool m_bFileMode;
 	std::fstream m_File;
 	MainKeyValueType m_KeyValue;
 	std::string m_sFileName;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BaseFeatures.h"
 
 class CVisualPlayer : public CBaseFeatures
@@ -64,6 +64,7 @@ private:
 	bool m_bNoVomit = true;
 	bool m_bCleanVision = true;
 	bool m_bCleanGhost = true;
+	bool m_bNoFog = false;
 
 private:
 	HFont m_hSurfaceFont = 0;
