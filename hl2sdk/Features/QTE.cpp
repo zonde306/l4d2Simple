@@ -54,7 +54,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		}
 	}
 
-	Vector myOrigin = local->GetAbsOrigin(), aimOrigin;
+	Vector myOrigin = local->GetEyePosition(), aimOrigin;
 	if (m_bVelExt)
 		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
 
@@ -65,7 +65,13 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		if (player == nullptr || player == local || !player->IsAlive() || player->GetTeam() != 3)
 			continue;
 
-		aimOrigin = player->GetAbsOrigin();
+		aimOrigin = player->GetHeadOrigin();
+		if (m_bOnlyVisible)
+		{
+			if (!IsVisibleEnemy(local, player, myOrigin, aimOrigin))
+				continue;
+		}
+
 		if (m_bVelExt)
 			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
 
@@ -244,6 +250,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Perfect Silent"), &m_bPerfectSilent);
 	IMGUI_TIPS("观察者看不到自动瞄准，建议开启");
 
+	ImGui::Checkbox(XorStr("Visible Only"), &m_bOnlyVisible);
+	IMGUI_TIPS("可见检查");
+
 	ImGui::SliderFloat(XorStr("Shove Range Extra"), &m_fShoveDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("推预测范围");
 
@@ -299,6 +308,7 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_lagext"), m_bLagExt);
 	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_silent"), m_bSilent);
 	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
+	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 
 	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
 	m_bHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
@@ -341,6 +351,7 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 }
 
 void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
@@ -432,4 +443,26 @@ void CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles)
 		cmd->viewangles = aimAngles;
 	else
 		g_pInterface->Engine->SetViewAngles(aimAngles);
+}
+
+bool CQuickTriggerEvent::IsVisibleEnemy(CBasePlayer * local, CBasePlayer * enemy, const Vector & start, const Vector & end)
+{
+	Ray_t ray;
+	trace_t trace;
+	CTraceFilter filter;
+
+	ray.Init(start, end);
+	filter.pSkip1 = local;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::logError(XorStr("CQuickTriggerEvent.IsVisibleEnemy.TraceRay Error."));
+		return true;
+	}
+
+	return (trace.m_pEnt == enemy || trace.fraction > 0.97f);
 }

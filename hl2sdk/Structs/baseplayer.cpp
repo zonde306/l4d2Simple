@@ -202,7 +202,7 @@ Vector CBasePlayer::GetHeadOrigin()
 	if (classId == ET_INFECTED)
 		return GetHitboxOrigin(HITBOX_COMMON);
 
-	return INVALID_VECTOR;
+	return GetAbsOrigin();
 }
 
 bool CBasePlayer::IsDying()

@@ -22,12 +22,14 @@ private:
 
 	QAngle GetAimAngles(CBasePlayer * self, CBasePlayer * enemy);
 	void SetAimAngles(CUserCmd* cmd, QAngle& aimAngles);
+	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 
 private:
 	bool m_bActive = true;
 	bool m_bVelExt = true;
 	bool m_bLagExt = true;
 
+	bool m_bOnlyVisible = true;
 	bool m_bPerfectSilent = true;
 	bool m_bSilent = true;
 
