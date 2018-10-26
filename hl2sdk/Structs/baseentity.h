@@ -53,7 +53,6 @@ public:	// NetProp
 	template<typename ...T>
 	static int GetNetPropOffsetEx(const std::string& table, const std::string& prop, const T& ...more);
 
-	
 public:
 	/*
 	IClientRenderable* m_pClientRenderable;		// 4
@@ -79,6 +78,8 @@ public:
 	int GetTeam();
 	bool IsPlayer();
 	bool IsNPC();
+	MoveType_t GetMoveType();
+	const char* GetClassname();
 };
 
 template<typename T>

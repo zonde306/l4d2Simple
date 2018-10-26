@@ -137,6 +137,7 @@ namespace indexes
 	const int IsNextBot = 149;	// Infected 和 Witch 会返回 1 的
 	const int EyePosition = 156;
 	const int EyeAngles = 157;
+	const int IsAbilityReadyToFire = 172;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

@@ -20,7 +20,7 @@ public:
 	Vector GetVelocity();
 	int GetHealth();
 	bool IsAlive();
-	int GetMoveType();
+	// int GetMoveType();
 	Vector& GetPunch();
 	int& GetTickBase();
 	int& GetFlags();
@@ -28,6 +28,9 @@ public:
 	int GetWaterLevel();
 	std::string GetName();
 	bool CanShove();
+	bool CanAttack();
+	bool CanBeShove();
+	bool IsReadyToShove();
 
 	// 获取 AABB 盒子
 	// first 为 min, second 为 max

@@ -4,6 +4,8 @@
 #include "../indexes.h"
 
 std::map<std::string, int> g_mPropOffset;
+#define SIG_SET_MOVETYPE	XorStr("55 8B EC 8A 45 08 8A 55 0C 88 81")
+#define SIG_GET_CLASSNAME	XorStr("57 8B F9 C6 05")
 
 int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop)
 {
@@ -198,5 +200,20 @@ bool CBaseEntity::IsNPC()
 {
 	using FnIsNextBot = bool(__thiscall*)(CBaseEntity*);
 	FnIsNextBot fn = Utils::GetVTableFunction<FnIsNextBot>(this, indexes::IsNextBot);
+	return fn(this);
+}
+
+MoveType_t CBaseEntity::GetMoveType()
+{
+	// 在 C_BaseEntity::SetMoveType 里
+	// this 后的第一个参数
+	const int offset = 0x144;
+	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + offset));
+}
+
+const char * CBaseEntity::GetClassname()
+{
+	using FnGetClassname = const char*(__thiscall*)(CBaseEntity*);
+	static FnGetClassname fn = reinterpret_cast<FnGetClassname>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLASSNAME));
 	return fn(this);
 }

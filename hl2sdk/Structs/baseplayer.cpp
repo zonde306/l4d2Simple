@@ -418,12 +418,14 @@ bool CBasePlayer::IsAlive()
 	return false;
 }
 
+/*
 int CBasePlayer::GetMoveType()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("movetype"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(int);
 }
+*/
 
 Vector& CBasePlayer::GetPunch()
 {
@@ -479,6 +481,27 @@ bool CBasePlayer::CanShove()
 		return false;
 
 	return (weapon->GetSecondryAttackDelay() <= 0.0f);
+}
+
+bool CBasePlayer::CanAttack()
+{
+	using FnCanAttack = bool(__thiscall*)(CBasePlayer*);
+	FnCanAttack fn = Utils::GetVTableFunction<FnCanAttack>(this, indexes::CanAttack);
+	return fn(this);
+}
+
+bool CBasePlayer::CanBeShove()
+{
+	using FnCanBeShove = bool(__thiscall*)(CBasePlayer*);
+	FnCanBeShove fn = Utils::GetVTableFunction<FnCanBeShove>(this, indexes::CanBeShoved);
+	return fn(this);
+}
+
+bool CBasePlayer::IsReadyToShove()
+{
+	using FnIsReadyToShove = bool(__thiscall*)(CBasePlayer*);
+	FnIsReadyToShove fn = Utils::GetVTableFunction<FnIsReadyToShove>(this, indexes::IsReadyToShove);
+	return fn(this);
 }
 
 std::pair<Vector, Vector> CBasePlayer::GetBoundingBox()

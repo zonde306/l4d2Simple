@@ -214,6 +214,7 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_velext"), m_bVelExt);
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
 	m_bTraceForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
+	m_bAimPosition = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -233,6 +234,7 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
