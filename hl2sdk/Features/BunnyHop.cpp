@@ -34,7 +34,8 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge())
+	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge() ||
+		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() >= 2)
 		return;
 
 	// int flags = player->GetFlags();
@@ -218,15 +219,15 @@ void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags
 		return;
 
 	// CBaseEntity* ground = player->GetGroundEntity();
-	bool inWater = (player->GetWaterLevel() >= 2);
-	bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
+	// bool inWater = (player->GetWaterLevel() >= 2);
+	// bool isBadMoveType = (player->GetMoveType() != MOVETYPE_WALK);
 	
 	/*
 	if ((pCmd->buttons & IN_JUMP) && (flags & FL_ONGROUND))
 		pCmd->buttons &= ~IN_JUMP;
 	*/
 
-	if((pCmd->buttons & IN_JUMP) && !(flags & FL_ONGROUND) && !isBadMoveType && !inWater)
+	if((pCmd->buttons & IN_JUMP) && !(flags & FL_ONGROUND)/* && !isBadMoveType && !inWater*/)
 		pCmd->buttons &= ~IN_JUMP;
 }
 
