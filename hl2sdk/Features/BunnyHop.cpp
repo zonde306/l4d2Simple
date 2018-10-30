@@ -35,7 +35,7 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge() ||
-		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() >= 2)
+		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() > 2)
 		return;
 
 	// int flags = player->GetFlags();
