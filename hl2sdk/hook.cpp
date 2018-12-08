@@ -898,7 +898,11 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	}
 
 	// 返回给服务器
-	gcv->GetNetChannel()->SendNetMsg(returnMsg);
+	INetChannel* nci = reinterpret_cast<INetChannel*>(g_pInterface->Engine->GetNetChannelInfo());
+	if (nci == nullptr)
+		gcv->GetNetChannel()->SendNetMsg(returnMsg);
+	else
+		nci->SendNetMsg(returnMsg);
 
 	return true;
 }
