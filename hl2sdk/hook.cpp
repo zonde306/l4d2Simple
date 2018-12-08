@@ -815,6 +815,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	returnMsg.m_szCvarName = gcv->m_szCvarName;
 	returnMsg.m_szCvarValue = resultBuffer;
 	returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
+	returnMsg.SetNetChannel(gcv->GetNetChannel());
 
 	ConVar* cvar = g_pInterface->Cvar->FindVar(gcv->m_szCvarName);
 	if (cvar == nullptr)
@@ -900,9 +901,19 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	// 返回给服务器
 	INetChannel* nci = reinterpret_cast<INetChannel*>(g_pInterface->Engine->GetNetChannelInfo());
 	if (nci == nullptr)
-		gcv->GetNetChannel()->SendNetMsg(returnMsg);
+	{
+		if (g_pClientHook->oSendNetMsg == nullptr)
+			gcv->GetNetChannel()->SendNetMsg(returnMsg);
+		else
+			g_pClientHook->oSendNetMsg(gcv->GetNetChannel(), returnMsg, false, false);
+	}
 	else
-		nci->SendNetMsg(returnMsg);
+	{
+		if (g_pClientHook->oSendNetMsg == nullptr)
+			nci->SendNetMsg(returnMsg);
+		else
+			g_pClientHook->oSendNetMsg(nci, returnMsg, false, false);
+	}
 
 	return true;
 }
