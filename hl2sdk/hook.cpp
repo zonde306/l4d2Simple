@@ -948,15 +948,27 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 			isSendComplete = g_pClientHook->oSendNetMsg(nci, returnMsg, false, false);
 	}
 
+	// 我们的 INetChannel::SendNetMsg 可能是假的...
 	if (!isSendComplete)
 	{
 		Utils::log(XorStr("[GCV] Warring: return %s failed... try original."), gcv->m_szCvarName);
 		
-		// 让查询器得到假的 ConVar
-		int flags = cvar->GetFlags();
-		g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
-		isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
-		g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
+		// 必须要处理，否则过不了 SMAC
+		if (cvar)
+		{
+			// 修复 Disconnected: Bad password.
+			int flags = cvar->GetFlags();
+
+			// 让查询器得到假的 ConVar
+			g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
+			isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+			g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
+		}
+		else
+		{
+			// 这是个 nullptr，可能是想坑那些有添加 cvar 的人的吧...
+			isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+		}
 	}
 
 	return true;
