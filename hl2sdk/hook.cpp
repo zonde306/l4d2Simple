@@ -953,12 +953,13 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		Utils::log(XorStr("[GCV] Warring: return %s failed... try original."), gcv->m_szCvarName);
 		
 		// 让查询器得到假的 ConVar
-		g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue);
+		int flags = cvar->GetFlags();
+		g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
 		isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 		g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
 	}
 
-	return isSendComplete;
+	return true;
 }
 
 bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
