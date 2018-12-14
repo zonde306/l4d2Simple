@@ -22,6 +22,7 @@
 #include "../l4d2Simple2/config.h"
 #include <memory>
 #include <fstream>
+#include <cctype>
 
 std::unique_ptr<CClientHook> g_pClientHook;
 std::unique_ptr<CClientPrediction> g_pClientPrediction;
@@ -954,9 +955,11 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		Utils::log(XorStr("[GCV] Warring: return %s failed... try original."), gcv->m_szCvarName);
 		
 		// 必须要处理，否则过不了 SMAC
-		if (cvar)
+		tmpValue = gcv->m_szCvarName;
+		std::transform(tmpValue.begin(), tmpValue.end(), tmpValue.begin(), std::tolower);
+
+		if (cvar && tmpValue.find(XorStr("password")) == std::string::npos)
 		{
-			// 修复 Disconnected: Bad password.
 			int flags = cvar->GetFlags();
 
 			// 让查询器得到假的 ConVar
