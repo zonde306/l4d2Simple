@@ -38,6 +38,9 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 		return;
 	
 	int team = player->GetTeam();
+	if (team == 3 && player->IsGhost())
+		return;
+
 	int weaponId = weapon->GetWeaponID();
 	float nextAttack = weapon->GetNextPrimaryAttack();
 	float serverTime = g_pClientPrediction->GetServerTime();

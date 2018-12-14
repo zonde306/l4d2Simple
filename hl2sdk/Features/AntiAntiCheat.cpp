@@ -294,10 +294,10 @@ bool CAntiAntiCheat::OnEmitSound(std::string & sample, int & entity, int & chann
 		sample.clear();
 	};
 	
-	if (m_bBlockNullSound && sample.find("null") != std::string::npos)
+	if (m_bBlockNullSound && sample.find(XorStr("null")) != std::string::npos)
 		stopSound();
 	
-	if(m_bNoHeartbeat && sample.find("heartbeatloop") != std::string::npos)
+	if(m_bNoHeartbeat && sample.find(XorStr("heartbeatloop")) != std::string::npos)
 		stopSound();
 
 	return true;

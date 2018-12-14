@@ -1,4 +1,4 @@
-#include "convar.h"
+﻿#include "convar.h"
 #include "../definitions.h"
 #include "../Interfaces/ICvar.h"
 #include "../../l4d2Simple2/utils.h"
@@ -79,6 +79,8 @@ ConVar::~ConVar(void)
 		delete[] m_pszString;
 		m_pszString = NULL;
 	}
+
+	ConCommandBase::~ConCommandBase();
 }
 bool ConVar::IsFlagSet(int flag) const
 {
@@ -546,6 +548,47 @@ SpoofedConvar::SpoofedConvar(ConVar* pCVar)
 }
 SpoofedConvar::~SpoofedConvar()
 {
+	Unspoof();
+}
+bool SpoofedConvar::IsSpoofed()
+{
+	return m_pDummyCVar != nullptr;
+}
+void SpoofedConvar::Spoof()
+{
+	if (!IsSpoofed() && m_pOriginalCVar)
+	{
+		//Save old name value and flags so we can restore the cvar lates if needed
+		m_iOriginalFlags = m_pOriginalCVar->m_nFlags;
+		strcpy_s(m_szOriginalName, m_pOriginalCVar->m_pszName);
+		strcpy_s(m_szOriginalValue, m_pOriginalCVar->m_pszDefaultValue);
+
+		sprintf_s(m_szDummyName, "d_%s", m_szOriginalName);
+
+		//Create the dummy cvar
+		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
+		if (!m_pDummyCVar) return;
+		memcpy_s(m_pDummyCVar, sizeof(ConVar), m_pOriginalCVar, sizeof(ConVar));
+
+		m_pDummyCVar->m_pNext = nullptr;
+		//Register it
+		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
+
+		//Fix "write access violation" bullshit
+		DWORD dwOld;
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
+
+		//Rename the cvar
+		// 我们真的不知道这玩意有多大...
+		strcpy((char*)m_pOriginalCVar->m_pszName, m_szDummyName);
+
+		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
+
+		SetFlags(FCVAR_NONE);
+	}
+}
+void SpoofedConvar::Unspoof()
+{
 	if (IsSpoofed())
 	{
 		DWORD dwOld;
@@ -561,42 +604,6 @@ SpoofedConvar::~SpoofedConvar()
 		g_pInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
 		free(m_pDummyCVar);
 		m_pDummyCVar = nullptr;
-	}
-}
-bool SpoofedConvar::IsSpoofed()
-{
-	return m_pDummyCVar != nullptr;
-}
-void SpoofedConvar::Spoof()
-{
-	if (!IsSpoofed() && m_pOriginalCVar)
-	{
-		//Save old name value and flags so we can restore the cvar lates if needed
-		m_iOriginalFlags = m_pOriginalCVar->m_nFlags;
-		strcpy(m_szOriginalName, m_pOriginalCVar->m_pszName);
-		strcpy(m_szOriginalValue, m_pOriginalCVar->m_pszDefaultValue);
-
-		sprintf_s(m_szDummyName, 128, "d_%s", m_szOriginalName);
-
-		//Create the dummy cvar
-		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
-		if (!m_pDummyCVar) return;
-		memcpy(m_pDummyCVar, m_pOriginalCVar, sizeof(ConVar));
-
-		m_pDummyCVar->m_pNext = nullptr;
-		//Register it
-		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
-
-		//Fix "write access violation" bullshit
-		DWORD dwOld;
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
-
-		//Rename the cvar
-		strcpy((char*)m_pOriginalCVar->m_pszName, m_szDummyName);
-
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
-
-		SetFlags(FCVAR_NONE);
 	}
 }
 void SpoofedConvar::SetFlags(int flags)
@@ -637,4 +644,14 @@ void SpoofedConvar::SetString(const char* szValue)
 	{
 		m_pOriginalCVar->SetValue(szValue);
 	}
+}
+
+ConVar * SpoofedConvar::GetOriginal() const
+{
+	return m_pOriginalCVar;
+}
+
+ConVar * SpoofedConvar::GetDummy() const
+{
+	return m_pDummyCVar;
 }

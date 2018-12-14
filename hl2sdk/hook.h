@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <optional>
 
 // 虚函数
 typedef void(__thiscall* FnPaintTraverse)(IVPanel*, VPANEL, bool, bool);
@@ -78,6 +79,9 @@ public:
 	void InitFeature();
 	void LoadConfig();
 	void SaveConfig();
+
+	ConVar* GetDummyConVar(const std::string& cvar, const std::optional<std::string>& value = {});
+	bool RestoreDummyConVar(const std::string& cvar);
 
 private:
 	// 被 Hook 后的原函数

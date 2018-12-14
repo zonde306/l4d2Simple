@@ -320,19 +320,24 @@ public:
 
 	~SpoofedConvar();
 
-	bool           IsSpoofed();
-	void           Spoof();
+	bool			IsSpoofed();
 
-	void           SetFlags(int flags);
-	int            GetFlags();
+	void			Spoof();
+	void			Unspoof();
 
-	void           SetBool(bool bValue);
-	void           SetInt(int iValue);
-	void           SetFloat(float flValue);
-	void           SetString(const char* szValue);
+	void			SetFlags(int flags);
+	int				GetFlags();
+
+	void			SetBool(bool bValue);
+	void			SetInt(int iValue);
+	void			SetFloat(float flValue);
+	void			SetString(const char* szValue);
+
+	ConVar*			GetOriginal() const;
+	ConVar*			GetDummy() const;
 
 private:
-	ConVar * m_pOriginalCVar = nullptr;
+	ConVar* m_pOriginalCVar = nullptr;
 	ConVar* m_pDummyCVar = nullptr;
 
 	char m_szDummyName[128];

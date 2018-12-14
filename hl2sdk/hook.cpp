@@ -26,6 +26,7 @@
 std::unique_ptr<CClientHook> g_pClientHook;
 std::unique_ptr<CClientPrediction> g_pClientPrediction;
 std::map<std::string, std::string> g_ServerConVar;
+std::map<std::string, std::unique_ptr<SpoofedConvar>> g_DummyConVar;
 extern const VMatrix* g_pWorldToScreenMatrix;
 
 // 计时
@@ -330,6 +331,36 @@ void CClientHook::SaveConfig()
 
 	file.close();
 	*/
+}
+
+ConVar * CClientHook::GetDummyConVar(const std::string & cvar, const std::optional<std::string>& value)
+{
+	auto it = g_DummyConVar.find(cvar);
+	if (it != g_DummyConVar.end() && it->second)
+	{
+		if (!it->second->GetOriginal())
+			it->second->Spoof();
+		
+		return it->second->GetOriginal();
+	}
+	
+	SpoofedConvar* cv = new SpoofedConvar(cvar.c_str());
+	g_DummyConVar.try_emplace(cvar, cv);
+
+	if (value.has_value())
+		cv->SetString(value->c_str());
+
+	return cv->GetOriginal();
+}
+
+bool CClientHook::RestoreDummyConVar(const std::string & cvar)
+{
+	auto it = g_DummyConVar.find(cvar);
+	if (it == g_DummyConVar.end() || !it->second)
+		return false;
+
+	it->second->Unspoof();
+	return true;
 }
 
 #define DECL_DESTORY_DETOUR(_name)		if(_name && _name->Created())\
@@ -816,6 +847,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	returnMsg.m_szCvarValue = resultBuffer;
 	returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 	returnMsg.SetNetChannel(gcv->GetNetChannel());
+	returnMsg.SetReliable(gcv->IsReliable());
 
 	ConVar* cvar = g_pInterface->Cvar->FindVar(gcv->m_szCvarName);
 	if (cvar == nullptr)
@@ -899,23 +931,34 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	}
 
 	// 返回给服务器
+	bool isSendComplete = false;
 	INetChannel* nci = reinterpret_cast<INetChannel*>(g_pInterface->Engine->GetNetChannelInfo());
 	if (nci == nullptr)
 	{
 		if (g_pClientHook->oSendNetMsg == nullptr)
-			gcv->GetNetChannel()->SendNetMsg(returnMsg);
+			isSendComplete = gcv->GetNetChannel()->SendNetMsg(returnMsg);
 		else
-			g_pClientHook->oSendNetMsg(gcv->GetNetChannel(), returnMsg, false, false);
+			isSendComplete = g_pClientHook->oSendNetMsg(gcv->GetNetChannel(), returnMsg, false, false);
 	}
 	else
 	{
 		if (g_pClientHook->oSendNetMsg == nullptr)
-			nci->SendNetMsg(returnMsg);
+			isSendComplete = nci->SendNetMsg(returnMsg);
 		else
-			g_pClientHook->oSendNetMsg(nci, returnMsg, false, false);
+			isSendComplete = g_pClientHook->oSendNetMsg(nci, returnMsg, false, false);
 	}
 
-	return true;
+	if (!isSendComplete)
+	{
+		Utils::log(XorStr("[GCV] Warring: return %s failed... try original."), gcv->m_szCvarName);
+		
+		// 让查询器得到假的 ConVar
+		g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue);
+		isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+		g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
+	}
+
+	return isSendComplete;
 }
 
 bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
