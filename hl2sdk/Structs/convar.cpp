@@ -563,17 +563,22 @@ void SpoofedConvar::Spoof()
 		strcpy_s(m_szOriginalName, m_pOriginalCVar->m_pszName);
 		strcpy_s(m_szOriginalValue, m_pOriginalCVar->m_pszDefaultValue);
 
-		sprintf_s(m_szDummyName, "d_%s", m_szOriginalName);
+		sprintf_s(m_szDummyName, XorStr("dmy_%s"), m_szOriginalName);
 
 		//Create the dummy cvar
 		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
 		if (!m_pDummyCVar) return;
+
 		memcpy_s(m_pDummyCVar, sizeof(ConVar), m_pOriginalCVar, sizeof(ConVar));
 
 		m_pDummyCVar->m_pNext = nullptr;
+		m_pDummyCVar->m_pParent = nullptr;
+		m_pOriginalCVar->m_pszName = m_szDummyName;
+
 		//Register it
 		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
 
+		/*
 		//Fix "write access violation" bullshit
 		DWORD dwOld;
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
@@ -583,6 +588,7 @@ void SpoofedConvar::Spoof()
 		strcpy((char*)m_pOriginalCVar->m_pszName, m_szDummyName);
 
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
+		*/
 
 		SetFlags(FCVAR_NONE);
 	}
@@ -591,17 +597,21 @@ void SpoofedConvar::Unspoof()
 {
 	if (IsSpoofed())
 	{
-		DWORD dwOld;
+		// DWORD dwOld;
 
 		SetFlags(m_iOriginalFlags);
 		SetString(m_szOriginalValue);
 
+		/*
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
 		strcpy((char*)m_pOriginalCVar->m_pszName, m_szOriginalName);
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
-
+		*/
+		
 		//Unregister dummy cvar
 		g_pInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
+		m_pOriginalCVar->m_pszName = m_pDummyCVar->m_pszName;
+
 		free(m_pDummyCVar);
 		m_pDummyCVar = nullptr;
 	}
