@@ -569,6 +569,8 @@ void SpoofedConvar::Spoof()
 
 		sprintf_s(m_szDummyName, XorStr("dmy_%s"), m_szOriginalName);
 
+		m_pDummyCVar = new ConVar(m_szOriginalName, m_pOriginalCVar->GetDefault(), m_pOriginalCVar->GetFlags());
+		/*
 		//Create the dummy cvar
 		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
 		if (!m_pDummyCVar) return;
@@ -579,6 +581,7 @@ void SpoofedConvar::Spoof()
 
 		//Register it
 		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
+		*/
 
 		/*
 		//Fix "write access violation" bullshit
@@ -611,10 +614,15 @@ void SpoofedConvar::Unspoof()
 		*/
 		m_pOriginalCVar->m_pszName = m_pDummyCVar->m_pszName;
 
+		/*
 		//Unregister dummy cvar
 		g_pInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
 
 		free(m_pDummyCVar);
+		m_pDummyCVar = nullptr;
+		*/
+
+		delete m_pDummyCVar;
 		m_pDummyCVar = nullptr;
 	}
 }

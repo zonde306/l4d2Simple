@@ -964,17 +964,17 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 
 		if (cvar && tmpValue.find(XorStr("password")) == std::string::npos)
 		{
-			int flags = cvar->GetFlags();
+			// int flags = cvar->GetFlags();
 
 			// 让查询器得到假的 ConVar
-			// g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
-			isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+			// g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue);
+			g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 			// g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
 		}
 		else
 		{
 			// 这是个 nullptr，可能是想坑那些有添加 cvar 的人的吧...
-			isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+			g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 		}
 	}
 
