@@ -339,19 +339,19 @@ ConVar * CClientHook::GetDummyConVar(const std::string & cvar, const std::option
 	auto it = g_DummyConVar.find(cvar);
 	if (it != g_DummyConVar.end() && it->second)
 	{
-		if (!it->second->GetOriginal())
+		if (!it->second->GetDummy())
 			it->second->Spoof();
 		
-		return it->second->GetOriginal();
+		return it->second->GetDummy();
 	}
 	
 	SpoofedConvar* cv = new SpoofedConvar(cvar.c_str());
 	g_DummyConVar.try_emplace(cvar, cv);
 
 	if (value.has_value())
-		cv->SetString(value->c_str());
+		cv->GetDummy()->SetValue(value->c_str());
 
-	return cv->GetOriginal();
+	return cv->GetDummy();
 }
 
 bool CClientHook::RestoreDummyConVar(const std::string & cvar)
@@ -840,7 +840,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 
 	// 空字符串
 	char resultBuffer[256]/*, msgBuffer[255]*/;
-	resultBuffer[0] = '\0';
+	// resultBuffer[0] = '\0';
+	ZeroMemory(resultBuffer, 256);
 
 	CLC_RespondCvarValue returnMsg;
 	returnMsg.m_iCookie = gcv->m_iCookie;
@@ -857,8 +858,10 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarNotFound;
 
 		// 这个其实是一个命令
+		/*
 		if (g_pInterface->Cvar->FindCommand(gcv->m_szCvarName) != nullptr)
 			returnMsg.m_eStatusCode = eQueryCvarValueStatus_NotACvar;
+		*/
 
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
@@ -873,7 +876,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY))
 	{
 		// 这玩意不可以查询
-		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
+		// 但是无论如何都要说它完整的
+		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
 
@@ -963,9 +967,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 			int flags = cvar->GetFlags();
 
 			// 让查询器得到假的 ConVar
-			g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
+			// g_pClientHook->GetDummyConVar(gcv->m_szCvarName, returnMsg.m_szCvarValue)->m_nFlags = flags;
 			isSendComplete = g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
-			g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
+			// g_pClientHook->RestoreDummyConVar(gcv->m_szCvarName);
 		}
 		else
 		{

@@ -322,7 +322,12 @@ ConCommandBase::ConCommandBase(const char *pName, const char *pHelpString, int f
 	Create(pName, pHelpString, flags);
 }
 ConCommandBase::~ConCommandBase(void)
-{}
+{
+	if (s_pAccessor)
+	{
+		s_pAccessor->RegisterConCommandBase(this);
+	}
+}
 
 bool ConCommandBase::IsCommand(void) const
 {
@@ -532,7 +537,6 @@ bool ConCommand::CanAutoComplete(void)
 	return m_bHasCompletionCallback;
 }
 
-
 SpoofedConvar::SpoofedConvar()
 {}
 
@@ -572,15 +576,13 @@ void SpoofedConvar::Spoof()
 		memcpy_s(m_pDummyCVar, sizeof(ConVar), m_pOriginalCVar, sizeof(ConVar));
 
 		m_pDummyCVar->m_pNext = nullptr;
-		m_pDummyCVar->m_pParent = nullptr;
-		m_pOriginalCVar->m_pszName = m_szDummyName;
 
 		//Register it
 		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
 
 		/*
 		//Fix "write access violation" bullshit
-		DWORD dwOld;
+		DWORD dwOld = 0;
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
 
 		//Rename the cvar
@@ -589,6 +591,7 @@ void SpoofedConvar::Spoof()
 
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
 		*/
+		m_pOriginalCVar->m_pszName = m_szDummyName;
 
 		SetFlags(FCVAR_NONE);
 	}
@@ -597,20 +600,19 @@ void SpoofedConvar::Unspoof()
 {
 	if (IsSpoofed())
 	{
-		// DWORD dwOld;
-
 		SetFlags(m_iOriginalFlags);
 		SetString(m_szOriginalValue);
 
 		/*
+		DWORD dwOld = 0;
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
 		strcpy((char*)m_pOriginalCVar->m_pszName, m_szOriginalName);
 		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
 		*/
-		
+		m_pOriginalCVar->m_pszName = m_pDummyCVar->m_pszName;
+
 		//Unregister dummy cvar
 		g_pInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
-		m_pOriginalCVar->m_pszName = m_pDummyCVar->m_pszName;
 
 		free(m_pDummyCVar);
 		m_pDummyCVar = nullptr;
