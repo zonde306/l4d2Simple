@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <optional>
 
 // 虚函数
@@ -154,3 +155,4 @@ private:
 };
 
 extern std::unique_ptr<CClientPrediction> g_pClientPrediction;
+extern std::map<std::string, std::string> g_ServerConVar;

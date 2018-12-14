@@ -1,5 +1,6 @@
 ﻿#include "AntiAntiCheat.h"
 #include "../../l4d2Simple2/config.h"
+#include "../hook.h"
 #include <functional>
 #include <cctype>
 
@@ -306,6 +307,7 @@ bool CAntiAntiCheat::OnEmitSound(std::string & sample, int & entity, int & chann
 bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool & bVoice)
 {
 	int msg_id = msg.GetType();
+	static char buffer[260], msgBuffer[255];
 
 	// 禁止服务器检查客户端文件 CRC32
 	// 这是另一种 sv_pure 绕过
@@ -316,6 +318,39 @@ bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool
 	if (m_bBlockNullSound && msg_id == 10)
 		bVoice = true;
 	
+	if (msg_id == 13)
+	{
+		CLC_RespondCvarValue& cvars = reinterpret_cast<CLC_RespondCvarValue&>(msg);
+		if (auto it = g_ServerConVar.find(cvars.m_szCvarName);
+			it != g_ServerConVar.end())
+		{
+			// 使用服务器设置的值返回
+			strcpy_s(buffer, it->second.c_str());
+			cvars.m_szCvarValue = buffer;
+		}
+		else if (std::string newValue = cvars.m_szCvarValue;
+			this->OnProcessGetCvarValue(cvars.m_szCvarName, newValue))
+		{
+			// 使用名单上的值返回
+			strcpy_s(buffer, newValue.c_str());
+			cvars.m_szCvarValue = buffer;
+		}
+		else if(ConVar* cvar = g_pInterface->Cvar->FindVar(cvars.m_szCvarName);
+			cvar != nullptr)
+		{
+			// 使用默认值返回
+			strcpy_s(buffer, cvar->GetDefault());
+			cvars.m_szCvarValue = buffer;
+		}
+
+		if (m_bLogConVarInfo)
+		{
+			char msgBuffer[255];
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] cvar %s moving.\""), cvars.m_szCvarName);
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+	}
+
 	return true;
 }
 

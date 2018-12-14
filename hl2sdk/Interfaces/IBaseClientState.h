@@ -278,13 +278,13 @@ public:
 
 };
 
-#define DECLARE_BASE_MESSAGE(msgtype)           \
-public:                                         \
-	bool ReadFromBuffer(bf_read &buffer);       \
-	bool WriteToBuffer(bf_write &buffer);       \
-	const char *ToString() const { return ""; } \
-	int GetType() const { return 0; }     \
-	const char *GetName() const { /*return XorStr(#msgtype);*/ return ""; }
+#define DECLARE_BASE_MESSAGE(msgtype)                \
+public:                                              \
+	bool ReadFromBuffer(bf_read &buffer);            \
+	bool WriteToBuffer(bf_write &buffer);            \
+	const char *ToString() const { return ""; }      \
+	const char *GetName() const { return #msgtype; }
+	// int GetType() const { return msgtype; }
 
 #define DECLARE_NET_MESSAGE(name)     \
 	DECLARE_BASE_MESSAGE(NET_##name); \
@@ -345,6 +345,7 @@ class NET_SetConVar : public CNetMessage
 public:
 	DECLARE_NET_MESSAGE(SetConVar);
 
+	int GetType(void) const { return 0x6; };
 	int	GetGroup() const { return INetChannelInfo::STRINGCMD; }
 	
 	NET_SetConVar() {}
@@ -382,6 +383,8 @@ class SVC_GetCvarValue : public CNetMessage
 public:
 	DECLARE_SVC_MESSAGE(GetCvarValue);
 
+	int GetType(void) const { return 0x1F; };
+
 	int					m_iCookie;
 	const char			*m_szCvarName;	// The sender sets this, and it automatically points it at m_szCvarNameBuffer when receiving.
 
@@ -393,6 +396,8 @@ class CLC_RespondCvarValue : public CNetMessage
 {
 public:
 	DECLARE_CLC_MESSAGE(RespondCvarValue);
+
+	int GetType(void) const { return 0x0D; };
 
 	int						m_iCookie;
 
@@ -420,6 +425,7 @@ class NET_StringCmd : public CNetMessage
 {
 	DECLARE_NET_MESSAGE(StringCmd);
 
+	int GetType(void) const { return 0x5; };
 	int	GetGroup() const { return INetChannelInfo::STRINGCMD; }
 
 	NET_StringCmd() { m_szCommand = NULL; };
@@ -436,6 +442,7 @@ class CLC_Move : public CNetMessage
 {
 	DECLARE_CLC_MESSAGE(Move);
 
+	int GetType(void) const { return 0x9; };
 	int	GetGroup() const { return INetChannelInfo::MOVE; }
 
 	CLC_Move() { m_bReliable = false; }
@@ -452,6 +459,7 @@ class SVC_Print : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(Print);
 
+	int GetType(void) const { return 0x10; };
 	SVC_Print() { m_bReliable = false; m_szText = NULL; };
 
 	SVC_Print(const char * text) { m_bReliable = false; m_szText = text; };
@@ -467,6 +475,7 @@ class SVC_ServerInfo : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(ServerInfo);
 
+	int GetType(void) const { return 0x8; };
 	int	GetGroup() const { return INetChannelInfo::SIGNON; }
 
 public:	// member vars are public for faster handling
@@ -499,6 +508,7 @@ class SVC_UserMessage : public CNetMessage
 
 	SVC_UserMessage() { m_bReliable = false; }
 
+	int GetType(void) const { return 0x17; };
 	int	GetGroup() const { return INetChannelInfo::USERMESSAGES; }
 
 public:
@@ -512,6 +522,7 @@ class SVC_EntityMessage : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(EntityMessage);
 
+	int GetType(void) const { return 0x18; };
 	SVC_EntityMessage() { m_bReliable = false; }
 
 	int	GetGroup() const { return INetChannelInfo::ENTMESSAGES; }
@@ -528,6 +539,7 @@ class SVC_PacketEntities : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(PacketEntities);
 
+	int GetType(void) const { return 0x1A; };
 	int	GetGroup() const { return INetChannelInfo::ENTITIES; }
 
 public:
@@ -547,6 +559,7 @@ class SVC_TempEntities : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(TempEntities);
 
+	int GetType(void) const { return 0x1B; };
 	SVC_TempEntities() { m_bReliable = false; }
 
 	int	GetGroup() const { return INetChannelInfo::EVENTS; }
@@ -561,6 +574,7 @@ class SVC_GameEvent : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(GameEvent);
 
+	int GetType(void) const { return 0x5; };
 	int	GetGroup() const { return INetChannelInfo::EVENTS; }
 
 public:
@@ -572,6 +586,8 @@ public:
 class SVC_BSPDecal : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(BSPDecal);
+
+	int GetType(void) const { return 0x15; };
 
 public:
 	Vector		m_Pos;
@@ -585,6 +601,7 @@ class SVC_CrosshairAngle : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(CrosshairAngle);
 
+	int GetType(void) const { return 0x14; };
 	SVC_CrosshairAngle() {}
 	SVC_CrosshairAngle(QAngle angle) { m_Angle = angle; }
 
@@ -596,6 +613,7 @@ class SVC_FixAngle : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(FixAngle);
 
+	int GetType(void) const { return 0x13; };
 	SVC_FixAngle() { m_bReliable = false; };
 	SVC_FixAngle(bool bRelative, QAngle angle)
 	{
@@ -611,6 +629,7 @@ class SVC_SetView : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(SetView);
 
+	int GetType(void) const { return 0x12; };
 	SVC_SetView() {}
 	SVC_SetView(int entity) { m_nEntityIndex = entity; }
 
@@ -622,6 +641,7 @@ class SVC_UpdateStringTable : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(UpdateStringTable);
 
+	int GetType(void) const { return 0x0D; };
 	int	GetGroup() const { return INetChannelInfo::STRINGTABLE; }
 
 public:
@@ -636,6 +656,7 @@ class SVC_SetPause : public CNetMessage
 {
 	DECLARE_SVC_MESSAGE(SetPause);
 
+	int GetType(void) const { return 0x0B; };
 	SVC_SetPause() {}
 	SVC_SetPause(bool state) { m_bPaused = state; }
 
@@ -648,6 +669,8 @@ class CLC_FileCRCCheck : public CNetMessage
 public:
 	DECLARE_CLC_MESSAGE(FileCRCCheck);
 
+	int GetType(void) const { return 0x0E; };
+
 	char		m_szPathID[MAX_PATH];
 	char		m_szFilename[MAX_PATH];
 	CRC32_t		m_CRC;
@@ -657,6 +680,7 @@ class NET_SignonState : public CNetMessage
 {
 	DECLARE_NET_MESSAGE(SignonState);
 
+	int GetType(void) const { return 0x7; };
 	int	GetGroup() const { return INetChannelInfo::SIGNON; }
 
 	NET_SignonState() {};
@@ -670,6 +694,8 @@ public:
 class NET_Tick : public CNetMessage
 {
 	DECLARE_NET_MESSAGE(Tick);
+
+	int GetType(void) const { return 0x4; };
 
 	NET_Tick()
 	{
