@@ -258,7 +258,7 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	IMGUI_TIPS("近战预测范围");
 
 	ImGui::Separator();
-	ImGui::Checkbox(XorStr("Smoker SelfClear"), &m_bVelExt);
+	ImGui::Checkbox(XorStr("Smoker SelfClear"), &m_bSmoker);
 	IMGUI_TIPS("被拉自救");
 
 	ImGui::Checkbox(XorStr("Hunter Skeet"), &m_bHunter);
