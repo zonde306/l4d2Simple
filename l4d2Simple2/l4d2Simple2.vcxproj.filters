@@ -16,9 +16,6 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{7152ac17-9ede-48e1-8ec9-de10645fa807}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ImGui\directx9">
-      <UniqueIdentifier>{8289a9be-3965-4fe3-a3de-bad06165c5b1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="detours">
       <UniqueIdentifier>{f51f216b-fafd-4855-8255-8efb72b5f97c}</UniqueIdentifier>
     </Filter>
@@ -40,28 +37,16 @@
     <Filter Include="hl2sdk\Features">
       <UniqueIdentifier>{a780306e-5961-468e-80e0-5cfbcac40208}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ImGui\opengl">
-      <UniqueIdentifier>{4c6b216f-df04-4cc7-a171-34c656e82f16}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ADVobfuscator">
       <UniqueIdentifier>{0503812a-a0cc-4cd8-9129-00401b3257ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\dx9_win32">
+      <UniqueIdentifier>{85cabbe9-b4c8-45da-9961-b6fceff95c3c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\imgui\imgui.cpp">
-      <Filter>ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\imgui\imgui_demo.cpp">
-      <Filter>ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\imgui\imgui_draw.cpp">
-      <Filter>ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\imgui\examples\directx9_example\imgui_impl_dx9.cpp">
-      <Filter>ImGui\directx9</Filter>
     </ClCompile>
     <ClCompile Include="dx9hook.cpp">
       <Filter>源文件</Filter>
@@ -255,29 +240,26 @@
     <ClCompile Include="..\hl2sdk\Features\QTE.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\imgui\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\examples\imgui_impl_dx9.cpp">
+      <Filter>ImGui\dx9_win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\examples\imgui_impl_win32.cpp">
+      <Filter>ImGui\dx9_win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\imgui\imconfig.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\imgui\imgui.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\imgui\imgui_internal.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\imgui\examples\directx9_example\imgui_impl_dx9.h">
-      <Filter>ImGui\directx9</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_rect_pack.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_textedit.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_truetype.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="dx9hook.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -506,9 +488,6 @@
     <ClInclude Include="..\hl2sdk\Features\BunnyHop.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
-    <ClInclude Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.h">
-      <Filter>ImGui\opengl</Filter>
-    </ClInclude>
     <ClInclude Include="speedhack.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -614,13 +593,34 @@
     <ClInclude Include="..\hl2sdk\Features\QTE.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
+    <ClInclude Include="..\imgui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\examples\imgui_impl_dx9.h">
+      <Filter>ImGui\dx9_win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\examples\imgui_impl_win32.h">
+      <Filter>ImGui\dx9_win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">
       <Filter>detours</Filter>
-    </None>
-    <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp">
-      <Filter>ImGui\opengl</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

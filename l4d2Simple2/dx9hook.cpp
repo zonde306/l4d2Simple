@@ -6,7 +6,7 @@
 #include "xorstr.h"
 #include "drawing.h"
 #include "menu.h"
-#include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+#include "../imgui/examples/imgui_impl_dx9.h"
 
 std::unique_ptr<CDirectX9Hook> g_pDirextXHook;
 
@@ -79,13 +79,38 @@ void CDirectX9Hook::Init()
 		SetupFirstHook();
 	}
 
-	ImGui::CreateContext();
+	if(ImGui::GetCurrentContext() == NULL)
+		ImGui::CreateContext();
+
 	Utils::log(XorStr("CDirectX9Hook Initialization..."));
 }
 
 void CDirectX9Hook::Shutdown()
 {
 	ImGui_ImplDX9_Shutdown();
+}
+
+void CDirectX9Hook::Rehook()
+{
+	if (m_bSuccessCreated)
+		ReleaseDevice();
+
+	if (m_bIsFirstHooked)
+	{
+		DECL_DESTORY_DETOURXS(m_pHookDrawIndexedPrimitive);
+		DECL_DESTORY_DETOURXS(m_pHookEndScene);
+		DECL_DESTORY_DETOURXS(m_pHookCreateQuery);
+		DECL_DESTORY_DETOURXS(m_pHookReset);
+		DECL_DESTORY_DETOURXS(m_pHookPresent);
+	}
+
+	if (m_bIsSecondHooked && m_pVMTHook)
+	{
+		m_pVMTHook->UninstallHook();
+		m_pVMTHook.reset();
+	}
+
+	Init();
 }
 
 HRESULT WINAPI CDirectX9Hook::Hooked_DrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
@@ -132,6 +157,8 @@ HRESULT WINAPI CDirectX9Hook::Hooked_EndScene(IDirect3DDevice9* device)
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_EndScene"));
+	if(g_pDrawing->CheckDeviceStatus(device))
+		Utils::log(XorStr("Device Updated with Hooked_EndScene"));
 
 	g_pDrawing->OnBeginEndScene();
 
@@ -184,7 +211,17 @@ HRESULT WINAPI CDirectX9Hook::Hooked_Reset(IDirect3DDevice9* device, D3DPRESENT_
 
 	HRESULT hr = g_pDirextXHook->oReset(device, pp);
 
-	g_pDrawing->OnResetDevice();
+#ifdef _DEBUG
+	if (hr == D3DERR_INVALIDCALL)
+		Utils::log(XorStr("IDirect3DDevice9::Reset returns a D3DERR_INVALIDCALL!"));
+#endif
+
+	if (hr != D3DERR_INVALIDCALL)
+		g_pDrawing->OnResetDevice();
+	/*
+	else
+		g_pDirextXHook->Rehook();
+	*/
 
 #ifdef _DEBUG
 	static bool bHasFirst = true;
@@ -203,6 +240,8 @@ HRESULT WINAPI CDirectX9Hook::Hooked_Present(IDirect3DDevice9* device, const REC
 {
 	if (g_pDirextXHook->CheckHookStatus(device))
 		Utils::log(XorStr("Initialization with Hooked_Present"));
+	if (g_pDrawing->CheckDeviceStatus(device))
+		Utils::log(XorStr("Device Updated with Hooked_Present"));
 
 	g_pDrawing->OnBeginPresent();
 

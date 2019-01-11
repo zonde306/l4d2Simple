@@ -4,7 +4,8 @@
 #include "utils.h"
 #include "xorstr.h"
 #include "menu.h"
-#include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+#include "../imgui/examples/imgui_impl_win32.h"
+#include "../imgui/examples/imgui_impl_dx9.h"
 #include "../hl2sdk/hook.h"
 
 // 将 D3DCOLOR 转换为 ImGui 的颜色
@@ -265,8 +266,8 @@ void CDrawing::CreateObjects()
 	fontPath += XorStr("\\Fonts\\msyhl.ttc");
 
 	// Utils::log("font %s loading...", fontPath.c_str());
-	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
-	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChinese());
+	m_imFonts.AddFontFromFileTTF(fontPath.c_str(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChineseFull());
+	ImGui::GetIO().Fonts->AddFontFromFileTTF(fontPath.data(), static_cast<float>(m_iFontSize), nullptr, m_imFonts.GetGlyphRangesChineseFull());
 
 	uint8_t* pixel_data;
 	int width, height, bytes_per_pixel;
@@ -513,7 +514,7 @@ std::string CDrawing::FindFonts(const std::string & name)
 CDrawing::CDrawing() : m_bInEndScene(false), m_bInPresent(false), m_pDevice(nullptr), m_pStateBlock(nullptr),
 	m_pDefaultFont(nullptr), m_pFont(nullptr), m_pLine(nullptr), m_pTextSprite(nullptr),
 	m_imDrawList(nullptr), m_imFontTexture(nullptr), m_iFramePerSecond(0), m_iFrameCount(0),
-	m_tNextUpdateTime(0), m_bTopStringDrawing(false), m_iFontSize(16)
+	m_tNextUpdateTime(0), m_bTopStringDrawing(false), m_iFontSize(16), m_bIsReset(false)
 {
 }
 
@@ -521,6 +522,7 @@ CDrawing::~CDrawing()
 {
 	ReleaseObjects();
 	ImGui_ImplDX9_Shutdown();
+	ImGui_ImplWin32_Shutdown();
 
 	m_imFonts.Clear();
 	ImGui::GetIO().Fonts->Clear();
@@ -531,7 +533,11 @@ void CDrawing::Init(IDirect3DDevice9 * device, int fontSize)
 	m_pDevice = device;
 	m_iFontSize = fontSize;
 
-	ImGui_ImplDX9_Init(g_hGameWindow, device);
+	if (ImGui::GetCurrentContext() == NULL)
+		ImGui::CreateContext();
+
+	ImGui_ImplWin32_Init(g_hGameWindow);
+	ImGui_ImplDX9_Init(device);
 	// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::StyleColorsDark();
 
@@ -546,6 +552,7 @@ void CDrawing::OnLostDevice()
 {
 	ImGui_ImplDX9_InvalidateDeviceObjects();
 	ReleaseObjects();
+	m_bIsReset = true;
 
 	LOCK_ENDSCENE();
 
@@ -570,6 +577,7 @@ void CDrawing::OnResetDevice()
 {
 	CreateObjects();
 	ImGui_ImplDX9_CreateDeviceObjects();
+	m_bIsReset = false;
 
 	LOCK_ENDSCENE();
 
@@ -582,6 +590,17 @@ void CDrawing::OnResetDevice()
 	*/
 
 	UNLOCK_ENDSCENE();
+}
+
+bool CDrawing::CheckDeviceStatus(IDirect3DDevice9 * device)
+{
+	if (!m_bIsReset)
+		return false;
+
+	Utils::log(XorStr("Try Reset Device..."));
+	m_pDevice = device;
+	OnResetDevice();
+	return true;
 }
 
 void CDrawing::OnBeginEndScene()
@@ -670,6 +689,8 @@ void CDrawing::OnBeginPresent()
 	LOCK_PRESENT();
 	
 	ImGui_ImplDX9_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
 	m_imDrawData.Valid = false;
 
 	UNLOCK_PRESENT();
@@ -705,8 +726,9 @@ void CDrawing::OnFinishPresent()
 		m_imDrawData.Valid = false;
 	}
 
-	// ImGui::EndFrame();
-	ImGui_ImplDX9_RenderDrawLists(&m_imDrawData);
+	ImGui::EndFrame();
+	// ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+	ImGui_ImplDX9_RenderDrawData(&m_imDrawData);
 	ImGui::Render();
 
 	m_imDrawList->Clear();

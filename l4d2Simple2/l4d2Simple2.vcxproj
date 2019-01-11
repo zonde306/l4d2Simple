@@ -184,11 +184,12 @@
     <ClCompile Include="..\hl2sdk\Utils\utlmemory.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlstring.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlvector.cpp" />
-    <ClCompile Include="..\imgui\examples\directx9_example\imgui_impl_dx9.cpp" />
-    <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\imgui\examples\imgui_impl_dx9.cpp" />
+    <ClCompile Include="..\imgui\examples\imgui_impl_win32.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="config.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="drawing.cpp" />
@@ -202,9 +203,6 @@
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_rect_pack.h" />
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_textedit.h" />
-    <ClInclude Include="..\..\l4d2Simple\imgui\stb_truetype.h" />
     <ClInclude Include="..\ADVobfuscator\Indexes.h" />
     <ClInclude Include="..\ADVobfuscator\Inline.h" />
     <ClInclude Include="..\ADVobfuscator\Log.h" />
@@ -305,11 +303,14 @@
     <ClInclude Include="..\hl2sdk\Utils\utlsortvector.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlstring.h" />
     <ClInclude Include="..\hl2sdk\Utils\utlvector.h" />
-    <ClInclude Include="..\imgui\examples\directx9_example\imgui_impl_dx9.h" />
-    <ClInclude Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.h" />
+    <ClInclude Include="..\imgui\examples\imgui_impl_dx9.h" />
+    <ClInclude Include="..\imgui\examples\imgui_impl_win32.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />
+    <ClInclude Include="..\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\imgui\imstb_truetype.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="console.h" />
     <ClInclude Include="drawing.h" />

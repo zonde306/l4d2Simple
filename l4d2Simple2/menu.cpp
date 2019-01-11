@@ -3,7 +3,7 @@
 #include "xorstr.h"
 #include "utils.h"
 #include "dx9hook.h"
-#include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
+#include "../imgui/examples/imgui_impl_win32.h"
 #include "../hl2sdk/hook.h"
 #include "../l4d2Simple2/config.h"
 

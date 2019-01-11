@@ -19,6 +19,7 @@ HINSTANCE Utils::g_hInstance = NULL;
 std::string Utils::g_sModulePath = "";
 DWORD Utils::g_iSelfStart;
 DWORD Utils::g_iSelfEnd;
+std::fstream Utils::g_logFile;
 
 void Utils::init(HINSTANCE inst)
 {
@@ -35,6 +36,11 @@ void Utils::init(HINSTANCE inst)
 	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)inst) + pDOSHeader->e_lfanew);
 	g_iSelfStart = pNTHeaders->OptionalHeader.ImageBase;
 	g_iSelfEnd = pNTHeaders->OptionalHeader.ImageBase + pNTHeaders->OptionalHeader.SizeOfImage;
+
+	// std::locale::global(std::locale(""));
+	g_logFile.open(Utils::BuildPath(XorStr("\\logging.log")), std::ios::app|std::ios::out|std::ios::ate);
+	if (g_logFile.good())
+		g_logFile << std::endl << "===" << Utils::GetDate() << " - " << Utils::GetTime() << "===" << std::endl;
 }
 
 std::string Utils::BuildPath(const char * text, ...)
@@ -81,6 +87,14 @@ void Utils::log(const char * text, ...)
 
 	strcat_s(buffer, "\r\n");
 
+#ifdef _DEBUG
+	if (g_logFile.good())
+	{
+		g_logFile << buffer;
+		g_logFile.flush();
+	}
+#endif
+
 	std::cout << buffer;
 	OutputDebugStringA(buffer);
 	g_pConsole->Print(buffer);
@@ -98,6 +112,12 @@ void Utils::logToFile(const char * text, ...)
 
 	strcat_s(buffer, "\r\n");
 
+	if (g_logFile.good())
+	{
+		g_logFile << buffer;
+		g_logFile.flush();
+	}
+
 	std::cout << '[' << GetDateTime() << ']' << buffer;
 	OutputDebugStringA(buffer);
 	g_pConsole->Print(buffer);
@@ -114,6 +134,14 @@ void Utils::logError(const char * text, ...)
 	va_end(ap);
 
 	strcat_s(buffer, "\r\n");
+
+#ifdef _DEBUG
+	if (g_logFile.good())
+	{
+		g_logFile << buffer;
+		g_logFile.flush();
+	}
+#endif
 
 	std::cout << '[' << GetDateTime() << ']' << buffer;
 	OutputDebugStringA(buffer);

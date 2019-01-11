@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <fstream>
 
 #define TRIM_INVALID_CHAR	XorStr(" \r\n\t")
 
@@ -14,6 +15,7 @@ namespace Utils
 	extern HWND g_hCurrentWindow;
 	extern DWORD g_iSelfStart;
 	extern DWORD g_iSelfEnd;
+	extern std::fstream g_logFile;
 	
 	// 初始化
 	void init(HINSTANCE inst);

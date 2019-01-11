@@ -24,6 +24,7 @@ public:
 	void OnBeginPresent();
 	void OnFinishPresent();
 	void OnGameFrame();
+	bool CheckDeviceStatus(IDirect3DDevice9* device);
 
 	// 把世界坐标转换成屏幕坐标
 	bool WorldToScreen(const Vector& origin, Vector& output);
@@ -185,7 +186,7 @@ private:
 	std::mutex m_hLockEndScene;
 	std::mutex m_hLockPresent;
 	IDirect3DDevice9* m_pDevice;
-	bool m_bIsReady;
+	bool m_bIsReady, m_bIsReset;
 
 public:
 	int m_iFontSize, m_iScreenWidth, m_iScreenHeight;

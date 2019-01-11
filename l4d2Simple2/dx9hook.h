@@ -24,6 +24,7 @@ public:
 	
 	void Init();
 	void Shutdown();
+	void Rehook();
 	inline IDirect3DDevice9* GetDevice() { return m_pOriginDevice; };
 
 public:
