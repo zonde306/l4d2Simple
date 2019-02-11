@@ -51,6 +51,7 @@ public:
 
 protected:
 	static void __cdecl Hooked_CL_Move(float, bool);
+	static void __cdecl Call_CL_Move(DWORD _edi, DWORD _esi, float accumulated_extra_samples, bool bFinalTick);
 	static void __cdecl Hooked_CL_SendMove();
 	static void __fastcall Hooked_PaintTraverse(IVPanel*, LPVOID, VPANEL, bool, bool);
 	static bool __fastcall Hooked_CreateMoveShared(IClientMode*, LPVOID, float, CUserCmd*);

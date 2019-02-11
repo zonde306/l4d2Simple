@@ -376,10 +376,15 @@ bool CVisualPlayer::HasTargetVisible(CBasePlayer * entity)
 
 void CVisualPlayer::DrawBox(bool friendly, CBasePlayer* entity, const Vector & head, const Vector & foot)
 {
+	// 普感满大街都是，画出来挡视线
+	if (entity->GetZombieType() == ZC_COMMON)
+		return;
+	
 	g_pDrawing->DrawRect(static_cast<int>(head.x), static_cast<int>(head.y - 5),
 		static_cast<int>(foot.x), static_cast<int>(foot.y + 5), GetDrawColor(entity));
 }
 
+// FIXME: 目前这个有 bug 待修复
 void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 {
 	model_t* models = entity->GetModel();
@@ -411,6 +416,9 @@ void CVisualPlayer::DrawBone(CBasePlayer * entity, bool friendly)
 	for (int i = 0; i < hdr->numbones; ++i)
 	{
 		mstudiobone_t* bone = hdr->pBone(i);
+
+		// 在这里有部分骨头拿不到
+		// 同样的代码，但是另一个项目却正常...
 		if (bone == nullptr || !(bone->flags & BONE_USED_BY_HITBOX) ||
 			bone->parent < 0 || bone->parent >= hdr->numbones)
 			continue;
