@@ -41,6 +41,7 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	// int flags = player->GetFlags();
 	int flags = g_pClientPrediction->GetFlags();
 
+	// 空格键连跳
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 	{
 		/*
@@ -91,6 +92,10 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 
 	if (m_bEdgeJump && (pCmd->buttons & IN_FORWARD))
 		DoEdgeJump(pCmd, flags);
+
+	// Charger 用的
+	if (m_bNoDuckCooldown)
+		pCmd->buttons |= IN_BULLRUSH;
 }
 
 void CBunnyHop::OnMenuDrawing()
@@ -187,6 +192,9 @@ void CBunnyHop::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("EdgeJump MinSpeed"), &m_fEdgeJumpSpeed, 0.0f, 220.0f, XorStr("%.0f"));
 	IMGUI_TIPS("边缘时起跳需要的最小速度。");
 
+	ImGui::Checkbox(XorStr("No Duck Cooldown"), &m_bNoDuckCooldown);
+	IMGUI_TIPS("作用不明。");
+
 	// ImGui::End();
 	ImGui::TreePop();
 }
@@ -200,6 +208,7 @@ void CBunnyHop::OnConfigLoading(const config_type & data)
 	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
 	m_bEdgeJump = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 	m_fEdgeJumpSpeed = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	m_bNoDuckCooldown = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
 }
 
 void CBunnyHop::OnConfigSave(config_type & data)
@@ -211,6 +220,7 @@ void CBunnyHop::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BaseFeatures.h"
 
 class CBunnyHop : public CBaseFeatures
@@ -34,6 +34,7 @@ private:
 	bool m_bAcitve = true;
 	bool m_bAutoStrafe = false;
 	bool m_bEdgeJump = false;
+	bool m_bNoDuckCooldown = false;
 	float m_fEdgeJumpSpeed = 150.0f;
 
 	const char* m_pszAutoBhopMode = nullptr;
