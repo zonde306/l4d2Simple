@@ -11,6 +11,7 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 #define ANIM_SMOKER_PULLING			30
 #define ANIM_HUNTER_LUNGING			67
 #define ANIM_JOCKEY_LEAPING			10
+#define ANIM_JOCKEY_RIDEING			8
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
@@ -128,6 +129,9 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (player->GetFlags() & FL_ONGROUND)
 					continue;
 				
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
+					continue;
+
 				/*
 				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
 					continue;
