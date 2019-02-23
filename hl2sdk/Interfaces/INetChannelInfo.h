@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "IBaseFileSystem.h"
 #include "../Structs/bitbuffer.h"
 #include "../Utils/utlvector.h"
@@ -203,7 +203,7 @@ public:
 	}
 	inline void SetFromString(const char *pch, bool bUseDNS = false) // if bUseDNS is true then do a DNS lookup if needed
 	{
-		std::vector<std::string> addr = Utils::Split(pch, ".");
+		std::vector<std::string> addr = Utils::StringSplit(pch, ".");
 		if (addr.size() < 4)
 			return;
 

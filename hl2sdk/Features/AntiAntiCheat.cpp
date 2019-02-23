@@ -79,7 +79,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		IMGUI_TIPS("添加一个防止被服务器执行的命令。");
 		if (clicked && !changed)
 		{
-			m_BlockExecute.emplace_back(Utils::Trim(m_szFilterText));
+			m_BlockExecute.emplace_back(Utils::StringTrim(m_szFilterText));
 			changed = true;
 		}
 
@@ -88,7 +88,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		IMGUI_TIPS("添加一个防止被客户端处理的用户消息。");
 		if (clicked && !changed)
 		{
-			m_BlockUserMessage.emplace_back(atoi(Utils::Trim(m_szFilterText).c_str()));
+			m_BlockUserMessage.emplace_back(atoi(Utils::StringTrim(m_szFilterText).c_str()));
 			changed = true;
 		}
 	}

@@ -270,7 +270,7 @@ void CClientHook::LoadConfig()
 		if (buffer[0] == '/' && buffer[1] == '/')
 			continue;
 
-		line = Utils::Trim(buffer, XorStr(" \r\n\t"));
+		line = Utils::StringTrim(buffer, XorStr(" \r\n\t"));
 
 		if (line[0] == '[')
 		{
@@ -284,8 +284,8 @@ void CClientHook::LoadConfig()
 		if (equal == std::string::npos)
 			continue;
 
-		key = Utils::Trim(line.substr(0, equal), XorStr(" \r\n\t\""));
-		value = Utils::Trim(line.substr(equal + 1), XorStr(" \r\n\t\""));
+		key = Utils::StringTrim(line.substr(0, equal), XorStr(" \r\n\t\""));
+		value = Utils::StringTrim(line.substr(equal + 1), XorStr(" \r\n\t\""));
 		if (key.empty() || value.empty())
 			continue;
 

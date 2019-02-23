@@ -131,7 +131,7 @@ bool CProfile::LoadFromFile()
 		}
 
 		// 去除无效字符
-		line = Utils::Trim(line, XorStr(" \t\r\n"));
+		line = Utils::StringTrim(line, XorStr(" \t\r\n"));
 
 		// 冒号注释
 		if (line.empty() || line[0] == ';')
@@ -164,8 +164,8 @@ bool CProfile::LoadFromFile()
 			value.clear();
 		}
 
-		key = Utils::Trim(key, XorStr(" \t\r\n"));
-		value = Utils::Trim(value, XorStr(" \t\r\n"));
+		key = Utils::StringTrim(key, XorStr(" \t\r\n"));
+		value = Utils::StringTrim(value, XorStr(" \t\r\n"));
 
 		// 去除两侧多余的双引号
 		if (key[0] == '"' && key[key.length() - 1] == '"')
@@ -301,7 +301,7 @@ std::pair<std::string, std::string> CProfile::ParseKeyValueEx(const std::string 
 	if (trim == std::string::npos)
 		return std::make_pair(text, "");
 
-	return std::make_pair(Utils::Trim(text.substr(0, trim)), Utils::Trim(text.substr(trim + 1)));
+	return std::make_pair(Utils::StringTrim(text.substr(0, trim)), Utils::StringTrim(text.substr(trim + 1)));
 }
 
 typename CProfile::iterator CProfile::begin()

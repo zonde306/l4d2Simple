@@ -8,6 +8,9 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 #define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
 #define HITBOX_WITCH_CHEST			8
 #define ANIM_CHARGER_CHARGING		5
+#define ANIM_SMOKER_PULLING			30
+#define ANIM_HUNTER_LUNGING			67
+#define ANIM_JOCKEY_LEAPING			10
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
@@ -66,14 +69,15 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			continue;
 
 		aimOrigin = player->GetHeadOrigin();
+
+		if (m_bVelExt)
+			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
+
 		if (m_bOnlyVisible)
 		{
 			if (!IsVisibleEnemy(local, player, myOrigin, aimOrigin))
 				continue;
 		}
-
-		if (m_bVelExt)
-			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
 
 		ZombieClass_t classId = player->GetZombieType();
 		distance = myOrigin.DistTo(aimOrigin);
@@ -94,6 +98,9 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > cvTongueRange->GetFloat())
 					continue;
 
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
+					continue;
+
 				break;
 			}
 			case ZC_HUNTER:
@@ -101,7 +108,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (!m_bHunter)
 					continue;
 				
-				if (!player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")))
+				if (!player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
+					player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
 					continue;
 
 				if (player->GetFlags() & FL_ONGROUND)
@@ -120,6 +128,11 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (player->GetFlags() & FL_ONGROUND)
 					continue;
 				
+				/*
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
+					continue;
+				*/
+
 				if (distance > m_fJockeyDistance)
 					continue;
 

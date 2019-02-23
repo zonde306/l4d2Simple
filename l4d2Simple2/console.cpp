@@ -330,7 +330,7 @@ bool CConsole::RemoveConCmd(const std::string & cmd)
 
 std::pair<std::string, std::string> CConsole::ParseCmdArgs(const std::string & cmdargs)
 {
-	std::string cmd = Utils::Trim(cmdargs);
+	std::string cmd = Utils::StringTrim(cmdargs);
 
 	bool inGroup = false;
 	for (size_t i = 0; i < cmd.length(); ++i)
@@ -344,8 +344,8 @@ std::pair<std::string, std::string> CConsole::ParseCmdArgs(const std::string & c
 		if (cmd[i] != ' ')
 			continue;
 
-		return std::make_pair(Utils::Trim(cmd.substr(0, i), XorStr(" \r\n\t\"'")),
-			Utils::Trim(cmd.substr(i + 1), XorStr(" \r\n\t\"'")));
+		return std::make_pair(Utils::StringTrim(cmd.substr(0, i), XorStr(" \r\n\t\"'")),
+			Utils::StringTrim(cmd.substr(i + 1), XorStr(" \r\n\t\"'")));
 	}
 
 	return std::make_pair(cmd, "");
@@ -353,7 +353,7 @@ std::pair<std::string, std::string> CConsole::ParseCmdArgs(const std::string & c
 
 std::vector<std::string> CConsole::ParseArgList(const std::string & args)
 {
-	std::string cmd = Utils::Trim(args);
+	std::string cmd = Utils::StringTrim(args);
 
 	std::vector<std::string> result;
 	size_t groupBegin = std::string::npos;

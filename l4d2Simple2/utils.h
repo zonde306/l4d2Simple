@@ -71,9 +71,11 @@ namespace Utils
 	inline T WriteMemory(T value, Arg... offset);
 
 	// 字符串处理
-	std::vector<std::string> Split(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
-	std::string Trim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
-	size_t Search(const std::string& s, const std::string& p, bool caseSensitive = true);
+	std::vector<std::string> StringSplit(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
+	std::string StringTrim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
+	size_t StringFind(const std::string& s, const std::string& p, bool caseSensitive = true);
+	bool StringEqual(const std::string& s, std::string p, bool caseSensitive = true);
+	std::string& StringReplace(std::string& s, const std::string& p, const std::string& newText);
 
 	//查找字符串
 	int FindingString(const char* lpszSour, const char* lpszFind, int nStart = 0);

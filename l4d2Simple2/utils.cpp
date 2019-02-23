@@ -9,6 +9,7 @@
 #include <thread>
 #include <TlHelp32.h>
 #include <cctype>
+#include <regex>
 
 #define INRANGE( x, a, b ) ( x >= a && x <= b )
 #define getBits( x ) ( INRANGE( ( x & ( ~0x20 ) ), 'A', 'F' ) ? ( ( x & ( ~0x20 ) ) - 'A' + 0xa ) : ( INRANGE( x, '0', '9' ) ? x - '0' : 0 ) )
@@ -550,7 +551,7 @@ DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPatte
 	return NULL;
 }
 
-std::vector<std::string> Utils::Split(const std::string & s, const std::string & delim)
+std::vector<std::string> Utils::StringSplit(const std::string & s, const std::string & delim)
 {
 	std::vector<std::string> result;
 	size_t last = 0;
@@ -569,7 +570,7 @@ std::vector<std::string> Utils::Split(const std::string & s, const std::string &
 	return result;
 }
 
-std::string Utils::Trim(const std::string & s, const std::string & delim)
+std::string Utils::StringTrim(const std::string & s, const std::string & delim)
 {
 	if (s.empty())
 		return s;
@@ -588,7 +589,7 @@ std::string Utils::Trim(const std::string & s, const std::string & delim)
 // s = 被搜索的字符串 (source)
 // p = 用来搜索的字符串 (pattern)
 // caseSensitive = 是否检查大小写
-size_t Utils::Search(const std::string & s, const std::string & p, bool caseSensitive)
+size_t Utils::StringFind(const std::string & s, const std::string & p, bool caseSensitive)
 {
 	// 比较字符
 	auto equal = [&caseSensitive](char s, char p) -> bool
@@ -696,6 +697,45 @@ size_t Utils::Search(const std::string & s, const std::string & p, bool caseSens
 	}
 
 	return msp;
+}
+
+// 比较字符串，支持通配符 ? 和 *
+bool Utils::StringEqual(const std::string& s, std::string p, bool caseSensitive)
+{
+	// 正则转义
+	StringReplace(p, u8"\\", u8"\\\\");
+	StringReplace(p, u8".", u8"\\.");
+	StringReplace(p, u8"+", u8"\\+");
+	StringReplace(p, u8"(", u8"\\(");
+	StringReplace(p, u8")", u8"\\)");
+	StringReplace(p, u8"[", u8"\\[");
+	StringReplace(p, u8"]", u8"\\]");
+	StringReplace(p, u8"{", u8"\\{");
+	StringReplace(p, u8"}", u8"\\}");
+	StringReplace(p, u8"|", u8"\\|");
+	StringReplace(p, u8"^", u8"\\^");
+	StringReplace(p, u8"$", u8"\\$");
+	StringReplace(p, u8"*", u8".*");
+	StringReplace(p, u8"?", u8".");
+
+	auto flags = (std::regex::optimize|std::regex::ECMAScript);
+	if (!caseSensitive)
+		flags |= std::regex::icase;
+
+	return std::regex_match(s, std::regex(p, flags));
+}
+
+std::string & Utils::StringReplace(std::string & s, const std::string & p, const std::string & newText)
+{
+	for (std::string::size_type pos(0); pos != std::string::npos; pos += newText.length())
+	{
+		pos = s.find(p, pos);
+		if (pos != std::string::npos)
+			s.replace(pos, p.length(), newText);
+		else
+			break;
+	}
+	return s;
 }
 
 //功  能：在lpszSour中查找字符串lpszFind，lpszFind中可以包含通配字符‘?’

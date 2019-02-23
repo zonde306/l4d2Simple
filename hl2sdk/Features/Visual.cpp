@@ -482,7 +482,7 @@ void CVisualPlayer::DrawHeadBox(CBasePlayer* entity, const Vector & head, float 
 int CVisualPlayer::GetTextMaxWide(const std::string & text)
 {
 	size_t width = 0;
-	for (auto line : Utils::Split(text, "\n"))
+	for (auto line : Utils::StringSplit(text, "\n"))
 	{
 		if (line.length() > width)
 			width = line.length();

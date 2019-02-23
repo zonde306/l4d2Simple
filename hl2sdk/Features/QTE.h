@@ -2,7 +2,7 @@
 #include "BaseFeatures.h"
 #include <optional>
 
-class CQuickTriggerEvent : public CBaseFeatures
+class CQuickTriggerEvent : public CBaseFeatures, public IGameEventListener2
 {
 public:
 	CQuickTriggerEvent();
