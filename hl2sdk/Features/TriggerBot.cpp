@@ -120,26 +120,32 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_bFollowEnemy)
 	{
 		Vector aimOrigin = m_pAimTarget->GetHitboxOrigin(m_iHitBox);
-		QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimOrigin);
-		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
+		if (!m_bFollowVisible || IsVisableToPosition(player, m_pAimTarget, aimOrigin))
 		{
-			g_pInterface->Engine->SetViewAngles(aimAngles);
+			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimOrigin);
+			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
+			{
+				g_pInterface->Engine->SetViewAngles(aimAngles);
+			}
 		}
 	}
 
 	if (m_bTraceHead || canWitchHeadshot)
 	{
 		Vector aimHeadOrigin = m_pAimTarget->GetHeadOrigin();
-		if (m_bTraceVelExt)
-			aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bTraceForwardtrack);
-		
-		QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
-		if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
+		if (!m_bFollowVisible || IsVisableToPosition(player, m_pAimTarget, aimHeadOrigin))
 		{
-			if(m_bTraceSilent || canWitchHeadshot)
-				g_pViewManager->ApplySilentFire(aimAngles);
-			else
-				g_pInterface->Engine->SetViewAngles(aimAngles);
+			if (m_bTraceVelExt)
+				aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bTraceForwardtrack);
+
+			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
+			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
+			{
+				if (m_bTraceSilent || canWitchHeadshot)
+					g_pViewManager->ApplySilentFire(aimAngles);
+				else
+					g_pInterface->Engine->SetViewAngles(aimAngles);
+			}
 		}
 	}
 }
@@ -175,6 +181,9 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Track head"), &m_bTraceHead);
 	IMGUI_TIPS("自动开枪时射击头部，用于 猎头者 模式。");
 
+	ImGui::Checkbox(XorStr("Track Visable"), &m_bTraceVisible);
+	IMGUI_TIPS("自动开枪时射击头部需要检查是否可见。");
+
 	ImGui::Checkbox(XorStr("Track Silent"), &m_bTraceSilent);
 	IMGUI_TIPS("自动开枪时射击头部防止被观察者发现。\n建议开启，因为不开是打不准的。");
 
@@ -190,6 +199,9 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
 	IMGUI_TIPS("自动开枪尝试跟随敌人。");
+
+	ImGui::Checkbox(XorStr("Follow Visible"), &m_bFollowVisible);
+	IMGUI_TIPS("自动开枪尝试跟随敌人需要检查是否可见。");
 
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 	IMGUI_TIPS("自动开枪尝试跟随敌人范围。");
@@ -215,6 +227,8 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
 	m_bTraceForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
 	m_bAimPosition = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
+	m_bTraceVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
+	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -235,6 +249,8 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -350,4 +366,27 @@ bool CTriggerBot::HasValidWeapon(CBaseWeapon * weapon)
 		return false;
 
 	return true;
+}
+
+bool CTriggerBot::IsVisableToPosition(CBasePlayer * local, CBasePlayer * target, const Vector & position)
+{
+	Ray_t ray;
+	ray.Init(local->GetEyePosition(), position);
+
+	CTraceFilter filter;
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CAimBot.IsTargetVisible.TraceRay Error."));
+		return true;
+	}
+
+	return (trace.m_pEnt == target || trace.fraction > 0.97f);
 }

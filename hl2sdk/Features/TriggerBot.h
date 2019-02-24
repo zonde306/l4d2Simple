@@ -17,6 +17,7 @@ public:
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 	static bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);
+	bool IsVisableToPosition(CBasePlayer* local, CBasePlayer* target, const Vector& position);
 
 private:	// 菜单项
 	bool m_bActive = false;
@@ -32,9 +33,11 @@ private:	// 菜单项
 	bool m_bTraceVelExt = true;
 	bool m_bTraceForwardtrack = false;
 	float m_fTraceFov = 9.0f;
+	bool m_bTraceVisible = true;
 
 	bool m_bFollowEnemy = false;
 	float m_fFollowFov = 9.0f;
+	bool m_bFollowVisible = true;
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
