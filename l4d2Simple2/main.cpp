@@ -85,6 +85,7 @@ DWORD WINAPI StartCheats(LPVOID module)
 
 	Utils::g_hCurrentWindow = g_hGameWindow;
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
+	ImGui::CreateContext();
 
 	g_pConsole = std::make_unique<CConsole>();
 	g_pConsole->Init();

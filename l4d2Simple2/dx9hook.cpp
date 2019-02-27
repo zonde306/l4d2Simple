@@ -79,7 +79,6 @@ void CDirectX9Hook::Init()
 		SetupFirstHook();
 	}
 
-	ImGui::CreateContext();
 	Utils::log(XorStr("CDirectX9Hook Initialization..."));
 }
 

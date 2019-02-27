@@ -1,8 +1,10 @@
-#include "speedhack.h"
+﻿#include "speedhack.h"
 #include "xorstr.h"
 #include "utils.h"
 #include <imgui.h>
 #include <intrin.h>
+#include <thread>
+#include <chrono>
 
 #pragma comment(lib, "Winmm")
 #pragma intrinsic(_ReturnAddress)

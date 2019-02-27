@@ -1,4 +1,4 @@
-#include <Windows.h>
+﻿#include <Windows.h>
 #include "splice.h"
 #include "opcodes.h"
 
@@ -44,16 +44,15 @@ SPLICE_ENTRY* SpliceHookFunction(LPVOID function, LPVOID handler)
 		curr_summ += dwlen;
 	}
 
-		
-	utilsCreateJMP((DWORD)trampoline + curr_summ, (DWORD)function + curr_summ);
-	utilsCreateJMP((DWORD)function, (DWORD)handler);
-
+	// 这个移上去，防止调用过快，而 trampoline 却还没有准备好
 	psplice = (SPLICE_ENTRY*)utilsVAlloc(sizeof(SPLICE_ENTRY));
-
 	psplice->repair_code_size = curr_summ;
 	psplice->trampoline = trampoline;
 	psplice->original_addr = function;
 	
+	utilsCreateJMP((DWORD)trampoline + curr_summ, (DWORD)function + curr_summ);
+	utilsCreateJMP((DWORD)function, (DWORD)handler);
+
 	return psplice;
 }
 
