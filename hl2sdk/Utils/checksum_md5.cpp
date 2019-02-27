@@ -1,4 +1,4 @@
-#include "checksum_md5.h"
+﻿#include "checksum_md5.h"
 #include "../Utils/strtools.h"
 #include "../definitions.h"
 #include <Windows.h>
@@ -24,7 +24,7 @@
 //-----------------------------------------------------------------------------
 static void MD5Transform(unsigned int buf[4], unsigned int const in[16])
 {
-	register unsigned int a, b, c, d;
+	unsigned int a, b, c, d;
 
 	a = buf[0];
 	b = buf[1];
