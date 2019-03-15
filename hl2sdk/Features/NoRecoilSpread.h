@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BaseFeatures.h"
 
 class CViewManager : public CBaseFeatures
@@ -31,6 +31,8 @@ public:
 	void RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon);
 	void RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFire);
 
+	bool IsUsingMinigun(CBasePlayer* player);
+
 private:
 	bool m_bNoSpread = true;
 	bool m_bNoRecoil = true;
@@ -39,6 +41,7 @@ private:
 	bool m_bSilentNoSpread = true;
 	bool m_bRealAngles = false;
 	bool m_bFakeAngleBug = false;
+	bool m_bFakeLag = false;
 
 private:
 	bool m_bSilentFire = false;

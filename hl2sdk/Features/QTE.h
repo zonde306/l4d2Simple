@@ -25,7 +25,7 @@ private:
 	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 
 private:
-	bool m_bActive = true;
+	bool m_bActive = false;
 	bool m_bVelExt = true;
 	bool m_bLagExt = true;
 

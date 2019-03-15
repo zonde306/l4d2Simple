@@ -42,6 +42,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
 
+	if (m_bFakeLag && (GetAsyncKeyState(VK_CAPITAL) & 0x8000))
+		*bSendPacket = false;
+
 	if (!(*bSendPacket))
 	{
 		++m_iPacketBlocked;
@@ -123,6 +126,9 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Real Angles"), &m_bRealAngles);
 	IMGUI_TIPS("调试用，显示真正的角度。");
 
+	ImGui::Checkbox(XorStr("Fake Lag"), &m_bFakeLag);
+	IMGUI_TIPS("丢包模拟 按住 大小写锁定(Caps Lock) 生效。");
+
 	ImGui::Checkbox(XorStr("chocked exploit"), &m_bFakeAngleBug);
 	IMGUI_TIPS("炸服用，开启后按住鼠标左键(开枪)启动。用后记得手动 disconnect，否则会卡住。\n最好是拿枪有子弹时用，否则可能会导致游戏无响应。");
 
@@ -139,6 +145,7 @@ void CViewManager::OnConfigLoading(const config_type & data)
 	m_bRapidFire = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
 	m_bSilentNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 	m_bRealAngles = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
+	m_bFakeLag = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
 }
 
 void CViewManager::OnConfigSave(config_type & data)
@@ -151,6 +158,7 @@ void CViewManager::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
 }
 
 void CViewManager::OnConnect()
@@ -284,8 +292,16 @@ void CViewManager::RemoveRecoil(CUserCmd * cmd)
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)
 {
-	if (!(cmd->buttons & IN_ATTACK))
+	if (!(cmd->buttons & IN_ATTACK)/* || IsUsingMinigun(local)*/)
 		return;
+
+	if (weapon->IsReloading())
+		return;
+
+	if (weapon->GetNetProp<float>(XorStr("DT_BaseCombatWeapon"), XorStr("m_flCycle")) > 0.0f)
+		return;
+
+	// weapon->GetNetProp<BYTE>(XorStr("DT_BaseCombatWeapon"), XorStr("m_isHoldingFireButton")) = 0;
 
 	int weaponId = weapon->GetWeaponID();
 	if ((local->GetTeam() == 3 || IsSingleWeapon(weaponId)) &&
@@ -336,4 +352,15 @@ void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFir
 			m_vecSilentAngles.Invalidate();
 		}
 	}
+}
+
+bool CViewManager::IsUsingMinigun(CBasePlayer * player)
+{
+	if (player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMinigun")) > 0)
+		return true;
+
+	if (player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")) > 0)
+		return true;
+	
+	return false;
 }
