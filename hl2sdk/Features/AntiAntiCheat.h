@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
 #include <vector>
+#include <functional>
 
 class CGEL_AntiAntiCheat;
 class CAntiAntiCheat : public CBaseFeatures

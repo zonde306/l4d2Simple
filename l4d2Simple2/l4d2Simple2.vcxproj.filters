@@ -46,6 +46,15 @@
     <Filter Include="ADVobfuscator">
       <UniqueIdentifier>{0503812a-a0cc-4cd8-9129-00401b3257ad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="dxsdk">
+      <UniqueIdentifier>{a4cc11d4-c671-4b12-b77b-6ba66bcd5152}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dxsdk\include">
+      <UniqueIdentifier>{e42f690b-d36d-4c84-abbf-4619b75b8f24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dxsdk\lib">
+      <UniqueIdentifier>{04bad5c0-54c7-42b1-9c23-48e2708b2b7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -614,6 +623,45 @@
     <ClInclude Include="..\hl2sdk\Features\QTE.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3d9.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3d9caps.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3d9types.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9anim.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9core.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9effect.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9math.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9mesh.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9shader.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9shape.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9tex.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dxsdk\Include\d3dx9xof.h">
+      <Filter>dxsdk\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">
@@ -621,6 +669,9 @@
     </None>
     <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp">
       <Filter>ImGui\opengl</Filter>
+    </None>
+    <None Include="..\dxsdk\Include\d3dx9math.inl">
+      <Filter>dxsdk\include</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -630,5 +681,13 @@
     <CustomBuild Include="..\detours\LDE64x64.asm">
       <Filter>detours</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\dxsdk\Lib\x86\d3d9.lib">
+      <Filter>dxsdk\lib</Filter>
+    </Library>
+    <Library Include="..\dxsdk\Lib\x86\d3dx9.lib">
+      <Filter>dxsdk\lib</Filter>
+    </Library>
   </ItemGroup>
 </Project>

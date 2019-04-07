@@ -358,7 +358,7 @@ bool V_GenerateUniqueName(char *name, int memsize, const char *prefix, const Nam
 		return true;
 	}
 
-	int newlen = prefixLength + (int)log10((float)i) + 1;
+	int newlen = prefixLength + (int)std::log10((float)i) + 1;
 	if (newlen + 1 > memsize)
 	{
 		V_strncpy(name, prefix, memsize);

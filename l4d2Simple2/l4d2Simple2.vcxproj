@@ -22,33 +22,33 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{6ABCF38F-39CA-4D8E-977B-2A2C58A957EE}</ProjectGuid>
     <RootNamespace>l4d2Simple2</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>l4d2Simple2</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\Program Files\dxsdk\Include;..\imgui;..\detours;..\d3dfont;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;G:\Program Files\dxsdk\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\dxsdk\include;..\imgui;..\detours;..\d3dfont;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;..\dxsdk\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);G:\Program Files\dxsdk\Include;..\imgui;..\detours;..\d3dfont;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;G:\Program Files\dxsdk\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);..\dxsdk\include;..\imgui;..\detours;..\d3dfont;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;..\dxsdk\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -185,6 +185,7 @@
     <ClCompile Include="..\hl2sdk\Utils\utlstring.cpp" />
     <ClCompile Include="..\hl2sdk\Utils\utlvector.cpp" />
     <ClCompile Include="..\imgui\examples\directx9_example\imgui_impl_dx9.cpp" />
+    <None Include="..\dxsdk\Include\d3dx9math.inl" />
     <None Include="..\imgui\examples\opengl2_example\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
@@ -218,6 +219,19 @@
     <ClInclude Include="..\detours\detourxs.h" />
     <ClInclude Include="..\detours\opcodes.h" />
     <ClInclude Include="..\detours\splice.h" />
+    <ClInclude Include="..\dxsdk\Include\d3d9.h" />
+    <ClInclude Include="..\dxsdk\Include\d3d9caps.h" />
+    <ClInclude Include="..\dxsdk\Include\d3d9types.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9anim.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9core.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9effect.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9math.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9mesh.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9shader.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9shape.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9tex.h" />
+    <ClInclude Include="..\dxsdk\Include\d3dx9xof.h" />
     <ClInclude Include="..\hl2sdk\definitions.h" />
     <ClInclude Include="..\hl2sdk\Features\Aimbot.h" />
     <ClInclude Include="..\hl2sdk\Features\AntiAntiCheat.h" />
@@ -346,6 +360,10 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ml /c /coff ..\detours\%(fileName).asm</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(fileName).obj;%(OutPuts)</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\dxsdk\Lib\x86\d3d9.lib" />
+    <Library Include="..\dxsdk\Lib\x86\d3dx9.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
