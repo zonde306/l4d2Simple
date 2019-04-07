@@ -348,6 +348,10 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(fileName).obj;%(OutPuts)</Outputs>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\dxsdk\Lib\x86\d3d9.lib" />
+    <Library Include="..\dxsdk\Lib\x86\d3dx9.lib" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

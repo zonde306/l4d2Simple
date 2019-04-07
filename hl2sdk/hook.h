@@ -76,6 +76,9 @@ protected:
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
 
+private:
+	static void CL_MoveGateWay(DWORD _edi, DWORD _esi, float accumulated_extra_samples, bool bFinalTick);
+
 public:
 	void InitFeature();
 	void LoadConfig();

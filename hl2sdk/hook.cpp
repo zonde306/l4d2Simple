@@ -416,35 +416,34 @@ void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool b
 	}
 #endif
 
-	// Gateway
-	static auto gwCL_Move = [](DWORD _edi, DWORD _esi, float accumulated_extra_samples, bool bFinalTick) -> void
-	{
-		// 不支持 push byte. 所以只能 push word
-		DWORD wFinalTick = bFinalTick;
-		DWORD dwOriginFunction = reinterpret_cast<DWORD>(g_pClientHook->oCL_Move);
-
-		__asm
-		{
-			// 堆栈传参
-			push	wFinalTick
-			push	accumulated_extra_samples
-
-			// 寄存器传参
-			mov		esi, _esi
-			mov		edi, _edi
-
-			// 调用原函数(其实是个蹦床)
-			call	dwOriginFunction
-
-			// 清理堆栈(需要内存对齐)
-			add		esp, 8
-		};
-	};
-
 	// 默认的 1 次调用，如果不调用会导致游戏冻结
 	// 参数 bFinalTick 相当于 bSendPacket
 	// 连续调用可以实现加速效果，但是需要破解 m_nTickBase 才能用
-	gwCL_Move(_edi, _esi, accumulated_extra_samples, bFinalTick);
+	CL_MoveGateWay(_edi, _esi, accumulated_extra_samples, bFinalTick);
+}
+
+void CClientHook::CL_MoveGateWay(DWORD _edi, DWORD _esi, float accumulated_extra_samples, bool bFinalTick)
+{
+	// 不支持 push byte. 所以只能 push word
+	DWORD wFinalTick = bFinalTick;
+	DWORD dwOriginFunction = reinterpret_cast<DWORD>(g_pClientHook->oCL_Move);
+
+	__asm
+	{
+		// 堆栈传参
+		push	wFinalTick
+		push	accumulated_extra_samples
+
+		// 寄存器传参
+		mov		esi, _esi
+		mov		edi, _edi
+
+		// 调用原函数(其实是个蹦床)
+		call	dwOriginFunction
+
+		// 清理堆栈(需要内存对齐)
+		add		esp, 8
+	};
 }
 
 void CClientHook::Hooked_CL_SendMove()

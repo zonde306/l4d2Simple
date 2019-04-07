@@ -631,4 +631,12 @@
       <Filter>detours</Filter>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\dxsdk\Lib\x86\d3d9.lib">
+      <Filter>资源文件</Filter>
+    </Library>
+    <Library Include="..\dxsdk\Lib\x86\d3dx9.lib">
+      <Filter>资源文件</Filter>
+    </Library>
+  </ItemGroup>
 </Project>
