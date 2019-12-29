@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cstdint>
 #include <ctype.h>
+#include <cmath>
 
 template< class T, class I > class CUtlMemory;
 template< class T, class A > class CUtlVector;
