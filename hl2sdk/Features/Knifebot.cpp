@@ -99,6 +99,13 @@ void CKnifeBot::OnMenuDrawing()
 	IMGUI_TIPS("速度延迟预测，需要开启上面的才能用。");
 
 	ImGui::Separator();
+	ImGui::SliderFloat(XorStr("Auto Melee FOV"), &m_fMeleeFOV, 10.0f, 120.0f, XorStr("%.0f"));
+	IMGUI_TIPS("近战武器攻击角度。");
+
+	ImGui::SliderFloat(XorStr("Auto Shove FOV"), &m_fShoveFOV, 10.0f, 120.0f, XorStr("%.0f"));
+	IMGUI_TIPS("右键(推/抓)角度。");
+
+	ImGui::Separator();
 	ImGui::SliderFloat(XorStr("Auto Melee Range"), &m_fExtraMeleeRange, 0.0f, 100.0f, XorStr("%.0f"));
 	IMGUI_TIPS("近战武器攻击范围预测。");
 
@@ -119,6 +126,8 @@ void CKnifeBot::OnConfigLoading(const config_type & data)
 	m_fExtraShoveRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
+	m_fMeleeFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
+	m_fShoveFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
 }
 
 void CKnifeBot::OnConfigSave(config_type & data)
@@ -132,6 +141,8 @@ void CKnifeBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
@@ -273,7 +284,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 
 		if (!m_bCanMeleeAttack &&
-			dist < meleeRange && fov < meleeRange &&
+			dist <= meleeRange && fov <= m_fMeleeFOV &&
 			classId != ET_BOOMER && classId != ET_WITCH)
 		{
 			// 近战武器攻击 (左键)
@@ -281,7 +292,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		}
 
 		if (!m_bCanShoveAttack &&
-			dist < swingRange && fov < swingRange &&
+			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
 			(classId != ET_CHARGER || canShoveCharger))
 		{

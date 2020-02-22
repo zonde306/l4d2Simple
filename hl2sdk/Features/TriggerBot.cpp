@@ -99,6 +99,11 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded")) > 0)
 			return;
 	}
+	else if (m_bTraceWithoutMagnum && classId == ET_INFECTED)
+	{
+		if (weapon->GetWeaponID() == WeaponId_MagnumPistol)
+			return;
+	}
 
 	if (m_bBlockFriendlyFire && team == player->GetTeam() &&
 		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
@@ -196,6 +201,9 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Track FOV"), &m_fTraceFov, 1.0f, 90.0f, ("%.1f"));
 	IMGUI_TIPS("瞄准头部范围限制。");
 
+	ImGui::Checkbox(XorStr("Track Without Magnum"), &m_bTraceWithoutMagnum);
+	IMGUI_TIPS("自动开枪时射击普感头部忽略马格南。");
+
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
 	IMGUI_TIPS("自动开枪尝试跟随敌人。");
@@ -229,6 +237,7 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bAimPosition = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
 	m_bTraceVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
 	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
+	m_bTraceWithoutMagnum = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -251,6 +260,7 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -303,11 +313,32 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 	}
 }
 
+class CTriggerTraceFilter : public CTraceFilter
+{
+public:
+	virtual bool ShouldHitEntity(CBaseEntity* pEntityHandle, int contentsMask) override
+	{
+		if (pEntityHandle == pSkip1)
+			return false;
+		
+		try
+		{
+			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+		}
+		catch (...)
+		{
+			return true;
+		}
+
+		return true;
+	}
+};
+
 CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 {
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	
-	CTraceFilter filter;
+	CTriggerTraceFilter filter;
 	filter.pSkip1 = player;
 
 	Ray_t ray;

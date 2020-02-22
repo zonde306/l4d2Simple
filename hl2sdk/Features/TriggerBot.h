@@ -34,6 +34,7 @@ private:	// 菜单项
 	bool m_bTraceForwardtrack = false;
 	float m_fTraceFov = 9.0f;
 	bool m_bTraceVisible = true;
+	bool m_bTraceWithoutMagnum = true;
 
 	bool m_bFollowEnemy = false;
 	float m_fFollowFov = 9.0f;
