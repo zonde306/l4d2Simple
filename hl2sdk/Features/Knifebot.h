@@ -24,6 +24,7 @@ private:
 	bool m_bFastMelee = true;
 	bool m_bVelExt = true;
 	bool m_bForwardtrack = false;
+	bool m_bVisualOnly = true;
 
 	float m_fExtraShoveRange = 0.0f;
 	float m_fExtraMeleeRange = 9.0f;

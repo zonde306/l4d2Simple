@@ -91,6 +91,9 @@ void CKnifeBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Melee Faster"), &m_bFastMelee);
 	IMGUI_TIPS("近战武器速砍，按住 R 启动。");
 
+	ImGui::Checkbox(XorStr("Visual Only"), &m_bVisualOnly);
+	IMGUI_TIPS("只有目标看得见才触发");
+
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Melee Velocity Extrapolate"), &m_bVelExt);
 	IMGUI_TIPS("速度预测，可以提升精度。");
@@ -128,6 +131,7 @@ void CKnifeBot::OnConfigLoading(const config_type & data)
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
 	m_fMeleeFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
 	m_fShoveFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
+	m_bVisualOnly = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
 }
 
 void CKnifeBot::OnConfigSave(config_type & data)
@@ -143,6 +147,7 @@ void CKnifeBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
+	g_pConfig->SetValue(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
@@ -294,7 +299,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 			continue;
 
 		Vector aimPosition = entity->GetHeadOrigin();
-		if (!HasEnemyVisible(entity, aimPosition))
+		if (m_bVisualOnly && !HasEnemyVisible(entity, aimPosition))
 			continue;
 
 		if (m_bVelExt)
