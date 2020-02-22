@@ -79,11 +79,11 @@ void CAntiAntiCheat::OnMenuDrawing()
 	ImGui::InputText(XorStr("aacFilter"), m_szFilterText, 255);
 	bool changed = false;
 
-	if (m_szFilterText[0] != '\0')
+	// if (m_szFilterText[0] != '\0')
 	{
 		bool clicked = ImGui::Button(XorStr("Add Query"));
 		IMGUI_TIPS("添加一个防止被服务器查询的 ConVar\n如果需要伪造结果，则将返回值用 空格 来隔开。\n格式为 <名字>[ <伪造值>]。");
-		if (clicked && !changed)
+		if (clicked && !changed && m_szFilterText[0] != '\0')
 		{
 			m_BlockQuery.emplace_back(g_pConfig->ParseKeyValueEx(m_szFilterText));
 			changed = true;
@@ -92,7 +92,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		ImGui::SameLine();
 		clicked = ImGui::Button(XorStr("Add Setting"));
 		IMGUI_TIPS("添加一个防止被服务器修改的 ConVar\n如果需要覆盖成自己的结果，则将返回值用 空格 来隔开。\n格式为 <名字>[ <覆盖值>]。");
-		if (clicked && !changed)
+		if (clicked && !changed && m_szFilterText[0] != '\0')
 		{
 			m_BlockSetting.emplace_back(g_pConfig->ParseKeyValueEx(m_szFilterText));
 			changed = true;
@@ -101,7 +101,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		ImGui::SameLine();
 		clicked = ImGui::Button(XorStr("Add Command"));
 		IMGUI_TIPS("添加一个防止被服务器执行的命令。");
-		if (clicked && !changed)
+		if (clicked && !changed && m_szFilterText[0] != '\0')
 		{
 			m_BlockExecute.emplace_back(Utils::StringTrim(m_szFilterText));
 			changed = true;
@@ -110,7 +110,7 @@ void CAntiAntiCheat::OnMenuDrawing()
 		ImGui::SameLine();
 		clicked = ImGui::Button(XorStr("Add UserMsg"));
 		IMGUI_TIPS("添加一个防止被客户端处理的用户消息。");
-		if (clicked && !changed)
+		if (clicked && !changed && m_szFilterText[0] != '\0')
 		{
 			m_BlockUserMessage.emplace_back(atoi(Utils::StringTrim(m_szFilterText).c_str()));
 			changed = true;
@@ -380,24 +380,32 @@ bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool
 
 void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 {
-	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiQuery")))
+	if (auto values = g_pConfig->GetMainKey(XorStr("AntiQuery")); !values.empty())
 	{
-		m_BlockQuery.emplace_back(it.first, it.second.m_sValue);
+		m_BlockQuery.clear();
+		for (const auto& it : values)
+			m_BlockQuery.emplace_back(it.first, it.second.m_sValue);
 	}
 
-	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiSetting")))
+	if (auto values = g_pConfig->GetMainKey(XorStr("AntiSetting")); !values.empty())
 	{
-		m_BlockSetting.emplace_back(it.first, it.second.m_sValue);
+		m_BlockSetting.clear();
+		for (const auto& it : values)
+			m_BlockSetting.emplace_back(it.first, it.second.m_sValue);
 	}
 
-	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiExecute")))
+	if (auto values = g_pConfig->GetMainKey(XorStr("AntiExecute")); !values.empty())
 	{
-		m_BlockExecute.emplace_back(it.first);
+		m_BlockExecute.clear();
+		for (const auto& it : values)
+			m_BlockExecute.emplace_back(it.first);
 	}
 
-	for (const auto& it : g_pConfig->GetMainKey(XorStr("AntiUserMsg")))
+	if (auto values = g_pConfig->GetMainKey(XorStr("AntiUserMsg")); !values.empty())
 	{
-		m_BlockUserMessage.emplace_back(atoi(it.first.c_str()));
+		m_BlockUserMessage.clear();
+		for (const auto& it : values)
+			m_BlockUserMessage.emplace_back(atoi(it.first.c_str()));
 	}
 
 	const std::string mainKeys = XorStr("AntiAntiCheat");
