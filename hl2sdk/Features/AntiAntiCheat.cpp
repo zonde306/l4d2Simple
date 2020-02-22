@@ -19,6 +19,30 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
 	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
 	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
+
+	m_BlockQuery = {
+		{ "c_thirdpersonshoulder", "0" },
+		{ "mat_queue_mode", "-1" },
+		{ "mat_hdr_level", "2" },
+		{ "mat_postprocess_enable", "1" },
+		{ "r_drawothermodels", "1" },
+		{ "cl_drawshadowtexture", "0" },
+		{ "mat_fullbright", "0" },
+		{ "c_thirdpersonshoulderoffset", "0" },
+		{ "c_thirdpersonshoulderheight", "0" },
+		{ "cam_idealdist", "0" },
+	};
+
+	m_BlockSetting = {
+		{ "sv_consistency", "0" },
+		{ "sv_pure", "0" },
+	};
+
+	m_BlockExecute = {
+		"bind",
+		"exec",
+		"cl_consistencycheck",
+	};
 }
 
 CAntiAntiCheat::~CAntiAntiCheat()
