@@ -404,7 +404,7 @@ bool CTriggerBot::IsVisableToPosition(CBasePlayer * local, CBasePlayer * target,
 	Ray_t ray;
 	ray.Init(local->GetEyePosition(), position);
 
-	CTraceFilter filter;
+	CTriggerTraceFilter filter;
 	filter.pSkip1 = local;
 
 	trace_t trace;

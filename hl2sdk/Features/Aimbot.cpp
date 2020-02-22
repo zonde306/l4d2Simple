@@ -312,6 +312,27 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 	return m_pAimTarget;
 }
 
+class CTriggerTraceFilter : public CTraceFilter
+{
+public:
+	virtual bool ShouldHitEntity(CBaseEntity* pEntityHandle, int contentsMask) override
+	{
+		if (pEntityHandle == pSkip1)
+			return false;
+
+		try
+		{
+			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+		}
+		catch (...)
+		{
+			return true;
+		}
+
+		return true;
+	}
+};
+
 bool CAimBot::IsTargetVisible(CBasePlayer * entity)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -321,7 +342,7 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity)
 	Ray_t ray;
 	ray.Init(local->GetEyePosition(), entity->GetHeadOrigin());
 
-	CTraceFilter filter;
+	CTriggerTraceFilter filter;
 	filter.pSkip1 = local;
 
 	trace_t trace;

@@ -199,6 +199,27 @@ bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, floa
 	return (m_iMeleeTick > 0);
 }
 
+class CTriggerTraceFilter : public CTraceFilter
+{
+public:
+	virtual bool ShouldHitEntity(CBaseEntity* pEntityHandle, int contentsMask) override
+	{
+		if (pEntityHandle == pSkip1)
+			return false;
+
+		try
+		{
+			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+		}
+		catch (...)
+		{
+			return true;
+		}
+
+		return true;
+	}
+};
+
 bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -206,7 +227,7 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 		return false;
 
 	Ray_t ray;
-	CTraceFilter filter;
+	CTriggerTraceFilter filter;
 	ray.Init(local->GetEyePosition(), position);
 	filter.pSkip1 = local;
 
