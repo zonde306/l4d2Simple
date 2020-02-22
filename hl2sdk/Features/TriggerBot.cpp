@@ -99,11 +99,6 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded")) > 0)
 			return;
 	}
-	else if (m_bTraceWithoutMagnum && classId == ET_INFECTED)
-	{
-		if (weapon->GetWeaponID() == WeaponId_MagnumPistol)
-			return;
-	}
 
 	if (m_bBlockFriendlyFire && team == player->GetTeam() &&
 		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
@@ -116,6 +111,9 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	cmd->buttons |= IN_ATTACK;
 
 	if (classId == ET_TankRock)
+		return;
+
+	if (m_bTraceWithoutMagnum && classId == ET_INFECTED && weapon->GetWeaponID() == WeaponId_MagnumPistol)
 		return;
 
 	Vector myEyeOrigin = player->GetEyePosition();
