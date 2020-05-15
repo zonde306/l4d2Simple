@@ -36,7 +36,7 @@ void Color::getFloatArray(float * arr) const
 
 float * Color::Base()
 {
-	float clr[3];
+	static float clr[3];
 
 	clr[0] = _color[0] / 255.0f;
 	clr[1] = _color[1] / 255.0f;

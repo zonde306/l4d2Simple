@@ -92,11 +92,18 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		int targetTeam = entity->GetTeam();
 		bool friendly = ((team == 2 && targetTeam == 3) || (team == 3 && targetTeam == 2));
 		int classId = entity->GetClassID();
+		bool flat = (targetTeam == 2 && entity->IsIncapacitated());
+
 		ss.str("");
 
 		// 方框的大小
 		float height = fabs(head.y - foot.y);
 		float width = height * 0.65f;
+		if (flat)
+		{
+			width = fabs(head.x - foot.x);
+			height = width * 0.65f;
+		}
 
 		// 距离
 		float dist = math::GetVectorDistance(myFootOrigin, footOrigin, true);
@@ -112,7 +119,13 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		*/
 
 		if (m_bBox)
-			DrawBox(friendly, entity, Vector(head.x - width / 2, head.y), Vector(width, height));
+		{
+			if(flat)
+				DrawBox(friendly, entity, Vector(head.x, head.y - height / 2), Vector(width, height));
+			else
+				DrawBox(friendly, entity, Vector(head.x - width / 2, head.y), Vector(width, height));
+		}
+
 		if (m_bBone)
 			DrawBone(entity, friendly);
 		if (m_bHeadBox)

@@ -440,7 +440,7 @@ void CQuickTriggerEvent::HandleWitchCrown(CBasePlayer * self,
 QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy)
 {
 	Vector myEyeOrigin = self->GetEyePosition();
-	Vector aimHeadOrigin = enemy->GetHeadOrigin();
+	Vector aimHeadOrigin = (HasShotgun(self->GetActiveWeapon()) ? enemy->GetChestOrigin() : enemy->GetHeadOrigin());
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, self->GetVelocity(), m_bLagExt);
@@ -480,4 +480,13 @@ bool CQuickTriggerEvent::IsVisibleEnemy(CBasePlayer * local, CBasePlayer * enemy
 	}
 
 	return (trace.m_pEnt == enemy || trace.fraction > 0.97f);
+}
+
+bool CQuickTriggerEvent::HasShotgun(CBaseWeapon* weapon)
+{
+	if (weapon == nullptr)
+		return false;
+
+	int weaponId = weapon->GetWeaponID();
+	return IsShotgun(weaponId);
 }

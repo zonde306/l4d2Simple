@@ -135,7 +135,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	if (m_bTraceHead || canWitchHeadshot)
 	{
-		Vector aimHeadOrigin = m_pAimTarget->GetHeadOrigin();
+		Vector aimHeadOrigin = (m_bTraceShotgunChest && HasShotgun(weapon) ? m_pAimTarget->GetChestOrigin() : m_pAimTarget->GetHeadOrigin());
 		if (!m_bFollowVisible || IsVisableToPosition(player, m_pAimTarget, aimHeadOrigin))
 		{
 			if (m_bTraceVelExt)
@@ -201,6 +201,9 @@ void CTriggerBot::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Track Without Magnum"), &m_bTraceWithoutMagnum);
 	IMGUI_TIPS("自动开枪时射击普感头部忽略马格南。");
+	
+	ImGui::Checkbox(XorStr("Track Shotgun Chest"), &m_bTraceShotgunChest);
+	IMGUI_TIPS("持有霰弹枪时瞄准位置改为身体。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
@@ -236,6 +239,7 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bTraceVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
 	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	m_bTraceWithoutMagnum = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
+	m_bTraceShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -259,6 +263,7 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -395,6 +400,15 @@ bool CTriggerBot::HasValidWeapon(CBaseWeapon * weapon)
 		return false;
 
 	return true;
+}
+
+bool CTriggerBot::HasShotgun(CBaseWeapon* weapon)
+{
+	if (weapon == nullptr)
+		return false;
+
+	int weaponId = weapon->GetWeaponID();
+	return IsShotgun(weaponId);
 }
 
 bool CTriggerBot::IsVisableToPosition(CBasePlayer * local, CBasePlayer * target, const Vector & position)

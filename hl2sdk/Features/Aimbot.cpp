@@ -74,7 +74,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	Vector myEyeOrigin = local->GetEyePosition();
-	Vector aimHeadOrigin = m_pAimTarget->GetHeadOrigin();
+	Vector aimHeadOrigin = (m_bShotgunChest && HasShotgun(local->GetActiveWeapon()) ? m_pAimTarget->GetChestOrigin() : m_pAimTarget->GetHeadOrigin());
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, local->GetVelocity(), m_bForwardtrack);
@@ -126,6 +126,9 @@ void CAimBot::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Ignore Witchs"), &m_bNonWitch);
 	IMGUI_TIPS("自动瞄准不瞄准 Witch。");
+	
+	ImGui::Checkbox(XorStr("Shotgun Chest"), &m_bShotgunChest);
+	IMGUI_TIPS("霰弹枪瞄准身体");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Velocity Extrapolate"), &m_bVelExt);
@@ -172,6 +175,7 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bShowAngles = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
+	m_bShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -192,6 +196,7 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
@@ -417,6 +422,15 @@ bool CAimBot::HasValidWeapon(CBaseWeapon * weapon)
 		return false;
 
 	return (weapon->GetPrimaryAttackDelay() <= 0.0f);
+}
+
+bool CAimBot::HasShotgun(CBaseWeapon* weapon)
+{
+	if (weapon == nullptr)
+		return false;
+	
+	int weaponId = weapon->GetWeaponID();
+	return IsShotgun(weaponId);
 }
 
 bool CAimBot::CanRunAimbot(CBasePlayer * entity)

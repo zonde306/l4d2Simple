@@ -4,17 +4,25 @@
 #include "convar.h"
 #include "../indexes.h"
 
-#define HITBOX_COMMON			15	// 普感
-#define HITBOX_PLAYER			10	// 生还者/特感
-#define HITBOX_COMMON_1			14
-#define HITBOX_COMMON_2			15
-#define HITBOX_COMMON_3			16
-#define HITBOX_COMMON_4			17
-#define HITBOX_JOCKEY			4
-#define HITBOX_SPITTER			4
-#define HITBOX_CHARGER			9
-#define HITBOX_TANK				12
-#define HITBOX_WITCH			10
+#define HITBOX_HEAD_COMMON			15	// 普感
+#define HITBOX_HEAD_PLAYER			10	// 生还者/特感
+#define HITBOX_HEAD_COMMON_1		14
+#define HITBOX_HEAD_COMMON_2		15
+#define HITBOX_HEAD_COMMON_3		16
+#define HITBOX_HEAD_COMMON_4		17
+#define HITBOX_HEAD_JOCKEY			4
+#define HITBOX_HEAD_SPITTER			4
+#define HITBOX_HEAD_CHARGER			9
+#define HITBOX_HEAD_TANK			12
+#define HITBOX_HEAD_WITCH			10
+
+#define HITBOX_CHEST_PLAYER			7
+#define HITBOX_CHEST_COMMON			8
+#define HITBOX_CHEST_JOCKEY			4
+#define HITBOX_CHEST_SPITTER		2
+#define HITBOX_CHEST_CHARGER		8
+#define HITBOX_CHEST_TANK			9
+#define HITBOX_CHEST_WITCH			8
 
 Vector CBasePlayer::GetEyePosition()
 {
@@ -188,19 +196,19 @@ Vector CBasePlayer::GetHeadOrigin()
 
 	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER || classId == ET_WITCH ||
 		classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
-		return GetHitboxOrigin(HITBOX_PLAYER);
+		return GetHitboxOrigin(HITBOX_HEAD_PLAYER);
 
 	if (classId == ET_TANK)
-		return GetHitboxOrigin(HITBOX_TANK);
+		return GetHitboxOrigin(HITBOX_HEAD_TANK);
 
 	if (classId == ET_JOCKEY || classId == ET_SPITTER)
-		return GetHitboxOrigin(HITBOX_JOCKEY);
+		return GetHitboxOrigin(HITBOX_HEAD_JOCKEY);
 
 	if (classId == ET_CHARGER)
-		return GetHitboxOrigin(HITBOX_CHARGER);
+		return GetHitboxOrigin(HITBOX_HEAD_CHARGER);
 
 	if (classId == ET_INFECTED)
-		return GetHitboxOrigin(HITBOX_COMMON);
+		return GetHitboxOrigin(HITBOX_HEAD_COMMON);
 
 	return GetAbsOrigin();
 }
@@ -351,6 +359,35 @@ bool CBasePlayer::IsCommonInfected()
 bool CBasePlayer::IsWitch()
 {
 	return (GetClassID() == ET_WITCH);
+}
+
+Vector CBasePlayer::GetChestOrigin()
+{
+	int classId = GetClassID();
+
+	if (classId == ET_SURVIVORBOT || classId == ET_CTERRORPLAYER ||
+		classId == ET_SMOKER || classId == ET_BOOMER || classId == ET_HUNTER)
+		return GetHitboxOrigin(HITBOX_CHEST_PLAYER);
+
+	if (classId == ET_TANK)
+		return GetHitboxOrigin(HITBOX_CHEST_TANK);
+
+	if (classId == ET_JOCKEY)
+		return GetHitboxOrigin(HITBOX_CHEST_JOCKEY);
+
+	if(classId == ET_SPITTER)
+		return GetHitboxOrigin(HITBOX_CHEST_SPITTER);
+
+	if (classId == ET_CHARGER)
+		return GetHitboxOrigin(HITBOX_CHEST_CHARGER);
+
+	if (classId == ET_INFECTED)
+		return GetHitboxOrigin(HITBOX_CHEST_COMMON);
+
+	if (classId == ET_WITCH)
+		return GetHitboxOrigin(HITBOX_CHEST_WITCH);
+
+	return GetAbsOrigin();
 }
 
 bool CBasePlayer::IsAlive()

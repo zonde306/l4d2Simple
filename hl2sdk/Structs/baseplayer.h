@@ -83,4 +83,7 @@ public:
 	bool IsSpecialInfected();
 	bool IsCommonInfected();
 	bool IsWitch();
+
+	// 获取身体位置
+	Vector GetChestOrigin();
 };

@@ -19,6 +19,7 @@ public:
 	bool IsTargetVisible(CBasePlayer* entity);
 	bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);
+	bool HasShotgun(CBaseWeapon* weapon);
 
 	bool CanRunAimbot(CBasePlayer* entity);
 	Vector GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
@@ -40,6 +41,7 @@ private:	// 菜单项
 
 	float m_fAimFov = 30.0f;
 	float m_fAimDist = 3000.0f;
+	bool m_bShotgunChest = true;
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
