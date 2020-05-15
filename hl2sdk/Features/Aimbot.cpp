@@ -232,8 +232,9 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 	else
 		g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::WHITE);
 
-	g_pDrawing->DrawText(width, height - 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
-	g_pDrawing->DrawText(width, height - 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
+	g_pDrawing->DrawText(width, height + 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
+	g_pDrawing->DrawText(width, height + 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
+	g_pDrawing->DrawText(width, height + 48, CDrawing::PURPLE, true, XorStr("IsShotgun = %d"), HasShotgun(local->GetActiveWeapon()));
 }
 
 void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)

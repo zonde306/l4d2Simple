@@ -99,29 +99,22 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		// 方框的大小
 		float height = fabs(head.y - foot.y);
 		float width = height * 0.65f;
+		
+		// 生还者在倒地时是横着的
+		// 所以方框需要横着计算大小
 		if (flat)
 		{
-			width = fabs(head.x - foot.x);
-			height = width * 0.65f;
+			width = -(head.x - foot.x) * 2.0f;
+			height = fabs(width) * 0.35f;
 		}
 
 		// 距离
 		float dist = math::GetVectorDistance(myFootOrigin, footOrigin, true);
 
-		/*
-		// 生还者在倒地时是横着的
-		// 所以方框需要横着计算大小
-		if (IsSurvivor(classId) && entity->IsIncapacitated())
-		{
-			width = fabs(head.x - foot.x);
-			height = width * 0.65f;
-		}
-		*/
-
 		if (m_bBox)
 		{
 			if(flat)
-				DrawBox(friendly, entity, Vector(head.x, head.y - height / 2), Vector(width, height));
+				DrawBox(friendly, entity, Vector(head.x, head.y), Vector(width, height));
 			else
 				DrawBox(friendly, entity, Vector(head.x - width / 2, head.y), Vector(width, height));
 		}
