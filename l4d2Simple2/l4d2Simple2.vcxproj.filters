@@ -264,6 +264,9 @@
     <ClCompile Include="..\hl2sdk\Features\QTE.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Structs\MRecipientFilter.cpp">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -661,6 +664,9 @@
     </ClInclude>
     <ClInclude Include="..\dxsdk\Include\d3dx9xof.h">
       <Filter>dxsdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\MRecipientFilter.h">
+      <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

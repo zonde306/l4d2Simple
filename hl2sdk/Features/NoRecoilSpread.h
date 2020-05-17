@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
 
+class CVM_ShotgunSound;
+
 class CViewManager : public CBaseFeatures
 {
 public:
@@ -64,6 +66,21 @@ private:
 
 private:
 	bool m_bRapidIgnore = true;
+	CVM_ShotgunSound* m_pEventListener = nullptr;
+};
+
+class CVM_ShotgunSound : public IGameEventListener2
+{
+public:
+	friend CViewManager;
+	virtual void FireGameEvent(IGameEvent* event) override;
+
+protected:
+	bool HasShotgun(CBaseWeapon* weapon);
+
+private:
+	bool m_bShotgunSound = true;
+	bool m_bIsGameTick = false;
 };
 
 extern CViewManager* g_pViewManager;

@@ -172,6 +172,7 @@
     <ClCompile Include="..\hl2sdk\Structs\handle.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\keyvalues.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\matrix.cpp" />
+    <ClCompile Include="..\hl2sdk\Structs\MRecipientFilter.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\netprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\recvprop.cpp" />
     <ClCompile Include="..\hl2sdk\Structs\trace.cpp" />
@@ -301,6 +302,7 @@
     <ClInclude Include="..\hl2sdk\Structs\handle.h" />
     <ClInclude Include="..\hl2sdk\Structs\keyvalues.h" />
     <ClInclude Include="..\hl2sdk\Structs\matrix.h" />
+    <ClInclude Include="..\hl2sdk\Structs\MRecipientFilter.h" />
     <ClInclude Include="..\hl2sdk\Structs\netprop.h" />
     <ClInclude Include="..\hl2sdk\Structs\playerinfo.h" />
     <ClInclude Include="..\hl2sdk\Structs\recvprop.h" />

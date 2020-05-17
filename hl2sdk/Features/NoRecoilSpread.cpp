@@ -2,25 +2,35 @@
 #include "../Utils/math.h"
 #include "../hook.h"
 #include "../../l4d2Simple2/config.h"
+#include "../Structs/MRecipientFilter.h"
 
 CViewManager* g_pViewManager = nullptr;
 
 #define IsSingleWeapon(_id)			(_id == Weapon_Pistol || _id == Weapon_ShotgunPump || _id == Weapon_ShotgunAuto || _id == Weapon_SniperHunting || _id == Weapon_ShotgunChrome || _id == Weapon_SniperMilitary || _id == Weapon_ShotgunSpas || _id == Weapon_PistolMagnum || _id == Weapon_SniperAWP || _id == Weapon_SniperScout)
 #define NUM_NEW_COMMAND_BITS		4
 #define MAX_NEW_COMMANDS			((1 << NUM_NEW_COMMAND_BITS)-1)
+#define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
 
 CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
 	m_vecAngles.Invalidate();
+	m_pEventListener = new CVM_ShotgunSound();
+	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("weapon_fire"), false);
+	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("bullet_impact"), false);
 }
 
 CViewManager::~CViewManager()
 {
+	g_pInterface->GameEvent->RemoveListener(m_pEventListener);
+	delete m_pEventListener;
+
 	CBaseFeatures::~CBaseFeatures();
 }
 
 void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
+	m_pEventListener->m_bIsGameTick = false;
+
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive())
 		return;
@@ -131,6 +141,9 @@ void CViewManager::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("chocked exploit"), &m_bFakeAngleBug);
 	IMGUI_TIPS("炸服用，开启后按住鼠标左键(开枪)启动。用后记得手动 disconnect，否则会卡住。\n最好是拿枪有子弹时用，否则可能会导致游戏无响应。");
+	
+	ImGui::Checkbox(XorStr("shotgun sound"), &(m_pEventListener->m_bShotgunSound));
+	IMGUI_TIPS("第三人称使用霰弹枪播放开枪声音。");
 
 	ImGui::TreePop();
 }
@@ -146,6 +159,7 @@ void CViewManager::OnConfigLoading(const config_type & data)
 	m_bSilentNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 	m_bRealAngles = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
 	m_bFakeLag = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
+	m_pEventListener->m_bShotgunSound = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
 }
 
 void CViewManager::OnConfigSave(config_type & data)
@@ -159,6 +173,7 @@ void CViewManager::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
 	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
+	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
 }
 
 void CViewManager::OnConnect()
@@ -363,4 +378,84 @@ bool CViewManager::IsUsingMinigun(CBasePlayer * player)
 		return true;
 	
 	return false;
+}
+
+void CVM_ShotgunSound::FireGameEvent(IGameEvent* event)
+{
+	if (!m_bShotgunSound)
+		return;
+	
+	const char* eventName = event->GetName();
+	if (!_stricmp(eventName, XorStr("weapon_fire")) || !_stricmp(eventName, XorStr("bullet_impact")))
+	{
+		static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
+		if (m_bIsGameTick || thirdMode->GetInt() == 0)
+			return;
+		
+		int attacker = g_pInterface->Engine->GetPlayerForUserID(event->GetInt(XorStr("userid")));
+		if (attacker < 1 || attacker > 32)
+			return;
+		
+		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+		if (g_pInterface->EntList->GetClientEntity(attacker) != local || !local->IsAlive())
+			return;
+
+		CBaseWeapon* weapon = local->GetActiveWeapon();
+		if (weapon == nullptr)
+			return;
+
+		int weaponId = weapon->GetWeaponID();
+		int upgrade = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec"));
+		int numAmmo = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded"));
+
+		MRecipientFilter filter;
+		filter.AddRecipient(attacker);
+
+		switch (weaponId)
+		{
+			case WeaponId_PumpShotgun:
+			{
+				if((upgrade & 1) && numAmmo > 0)
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+				else
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+				break;
+			}
+			case WeaponId_Chrome:
+			{
+				if ((upgrade & 1) && numAmmo > 0)
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+				else
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+				break;
+			}
+			case WeaponId_AutoShotgun:
+			{
+				if ((upgrade & 1) && numAmmo > 0)
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+				else
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+				break;
+			}
+			case WeaponId_SPAS:
+			{
+				if ((upgrade & 1) && numAmmo > 0)
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+				else
+					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+				break;
+			}
+		}
+
+		m_bIsGameTick = true;
+	}
+}
+
+bool CVM_ShotgunSound::HasShotgun(CBaseWeapon* weapon)
+{
+	if (weapon == nullptr)
+		return false;
+
+	int weaponId = weapon->GetWeaponID();
+	return IsShotgun(weaponId);
 }
