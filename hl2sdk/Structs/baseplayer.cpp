@@ -392,8 +392,16 @@ Vector CBasePlayer::GetChestOrigin()
 
 bool CBasePlayer::IsAlive()
 {
-	if (this == nullptr || IsDormant())
+	try
+	{
+		// 不知道为什么，这里会出现 nullptr 异常
+		if (this == nullptr || IsDormant())
+			return false;
+	}
+	catch (...)
+	{
 		return false;
+	}
 	
 	static int lifeOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_lifeState"));
 	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));

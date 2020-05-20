@@ -275,11 +275,11 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		return;
 	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr)
+	if (player == nullptr || !player->IsAlive())
 		return;
 
 	D3DCOLOR color = CDrawing::WHITE;
-	if (m_pAimTarget == nullptr)
+	if (m_pAimTarget == nullptr || !m_pAimTarget->IsAlive())
 	{
 		color = CDrawing::LAWNGREEN;
 		// g_pInterface->Surface->DrawSetColor(128, 255, 0, 255);

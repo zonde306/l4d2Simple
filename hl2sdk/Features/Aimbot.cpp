@@ -228,7 +228,7 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 		return;
 	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr)
+	if (local == nullptr || !local->IsAlive())
 		return;
 
 	int width = 0, height = 0;
