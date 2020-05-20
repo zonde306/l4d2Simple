@@ -69,16 +69,12 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		if (player == nullptr || player == local || !player->IsAlive() || player->GetTeam() != 3 || player->IsGhost())
 			continue;
 
-		aimOrigin = player->GetHeadOrigin();
+		aimOrigin = GetTargetAimPosition(player);
+		if (!aimOrigin.IsValid())
+			continue;
 
 		if (m_bVelExt)
 			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
-
-		if (m_bOnlyVisible)
-		{
-			if (!IsVisibleEnemy(local, player, myOrigin, aimOrigin))
-				continue;
-		}
 
 		ZombieClass_t classId = player->GetZombieType();
 		distance = myOrigin.DistTo(aimOrigin);
@@ -387,7 +383,7 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	if (distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
 		return;
 
-	QAngle aimAngles = GetAimAngles(self, enemy);
+	QAngle aimAngles = GetAimAngles(self, enemy, false);
 	if (aimAngles.IsValid())
 	{
 		cmd->buttons |= IN_ATTACK;
@@ -407,7 +403,7 @@ void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
 	if (distance > cvShoveRange->GetFloat() + m_fShoveDstExtra)
 		return;
 
-	QAngle aimAngles = GetAimAngles(self, enemy);
+	QAngle aimAngles = GetAimAngles(self, enemy, false);
 	if (aimAngles.IsValid() && self->CanShove())
 	{
 		cmd->buttons |= IN_ATTACK2;
@@ -437,10 +433,10 @@ void CQuickTriggerEvent::HandleWitchCrown(CBasePlayer * self,
 	}
 }
 
-QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy)
+QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy, std::optional<bool> visable)
 {
 	Vector myEyeOrigin = self->GetEyePosition();
-	Vector aimHeadOrigin = (HasShotgun(self->GetActiveWeapon()) ? enemy->GetChestOrigin() : enemy->GetHeadOrigin());
+	Vector aimHeadOrigin = GetTargetAimPosition(enemy, visable);
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, self->GetVelocity(), m_bLagExt);
@@ -489,4 +485,24 @@ bool CQuickTriggerEvent::HasShotgun(CBaseWeapon* weapon)
 
 	int weaponId = weapon->GetWeaponID();
 	return IsShotgun(weaponId);
+}
+
+Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || entity == nullptr || !entity->IsAlive())
+		return NULL_VECTOR;
+
+	bool vis = visible.value_or(m_bOnlyVisible);
+	bool chestFirst = HasShotgun(local->GetActiveWeapon());
+	Vector startPosition = local->GetEyePosition();
+	Vector aimPosition = (chestFirst ? entity->GetChestOrigin() : entity->GetHeadOrigin());
+	if (!vis || IsVisibleEnemy(local, entity, startPosition, aimPosition))
+		return aimPosition;
+
+	aimPosition = (chestFirst ? entity->GetHeadOrigin() : entity->GetChestOrigin());
+	if (!vis || IsVisibleEnemy(local, entity, startPosition, aimPosition))
+		return aimPosition;
+
+	return NULL_VECTOR;
 }

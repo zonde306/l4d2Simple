@@ -20,10 +20,11 @@ private:
 	void HandleShoveSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 	void HandleWitchCrown(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 
-	QAngle GetAimAngles(CBasePlayer * self, CBasePlayer * enemy);
+	QAngle GetAimAngles(CBasePlayer* self, CBasePlayer* enemy, std::optional<bool> visable = {});
 	void SetAimAngles(CUserCmd* cmd, QAngle& aimAngles);
 	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 	bool HasShotgun(CBaseWeapon* weapon);
+	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
 
 private:
 	bool m_bActive = false;

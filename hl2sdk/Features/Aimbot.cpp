@@ -74,7 +74,14 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	Vector myEyeOrigin = local->GetEyePosition();
-	Vector aimHeadOrigin = (m_bShotgunChest && HasShotgun(local->GetActiveWeapon()) ? m_pAimTarget->GetChestOrigin() : m_pAimTarget->GetHeadOrigin());
+	Vector aimHeadOrigin = GetTargetAimPosition(m_pAimTarget, false);
+	if (!aimHeadOrigin.IsValid())
+	{
+		Utils::logError(XorStr("Aimbot Can't get target location"));
+		m_pAimTarget = nullptr;
+		return;
+	}
+
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, local->GetVelocity(), m_bForwardtrack);
@@ -283,7 +290,10 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		if (entity == local || !IsValidTarget(entity))
 			continue;
 
-		Vector aimPosition = entity->GetHeadOrigin();
+		Vector aimPosition = GetTargetAimPosition(entity);
+		if (!aimPosition.IsValid())
+			continue;
+
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
 
@@ -299,7 +309,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		}
 		else
 		{
-			// 范围优先
+			// 最近优先
 			if (dist <= m_fAimDist && fov < minFov)
 			{
 				m_pAimTarget = entity;
@@ -339,14 +349,22 @@ public:
 	}
 };
 
-bool CAimBot::IsTargetVisible(CBasePlayer * entity)
+bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || entity == nullptr || !entity->IsAlive())
 		return false;
 
+	if (!aimPosition.IsValid())
+	{
+		if (m_bShotgunChest && HasShotgun(local->GetActiveWeapon()))
+			aimPosition = entity->GetChestOrigin();
+		else
+			aimPosition = entity->GetHeadOrigin();
+	}
+
 	Ray_t ray;
-	ray.Init(local->GetEyePosition(), entity->GetHeadOrigin());
+	ray.Init(local->GetEyePosition(), aimPosition);
 
 	CTriggerTraceFilter filter;
 	filter.pSkip1 = local;
@@ -395,11 +413,13 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 			return false;
 	}
 
+	/*
 	if (m_bVisible)
 	{
 		if (!IsTargetVisible(entity))
 			return false;
 	}
+	*/
 
 	if (m_bNonWitch)
 	{
@@ -432,6 +452,25 @@ bool CAimBot::HasShotgun(CBaseWeapon* weapon)
 	
 	int weaponId = weapon->GetWeaponID();
 	return IsShotgun(weaponId);
+}
+
+Vector CAimBot::GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || entity == nullptr || !entity->IsAlive())
+		return NULL_VECTOR;
+	
+	bool vis = visible.value_or(m_bVisible);
+	bool chestFirst = (m_bShotgunChest && HasShotgun(local->GetActiveWeapon()));
+	Vector aimPosition = (chestFirst ? entity->GetChestOrigin() : entity->GetHeadOrigin());
+	if (!vis || IsTargetVisible(entity, aimPosition))
+		return aimPosition;
+
+	aimPosition = (chestFirst ? entity->GetHeadOrigin() : entity->GetChestOrigin());
+	if (!vis || IsTargetVisible(entity, aimPosition))
+		return aimPosition;
+
+	return NULL_VECTOR;
 }
 
 bool CAimBot::CanRunAimbot(CBasePlayer * entity)

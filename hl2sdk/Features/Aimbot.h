@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
+#include <optional>
 
 class CAimBot : public CBaseFeatures
 {
@@ -16,10 +17,11 @@ public:
 	virtual void OnConfigSave(config_type& data) override;
 
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
-	bool IsTargetVisible(CBasePlayer* entity);
+	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR);
 	bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);
 	bool HasShotgun(CBaseWeapon* weapon);
+	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
 
 	bool CanRunAimbot(CBasePlayer* entity);
 	Vector GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
