@@ -277,19 +277,19 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Hunter Skeet"), &m_bHunter);
 	IMGUI_TIPS("空爆猎人");
 
-	ImGui::SliderFloat(XorStr("HunterSkeet Distance"), &m_fHunterDistance, 1.0f, 1000.0f, ("%.1f"));
+	ImGui::SliderFloat(XorStr("HunterSkeet Distance"), &m_fHunterDistance, 1.0f, 500.0f, ("%.1f"));
 	IMGUI_TIPS("空爆猎人范围");
 
 	ImGui::Checkbox(XorStr("Jockey Skeet"), &m_bJockey);
 	IMGUI_TIPS("推猴子");
 
-	ImGui::SliderFloat(XorStr("JockeySkeet Distance"), &m_fJockeyDistance, 1.0f, 300.0f, ("%.1f"));
+	ImGui::SliderFloat(XorStr("JockeySkeet Distance"), &m_fJockeyDistance, 1.0f, 500.0f, ("%.1f"));
 	IMGUI_TIPS("推猴范围");
 
 	ImGui::Checkbox(XorStr("Charge Level"), &m_bCharger);
 	IMGUI_TIPS("近战秒牛");
 
-	ImGui::SliderFloat(XorStr("ChargeLevel Distance"), &m_fChargerDistance, 1.0f, 1500.0f, ("%.1f"));
+	ImGui::SliderFloat(XorStr("ChargeLevel Distance"), &m_fChargerDistance, 1.0f, 500.0f, ("%.1f"));
 	IMGUI_TIPS("秒牛范围");
 
 	ImGui::Checkbox(XorStr("Witch Crown"), &m_bWitch);

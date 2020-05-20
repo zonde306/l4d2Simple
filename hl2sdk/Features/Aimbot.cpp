@@ -38,6 +38,12 @@ CAimBot* g_pAimbot = nullptr;
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
 
+#define ANIM_CHARGER_CHARGING		5
+#define ANIM_SMOKER_PULLING			30
+#define ANIM_HUNTER_LUNGING			67
+#define ANIM_JOCKEY_LEAPING			10
+#define ANIM_JOCKEY_RIDEING			8
+
 CAimBot::CAimBot() : CBaseFeatures::CBaseFeatures()
 {
 }
@@ -56,7 +62,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	}
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (!CanRunAimbot(local) || (m_bOnFire && !(cmd->buttons & IN_ATTACK)))
+	if (!CanRunAimbot(local))
 	{
 		m_bRunAutoAim = false;
 		return;
@@ -67,7 +73,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if(!IsValidTarget(m_pAimTarget) || !(cmd->buttons & IN_ATTACK))
 		FindTarget(cmd->viewangles);
 
-	if (m_pAimTarget == nullptr)
+	if (m_pAimTarget == nullptr || (m_bOnFire && !(cmd->buttons & IN_ATTACK)))
 	{
 		m_bRunAutoAim = false;
 		return;
@@ -136,6 +142,9 @@ void CAimBot::OnMenuDrawing()
 	
 	ImGui::Checkbox(XorStr("Shotgun Chest"), &m_bShotgunChest);
 	IMGUI_TIPS("霰弹枪瞄准身体");
+	
+	ImGui::Checkbox(XorStr("Fatal First"), &m_bFatalFirst);
+	IMGUI_TIPS("优先选择致命（危险）目标");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Velocity Extrapolate"), &m_bVelExt);
@@ -160,6 +169,9 @@ void CAimBot::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("AutoAim Angles"), &m_bShowAngles);
 	IMGUI_TIPS("显示瞄准的位置。");
+	
+	ImGui::Checkbox(XorStr("AutoAim Target"), &m_bShowTarget);
+	IMGUI_TIPS("显示瞄准的目标。");
 
 	ImGui::TreePop();
 }
@@ -183,6 +195,8 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
 	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
 	m_bShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
+	m_bFatalFirst = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
+	m_bShowTarget = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -204,13 +218,15 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
 {
-	if (!m_bShowRange)
+	if (!m_bActive)
 		return;
-
+	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr)
 		return;
@@ -218,30 +234,45 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 	int width = 0, height = 0;
 	g_pInterface->Engine->GetScreenSize(width, height);
 
-	int myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iFOV"));
-	if (myFov == 0)
+	if (m_bShowRange)
 	{
-		static ConVar* cl_fov = g_pInterface->Cvar->FindVar(XorStr("cl_fov"));
-		if (cl_fov != nullptr)
-			myFov = cl_fov->GetInt();
+		int myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iFOV"));
+		if (myFov == 0)
+		{
+			static ConVar* cl_fov = g_pInterface->Cvar->FindVar(XorStr("cl_fov"));
+			if (cl_fov != nullptr)
+				myFov = cl_fov->GetInt();
+			else
+				myFov = 90;
+			// myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iDefaultFOV"));
+		}
+
+		float radius = (std::tanf(DEG2RAD(m_fAimFov) / 2) / std::tanf(DEG2RAD(myFov) / 2) * width);
+
+		width /= 2;
+		height /= 2;
+
+		if (m_bRunAutoAim)
+			g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::GREEN);
 		else
-			myFov = 90;
-		// myFov = local->GetNetProp<byte>(XorStr("DT_BasePlayer"), XorStr("m_iDefaultFOV"));
+			g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::WHITE);
+
+		g_pDrawing->DrawText(width, height + 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
+		g_pDrawing->DrawText(width, height + 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
+		g_pDrawing->DrawText(width, height + 48, CDrawing::PURPLE, true, XorStr("IsShotgun = %d"), HasShotgun(local->GetActiveWeapon()));
 	}
 
-	float radius = (std::tanf(DEG2RAD(m_fAimFov) / 2) / std::tanf(DEG2RAD(myFov) / 2) * width);
-
-	width /= 2;
-	height /= 2;
-
-	if(m_bRunAutoAim)
-		g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::GREEN);
-	else
-		g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::WHITE);
-
-	g_pDrawing->DrawText(width, height + 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
-	g_pDrawing->DrawText(width, height + 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
-	g_pDrawing->DrawText(width, height + 48, CDrawing::PURPLE, true, XorStr("IsShotgun = %d"), HasShotgun(local->GetActiveWeapon()));
+	if (m_bShowTarget && m_pAimTarget && m_pAimTarget->IsAlive())
+	{
+		Vector screen, origin = GetTargetAimPosition(m_pAimTarget, false);
+		if (origin.IsValid() && math::WorldToScreenEx(origin, screen))
+		{
+			if(m_bRunAutoAim)
+				g_pDrawing->DrawCircleFilled(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
+			else
+				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
+		}
+	}
 }
 
 void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -277,7 +308,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 	
 	Vector myEyePosition = local->GetEyePosition();
 
-	float minFov = m_fAimFov + 1.0f, minDistance = m_fAimDist + 1.0f;
+	float minFov = m_fAimFov, minDistance = m_fAimDist;
 	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
 
 	// 特感和普感是同一个阵营的
@@ -296,6 +327,14 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
 		float dist = math::GetVectorDistance(myEyePosition, aimPosition, true);
+
+		if (m_bFatalFirst && i <= 64 && fov <= m_fAimFov && dist <= m_fAimDist && IsFatalTarget(entity))
+		{
+			m_pAimTarget = entity;
+			minDistance = dist;
+			minFov = fov;
+			break;
+		}
 
 		if (m_bDistance)
 		{
@@ -517,4 +556,106 @@ Vector CAimBot::GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CB
 		*hitEntity = reinterpret_cast<CBasePlayer*>(trace.m_pEnt);
 
 	return trace.end;
+}
+
+bool CAimBot::IsFatalTarget(CBasePlayer* entity)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || entity == nullptr || !entity->IsAlive())
+		return false;
+	
+	ZombieClass_t classId = entity->GetZombieType();
+	float distance = local->GetAbsOrigin().DistTo(entity->GetAbsOrigin());
+
+	switch (classId)
+	{
+		case ZC_SMOKER:
+		{
+			static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
+			if (distance > cvTongueRange->GetFloat())
+				return false;
+			
+			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
+				return false;
+
+			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			if (fov > 30.0f)
+				return false;
+
+			return true;
+		}
+		case ZC_HUNTER:
+		{
+			if (distance > 100.0f)
+				return false;
+			
+			if (!entity->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
+				entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
+				return false;
+
+			if (entity->GetFlags() & FL_ONGROUND)
+				return false;
+
+			// 或许使用 velocity 更好
+			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			if (fov > 15.0f)
+				return false;
+
+			return true;
+		}
+		case ZC_JOCKEY:
+		{
+			if (distance > 125.0f)
+				return false;
+			
+			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
+				return false;
+
+			if (entity->GetFlags() & FL_ONGROUND)
+				return false;
+
+			// 或许使用 velocity 更好
+			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			if (fov > 15.0f)
+				return false;
+
+			return true;
+		}
+		/*
+		case ZC_CHARGER:
+		{
+			static ConVar* cvChargeDuration = g_pInterface->Cvar->FindVar(XorStr("z_charge_duration"));
+			static ConVar* cvChargeSpeed = g_pInterface->Cvar->FindVar(XorStr("z_charge_max_speed"));
+			if (distance > cvChargeDuration->GetFloat() * cvChargeSpeed->GetFloat())
+				return false;
+			
+			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
+				return false;
+
+			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			if (fov > 30.0f)
+				return false;
+
+			return true;
+		}
+		case ZC_WITCH:
+		{
+			if (distance > 1000.0f)
+				return false;
+			
+			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+				return false;
+
+			Vector eyePosition = entity->GetAbsOrigin();
+			eyePosition.z += entity->GetNetPropCollision<Vector>(XorStr("m_vecMaxs")).z;
+			float fov = math::GetAnglesFieldOfView(entity->GetAbsAngles(), math::CalculateAim(eyePosition, local->GetChestOrigin()));
+			if (fov > 10.0f)
+				return false;
+
+			return true;
+		}
+		*/
+	}
+	
+	return false;
 }

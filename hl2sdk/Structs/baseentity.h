@@ -43,10 +43,16 @@ public:	// NetProp
 	template<typename T>
 	T& GetNetPropLocal(const std::string& table, const std::string& prop, size_t element = 0);
 
+	template<typename T>
+	T& GetNetPropLocal(const std::string& prop, size_t element = 0);
+
 	// 没有用的，不需要使用
 	// 像是 m_Collision 这种二次偏移已经不需要了
 	template<typename T>
 	T& GetNetPropCollision(const std::string& table, const std::string& prop, size_t element = 0);
+
+	template<typename T>
+	T& GetNetPropCollision(const std::string& prop, size_t element = 0);
 
 	static int GetNetPropOffset(const std::string& table, const std::string& prop);
 
@@ -158,10 +164,22 @@ inline T & CBaseEntity::GetNetPropLocal(const std::string & table, const std::st
 }
 
 template<typename T>
+inline T& CBaseEntity::GetNetPropLocal(const std::string& prop, size_t element)
+{
+	return GetNetProp2<T>(XorStr("DT_Local"), prop, XorStr("m_Local"), element);
+}
+
+template<typename T>
 inline T & CBaseEntity::GetNetPropCollision(const std::string & table, const std::string & prop, size_t element)
 {
 	// return GetNetProp2<T>(table, prop, XorStr("m_Collision"), element);
 	return GetNetPropEx<T>(table, prop, element, XorStr("m_Collision"));
+}
+
+template<typename T>
+inline T& CBaseEntity::GetNetPropCollision(const std::string& prop, size_t element)
+{
+	return GetNetPropEx<T>(XorStr("DT_CollisionProperty"), prop, element, XorStr("m_Collision"));
 }
 
 template<typename ...T>

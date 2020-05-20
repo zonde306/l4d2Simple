@@ -43,10 +43,10 @@ private:
 	bool m_bBoomer = true;
 	bool m_bRock = true;
 
-	float m_fHunterDistance = 400.0f;
-	float m_fJockeyDistance = 300.0f;
-	float m_fChargerDistance = 500.0f;
-	float m_fWitchDistance = 250.0f;
+	float m_fHunterDistance = 100.0f;
+	float m_fJockeyDistance = 125.0f;
+	float m_fChargerDistance = 300.0f;
+	float m_fWitchDistance = 50.0f;
 	float m_fRockDistance = 350.0f;
 
 	float m_fShoveDstExtra = 25.0f;

@@ -268,6 +268,9 @@ void CTriggerBot::OnConfigSave(config_type & data)
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 {
+	if (!m_bActive)
+		return;
+	
 	if (!m_bCrosshairs && !m_bAimPosition)
 		return;
 	
