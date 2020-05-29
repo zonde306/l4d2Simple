@@ -21,27 +21,27 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
 
 	m_BlockQuery = {
-		{ "c_thirdpersonshoulder", "0" },
-		{ "mat_queue_mode", "-1" },
-		{ "mat_hdr_level", "2" },
-		{ "mat_postprocess_enable", "1" },
-		{ "r_drawothermodels", "1" },
-		{ "cl_drawshadowtexture", "0" },
-		{ "mat_fullbright", "0" },
-		{ "c_thirdpersonshoulderoffset", "0" },
-		{ "c_thirdpersonshoulderheight", "0" },
-		{ "cam_idealdist", "0" },
+		{ XorStr("c_thirdpersonshoulder"), "0" },
+		{ XorStr("mat_queue_mode"), "-1" },
+		{ XorStr("mat_hdr_level"), "2" },
+		{ XorStr("mat_postprocess_enable"), "1" },
+		{ XorStr("r_drawothermodels"), "1" },
+		{ XorStr("cl_drawshadowtexture"), "0" },
+		{ XorStr("mat_fullbright"), "0" },
+		{ XorStr("c_thirdpersonshoulderoffset"), "0" },
+		{ XorStr("c_thirdpersonshoulderheight"), "0" },
+		{ XorStr("cam_idealdist"), "0" },
 	};
 
 	m_BlockSetting = {
-		{ "sv_consistency", "0" },
-		{ "sv_pure", "0" },
+		{ XorStr("sv_consistency"), "0" },
+		{ XorStr("sv_pure"), "0" },
 	};
 
 	m_BlockExecute = {
-		"bind",
-		"exec",
-		"cl_consistencycheck",
+		XorStr("bind"),
+		XorStr("exec"),
+		XorStr("cl_consistencycheck"),
 	};
 }
 
@@ -581,7 +581,10 @@ inline void CAntiAntiCheat::CreateMenuList(const std::string& name, std::vector<
 		if (disName.empty())
 			continue;
 
-		if (m_szFilterText[0] != '\0' && disName.find(m_szFilterText) == std::string::npos)
+		std::string_view needle = m_szFilterText;
+
+		if (!needle.empty() &&
+			std::search(disName.begin(), disName.end(), std::boyer_moore_searcher(needle.begin(), needle.end())) == disName.end())
 			continue;
 
 		bool deleted = false;
