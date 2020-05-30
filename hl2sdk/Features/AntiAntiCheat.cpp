@@ -579,13 +579,19 @@ inline void CAntiAntiCheat::CreateMenuList(const std::string& name, std::vector<
 	{
 		std::string disName = display(*it);
 		if (disName.empty())
+		{
+			++it;
 			continue;
+		}
 
 		std::string_view needle = m_szFilterText;
 
 		if (!needle.empty() &&
 			std::search(disName.begin(), disName.end(), std::boyer_moore_searcher(needle.begin(), needle.end())) == disName.end())
+		{
+			++it;
 			continue;
+		}
 
 		bool deleted = false;
 		ImGui::Selectable(disName.c_str());
