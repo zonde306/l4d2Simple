@@ -22,6 +22,26 @@ int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string &
 	return g_mPropOffset[prop];
 }
 
+bool CBaseEntity::IsValid()
+{
+	if (this == nullptr)
+		return false;
+
+	IClientNetworkable* net = GetNetworkable();
+	if (net == nullptr)
+		return false;
+
+	try
+	{
+		return (!IsDormant() && GetIndex() > 0);
+	}
+	catch (...)
+	{
+	}
+
+	return false;
+}
+
 bool CBaseEntity::IsDormant()
 {
 	try

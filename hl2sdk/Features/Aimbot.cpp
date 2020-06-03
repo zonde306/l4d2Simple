@@ -260,6 +260,7 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 		g_pDrawing->DrawText(width, height + 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
 		g_pDrawing->DrawText(width, height + 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
 		g_pDrawing->DrawText(width, height + 48, CDrawing::PURPLE, true, XorStr("IsShotgun = %d"), HasShotgun(local->GetActiveWeapon()));
+		g_pDrawing->DrawText(width, height + 64, CDrawing::PURPLE, true, XorStr("entindex = %d"), m_iEntityIndex);
 	}
 
 	if (m_bShowTarget && m_pAimTarget && m_pAimTarget->IsAlive())
@@ -271,6 +272,8 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 				g_pDrawing->DrawCircleFilled(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
 			else
 				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
+
+			g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d(%d), h=%d"), m_iEntityIndex, m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
 		}
 	}
 }
@@ -330,6 +333,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 
 		if (m_bFatalFirst && i <= 64 && fov <= m_fAimFov && dist <= m_fAimDist && IsFatalTarget(entity))
 		{
+			m_iEntityIndex = i;
 			m_pAimTarget = entity;
 			minDistance = dist;
 			minFov = fov;
@@ -341,6 +345,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			// 距离优先
 			if (fov <= m_fAimFov && dist < minDistance)
 			{
+				m_iEntityIndex = i;
 				m_pAimTarget = entity;
 				minDistance = dist;
 				minFov = fov;
@@ -351,6 +356,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			// 最近优先
 			if (dist <= m_fAimDist && fov < minFov)
 			{
+				m_iEntityIndex = i;
 				m_pAimTarget = entity;
 				minDistance = dist;
 				minFov = fov;

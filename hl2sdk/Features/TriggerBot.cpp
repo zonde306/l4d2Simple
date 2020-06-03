@@ -168,7 +168,7 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("防止黑枪，瞄准队友时禁止开枪。");
 
 	ImGui::Checkbox(XorStr("Trigger No Witchs"), &m_bNonWitch);
-	IMGUI_TIPS("自动开枪不会射击队友。");
+	IMGUI_TIPS("自动开枪不会射击Witch。");
 
 	ImGui::Checkbox(XorStr("Trigger Position"), &m_bAimPosition);
 	IMGUI_TIPS("显示瞄准的位置，调试用。");
@@ -315,6 +315,9 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		{
 			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
 				color, true, XorStr("O"));
+
+			if(m_pAimTarget && m_pAimTarget->IsAlive())
+				g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d, h=%d"), m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
 		}
 	}
 }

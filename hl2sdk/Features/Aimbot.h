@@ -77,6 +77,7 @@ private:
 
 	float m_fTargetFov = 0.0f;
 	float m_fTargetDistance = 0.0f;
+	int m_iEntityIndex = -1;
 };
 
 extern CAimBot* g_pAimbot;

@@ -69,6 +69,7 @@ public:
 	inline IClientNetworkable* GetNetworkable();
 
 public:
+	bool IsValid();
 	bool IsDormant();
 	int GetIndex();
 	bool SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime);
