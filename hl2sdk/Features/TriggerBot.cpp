@@ -316,8 +316,10 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
 				color, true, XorStr("O"));
 
+			/*
 			if(m_pAimTarget && m_pAimTarget->IsAlive())
 				g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d, h=%d"), m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
+			*/
 		}
 	}
 }

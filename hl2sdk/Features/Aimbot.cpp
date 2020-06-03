@@ -273,7 +273,7 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 			else
 				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
 
-			g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d(%d), h=%d"), m_iEntityIndex, m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
+			// g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d(%d), h=%d"), m_iEntityIndex, m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
 		}
 	}
 }
