@@ -31,6 +31,16 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 		{ XorStr("c_thirdpersonshoulderoffset"), "0" },
 		{ XorStr("c_thirdpersonshoulderheight"), "0" },
 		{ XorStr("cam_idealdist"), "0" },
+		{ XorStr("sv_cheats"), "0" },
+		{ XorStr("mat_wireframe"), "0" },
+		{ XorStr("snd_show"), "0" },
+		{ XorStr("snd_visualize"), "0" },
+		{ XorStr("mat_proxy"), "0" },
+		{ XorStr("r_drawmodelstatsoverlay"), "0" },
+		{ XorStr("r_shadowwireframe"), "0" },
+		{ XorStr("r_showenvcubemap"), "0" },
+		{ XorStr("r_drawrenderboxes"), "0" },
+		{ XorStr("r_modelwireframedecal"), "0" },
 	};
 
 	m_BlockSetting = {
