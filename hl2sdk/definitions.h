@@ -655,6 +655,7 @@ enum EntityType_t
 	ET_WeaponFirework = 72,
 	ET_WeaponCola = 44,
 	ET_PhysicsProp = 127,
+	ET_WeaponPropaneTank = 142,
 };
 
 // CTerrorPlayer::m_zombieClass

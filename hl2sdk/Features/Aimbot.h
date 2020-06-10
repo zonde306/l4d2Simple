@@ -37,7 +37,7 @@ public:
 	virtual void OnConfigSave(config_type& data) override;
 
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
-	std::priority_queue<QueuedTarget_t> ScanTarget(const QAngle& myEyeAngles);
+	CBasePlayer* GetAimTarget(CBasePlayer* player, const QAngle& viewAngles);
 
 	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR);
 	bool IsValidTarget(CBasePlayer* entity);
@@ -64,6 +64,7 @@ private:	// 菜单项
 	bool m_bVelExt = true;
 	bool m_bForwardtrack = false;
 	bool m_bShowTarget = false;
+	bool m_bIgnoreTank = true;
 
 	float m_fAimFov = 30.0f;
 	float m_fAimDist = 3000.0f;

@@ -24,6 +24,7 @@ CTriggerBot* g_pTriggerBot = nullptr;
 #define IsMedicalWeapon(_id)		(_id == Weapon_FirstAidKit || _id == Weapon_Defibrillator || _id == Weapon_FireAmmo || _id == Weapon_ExplodeAmmo)
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
+#define IsSpecialInfected(_id)		(_id == ET_BOOMER || _id == ET_HUNTER || _id == ET_SMOKER || _id == ET_SPITTER || _id == ET_JOCKEY || _id == ET_CHARGER || _id == ET_TANK)
 
 CTriggerBot::CTriggerBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -332,14 +333,22 @@ public:
 		if (pEntityHandle == pSkip1)
 			return false;
 		
+		int classId = -1;
+
 		try
 		{
-			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+			classId = pEntityHandle->GetClassID();
 		}
 		catch (...)
 		{
 			return true;
 		}
+
+		if (classId == ET_SurvivorRescue)
+			return false;
+
+		if (classId == ET_CTERRORPLAYER && IsSpecialInfected(classId) && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+			return false;
 
 		return true;
 	}

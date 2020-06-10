@@ -37,6 +37,7 @@ CAimBot* g_pAimbot = nullptr;
 #define IsMedicalWeapon(_id)		(_id == Weapon_FirstAidKit || _id == Weapon_Defibrillator || _id == Weapon_FireAmmo || _id == Weapon_ExplodeAmmo)
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
+#define IsSpecialInfected(_id)		(_id == ET_BOOMER || _id == ET_HUNTER || _id == ET_SMOKER || _id == ET_SPITTER || _id == ET_JOCKEY || _id == ET_CHARGER || _id == ET_TANK)
 
 #define ANIM_CHARGER_CHARGING		5
 #define ANIM_SMOKER_PULLING			30
@@ -140,6 +141,9 @@ void CAimBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Ignore Witchs"), &m_bNonWitch);
 	IMGUI_TIPS("自动瞄准不瞄准 Witch。");
 	
+	ImGui::Checkbox(XorStr("Ignore Tank"), &m_bIgnoreTank);
+	IMGUI_TIPS("自动瞄准不瞄准 Tank。");
+	
 	ImGui::Checkbox(XorStr("Shotgun Chest"), &m_bShotgunChest);
 	IMGUI_TIPS("霰弹枪瞄准身体");
 	
@@ -197,6 +201,7 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
 	m_bFatalFirst = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
 	m_bShowTarget = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
+	m_bIgnoreTank = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -220,6 +225,7 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
@@ -309,6 +315,17 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 	if (local == nullptr)
 		return nullptr;
 	
+	m_pAimTarget = GetAimTarget(local, myEyeAngles);
+	if (m_pAimTarget && m_pAimTarget->IsValid())
+	{
+		int classId = m_pAimTarget->GetClassID();
+		if (classId == ET_WeaponGascan || classId == ET_WeaponPropaneTank || classId == ET_WeaponFirework || classId == ET_WeaponOxygen || classId == ET_TankRock)
+			return m_pAimTarget;
+
+		if (m_pAimTarget->IsAlive() && IsFatalTarget(m_pAimTarget))
+			return m_pAimTarget;
+	}
+
 	Vector myEyePosition = local->GetEyePosition();
 
 	float minFov = m_fAimFov, minDistance = m_fAimDist;
@@ -381,18 +398,63 @@ public:
 		if (pEntityHandle == pSkip1)
 			return false;
 
+		int classId = -1;
+
 		try
 		{
-			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+			classId = pEntityHandle->GetClassID();
 		}
 		catch (...)
 		{
 			return true;
 		}
 
+		if (classId == ET_SurvivorRescue)
+			return false;
+
+		if (classId == ET_CTERRORPLAYER && IsSpecialInfected(classId) && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+			return false;
+
 		return true;
 	}
 };
+
+CBasePlayer* CAimBot::GetAimTarget(CBasePlayer* player, const QAngle& viewAngles)
+{
+	// QAngle viewAngles;
+	// g_pInterface->Engine->GetViewAngles(viewAngles);
+	
+	CTriggerTraceFilter filter;
+	filter.pSkip1 = player;
+
+	Ray_t ray;
+	Vector startPosition = player->GetEyePosition();
+	if (m_bVelExt)
+		startPosition = math::VelocityExtrapolate(startPosition, player->GetVelocity(), m_bForwardtrack);
+
+	Vector endPosition = startPosition + viewAngles.Forward().Scale(3500.0f);
+	ray.Init(startPosition, endPosition);
+
+	trace_t trace;
+
+	try
+	{
+		// g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		// g_pClientHook->TraceLine2(startPosition, endPosition, MASK_SHOT, player, CG_PLAYER|CG_NPC|CG_DEBRIS|CG_VEHICLE, &trace);
+		g_pInterface->TraceLine(startPosition, endPosition, MASK_SHOT, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CAimBot.GetAimTarget.TraceRay Error."));
+		m_pAimTarget = nullptr;
+		return nullptr;
+	}
+
+	if (trace.m_pEnt == player || !IsValidTarget(reinterpret_cast<CBasePlayer*>(trace.m_pEnt)))
+		return nullptr;
+
+	return reinterpret_cast<CBasePlayer*>(trace.m_pEnt);
+}
 
 bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition)
 {
@@ -431,9 +493,13 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition)
 
 bool CAimBot::IsValidTarget(CBasePlayer * entity)
 {
-	if (entity == nullptr)
+	if (entity == nullptr || !entity->IsValid())
 		return false;
 	
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local && entity->GetClassID() == ET_TankRock && local->GetTeam() == 2)
+		return true;
+
 	try
 	{
 		if (!entity->IsAlive() || entity->GetClassID() == ET_TankRock)
@@ -445,7 +511,6 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 	}
 
 	int team = entity->GetTeam();
-	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local != nullptr)
 	{
 		if (team == 4)
@@ -465,6 +530,12 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 			return false;
 	}
 	*/
+
+	if (m_bIgnoreTank)
+	{
+		if (entity->GetClassID() == ET_TANK)
+			return false;
+	}
 
 	if (m_bNonWitch)
 	{
@@ -602,8 +673,7 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (entity->GetFlags() & FL_ONGROUND)
 				return false;
 
-			// 或许使用 velocity 更好
-			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
 			if (fov > 15.0f)
 				return false;
 
@@ -620,14 +690,23 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (entity->GetFlags() & FL_ONGROUND)
 				return false;
 
-			// 或许使用 velocity 更好
-			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
 			if (fov > 15.0f)
 				return false;
 
 			return true;
 		}
-		/*
+		case ZC_ROCK:
+		{
+			if (distance > 1000.0f)
+				return false;
+			
+			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetAbsOrigin(), local->GetChestOrigin()));
+			if (fov > 15.0f)
+				return false;
+
+			return true;
+		}
 		case ZC_CHARGER:
 		{
 			static ConVar* cvChargeDuration = g_pInterface->Cvar->FindVar(XorStr("z_charge_duration"));
@@ -638,12 +717,13 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
 				return false;
 
-			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
+			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
 			if (fov > 30.0f)
 				return false;
 
 			return true;
 		}
+		/*
 		case ZC_WITCH:
 		{
 			if (distance > 1000.0f)
