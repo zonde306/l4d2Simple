@@ -279,7 +279,7 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 			else
 				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
 
-			// g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d(%d), h=%d"), m_iEntityIndex, m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
+			g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetHealth());
 		}
 	}
 }
@@ -322,7 +322,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 		if (classId == ET_WeaponGascan || classId == ET_WeaponPropaneTank || classId == ET_WeaponFirework || classId == ET_WeaponOxygen || classId == ET_TankRock)
 			return m_pAimTarget;
 
-		if (m_pAimTarget->IsAlive() && IsFatalTarget(m_pAimTarget))
+		if (IsValidTarget(m_pAimTarget) && IsFatalTarget(m_pAimTarget))
 			return m_pAimTarget;
 	}
 
@@ -412,7 +412,7 @@ public:
 		if (classId == ET_SurvivorRescue)
 			return false;
 
-		if (classId == ET_CTERRORPLAYER && IsSpecialInfected(classId) && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+		if (classId == ET_CTERRORPLAYER && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
 			return false;
 
 		return true;
@@ -450,7 +450,7 @@ CBasePlayer* CAimBot::GetAimTarget(CBasePlayer* player, const QAngle& viewAngles
 		return nullptr;
 	}
 
-	if (trace.m_pEnt == player || !IsValidTarget(reinterpret_cast<CBasePlayer*>(trace.m_pEnt)))
+	if (trace.m_pEnt == player || !trace.m_pEnt->IsValid())
 		return nullptr;
 
 	return reinterpret_cast<CBasePlayer*>(trace.m_pEnt);

@@ -41,15 +41,12 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr)
+	if (player == nullptr || !player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge())
 		return;
 
 	// QAngle viewAngles;
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
 	GetAimTarget(cmd->viewangles);
-
-	if (!player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge())
-		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
 	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
@@ -58,7 +55,10 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	// 检查目标是否可以被攻击
 	int team = m_pAimTarget->GetTeam();
 	int classId = m_pAimTarget->GetClassID();
-	if (team == 4 || (team == 3 && classId != ET_TankRock && m_pAimTarget->IsGhost()))
+	if (classId == ET_TankRock)
+		team = 3;
+
+	if (team >= 4 || team <= 1)
 		return;
 
 	// 检查队友是否被控
@@ -307,6 +307,9 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
 		g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
 		g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
+
+		if(m_pAimTarget && m_pAimTarget->IsValid())
+			g_pDrawing->DrawText(width, height - 26, CDrawing::WHITE, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetIndex());
 	}
 
 	if (m_bAimPosition)
@@ -347,7 +350,7 @@ public:
 		if (classId == ET_SurvivorRescue)
 			return false;
 
-		if (classId == ET_CTERRORPLAYER && IsSpecialInfected(classId) && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+		if (classId == ET_CTERRORPLAYER && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
 			return false;
 
 		return true;
@@ -401,10 +404,13 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 
 bool CTriggerBot::IsValidTarget(CBasePlayer * entity)
 {
-	if (entity == nullptr || !entity->IsAlive())
+	if (entity == nullptr || !entity->IsValid())
 		return false;
 
-	return true;
+	if(entity->GetClassID() == ET_TankRock || entity->IsAlive())
+		return true;
+
+	return false;
 }
 
 bool CTriggerBot::HasValidWeapon(CBaseWeapon * weapon)
