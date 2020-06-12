@@ -1425,10 +1425,10 @@ std::pair<float, float> CClientPrediction::GetWeaponSpread(int seed, CBaseWeapon
 
 	float horizontal = 0.0f, vertical = 0.0f;
 	g_pInterface->SharedRandomFloat(XorStr("CTerrorGun::FireBullet HorizSpread"), -spread, spread, 0);
-	__asm fstp horizontal;
+	__asm fstp horizontal;	// 由于优化的问题，这里使用 asm 获取返回值
 
 	g_pInterface->SharedRandomFloat(XorStr("CTerrorGun::FireBullet VertSpread"), -spread, spread, 0);
-	__asm fstp vertical;
+	__asm fstp vertical;	// 由于优化的问题，这里使用 asm 获取返回值
 
 	weapon->GetSpread() = oldSpread;
 	*m_pSpreadRandomSeed = oldSeed;

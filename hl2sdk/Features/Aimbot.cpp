@@ -263,10 +263,12 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 		else
 			g_pDrawing->DrawCircle(width, height, static_cast<int>(radius), CDrawing::WHITE);
 
+#ifdef _DEBUG
 		g_pDrawing->DrawText(width, height + 16, CDrawing::ORANGE, true, XorStr("aimDistance = %.0f"), m_fTargetDistance);
 		g_pDrawing->DrawText(width, height + 32, CDrawing::YELLOW, true, XorStr("aimFov = %.0f"), m_fTargetFov);
 		g_pDrawing->DrawText(width, height + 48, CDrawing::PURPLE, true, XorStr("IsShotgun = %d"), HasShotgun(local->GetActiveWeapon()));
 		g_pDrawing->DrawText(width, height + 64, CDrawing::PURPLE, true, XorStr("entindex = %d"), m_iEntityIndex);
+#endif
 	}
 
 	if (m_bShowTarget && m_pAimTarget && m_pAimTarget->IsAlive())
@@ -279,7 +281,9 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 			else
 				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
 
+#ifdef _DEBUG
 			g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetHealth());
+#endif
 		}
 	}
 }

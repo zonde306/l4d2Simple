@@ -19,7 +19,7 @@ public:
 	virtual void OnConnect() override;
 	virtual void OnDisconnect() override;
 
-	bool ApplySilentAngles(const QAngle& viewAngles);
+	bool ApplySilentAngles(const QAngle& viewAngles, int ticks = 1);
 	bool ApplySilentFire(const QAngle& viewAngles);
 
 	void RunNoRecoilSpread(CUserCmd* cmd, CBaseWeapon* weapon, bool* bSendPacket);
@@ -47,7 +47,7 @@ private:
 
 private:
 	bool m_bSilentFire = false;
-	bool m_bSilentOnce = false;
+	int m_iSilentTicks = -1;
 	QAngle m_vecSilentAngles = INVALID_VECTOR;
 
 private:

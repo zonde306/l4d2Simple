@@ -42,11 +42,12 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_bRapidFire)
 		RunRapidFire(cmd, local, weapon);
 
-	bool canFire = weapon->CanFire();
+	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
-	if (weapon->IsFireGun() && canFire && m_bHasFiring)
+	// 推没有后坐力的
+	if (weapon->IsFireGun() && canFire && m_bHasFiring && (cmd->buttons & IN_ATTACK))
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
 
 	m_bHasSilent = !(*bSendPacket);
@@ -210,19 +211,19 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 		static_cast<int>(screen.x - 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
 }
 
-bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
+bool CViewManager::ApplySilentAngles(const QAngle& viewAngles, int ticks)
 {
-	if (m_bSilentFire || m_bSilentOnce)
+	if (m_bSilentFire || m_iSilentTicks > -1 || ticks < 1)
 		return false;
 
-	m_bSilentOnce = true;
+	m_iSilentTicks = ticks;
 	m_vecSilentAngles = viewAngles;
 	return true;
 }
 
-bool CViewManager::ApplySilentFire(const QAngle & viewAngles)
+bool CViewManager::ApplySilentFire(const QAngle& viewAngles)
 {
-	if (m_bSilentFire || m_bSilentOnce)
+	if (m_bSilentFire || m_iSilentTicks > -1)
 		return false;
 
 	m_bSilentFire = true;
@@ -351,21 +352,22 @@ void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFir
 			m_vecSilentAngles.Invalidate();
 		}
 	}
-	else if (m_bSilentOnce)
+	else if (m_iSilentTicks > -1)
 	{
-		if (m_vecSilentAngles.IsValid())
+		if (m_iSilentTicks > 0 && m_vecSilentAngles.IsValid())
 		{
 			StartSilent(cmd);
 			cmd->viewangles = m_vecSilentAngles;
 			*bSendPacket = false;
-			m_vecSilentAngles.Invalidate();
 		}
 		else
 		{
-			m_bSilentOnce = false;
+			m_iSilentTicks = -1;
 			FinishSilent(cmd);
 			m_vecSilentAngles.Invalidate();
 		}
+
+		m_iSilentTicks -= 1;
 	}
 }
 

@@ -14,6 +14,10 @@ public:
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
 
+	virtual bool OnEmitSound(std::string& sample, int& entity, int& channel, float& volume,
+		SoundLevel_t& level, int& flags, int& pitch, Vector& origin, Vector& direction,
+		bool& updatePosition, float& soundTime) override;
+
 private:
 	void HandleShotSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 	void HandleMeleeSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
@@ -21,7 +25,7 @@ private:
 	void HandleWitchCrown(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 
 	QAngle GetAimAngles(CBasePlayer* self, CBasePlayer* enemy, std::optional<bool> visable = {});
-	void SetAimAngles(CUserCmd* cmd, QAngle& aimAngles);
+	void SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick = false);
 	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 	bool HasShotgun(CBaseWeapon* weapon);
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
@@ -34,6 +38,9 @@ private:
 	bool m_bOnlyVisible = true;
 	bool m_bPerfectSilent = true;
 	bool m_bSilent = true;
+	bool m_bCheckFov = true;
+	bool m_bAllowShot = true;
+	float m_iShoveTicks = 3.0f;
 
 	bool m_bSmoker = true;
 	bool m_bHunter = true;
@@ -51,6 +58,8 @@ private:
 
 	float m_fShoveDstExtra = 25.0f;
 	float m_fMeleeDstExtra = 30.0f;
+
+	CBasePlayer* m_pSmokerAttacker = nullptr;
 };
 
 extern CQuickTriggerEvent* g_pQTE;

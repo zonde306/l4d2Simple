@@ -517,7 +517,7 @@ bool CBasePlayer::CanShove()
 	if (weapon == nullptr)
 		return false;
 
-	return (weapon->GetSecondryAttackDelay() <= 0.0f);
+	return weapon->CanShove();
 }
 
 bool CBasePlayer::CanAttack()

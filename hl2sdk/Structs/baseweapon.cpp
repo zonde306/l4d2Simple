@@ -203,3 +203,8 @@ bool CBaseWeapon::IsFireGun()
 	int weaponId = GetWeaponID();
 	return IsGunWeapon(weaponId);
 }
+
+bool CBaseWeapon::CanShove()
+{
+	return (GetSecondryAttackDelay() <= 0.0f);
+}

@@ -308,8 +308,10 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
 		g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
 
+#ifdef _DEBUG
 		if(m_pAimTarget && m_pAimTarget->IsValid())
 			g_pDrawing->DrawText(width, height - 26, CDrawing::WHITE, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetIndex());
+#endif
 	}
 
 	if (m_bAimPosition)

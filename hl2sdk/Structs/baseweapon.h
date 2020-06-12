@@ -73,4 +73,7 @@ public:
 
 	// 是否为枪械
 	bool IsFireGun();
+
+	// 现在是否可以推(或者抓)
+	bool CanShove();
 };
