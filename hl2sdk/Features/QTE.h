@@ -40,7 +40,9 @@ private:
 	bool m_bSilent = true;
 	bool m_bCheckFov = true;
 	bool m_bAllowShot = true;
+	bool m_bAllowMelee = true;
 	float m_iShoveTicks = 3.0f;
+	bool m_bMeleeAsShove = false;
 
 	bool m_bSmoker = true;
 	bool m_bHunter = true;

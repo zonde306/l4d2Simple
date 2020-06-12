@@ -38,17 +38,17 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	float distance = 1000.0f;
 	CBasePlayer* player = nullptr;
 	bool canFire = (m_bAllowShot && weapon->IsFireGun() && weapon->CanFire());
-	bool hasMelee = (weapon->GetWeaponID() == Weapon_Melee);
+	bool hasMelee = (m_bAllowMelee && weapon->GetWeaponID() == Weapon_Melee);
+	Vector myOrigin = local->GetEyePosition();
 
-	/*
-	// 这里没有效果。。。
+	// 这里好像没有效果。。。
 	CBaseHandle handle = local->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_tongueOwner"));
 	if (handle.IsValid() && !local->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isProneTongueDrag")))
 	{
 		player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 		if (player != nullptr)
 		{
-			distance = local->GetAbsOrigin().DistTo(player->GetAbsOrigin());
+			distance = myOrigin.DistTo(player->GetAbsOrigin());
 			
 			if (hasMelee)
 				HandleMeleeSelfClear(local, player, cmd, distance);
@@ -57,16 +57,14 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			else
 				HandleShoveSelfClear(local, player, cmd, distance);
 
+			// 优先处理被拉自救，其他的先不管了
 			return;
 		}
 	}
-	*/
-
-	Vector myOrigin = local->GetEyePosition();
 
 	if (m_pSmokerAttacker && m_pSmokerAttacker->IsAlive())
 	{
-		float distance = myOrigin.DistTo(myOrigin);
+		float distance = myOrigin.DistTo(m_pSmokerAttacker->GetEyePosition());
 
 		if (hasMelee)
 			HandleMeleeSelfClear(local, m_pSmokerAttacker, cmd, distance);
@@ -312,6 +310,12 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	
 	ImGui::Checkbox(XorStr("Allow Shot"), &m_bAllowShot);
 	IMGUI_TIPS("允许射击");
+	
+	ImGui::Checkbox(XorStr("Allow Melee"), &m_bAllowMelee);
+	IMGUI_TIPS("允许近战");
+	
+	ImGui::Checkbox(XorStr("Melee TickMode"), &m_bMeleeAsShove);
+	IMGUI_TIPS("近战武器攻击使用推的形式(基于tick)，如果近战砍不到则开启");
 
 	ImGui::SliderFloat(XorStr("Shove Range Extra"), &m_fShoveDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("推预测范围");
@@ -373,7 +377,9 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 	m_bAllowShot = g_pConfig->GetBoolean(mainKeys, XorStr("qte_shot"), m_bAllowShot);
+	m_bAllowMelee = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee"), m_bAllowMelee);
 	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
 	m_iShoveTicks = g_pConfig->GetFloat(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
 
 	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
@@ -419,7 +425,9 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_shot"), m_bAllowShot);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee"), m_bAllowMelee);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
 }
 
@@ -481,11 +489,13 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	{
 		cmd->buttons |= IN_ATTACK;
 
+		/*
 		// 砍舌头需要稍微往下一点，不然砍不到
 		if (enemy->GetZombieType() == ZC_SMOKER)
-			aimAngles.x += 10.0f;
+			aimAngles.x += 15.0f;
+		*/
 
-		SetAimAngles(cmd, aimAngles);
+		SetAimAngles(cmd, aimAngles, m_bMeleeAsShove);
 	}
 }
 
