@@ -88,7 +88,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (player == nullptr || player == local)
+		if (player == nullptr || player == local || !player->IsValid())
 			continue;
 
 		if (!player->IsPlayer())
@@ -97,6 +97,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			if (classId != ET_WITCH && classId != ET_TankRock)
 				continue;
 		}
+		else if (player->IsGhost())
+			continue;
 
 		aimOrigin = GetTargetAimPosition(player);
 		if (!aimOrigin.IsValid())

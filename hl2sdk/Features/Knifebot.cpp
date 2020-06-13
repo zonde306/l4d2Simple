@@ -212,14 +212,22 @@ public:
 		if (pEntityHandle == pSkip1)
 			return false;
 
+		int classId = -1;
+
 		try
 		{
-			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+			classId = pEntityHandle->GetClassID();
 		}
 		catch (...)
 		{
 			return true;
 		}
+
+		if (classId == ET_SurvivorRescue)
+			return false;
+
+		if (classId == ET_CTERRORPLAYER && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+			return false;
 
 		return true;
 	}
@@ -292,6 +300,9 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
 		if (entity == nullptr || entity == local || !entity->IsAlive() || entity->GetTeam() == team ||
 			entity->GetClassID() == ET_TankRock)
+			continue;
+
+		if (entity->IsPlayer() && entity->IsGhost())
 			continue;
 
 		int targetTeam = entity->GetTeam();
