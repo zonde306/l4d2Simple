@@ -24,6 +24,8 @@
 #define HITBOX_CHEST_TANK			9
 #define HITBOX_CHEST_WITCH			8
 
+#define SIG_IS_LUNGING				XorStr("56 E8 ? ? ? ? 8B F0 85 F6 75 04")
+
 Vector CBasePlayer::GetEyePosition()
 {
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecViewOffset[0]"));
@@ -388,6 +390,14 @@ Vector CBasePlayer::GetChestOrigin()
 		return GetHitboxOrigin(HITBOX_CHEST_WITCH);
 
 	return GetAbsOrigin();
+}
+
+bool CBasePlayer::IsLunging()
+{
+	using FnIsLunging = bool (__thiscall*)(CBasePlayer*);
+	static FnIsLunging fn = reinterpret_cast<FnIsLunging>(Utils::FindPattern(XorStr("client.dll"), SIG_IS_LUNGING));
+	
+	return fn(this);
 }
 
 bool CBasePlayer::IsAlive()

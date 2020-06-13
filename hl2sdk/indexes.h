@@ -135,6 +135,7 @@ namespace indexes
 	const int IsBaseCombatCharacter = 144;
 	const int IsNPC = 148;		// 这个永远返回 0
 	const int IsNextBot = 149;	// Infected 和 Witch 会返回 1 的
+	const int IsBaseCombatWeapon = 151;
 	const int EyePosition = 156;
 	const int EyeAngles = 157;
 	const int IsAbilityReadyToFire = 172;

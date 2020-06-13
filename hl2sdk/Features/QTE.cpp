@@ -91,6 +91,13 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		if (player == nullptr || player == local)
 			continue;
 
+		if (!player->IsPlayer())
+		{
+			int classId = player->GetClassID();
+			if (classId != ET_WITCH && classId != ET_TankRock)
+				continue;
+		}
+
 		aimOrigin = GetTargetAimPosition(player);
 		if (!aimOrigin.IsValid())
 			continue;
@@ -100,7 +107,11 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 
 		ZombieClass_t classId = player->GetZombieType();
 		distance = myOrigin.DistTo(aimOrigin);
-		fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
+
+		if(player->IsPlayer())
+			fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
+		else
+			fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
 
 		/*
 		if (classId != ZC_SMOKER && classId != ZC_HUNTER && classId != ZC_JOCKEY && classId != ZC_CHARGER)

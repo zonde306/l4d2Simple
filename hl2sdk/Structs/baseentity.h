@@ -87,6 +87,8 @@ public:
 	bool IsNPC();
 	MoveType_t GetMoveType();
 	const char* GetClassname();
+	Vector GetEyePosition();
+	const QAngle& GetEyeAngles();
 };
 
 template<typename T>

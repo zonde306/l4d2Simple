@@ -237,3 +237,17 @@ const char * CBaseEntity::GetClassname()
 	static FnGetClassname fn = reinterpret_cast<FnGetClassname>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLASSNAME));
 	return fn(this);
 }
+
+Vector CBaseEntity::GetEyePosition()
+{
+	using FnEyePosition = Vector(__thiscall*)(CBaseEntity*);
+	FnEyePosition fn = Utils::GetVTableFunction<FnEyePosition>(this, indexes::EyePosition);
+	return fn(this);
+}
+
+const QAngle& CBaseEntity::GetEyeAngles()
+{
+	using FnEyeAngles = const QAngle&(__thiscall*)(CBaseEntity*);
+	FnEyeAngles fn = Utils::GetVTableFunction<FnEyeAngles>(this, indexes::EyeAngles);
+	return fn(this);
+}
