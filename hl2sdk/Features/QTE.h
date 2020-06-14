@@ -43,6 +43,7 @@ private:
 	bool m_bAllowMelee = true;
 	float m_iShoveTicks = 3.0f;
 	bool m_bMeleeAsShove = false;
+	bool m_bForceShot = false;
 
 	bool m_bSmoker = true;
 	bool m_bHunter = true;
@@ -60,6 +61,9 @@ private:
 
 	float m_fShoveDstExtra = 25.0f;
 	float m_fMeleeDstExtra = 30.0f;
+	
+	float m_fHunterFov = 20.0f;
+	float m_fJockeyFov = 30.0f;
 
 	CBasePlayer* m_pSmokerAttacker = nullptr;
 };

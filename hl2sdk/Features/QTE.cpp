@@ -37,8 +37,10 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 
 	float distance = 1000.0f;
 	CBasePlayer* player = nullptr;
+	int weaponId = weapon->GetWeaponID();
+	bool canShot = (m_bForceShot && weapon->IsFireGun() && weapon->CanFire());
 	bool canFire = (m_bAllowShot && weapon->IsFireGun() && weapon->CanFire());
-	bool hasMelee = (m_bAllowMelee && weapon->GetWeaponID() == Weapon_Melee);
+	bool hasMelee = (m_bAllowMelee && weaponId == Weapon_Melee);
 	Vector myOrigin = local->GetEyePosition();
 
 	// 这里好像没有效果。。。
@@ -104,16 +106,18 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		if (!aimOrigin.IsValid())
 			continue;
 
-		if (m_bVelExt)
+		if (m_bVelExt && player->IsPlayer())
 			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
 
 		ZombieClass_t classId = player->GetZombieType();
 		distance = myOrigin.DistTo(aimOrigin);
 
+		/*
 		if(player->IsPlayer())
 			fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
 		else
 			fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
+		*/
 
 		/*
 		if (classId != ZC_SMOKER && classId != ZC_HUNTER && classId != ZC_JOCKEY && classId != ZC_CHARGER)
@@ -134,7 +138,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
 					continue;
 
-				if (m_bCheckFov && fov > 30.0f)
+				fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
+				if (m_bCheckFov && fov > 10.0f)
 					continue;
 
 				break;
@@ -154,7 +159,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > m_fHunterDistance)
 					continue;
 
-				if (m_bCheckFov && fov > 15.0f)
+				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
+				if (m_bCheckFov && fov > m_fHunterFov)
 					continue;
 
 				break;
@@ -167,8 +173,10 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (player->GetFlags() & FL_ONGROUND)
 					continue;
 				
+				/*
 				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
 					continue;
+				*/
 
 				/*
 				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
@@ -178,7 +186,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > m_fJockeyDistance)
 					continue;
 
-				if (m_bCheckFov && fov > 15.0f)
+				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), local->GetHeadOrigin()));
+				if (m_bCheckFov && fov > m_fJockeyFov)
 					continue;
 
 				break;
@@ -216,6 +225,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > m_fChargerDistance)
 					continue;
 
+				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
 				if (m_bCheckFov && fov > 30.0f)
 					continue;
 
@@ -232,8 +242,12 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > m_fWitchDistance)
 					continue;
 
+				/*
+				CBaseEntity* entity = static_cast<CBaseEntity*>(player);
+				fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), myOrigin));
 				if (m_bCheckFov && fov > 15.0f)
 					continue;
+				*/
 
 				break;
 			}
@@ -245,6 +259,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (distance > m_fRockDistance)
 					continue;
 
+				const Vector& velocity = player->GetNetProp<Vector>(XorStr("DT_BaseGrenade"), XorStr("m_vecVelocity"));
+				fov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
 				if (m_bCheckFov && fov > 15.0f)
 					continue;
 
@@ -255,6 +271,16 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		switch (classId)
 		{
 			case ZC_SMOKER:
+			{
+				if (hasMelee)
+					HandleMeleeSelfClear(local, player, cmd, distance);
+				else if (canFire)
+					HandleShotSelfClear(local, player, cmd, distance);
+				else
+					HandleShoveSelfClear(local, player, cmd, distance);
+				
+				break;
+			}
 			case ZC_HUNTER:
 			case ZC_JOCKEY:
 			{
@@ -279,8 +305,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			}
 			case ZC_WITCH:
 			{
-				int weaponId = weapon->GetWeaponID();
-				if (canFire && IsShotgun(weaponId))
+				if ((canFire || canShot) && IsShotgun(weaponId))
 					HandleWitchCrown(local, player, cmd, distance);
 
 				break;
@@ -323,6 +348,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	
 	ImGui::Checkbox(XorStr("Allow Shot"), &m_bAllowShot);
 	IMGUI_TIPS("允许射击");
+	
+	ImGui::Checkbox(XorStr("Allow Shot Witch"), &m_bForceShot);
+	IMGUI_TIPS("允许射击 Witch");
 	
 	ImGui::Checkbox(XorStr("Allow Melee"), &m_bAllowMelee);
 	IMGUI_TIPS("允许近战");
@@ -376,6 +404,13 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("RockSkeet Distance"), &m_fRockDistance, 1.0f, 500.0f, ("%.1f"));
 	IMGUI_TIPS("打石头范围");
 
+	ImGui::Separator();
+	ImGui::SliderFloat(XorStr("Hunter Lunge FOV"), &m_fHunterFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("推猎人视野");
+
+	ImGui::SliderFloat(XorStr("Jockey Lunge FOV"), &m_fJockeyFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("推猴视野");
+
 	ImGui::TreePop();
 }
 
@@ -390,6 +425,7 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 	m_bAllowShot = g_pConfig->GetBoolean(mainKeys, XorStr("qte_shot"), m_bAllowShot);
+	m_bForceShot = g_pConfig->GetBoolean(mainKeys, XorStr("qte_shot_forced"), m_bForceShot);
 	m_bAllowMelee = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee"), m_bAllowMelee);
 	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
 	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
@@ -411,6 +447,9 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 
 	m_fShoveDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
 	m_fMeleeDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
+
+	m_fHunterFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	m_fJockeyFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
 }
 
 void CQuickTriggerEvent::OnConfigSave(config_type & data)
@@ -438,10 +477,13 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_shot"), m_bAllowShot);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_shot_forced"), m_bForceShot);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_melee"), m_bAllowMelee);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
 }
 
 bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,
@@ -538,7 +580,7 @@ void CQuickTriggerEvent::HandleWitchCrown(CBasePlayer * self,
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, self->GetVelocity(), m_bLagExt);
-		aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, enemy->GetVelocity(), m_bLagExt);
+		// aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, enemy->GetVelocity(), m_bLagExt);
 	}
 
 	QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
