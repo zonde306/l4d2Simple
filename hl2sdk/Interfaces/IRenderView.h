@@ -372,6 +372,7 @@ public:
 #endif
 };
 
+/*
 class CViewSetup
 {
 public:
@@ -405,3 +406,4 @@ public:
 	char _0x0104[68];
 	__int32 m_EdgeBlur;
 };
+*/

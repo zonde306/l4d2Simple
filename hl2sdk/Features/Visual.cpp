@@ -240,6 +240,16 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("My Spectator"), &m_bSpectator);
 	IMGUI_TIPS("显示当前观察者。");
+	
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Fov Changer"), &m_bFovChanger);
+	IMGUI_TIPS("修改 FOV");
+	
+	ImGui::SliderFloat(XorStr("Fov"), &m_fFov, 90.0f, 150.0f, XorStr("%.0f"));
+	IMGUI_TIPS("修改 FOV");
+	
+	ImGui::SliderFloat(XorStr("Viewmodel Fov"), &m_fViewFov, 10.0f, 130.0f, XorStr("%.0f"));
+	IMGUI_TIPS("修改 Viewmodel FOV");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Player Barrel"), &m_bBarrel);
@@ -250,7 +260,7 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("No Vomit Effect"), &m_bNoVomit);
-	IMGUI_TIPS("去除胆子屏幕效果。");
+	IMGUI_TIPS("去除胆汁屏幕效果。");
 
 	ImGui::Checkbox(XorStr("No Infected Vision"), &m_bCleanVision);
 	IMGUI_TIPS("去除特感黄色屏幕。");
@@ -285,6 +295,9 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_bCleanVision = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	m_bCleanGhost = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 	m_bNoFog = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	m_fFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	m_fViewFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	m_bFovChanger = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -308,6 +321,9 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -351,6 +367,22 @@ bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & tex
 		textureGroupName.clear();
 	}
 
+	return true;
+}
+
+void CVisualPlayer::OnOverrideView(CViewSetup* setup)
+{
+	if(m_bFovChanger)
+		setup->m_fov = m_fFov;
+	// setup->m_viewmodelfov = m_fViewFov;
+}
+
+bool CVisualPlayer::OnGetViewModelFOV(float& fov)
+{
+	if (!m_bFovChanger)
+		return false;
+	
+	fov = m_fViewFov;
 	return true;
 }
 

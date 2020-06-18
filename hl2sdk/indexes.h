@@ -151,6 +151,8 @@ namespace indexes
 	const int SharedCreateMove = 27;
 	const int GetMessagePanel = 24;
 	const int KeyInput = 21;
+	const int OverrideView = 19;
+	const int GetViewModelFOV = 40;
 
 	// CBaseHudChat
 	const int Printf = 22;

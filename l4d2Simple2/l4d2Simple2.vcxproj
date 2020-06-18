@@ -308,6 +308,7 @@
     <ClInclude Include="..\hl2sdk\Structs\recvprop.h" />
     <ClInclude Include="..\hl2sdk\Structs\trace.h" />
     <ClInclude Include="..\hl2sdk\Structs\usercmd.h" />
+    <ClInclude Include="..\hl2sdk\Structs\viewsetup.h" />
     <ClInclude Include="..\hl2sdk\Structs\vplane.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_crc.h" />
     <ClInclude Include="..\hl2sdk\Utils\checksum_md5.h" />

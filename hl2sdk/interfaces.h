@@ -29,29 +29,30 @@
 #include "./Interfaces/IKeyValuesSystem.h"
 #include "./Structs/baseplayerresource.h"
 #include "./Structs/netprop.h"
+#include "./Structs/viewsetup.h"
 #include <Windows.h>
 #include <string>
 #include <sstream>
 #include <memory>
 
 // 搜索到的函数
-typedef void(__thiscall* FnStartDrawing)(ISurface* _this);
-typedef void(__thiscall* FnFinishDrawing)(ISurface* _this);
-typedef void(__cdecl* FnWriteUsercmd)(bf_write* buf, CUserCmd* to, CUserCmd* from);
-typedef int(__cdecl* FnSetPredictionRandomSeed)(int seed);
-typedef void(__cdecl* FnSharedRandomFloat)(const char* name, float min, float max, int slots);
-typedef void(__cdecl* FnTraceLine2)(const Vector& start, const Vector& end, unsigned int mask, const IHandleEntity* ignore, int collisionGroup, trace_t* result);
-typedef void(__cdecl* FnTraceLine)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
-typedef void(__cdecl* FnClipTraceToPlayers)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
+using FnStartDrawing = void(__thiscall*)(ISurface* _this);
+using FnFinishDrawing = void(__thiscall*)(ISurface* _this);
+using FnWriteUsercmd = void(__cdecl*)(bf_write* buf, CUserCmd* to, CUserCmd* from);
+using FnSetPredictionRandomSeed = int(__cdecl*)(int seed);
+using FnSharedRandomFloat = void(__cdecl*)(const char* name, float min, float max, int slots);
+using FnTraceLine2 = void(__cdecl*)(const Vector& start, const Vector& end, unsigned int mask, const IHandleEntity* ignore, int collisionGroup, trace_t* result);
+using FnTraceLine = void(__cdecl*)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
+using FnClipTraceToPlayers = void(__cdecl*)(const Vector& start, const Vector& end, unsigned int mask, ITraceFilter* filter, trace_t* result);
 
 // 导出函数
-typedef void(__cdecl* FnRandomSeed)(int iSeed);
-typedef float(__cdecl* FnRandomFloat)(float flMinVal, float flMaxVal);
-typedef float(__cdecl* FnRandomFloatExp)(float flMinVal, float flMaxVal, float flExponent);
-typedef int(__cdecl* FnRandomInt)(int iMinVal, int iMaxVal);
-typedef float(__cdecl* FnRandomGaussianFloat)(float flMean, float flStdDev);
-typedef void(__cdecl* FnInstallUniformRandomStream)(IUniformRandomStream* pStream);
-typedef IKeyValuesSystem*(__cdecl* FnKeyValuesSystem)();
+using FnRandomSeed = void(__cdecl*)(int iSeed);
+using FnRandomFloat = float(__cdecl*)(float flMinVal, float flMaxVal);
+using FnRandomFloatExp = float(__cdecl*)(float flMinVal, float flMaxVal, float flExponent);
+using FnRandomInt = int(__cdecl*)(int iMinVal, int iMaxVal);
+using FnRandomGaussianFloat = float(__cdecl*)(float flMean, float flStdDev);
+using FnInstallUniformRandomStream = void(__cdecl*)(IUniformRandomStream* pStream);
+using FnKeyValuesSystem = IKeyValuesSystem*(__cdecl*)();
 
 class CClientInterface
 {

@@ -668,6 +668,9 @@
     <ClInclude Include="..\hl2sdk\Structs\MRecipientFilter.h">
       <Filter>hl2sdk\Structs</Filter>
     </ClInclude>
+    <ClInclude Include="..\hl2sdk\Structs\viewsetup.h">
+      <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\detours\hook.def">

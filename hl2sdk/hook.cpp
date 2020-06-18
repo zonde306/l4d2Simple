@@ -46,6 +46,7 @@ extern time_t g_tpGameTimer;
 #define SIG_CREATEMOVESHARED		XorStr("55 8B EC 6A FF E8 ? ? ? ? 83 C4 04 85 C0 75 06 B0 01")
 #define SIG_SEND_NETMSG				XorStr("55 8B EC 56 8B F1 8D 8E ? ? ? ? E8 ? ? ? ? 85 C0 75 07 B0 01 5E 5D C2 0C 00 53")
 #define SIG_RANDOM_SEED				XorStr("A3 ? ? ? ? 5D C3 55")
+#define SIG_OVERRIDE_VIEW			XorStr("55 8B EC 83 EC 40 6A FF ")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
@@ -650,6 +651,8 @@ void CClientHook::InstallClientModeHook(IClientMode * pointer)
 		g_pHookClientMode = std::make_unique<CVmtHook>(pointer);
 		oCreateMoveShared = reinterpret_cast<FnCreateMoveShared>(g_pHookClientMode->HookFunction(indexes::SharedCreateMove, Hooked_CreateMoveShared));
 		oKeyInput = reinterpret_cast<FnKeyInput>(g_pHookClientMode->HookFunction(indexes::KeyInput, Hooked_KeyInput));
+		oOverrideView = reinterpret_cast<FnOverrideView>(g_pHookClientMode->HookFunction(indexes::OverrideView, Hooked_OverrideView));
+		oGetViewModelFOV = reinterpret_cast<FnGetViewModelFOV>(g_pHookClientMode->HookFunction(indexes::GetViewModelFOV, Hooked_GetViewModelFOV));
 		g_pHookClientMode->InstallHook();
 	}
 }
@@ -1315,6 +1318,30 @@ bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, I
 
 	// 这个会每次连接都会分配新的指针，无法使用 VMT 进行挂钩
 	return g_pClientHook->oSendNetMsg(_ecx, msg, bForceReliable, bVoice);
+}
+
+void __fastcall CClientHook::Hooked_OverrideView(IClientMode* _ecx, LPVOID, CViewSetup* pSetup)
+{
+	for (const auto& inst : g_pClientHook->_GameHook)
+		inst->OnOverrideView(pSetup);
+	
+	return g_pClientHook->oOverrideView(_ecx, pSetup);
+}
+
+float __fastcall CClientHook::Hooked_GetViewModelFOV(IClientMode* _ecx, LPVOID)
+{
+	bool replace = false;
+	float fov = g_pClientHook->oGetViewModelFOV(_ecx);
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		if (inst->OnGetViewModelFOV(fov))
+			replace = true;
+	}
+	
+	if (replace)
+		return fov;
+
+	return g_pClientHook->oGetViewModelFOV(_ecx);
 }
 
 void CClientPrediction::Init()
