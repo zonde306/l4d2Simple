@@ -372,14 +372,24 @@ bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & tex
 
 void CVisualPlayer::OnOverrideView(CViewSetup* setup)
 {
-	if(m_bFovChanger)
-		setup->m_fov = m_fFov;
+	if (!m_bFovChanger)
+		return;
+	
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+	
+	setup->m_fov = m_fFov;
 	// setup->m_viewmodelfov = m_fViewFov;
 }
 
 bool CVisualPlayer::OnGetViewModelFOV(float& fov)
 {
 	if (!m_bFovChanger)
+		return false;
+	
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
 		return false;
 	
 	fov = m_fViewFov;
