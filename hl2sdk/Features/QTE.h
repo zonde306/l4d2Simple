@@ -29,6 +29,7 @@ private:
 	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 	bool HasShotgun(CBaseWeapon* weapon);
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
+	CBasePlayer* FindTarget(CBasePlayer* local, const QAngle& myEyeAngles);
 
 private:
 	bool m_bActive = false;

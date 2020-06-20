@@ -146,6 +146,12 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		if (m_bDistance)
 			ss << DrawDistance(entity, dist);
 
+		if (m_bFieldOfView)
+			ss << DrawFOV(entity, local);
+
+		if (m_bDebug)
+			ss << "\n" << DrawDebugInfo(entity);
+
 		if (ss.str().empty())
 			continue;
 
@@ -228,6 +234,9 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Player Distance"), &m_bDistance);
 	IMGUI_TIPS("玩家显示距离。");
+	
+	ImGui::Checkbox(XorStr("Player In FOV"), &m_bFieldOfView);
+	IMGUI_TIPS("玩家显示瞄准角度。");
 
 	ImGui::Checkbox(XorStr("Player Weapon"), &m_bWeapon);
 	IMGUI_TIPS("玩家显示武器和弹药。");
@@ -240,6 +249,9 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("My Spectator"), &m_bSpectator);
 	IMGUI_TIPS("显示当前观察者。");
+	
+	ImGui::Checkbox(XorStr("Show Position"), &m_bDebug);
+	IMGUI_TIPS("显示位置/角度/速度。");
 	
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Fov Changer"), &m_bFovChanger);
@@ -298,6 +310,7 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_fFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_fov"), m_fFov);
 	m_fViewFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
 	m_bFovChanger = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	m_bFieldOfView = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -324,6 +337,7 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov"), m_fFov);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -785,4 +799,44 @@ bool CVisualPlayer::DrawSpectator(CBasePlayer * player, CBasePlayer* local, int 
 		color, false, ss.str().c_str());
 
 	return true;
+}
+
+std::string CVisualPlayer::DrawDebugInfo(CBaseEntity* player)
+{
+	std::stringstream ss;
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+
+	Vector origin = player->GetAbsOrigin();
+	ss << XorStr("pos(") << origin.x << ", " << origin.y << ", " << origin.z << ")\n";
+
+	QAngle angles = player->GetEyeAngles();
+	ss << XorStr("ang(") << angles.x << ", " << angles.y << ", " << angles.z << ")\n";
+
+	if (player->IsPlayer())
+	{
+		Vector velocity = reinterpret_cast<CBasePlayer*>(player)->GetVelocity();
+		ss << XorStr("vel(") << velocity.x << ", " << velocity.y << ", " << velocity.z << ") " << velocity.Length() << std::endl;
+	}
+
+	return ss.str();
+}
+
+std::string CVisualPlayer::DrawFOV(CBasePlayer* player, CBasePlayer* local)
+{
+	QAngle eyeAngles/* = local->GetEyeAngles()*/;
+	g_pInterface->Engine->GetViewAngles(eyeAngles);
+	Vector eyePosition = local->GetEyePosition();
+	Vector aimPosition = player->GetHeadOrigin();
+
+	std::stringstream ss;
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+
+	ss << "(" << math::GetAnglesFieldOfView(eyeAngles, math::CalculateAim(eyePosition, aimPosition)) << ")";
+	return ss.str();
 }

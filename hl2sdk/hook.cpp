@@ -767,6 +767,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					g_tpPlayingTimer = time(nullptr);
 					// g_ServerConVar.clear();
 					g_pPlayerResource = nullptr;
+					g_pGameRulesProxy = nullptr;
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnConnect();
@@ -780,6 +781,7 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					g_tpPlayingTimer = 0;
 					g_ServerConVar.clear();
 					g_pPlayerResource = nullptr;
+					g_pGameRulesProxy = nullptr;
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 					{

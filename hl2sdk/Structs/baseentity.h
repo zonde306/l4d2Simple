@@ -54,7 +54,7 @@ public:	// NetProp
 	template<typename T>
 	T& GetNetPropCollision(const std::string& prop, size_t element = 0);
 
-	static int GetNetPropOffset(const std::string& table, const std::string& prop);
+	static int GetNetPropOffset(const std::string& table, const std::string& prop, bool cache = false);
 
 	template<typename ...T>
 	static int GetNetPropOffsetEx(const std::string& table, const std::string& prop, const T& ...more);

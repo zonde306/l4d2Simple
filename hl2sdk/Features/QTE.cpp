@@ -41,6 +41,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	bool canShot = (m_bForceShot && weapon->IsFireGun() && weapon->CanFire());
 	bool canFire = (m_bAllowShot && weapon->IsFireGun() && weapon->CanFire());
 	bool hasMelee = (m_bAllowMelee && weaponId == Weapon_Melee);
+	bool canShove = weapon->CanShove();
 	Vector myOrigin = local->GetEyePosition();
 
 	// 这里好像没有效果。。。
@@ -66,258 +67,58 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	}
 	*/
 
-	if (m_pSmokerAttacker && m_pSmokerAttacker->IsAlive())
-	{
-		float distance = myOrigin.DistTo(m_pSmokerAttacker->GetEyePosition());
-
-		if (hasMelee)
-			HandleMeleeSelfClear(local, m_pSmokerAttacker, cmd, distance);
-		else if (canFire)
-			HandleShotSelfClear(local, m_pSmokerAttacker, cmd, distance);
-		else
-			HandleShoveSelfClear(local, m_pSmokerAttacker, cmd, distance);
-
-		// 优先处理被拉自救，其他的先不管了
-		return;
-	}
-
-	m_pSmokerAttacker = nullptr;
-
 	if (m_bVelExt)
 		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
 
-	float fov = 360.0f;
-	Vector aimOrigin;
-	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-	for (int i = 1; i <= maxEntity; ++i)
+	player = m_pSmokerAttacker;
+	m_pSmokerAttacker = nullptr;
+
+	if (player == nullptr)
+		player = FindTarget(local, cmd->viewangles);
+	if (player == nullptr)
+		return;
+
+	distance = myOrigin.DistTo(player->GetAbsOrigin());
+	ZombieClass_t classId = player->GetZombieType();
+
+	switch (classId)
 	{
-		player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (player == nullptr || player == local || !player->IsValid())
-			continue;
-
-		if (!player->IsPlayer())
+		case ZC_SMOKER:
+		case ZC_HUNTER:
+		case ZC_JOCKEY:
 		{
-			int classId = player->GetClassID();
-			if (classId != ET_WITCH && classId != ET_TankRock)
-				continue;
-		}
-		else if (player->IsGhost())
-			continue;
-
-		aimOrigin = GetTargetAimPosition(player);
-		if (!aimOrigin.IsValid())
-			continue;
-
-		if (m_bVelExt && player->IsPlayer())
-			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
-
-		ZombieClass_t classId = player->GetZombieType();
-		distance = myOrigin.DistTo(aimOrigin);
-
-		/*
-		if(player->IsPlayer())
-			fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
-		else
-			fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
-		*/
-
-		/*
-		if (classId != ZC_SMOKER && classId != ZC_HUNTER && classId != ZC_JOCKEY && classId != ZC_CHARGER)
-			continue;
-		*/
-
-		switch (classId)
-		{
-			case ZC_SMOKER:
-			{
-				if (!m_bSmoker)
-					continue;
-				
-				static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
-				if (distance > cvTongueRange->GetFloat())
-					continue;
-
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
-					continue;
-
-				fov = math::GetAnglesFieldOfView(player->GetEyeAngles(), math::CalculateAim(player->GetEyePosition(), myOrigin));
-				if (m_bCheckFov && fov > 10.0f)
-					continue;
-
-				break;
-			}
-			case ZC_HUNTER:
-			{
-				if (!m_bHunter)
-					continue;
-				
-				if (!player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
-					player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
-					continue;
-
-				if (player->GetFlags() & FL_ONGROUND)
-					continue;
-				
-				if (distance > m_fHunterDistance)
-					continue;
-
-				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
-				if (m_bCheckFov && fov > m_fHunterFov)
-					continue;
-
-				break;
-			}
-			case ZC_JOCKEY:
-			{
-				if (!m_bJockey)
-					continue;
-				
-				if (player->GetFlags() & FL_ONGROUND)
-					continue;
-				
-				/*
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
-					continue;
-				*/
-
-				/*
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
-					continue;
-				*/
-
-				if (distance > m_fJockeyDistance)
-					continue;
-
-				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), local->GetHeadOrigin()));
-				if (m_bCheckFov && fov > m_fJockeyFov)
-					continue;
-
-				break;
-			}
-			case ZC_BOOMER:
-			{
-				if (!m_bBoomer)
-					continue;
-				
-				static ConVar* cvExplodeRange = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
-				if (distance > cvExplodeRange->GetFloat())
-					continue;
-
-				break;
-			}
-			case ZC_CHARGER:
-			{
-				if (!m_bCharger)
-					continue;
-				
-				/*
-				// 这个可能不正确
-				handle = player->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
-				if (handle.IsValid())
-				{
-					CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
-					if (ability != nullptr && !ability->GetNetProp<BYTE>(XorStr("DT_Charge"), XorStr("m_isCharging")))
-						continue;
-				}
-				*/
-
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
-					continue;
-
-				if (distance > m_fChargerDistance)
-					continue;
-
-				fov = math::GetAnglesFieldOfView(player->GetVelocity().toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
-				if (m_bCheckFov && fov > 30.0f)
-					continue;
-
-				break;
-			}
-			case ZC_WITCH:
-			{
-				if (!m_bWitch)
-					continue;
-				
-				if (player->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
-					continue;
-
-				if (distance > m_fWitchDistance)
-					continue;
-
-				/*
-				CBaseEntity* entity = static_cast<CBaseEntity*>(player);
-				fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), myOrigin));
-				if (m_bCheckFov && fov > 15.0f)
-					continue;
-				*/
-
-				break;
-			}
-			case ZC_ROCK:
-			{
-				if (!m_bRock)
-					continue;
-				
-				if (distance > m_fRockDistance)
-					continue;
-
-				const Vector& velocity = player->GetNetProp<Vector>(XorStr("DT_BaseGrenade"), XorStr("m_vecVelocity"));
-				fov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(player->GetAbsOrigin(), myOrigin));
-				if (m_bCheckFov && fov > 15.0f)
-					continue;
-
-				break;
-			}
-		}
-
-		switch (classId)
-		{
-			case ZC_SMOKER:
-			{
-				if (hasMelee)
-					HandleMeleeSelfClear(local, player, cmd, distance);
-				else if (canFire)
-					HandleShotSelfClear(local, player, cmd, distance);
-				else
-					HandleShoveSelfClear(local, player, cmd, distance);
-				
-				break;
-			}
-			case ZC_HUNTER:
-			case ZC_JOCKEY:
-			{
-				if (hasMelee)
-					HandleMeleeSelfClear(local, player, cmd, distance);
-				else if (canFire)
-					HandleShotSelfClear(local, player, cmd, distance);
-				else
-					HandleShoveSelfClear(local, player, cmd, distance);
-
-				break;
-			}
-			case ZC_CHARGER:
-			case ZC_ROCK:
-			{
-				if (hasMelee)
-					HandleMeleeSelfClear(local, player, cmd, distance);
-				else if (canFire)
-					HandleShotSelfClear(local, player, cmd, distance);
-				
-				break;
-			}
-			case ZC_WITCH:
-			{
-				if ((canFire || canShot) && IsShotgun(weaponId))
-					HandleWitchCrown(local, player, cmd, distance);
-
-				break;
-			}
-			case ZC_BOOMER:
-			case ZC_SPITTER:
-			{
+			if (hasMelee)
+				HandleMeleeSelfClear(local, player, cmd, distance);
+			else if (canFire)
+				HandleShotSelfClear(local, player, cmd, distance);
+			else if (canShove)
 				HandleShoveSelfClear(local, player, cmd, distance);
-				break;
-			}
+
+			break;
+		}
+		case ZC_CHARGER:
+		case ZC_ROCK:
+		{
+			if (hasMelee)
+				HandleMeleeSelfClear(local, player, cmd, distance);
+			else if (canFire)
+				HandleShotSelfClear(local, player, cmd, distance);
+
+			break;
+		}
+		case ZC_WITCH:
+		{
+			if ((canFire || canShot) && IsShotgun(weaponId))
+				HandleWitchCrown(local, player, cmd, distance);
+
+			break;
+		}
+		case ZC_BOOMER:
+		case ZC_SPITTER:
+		{
+			if (canShove)
+				HandleShoveSelfClear(local, player, cmd, distance);
+			break;
 		}
 	}
 }
@@ -680,4 +481,192 @@ Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::option
 		return aimPosition;
 
 	return NULL_VECTOR;
+}
+
+CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles)
+{
+	float minDistance = 65535.0f;
+	CBasePlayer* result = nullptr;
+	Vector myEyePosition = local->GetEyePosition();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBasePlayer* target = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+		if (target == local || target == nullptr || !target->IsAlive())
+			continue;
+
+		if (target->IsPlayer() && target->IsGhost())
+			continue;
+
+		Vector aimPosition = GetTargetAimPosition(target);
+		if (!aimPosition.IsValid())
+			continue;
+
+		ZombieClass_t classId = target->GetZombieType();
+		float distance = myEyePosition.DistTo(target->GetAbsOrigin());
+		bool selected = false;
+
+		switch (classId)
+		{
+			case ZC_SMOKER:
+			{
+				if (!m_bSmoker)
+					break;
+
+				static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
+				if (distance > cvTongueRange->GetFloat())
+					break;
+
+				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));
+				if (m_bCheckFov && fov > 10.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_HUNTER:
+			{
+				if (!m_bHunter)
+					break;
+
+				if (!target->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
+					target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
+					break;
+
+				if (target->GetFlags() & FL_ONGROUND)
+					break;
+
+				if (distance > m_fHunterDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > m_fHunterFov)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_JOCKEY:
+			{
+				if (!m_bJockey)
+					break;
+
+				if (target->GetFlags() & FL_ONGROUND)
+					break;
+
+				/*
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
+					continue;
+				*/
+
+				/*
+				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
+					continue;
+				*/
+
+				if (distance > m_fJockeyDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), local->GetHeadOrigin()));
+				if (m_bCheckFov && fov > m_fJockeyFov)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_BOOMER:
+			{
+				if (!m_bBoomer)
+					break;
+
+				static ConVar* cvExplodeRange = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+				if (distance > cvExplodeRange->GetFloat())
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_CHARGER:
+			{
+				if (!m_bCharger)
+					break;
+
+				/*
+				// 这个可能不正确
+				handle = player->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
+				if (handle.IsValid())
+				{
+					CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
+					if (ability != nullptr && !ability->GetNetProp<BYTE>(XorStr("DT_Charge"), XorStr("m_isCharging")))
+						continue;
+				}
+				*/
+
+				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
+					break;
+
+				if (distance > m_fChargerDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > 30.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_WITCH:
+			{
+				if (!m_bWitch)
+					break;
+
+				if (target->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+					break;
+
+				if (distance > m_fWitchDistance)
+					break;
+
+				/*
+				CBaseEntity* entity = static_cast<CBaseEntity*>(player);
+				fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), myOrigin));
+				if (m_bCheckFov && fov > 15.0f)
+					continue;
+				*/
+
+				selected = true;
+				break;
+			}
+			case ZC_ROCK:
+			{
+				if (!m_bRock)
+					break;
+
+				if (distance > m_fRockDistance)
+					break;
+
+				const Vector& velocity = target->GetNetProp<Vector>(XorStr("DT_BaseGrenade"), XorStr("m_vecVelocity"));
+				float fov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > 15.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+		}
+
+		if (selected && distance < minDistance)
+		{
+			result = target;
+			minDistance = distance;
+		}
+
+		if (i > 64 && result)
+			break;
+	}
+
+	return result;
 }

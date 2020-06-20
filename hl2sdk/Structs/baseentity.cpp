@@ -7,8 +7,11 @@ std::map<std::string, int> g_mPropOffset;
 #define SIG_SET_MOVETYPE	XorStr("55 8B EC 8A 45 08 8A 55 0C 88 81")
 #define SIG_GET_CLASSNAME	XorStr("57 8B F9 C6 05")
 
-int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop)
+int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop, bool cache)
 {
+	if (!cache)
+		return g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str());
+	
 	auto it = g_mPropOffset.find(prop);
 	if (it == g_mPropOffset.end())
 		g_mPropOffset.emplace(prop, g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str()));

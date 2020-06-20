@@ -31,6 +31,8 @@ public:
 	std::string DrawDistance(CBasePlayer* entity, float distance, bool separator = false);
 	std::string DrawCharacter(CBasePlayer* entity, bool separator = false);
 	bool DrawSpectator(CBasePlayer* player, CBasePlayer* local, int index, int line);
+	std::string DrawDebugInfo(CBaseEntity* player);
+	std::string DrawFOV(CBasePlayer* player, CBasePlayer* local);
 
 	enum DrawPosition_t
 	{
@@ -59,6 +61,8 @@ private:
 	bool m_bHeadBox = false;
 	bool m_bChams = false;
 	bool m_bSpectator = true;
+	bool m_bDebug = false;
+	bool m_bFieldOfView = false;
 
 	bool m_bBarrel = false;
 	float m_fBarrelDistance = 1500.0f;

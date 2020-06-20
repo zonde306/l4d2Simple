@@ -99,11 +99,11 @@ int CBasePlayer::GetCrosshairID()
 
 bool CBasePlayer::IsGhost()
 {
-	using FnIsGhost = bool(__thiscall*)(CBasePlayer*);
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_isGhost"));
-	FnIsGhost fn = Utils::GetVTableFunction<FnIsGhost>(this, indexes::IsGhost);
 	Assert_NetProp(offset);
 
+	using FnIsGhost = bool(__thiscall*)(CBasePlayer*);
+	FnIsGhost fn = Utils::GetVTableFunction<FnIsGhost>(this, indexes::IsGhost);
 	if(fn != nullptr)
 		return fn(this);
 
@@ -337,7 +337,17 @@ ZombieClass_t CBasePlayer::GetZombieType()
 	
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
 	Assert_NetProp(offset);
-	return static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));
+
+	ZombieClass_t zc = static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));
+
+	/*
+	int index = GetIndex();
+	CBasePlayerResource* ps = CBasePlayerResource::Get();
+	if ((zc < ZC_SMOKER || zc > ZC_SURVIVORBOT || zc == ZC_WITCH) && (index >= 1 && index <= 32) && ps && ps->IsConnected(index))
+		return static_cast<ZombieClass_t>(ps->GetZombie(index));
+	*/
+
+	return zc;
 }
 
 bool CBasePlayer::IsSurvivor()
