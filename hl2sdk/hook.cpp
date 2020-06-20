@@ -851,8 +851,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	returnMsg.m_szCvarName = gcv->m_szCvarName;
 	returnMsg.m_szCvarValue = resultBuffer;
 	returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
-	returnMsg.SetNetChannel(gcv->GetNetChannel());
-	returnMsg.SetReliable(gcv->IsReliable());
+	// returnMsg.SetNetChannel(gcv->GetNetChannel());
+	// returnMsg.SetReliable(gcv->IsReliable());
 
 	ConVar* cvar = g_pInterface->Cvar->FindVar(gcv->m_szCvarName);
 	if (cvar == nullptr)
@@ -861,10 +861,8 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarNotFound;
 
 		// 这个其实是一个命令
-		/*
-		if (g_pInterface->Cvar->FindCommand(gcv->m_szCvarName) != nullptr)
+		if (g_pInterface->Cvar->FindCommand(gcv->m_szCvarName))
 			returnMsg.m_eStatusCode = eQueryCvarValueStatus_NotACvar;
-		*/
 
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
@@ -879,19 +877,28 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	else if (cvar->IsFlagSet(FCVAR_SERVER_CANNOT_QUERY))
 	{
 		// 这玩意不可以查询
-		// 但是无论如何都要说它完整的
-		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
+		returnMsg.m_eStatusCode = eQueryCvarValueStatus_CvarProtected;
 		resultBuffer[0] = '\0';
 		returnMsg.m_szCvarValue = resultBuffer;
 
 		Utils::log(XorStr("[GCV] query %s, protected."), gcv->m_szCvarName);
 		
-		/*
-		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, protected.\""), gcv->m_szCvarName);
-		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
-		*/
+		// sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, protected.\""), gcv->m_szCvarName);
+		// g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
+	/*
 	else if (cvar->IsFlagSet(FCVAR_NEVER_AS_STRING))
+	{
+		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
+		if (std::fabsf(cvar->GetFloat() - cvar->GetInt()) < 0.001f)
+			sprintf_s(resultBuffer, "%d", cvar->GetInt());
+		else
+			sprintf_s(resultBuffer, "%f", cvar->GetFloat());
+
+		Utils::log(XorStr("[GCV] query %s, returns %s."), gcv->m_szCvarName, resultBuffer);
+		returnMsg.m_szCvarValue = resultBuffer;
+	}
+	else if(cvar->m_nFlags & FCVAR_NEVER_AS_STRING)
 	{
 		// 可以被查询，但无法转换成字符串
 		returnMsg.m_eStatusCode = eQueryCvarValueStatus_ValueIntact;
@@ -899,12 +906,11 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		returnMsg.m_szCvarValue = resultBuffer;
 
 		Utils::log(XorStr("[GCV] query %s, never as string."), gcv->m_szCvarName);
-		
-		/*
-		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, never as string.\""), gcv->m_szCvarName);
-		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
-		*/
+
+		// sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s, never as string.\""), gcv->m_szCvarName);
+		// g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
+	*/
 	else
 	{
 		// 可以被查询
@@ -939,6 +945,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	}
 
 	// 返回给服务器
+	/*
 	bool isSendComplete = false;
 	INetChannel* nci = reinterpret_cast<INetChannel*>(g_pInterface->Engine->GetNetChannelInfo());
 	if (nci == nullptr)
@@ -980,7 +987,18 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 			g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 		}
 	}
+	*/
 
+	/*
+	// if (!_ecx->m_NetChannel->SendNetMsg(returnMsg))
+	if(!g_pClientHook->oSendNetMsg(_ecx->m_NetChannel, returnMsg, false, false))
+	{
+		Utils::log(XorStr("[GCV] Warring: return %s failed... try original."), gcv->m_szCvarName);
+		g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
+	}
+	*/
+
+	g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 	return true;
 }
 

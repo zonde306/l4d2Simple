@@ -40,6 +40,7 @@ class SVC_Prefetch;
 
 typedef struct netpacket_s netpacket_t;
 #define MAX_USER_MSG_DATA 255
+#define NETMSG_TYPE_BITS	5	// must be 2^NETMSG_TYPE_BITS > SVC_LASTMSG
 
 class IConnectionlessPacketHandler
 {
@@ -159,11 +160,13 @@ class PackedEntity;
 class CServerClassInfo;
 class CNetworkStringTableContainer;
 
-class CBaseClientState : public INetChannelHandler, public IConnectionlessPacketHandler, public IServerMessageHandler
+class CBaseClientState : /*public INetChannelHandler, public IConnectionlessPacketHandler,*/ public IServerMessageHandler
 {
 public:
 	virtual ~CBaseClientState() = 0;
 	
+	/*
+	// Windows 下 CBaseClientState 被分成了两个，这个没有继承 INetChannelHandler 和 IConnectionlessPacketHandler
 public:		// INetMsgHandler
 	virtual void ConnectionStart(INetChannel *chan) = 0;
 	virtual void ConnectionClosing(const char *reason) = 0;
@@ -179,6 +182,7 @@ public:		// INetMsgHandler
 
 public:		// IConnectionlessPacketHandler
 	virtual bool ProcessConnectionlessPacket(struct netpacket_s *packet) = 0;
+	*/
 
 public:		// IServerMessageHandlers
 	virtual bool ProcessTick(NET_Tick*) = 0;
@@ -226,7 +230,7 @@ public:
 	virtual void HandleReserveServerChallengeResponse(int) = 0;
 	virtual void SetServerReservationCookie(unsigned long long) = 0;
 	
-	public:
+public:
 	// Connection to server.			
 	int				m_Socket;		// network socket 
 	INetChannel		*m_NetChannel;		// Our sequenced channel to the remote server.
@@ -370,12 +374,38 @@ public:
 
 inline bool NET_SetConVar::ReadFromBuffer(bf_read& buffer)
 {
-	return false;
+	int numvars = buffer.ReadByte();
+
+	m_ConVars.RemoveAll();
+
+	for (int i = 0; i < numvars; i++)
+	{
+		cvar_t cvar;
+		buffer.ReadString(cvar.name, sizeof(cvar.name));
+		buffer.ReadString(cvar.value, sizeof(cvar.value));
+		m_ConVars.AddToTail(cvar);
+
+	}
+	return !buffer.IsOverflowed();
 }
 
 inline bool NET_SetConVar::WriteToBuffer(bf_write& buffer)
 {
-	return false;
+	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS);
+
+	int numvars = m_ConVars.Count();
+
+	// Note how many we're sending
+	buffer.WriteByte(numvars);
+
+	for (int i = 0; i < numvars; i++)
+	{
+		cvar_t* cvar = &m_ConVars[i];
+		buffer.WriteString(cvar->name);
+		buffer.WriteString(cvar->value);
+	}
+
+	return !buffer.IsOverflowed();
 }
 
 class SVC_GetCvarValue : public CNetMessage
@@ -413,12 +443,31 @@ private:
 
 inline bool CLC_RespondCvarValue::ReadFromBuffer(bf_read& buffer)
 {
-	return false;
+	m_iCookie = buffer.ReadSBitLong(32);
+	m_eStatusCode = (EQueryCvarValueStatus)buffer.ReadSBitLong(4);
+
+	// Read the name.
+	buffer.ReadString(m_szCvarNameBuffer, sizeof(m_szCvarNameBuffer));
+	m_szCvarName = m_szCvarNameBuffer;
+
+	// Read the value.
+	buffer.ReadString(m_szCvarValueBuffer, sizeof(m_szCvarValueBuffer));
+	m_szCvarValue = m_szCvarValueBuffer;
+
+	return !buffer.IsOverflowed();
 }
 
 inline bool CLC_RespondCvarValue::WriteToBuffer(bf_write& buffer)
 {
-	return false;
+	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS);
+
+	buffer.WriteSBitLong(m_iCookie, 32);
+	buffer.WriteSBitLong(m_eStatusCode, 4);
+
+	buffer.WriteString(m_szCvarName);
+	buffer.WriteString(m_szCvarValue);
+
+	return !buffer.IsOverflowed();
 }
 
 class NET_StringCmd : public CNetMessage

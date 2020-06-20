@@ -44,6 +44,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	Vector myOrigin = local->GetEyePosition();
 
 	// 这里好像没有效果。。。
+	/*
 	CBaseHandle handle = local->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_tongueOwner"));
 	if (handle.IsValid() && !local->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isProneTongueDrag")))
 	{
@@ -63,6 +64,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			return;
 		}
 	}
+	*/
 
 	if (m_pSmokerAttacker && m_pSmokerAttacker->IsAlive())
 	{

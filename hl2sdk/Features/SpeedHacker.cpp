@@ -22,10 +22,10 @@ void CSpeedHacker::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Position Adjustment"), &m_bPositionAdjustment);
-	IMGUI_TIPS("根据 lerp 进行 tick 优化，提升精准度");
+	IMGUI_TIPS("根据 lerp 进行 tick 优化，提升精准度\n警告：这个能够被检测到");
 
 	ImGui::Checkbox(XorStr("Backtracking"), &m_bBacktrack);
-	IMGUI_TIPS("根据位置进行 tick 优化，适用于瞄准头部");
+	IMGUI_TIPS("根据位置进行 tick 优化，适用于瞄准头部\n警告：这个或许能够被检测到");
 
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
 	IMGUI_TIPS("tick 优化，使用速度延迟预测需要这个功能。\n三种 tick 优化做的是同一种事情(方法不同)，只能选一个。");
@@ -104,8 +104,11 @@ void CSpeedHacker::OnConfigSave(config_type & data)
 
 void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
 {
+	if (!(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2))
+		return;
+	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr)
+	if (local == nullptr || !local->IsAlive())
 		return;
 
 	static ConVar* cvar_cl_interp = g_pInterface->Cvar->FindVar(XorStr("cl_interp"));
