@@ -53,6 +53,7 @@ private:
 	bool m_bWitch = true;
 	bool m_bBoomer = true;
 	bool m_bRock = true;
+	bool m_bLogInfo = false;
 
 	float m_fHunterDistance = 100.0f;
 	float m_fJockeyDistance = 125.0f;

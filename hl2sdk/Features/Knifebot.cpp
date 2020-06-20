@@ -322,7 +322,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 
 		if (!m_bCanMeleeAttack &&
 			dist <= meleeRange && fov <= m_fMeleeFOV &&
-			classId != ET_BOOMER && classId != ET_WITCH)
+			classId != ET_BOOMER && (classId != ET_WITCH || entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) >= 1.0f))
 		{
 			// 近战武器攻击 (左键)
 			m_bCanMeleeAttack = true;

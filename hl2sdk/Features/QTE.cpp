@@ -88,11 +88,23 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		case ZC_JOCKEY:
 		{
 			if (hasMelee)
+			{
 				HandleMeleeSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
 			else if (canFire)
+			{
 				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
 			else if (canShove)
+			{
 				HandleShoveSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
 
 			break;
 		}
@@ -100,16 +112,28 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		case ZC_ROCK:
 		{
 			if (hasMelee)
+			{
 				HandleMeleeSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack charger/rock(%d), dist: %.0f"), classId, distance);
+			}
 			else if (canFire)
+			{
 				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot charger/rock(%d), dist: %.0f"), classId, distance);
+			}
 
 			break;
 		}
 		case ZC_WITCH:
 		{
 			if ((canFire || canShot) && IsShotgun(weaponId))
+			{
 				HandleWitchCrown(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot witch, dist: %.0f"), distance);
+			}
 
 			break;
 		}
@@ -117,7 +141,11 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		case ZC_SPITTER:
 		{
 			if (canShove)
+			{
 				HandleShoveSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove boomer/spitter(%d), dist: %.0f"), classId, distance);
+			}
 			break;
 		}
 	}
@@ -160,6 +188,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	
 	ImGui::Checkbox(XorStr("Melee TickMode"), &m_bMeleeAsShove);
 	IMGUI_TIPS("近战武器攻击使用推的形式(基于tick)，如果近战砍不到则开启");
+	
+	ImGui::Checkbox(XorStr("Show Info"), &m_bLogInfo);
+	IMGUI_TIPS("显示信息");
 
 	ImGui::SliderFloat(XorStr("Shove Range Extra"), &m_fShoveDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("推预测范围");
