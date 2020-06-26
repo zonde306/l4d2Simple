@@ -18,6 +18,8 @@ public:
 	virtual void OnConfigSave(config_type& data) override;
 	virtual void OnConnect() override;
 	virtual void OnDisconnect() override;
+	virtual void OnGameEventClient(IGameEvent* event) override;
+	virtual void OnGameEvent(IGameEvent* event, bool dontBroadcast) override;
 
 	bool ApplySilentAngles(const QAngle& viewAngles, int ticks = 1);
 	bool ApplySilentFire(const QAngle& viewAngles);

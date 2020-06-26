@@ -267,6 +267,9 @@
     <ClCompile Include="..\hl2sdk\Structs\MRecipientFilter.cpp">
       <Filter>hl2sdk\Structs</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Interfaces\IBaseClientState.cpp">
+      <Filter>hl2sdk\Interfaces</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -670,6 +673,9 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Structs\viewsetup.h">
       <Filter>hl2sdk\Structs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Utils\utlbitvec.h">
+      <Filter>hl2sdk\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -53,6 +53,11 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 
 #define TIME_TO_TICKS(dt)		((int)(0.5f + (float)(dt) / g_pInterface->GlobalVars->interval_per_tick))
 #define FORWARD_TRACK			(TIME_TO_TICKS(g_pNetChannelInfo->GetLatency(NetFlow_Incoming) + g_pNetChannelInfo->GetLatency(NetFlow_Outgoing)))
+#define MAX_PLAYER_NAME_LENGTH		32
+
+// a client can have up to 4 customization files (logo, sounds, models, txt).
+#define MAX_CUSTOM_FILES		4		// max 4 files
+#define MAX_CUSTOM_FILE_SIZE	524288	// Half a megabyte
 
 // These defines are for client button presses
 // CUserCommand::buttons

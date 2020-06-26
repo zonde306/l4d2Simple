@@ -3,6 +3,7 @@
 #include "../Structs/handle.h"
 #include "../Utils/checksum_crc.h"
 #include "../Utils/utlvector.h"
+#include "../Utils/utlbitvec.h"
 #include "../../l4d2Simple2/xorstr.h"
 #include "../../l4d2Simple2/vector.h"
 
@@ -41,6 +42,9 @@ class SVC_Prefetch;
 typedef struct netpacket_s netpacket_t;
 #define MAX_USER_MSG_DATA 255
 #define NETMSG_TYPE_BITS	5	// must be 2^NETMSG_TYPE_BITS > SVC_LASTMSG
+#define MAX_EVENT_NAME_LENGTH	32		// max game event name length
+#define MAX_EVENT_BITS			9		// max bits needed for an event index
+#define MAX_EVENT_NUMBER		(1<<MAX_EVENT_BITS)		// max number of events 
 
 class IConnectionlessPacketHandler
 {
@@ -372,42 +376,6 @@ public:
 	CUtlVector<cvar_t> m_ConVars;
 };
 
-inline bool NET_SetConVar::ReadFromBuffer(bf_read& buffer)
-{
-	int numvars = buffer.ReadByte();
-
-	m_ConVars.RemoveAll();
-
-	for (int i = 0; i < numvars; i++)
-	{
-		cvar_t cvar;
-		buffer.ReadString(cvar.name, sizeof(cvar.name));
-		buffer.ReadString(cvar.value, sizeof(cvar.value));
-		m_ConVars.AddToTail(cvar);
-
-	}
-	return !buffer.IsOverflowed();
-}
-
-inline bool NET_SetConVar::WriteToBuffer(bf_write& buffer)
-{
-	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS);
-
-	int numvars = m_ConVars.Count();
-
-	// Note how many we're sending
-	buffer.WriteByte(numvars);
-
-	for (int i = 0; i < numvars; i++)
-	{
-		cvar_t* cvar = &m_ConVars[i];
-		buffer.WriteString(cvar->name);
-		buffer.WriteString(cvar->value);
-	}
-
-	return !buffer.IsOverflowed();
-}
-
 class SVC_GetCvarValue : public CNetMessage
 {
 public:
@@ -440,35 +408,6 @@ private:
 	char		m_szCvarNameBuffer[256];
 	char		m_szCvarValueBuffer[256];
 };
-
-inline bool CLC_RespondCvarValue::ReadFromBuffer(bf_read& buffer)
-{
-	m_iCookie = buffer.ReadSBitLong(32);
-	m_eStatusCode = (EQueryCvarValueStatus)buffer.ReadSBitLong(4);
-
-	// Read the name.
-	buffer.ReadString(m_szCvarNameBuffer, sizeof(m_szCvarNameBuffer));
-	m_szCvarName = m_szCvarNameBuffer;
-
-	// Read the value.
-	buffer.ReadString(m_szCvarValueBuffer, sizeof(m_szCvarValueBuffer));
-	m_szCvarValue = m_szCvarValueBuffer;
-
-	return !buffer.IsOverflowed();
-}
-
-inline bool CLC_RespondCvarValue::WriteToBuffer(bf_write& buffer)
-{
-	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS);
-
-	buffer.WriteSBitLong(m_iCookie, 32);
-	buffer.WriteSBitLong(m_eStatusCode, 4);
-
-	buffer.WriteString(m_szCvarName);
-	buffer.WriteString(m_szCvarValue);
-
-	return !buffer.IsOverflowed();
-}
 
 class NET_StringCmd : public CNetMessage
 {
@@ -765,4 +704,29 @@ public:
 	int			m_nTick;
 	float		m_flHostFrameTime;
 	float		m_flHostFrameTimeStdDeviation;
+};
+
+class CLC_ListenEvents : public CNetMessage
+{
+	DECLARE_CLC_MESSAGE(ListenEvents);
+
+	int	GetGroup() const { return INetChannelInfo::SIGNON; }
+	int GetType(void) const { return 0x0C; };
+
+public:
+	CBitVec<MAX_EVENT_NUMBER> m_EventArray;
+};
+
+class CLC_ClientInfo : public CNetMessage
+{
+	DECLARE_CLC_MESSAGE(ClientInfo);
+	int GetType(void) const { return 0x8; };
+
+public:
+	CRC32_t			m_nSendTableCRC;
+	int				m_nServerCount;
+	bool			m_bIsHLTV;
+	uint32_t			m_nFriendsID;
+	char			m_FriendsName[MAX_PLAYER_NAME_LENGTH];
+	CRC32_t			m_nCustomFiles[MAX_CUSTOM_FILES];
 };

@@ -15,8 +15,9 @@ CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
 	m_vecAngles.Invalidate();
 	m_pEventListener = new CVM_ShotgunSound();
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("weapon_fire"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("bullet_impact"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("weapon_fire"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("bullet_impact"), false);
+	g_pClientHook->m_ProtectedEventListeners.insert(m_pEventListener);
 }
 
 CViewManager::~CViewManager()
@@ -185,6 +186,20 @@ void CViewManager::OnConnect()
 void CViewManager::OnDisconnect()
 {
 	m_bFakeAngleBug = false;
+}
+
+void CViewManager::OnGameEventClient(IGameEvent* event)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
+		m_pEventListener->FireGameEvent(event);
+}
+
+void CViewManager::OnGameEvent(IGameEvent* event, bool dontBroadcast)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
+		m_pEventListener->FireGameEvent(event);
 }
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)

@@ -10,6 +10,8 @@ public:
 	friend CGEL_EventLogger;
 
 	virtual void OnMenuDrawing() override;
+	virtual void OnGameEventClient(IGameEvent* event) override;
+	virtual void OnGameEvent(IGameEvent* event, bool dontBroadcast) override;
 
 protected:
 	void OnPlayerSpawn(int client);

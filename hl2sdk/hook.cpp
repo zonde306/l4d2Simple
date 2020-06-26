@@ -29,6 +29,7 @@ std::unique_ptr<CClientPrediction> g_pClientPrediction;
 std::map<std::string, std::string> g_ServerConVar;
 std::map<std::string, std::unique_ptr<SpoofedConvar>> g_DummyConVar;
 extern const VMatrix* g_pWorldToScreenMatrix;
+static CLC_ListenEvents g_ListenEvents;
 
 // 计时
 extern time_t g_tpPlayingTimer;
@@ -47,13 +48,15 @@ extern time_t g_tpGameTimer;
 #define SIG_SEND_NETMSG				XorStr("55 8B EC 56 8B F1 8D 8E ? ? ? ? E8 ? ? ? ? 85 C0 75 07 B0 01 5E 5D C2 0C 00 53")
 #define SIG_RANDOM_SEED				XorStr("A3 ? ? ? ? 5D C3 55")
 #define SIG_OVERRIDE_VIEW			XorStr("55 8B EC 83 EC 40 6A FF ")
+#define SIG_WRITE_LISTEN_EVENTS		XorStr("55 8B EC 8B 45 08 83 EC 08 53 56 83 C0 10 33 F6 8B D9 3B C6 74 0C 6A 40 56 50 E8 ? ? ? ? 83 C4 0C 89 75 F8")
+#define SIG_CHECK_FILE_CRC_SERVER	XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 57 8B F9 80 BF ? ? ? ? ? 0F 84 ? ? ? ? 83 7F 68 06 0F 85 ? ? ? ? FF 15 ? ? ? ? D9 95 ? ? ? ? D8 A7 ? ? ? ? D9 05 ? ? ? ? DF F1 DD D8")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove,
-	g_pDetourSendNetMsg;
+	g_pDetourSendNetMsg, g_pDetourWriteListenEventList;
 
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
@@ -211,6 +214,22 @@ bool CClientHook::Init()
 			oSendNetMsg = reinterpret_cast<FnSendNetMsg>(g_pDetourSendNetMsg->GetTrampoline());
 		}
 	}
+
+	/*
+	if (oWriteListenEventList == nullptr || !g_pDetourWriteListenEventList)
+	{
+		oWriteListenEventList = reinterpret_cast<FnWriteListenEventList>(Utils::FindPattern(XorStr("engine.dll"), SIG_WRITE_LISTEN_EVENTS));
+		PRINT_OFFSET(XorStr("CGameEventManager::WriteListenEventList"), oWriteListenEventList);
+
+		if (oWriteListenEventList != nullptr)
+		{
+			g_pDetourWriteListenEventList = std::make_unique<DetourXS>(oWriteListenEventList, Hooked_WriteListenEventList);
+			oWriteListenEventList = reinterpret_cast<FnWriteListenEventList>(g_pDetourWriteListenEventList->GetTrampoline());
+		}
+	}
+	*/
+
+	// oWriteListenEventList(g_pInterface->GameEvent, &g_ListenEvents);
 
 	InitFeature();
 	// LoadConfig();
@@ -1362,6 +1381,51 @@ float __fastcall CClientHook::Hooked_GetViewModelFOV(IClientMode* _ecx, LPVOID)
 		return fov;
 
 	return g_pClientHook->oGetViewModelFOV(_ecx);
+}
+
+void __fastcall CClientHook::Hooked_WriteListenEventList(IGameEventManager2* _ecx, LPVOID, CLC_ListenEvents* msg)
+{
+	// g_pClientHook->oWriteListenEventList(_ecx, msg);
+
+	msg->m_EventArray.ClearAll();
+	// msg->m_EventArray = g_ListenEvents.m_EventArray;
+
+	/*
+	// FIXME
+	// and know tell the server what events we want to listen to
+	for (int i = 0; i < _ecx->m_GameEvents.Count(); i++)
+	{
+		CGameEventDescriptor& descriptor = _ecx->m_GameEvents[i];
+
+		bool bHasClientListener = false;
+
+		for (int j = 0; j < descriptor.listeners.Count(); j++)
+		{
+			CGameEventCallback* listener = descriptor.listeners[j];
+			if (g_pClientHook->m_ProtectedEventListeners.find(listener->m_pCallback) != g_pClientHook->m_ProtectedEventListeners.end())
+				continue;
+
+			if (listener->m_nListenerType == IGameEventManager2::CLIENTSIDE ||
+				listener->m_nListenerType == IGameEventManager2::CLIENTSIDE_OLD)
+			{
+				// if we have a client side listener and server knows this event, add it
+				bHasClientListener = true;
+				break;
+			}
+		}
+
+		if (!bHasClientListener)
+			continue;
+
+		if (descriptor.eventid == -1)
+		{
+			// DevMsg("Warning! Client listens to event '%s' unknown by server.\n", descriptor.name);
+			continue;
+		}
+
+		msg->m_EventArray.Set(descriptor.eventid);
+	}
+	*/
 }
 
 void CClientPrediction::Init()

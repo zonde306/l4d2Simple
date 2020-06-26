@@ -9,6 +9,9 @@
 #include <unordered_map>
 #include <map>
 #include <optional>
+#include <set>
+
+class CLC_ListenEvents;
 
 // 虚函数
 using FnPaintTraverse = void(__thiscall*)(IVPanel*, VPANEL, bool, bool);
@@ -38,6 +41,7 @@ using FnGetViewModelFOV = float(__thiscall*)(IClientMode*);
 // 非虚函数
 typedef void(__cdecl* FnCL_SendMove)();
 typedef void(__cdecl* FnCL_Move)(float, bool);
+using FnWriteListenEventList = void(__thiscall*)(IGameEventManager2*, CLC_ListenEvents*);
 
 class CClientHook
 {
@@ -77,9 +81,11 @@ protected:
 	static bool __fastcall Hooked_SendNetMsg(INetChannel*, LPVOID, INetMessage&, bool, bool);
 	static void __fastcall Hooked_OverrideView(IClientMode*, LPVOID, CViewSetup*);
 	static float __fastcall Hooked_GetViewModelFOV(IClientMode*, LPVOID);
+	static void __fastcall Hooked_WriteListenEventList(IGameEventManager2*, LPVOID, CLC_ListenEvents*);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
+	std::set<void*> m_ProtectedEventListeners;
 
 public:
 	void InitFeature();
@@ -114,6 +120,7 @@ private:
 	FnEmitSound oEmitSound = nullptr;
 	FnOverrideView oOverrideView = nullptr;
 	FnGetViewModelFOV oGetViewModelFOV = nullptr;
+	FnWriteListenEventList oWriteListenEventList = nullptr;
 
 public:
 	bool* bSendPacket;

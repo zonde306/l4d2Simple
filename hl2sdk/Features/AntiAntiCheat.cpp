@@ -16,9 +16,10 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 	m_pEventListener = new CGEL_AntiAntiCheat();
 	m_pEventListener->m_pParent = this;
 
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
+	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
+	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
 	// g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
+	g_pClientHook->m_ProtectedEventListeners.insert(m_pEventListener);
 
 	m_BlockQuery = {
 		{ XorStr("c_thirdpersonshoulder"), "0" },
@@ -41,6 +42,8 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 		{ XorStr("r_showenvcubemap"), "0" },
 		{ XorStr("r_drawrenderboxes"), "0" },
 		{ XorStr("r_modelwireframedecal"), "0" },
+		{ XorStr("sv_pure"), "2" },
+		{ XorStr("sv_consistency"), "1" },
 	};
 
 	m_BlockSetting = {
@@ -52,6 +55,11 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 		XorStr("bind"),
 		XorStr("exec"),
 		XorStr("cl_consistencycheck"),
+	};
+
+	m_BlockUserMessage = {
+		0x0E,	// CLC_FileCRCCheck
+		0x14,	// SVC_CrosshairAngle
 	};
 }
 
@@ -224,7 +232,16 @@ bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string
 	});
 
 	if (it == m_BlockQuery.end())
+	{
+		if (m_bLogConVarInfo)
+		{
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s returns %s (passed).\""),
+				cvars.c_str(), result.c_str());
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+		
 		return true;
+	}
 	
 	if (it->second.empty())
 	{
@@ -241,7 +258,7 @@ bool CAntiAntiCheat::OnProcessGetCvarValue(const std::string& cvars, std::string
 	result = it->second;
 	if (m_bLogConVarInfo)
 	{
-		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s returns %s.\""),
+		sprintf_s(msgBuffer, XorStr("echo \"[AAC] query %s returns %s (changed).\""),
 			cvars.c_str(), result.c_str());
 		g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 	}
@@ -265,14 +282,23 @@ bool CAntiAntiCheat::OnProcessSetConVar(const std::string& cvars, std::string& v
 	});
 
 	if (it == m_BlockSetting.end())
+	{
+		if (m_bLogConVarInfo)
+		{
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] set %s to %s passed.\""),
+				cvars.c_str(), value.c_str());
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+		
 		return true;
+	}
 
 	if (it->second.empty())
 	{
 		if (m_bLogConVarInfo)
 		{
-			sprintf_s(msgBuffer, XorStr("echo \"[AAC] set %s blocked.\""),
-				cvars.c_str());
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] set %s to %s blocked.\""),
+				cvars.c_str(), value.c_str());
 			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
 		}
 		
@@ -306,7 +332,17 @@ bool CAntiAntiCheat::OnProcessClientCommand(const std::string& cmd)
 	});
 
 	if (it == m_BlockExecute.end())
+	{
+		if (m_bLogConVarInfo)
+		{
+			char msgBuffer[255];
+			sprintf_s(msgBuffer, XorStr("echo \"[AAC] execute %s passed.\""),
+				cmd.c_str());
+			g_pInterface->Engine->ClientCmd_Unrestricted(msgBuffer);
+		}
+		
 		return true;
+	}
 	
 	if (m_bLogConVarInfo)
 	{
@@ -344,9 +380,12 @@ bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool
 	static char buffer[260], msgBuffer[255];
 
 	// 禁止服务器检查客户端文件 CRC32
+	// 注意：可能会被服务器检测到！
 	// 这是另一种 sv_pure 绕过
+	/*
 	if (m_bBlockCRCCheck && msg_id == 14)
 		return false;
+	*/
 
 	// 修复服务器发送不正确的语音数据导致客户端卡顿
 	if (m_bBlockNullSound && msg_id == 10)
@@ -386,6 +425,20 @@ bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool
 	}
 
 	return true;
+}
+
+void CAntiAntiCheat::OnGameEventClient(IGameEvent* event)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("player_team") || name == XorStr("player_spawn") || name == XorStr("player_first_spawn"))
+		m_pEventListener->FireGameEvent(event);
+}
+
+void CAntiAntiCheat::OnGameEvent(IGameEvent* event, bool dontBroadcast)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("player_team") || name == XorStr("player_spawn") || name == XorStr("player_first_spawn"))
+		m_pEventListener->FireGameEvent(event);
 }
 
 void CAntiAntiCheat::OnConfigLoading(const config_type & data)
