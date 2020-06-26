@@ -1219,10 +1219,10 @@ int __fastcall CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int 
 
 bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event)
 {
-	bool result = g_pClientHook->oFireEventClientSide(_ecx, event);
-
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnGameEventClient(event);
+	
+	bool result = g_pClientHook->oFireEventClientSide(_ecx, event);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1255,10 +1255,10 @@ void __fastcall CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx
 
 bool __fastcall CClientHook::Hooked_FireEvent(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event, bool bDontBroadcast)
 {
-	bool result = g_pClientHook->oFireEvent(_ecx, event, bDontBroadcast);
-
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnGameEvent(event, bDontBroadcast);
+	
+	bool result = g_pClientHook->oFireEvent(_ecx, event, bDontBroadcast);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
