@@ -9,15 +9,15 @@ public:
 	~CSpeedHacker();
 	
 	virtual void OnMenuDrawing() override;
-	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
+	virtual void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
 
-	void RunPositionAdjustment(CUserCmd* cmd);
-	void RunBacktracking(CUserCmd* cmd);
+	void RunPositionAdjustment(CUserCmd* cmd, bool bSendPacket);
+	void RunBacktracking(CUserCmd* cmd, bool bSendPacket);
 	void RecordBacktracking(CUserCmd* cmd);
-	void RunForwardtrack(CUserCmd* cmd);
+	void RunForwardtrack(CUserCmd* cmd, bool bSendPacket);
 
 private:
 	float m_fOriginSpeed = 1.0f;
@@ -28,6 +28,7 @@ private:
 	bool m_bPositionAdjustment = false;
 	bool m_bBacktrack = false;
 	bool m_bForwardtrack = false;
+	bool m_bLACSafe = true;
 
 private:
 	struct _Backtrack

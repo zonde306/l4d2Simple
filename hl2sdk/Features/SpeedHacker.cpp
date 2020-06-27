@@ -30,6 +30,10 @@ void CSpeedHacker::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
 	IMGUI_TIPS("tick 优化，使用速度延迟预测需要这个功能。\n三种 tick 优化做的是同一种事情(方法不同)，只能选一个。");
 
+	ImGui::Checkbox(XorStr("NoLerp Safe"), &m_bLACSafe);
+	IMGUI_TIPS("只有在射击/推的时候才运行，防止被检测。");
+
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("SpeedHack Active"), &m_bActive);
 	IMGUI_TIPS("加速，勾上后下面的东西才有效果。");
 
@@ -48,18 +52,18 @@ void CSpeedHacker::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
+void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
 	RecordBacktracking(cmd);
 	
 	if (m_bPositionAdjustment)
-		RunPositionAdjustment(cmd);
+		RunPositionAdjustment(cmd, *bSendPacket);
 	
 	if (m_bBacktrack)
-		RunBacktracking(cmd);
+		RunBacktracking(cmd, *bSendPacket);
 
 	if (m_bForwardtrack)
-		RunForwardtrack(cmd);
+		RunForwardtrack(cmd, *bSendPacket);
 
 	if (!m_bActive)
 		return;
@@ -85,7 +89,8 @@ void CSpeedHacker::OnConfigLoading(const config_type & data)
 	m_fUseSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
 	m_fWalkSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	m_fFireSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
-	m_bForwardtrack = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	m_bLACSafe = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
 void CSpeedHacker::OnConfigSave(config_type & data)
@@ -100,11 +105,12 @@ void CSpeedHacker::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
-void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
+void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd, bool bSendPacket)
 {
-	if (!(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2))
+	if (m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket)
 		return;
 	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -143,9 +149,9 @@ void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
 	}
 }
 
-void CSpeedHacker::RunBacktracking(CUserCmd * cmd)
+void CSpeedHacker::RunBacktracking(CUserCmd * cmd, bool bSendPacket)
 {
-	if ((!(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2)) || m_iBacktrackingTarget <= 0)
+	if ((m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket) || m_iBacktrackingTarget <= 0)
 		return;
 	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -207,8 +213,11 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 	}
 }
 
-void CSpeedHacker::RunForwardtrack(CUserCmd * cmd)
+void CSpeedHacker::RunForwardtrack(CUserCmd * cmd, bool bSendPacket)
 {
+	if (m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket)
+		return;
+	
 	INetChannelInfo* netChan = g_pInterface->Engine->GetNetChannelInfo();
 	if (netChan == nullptr)
 		return;

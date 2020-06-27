@@ -242,8 +242,6 @@ void CClientHook::InitFeature()
 {
 	if (!g_pBunnyHop)
 		g_pBunnyHop = new CBunnyHop();
-	if (!g_pSpeedHacker)
-		g_pSpeedHacker = new CSpeedHacker();
 	if (!g_pAimbot)
 		g_pAimbot = new CAimBot();
 	if (!g_pTriggerBot)
@@ -263,9 +261,11 @@ void CClientHook::InitFeature()
 	if (!g_pQTE)
 		g_pQTE = new CQuickTriggerEvent();
 
-	// 这个要排在最后，否则没有效果
+	// 这些要排在最后，否则没有效果
 	if (!g_pViewManager)
 		g_pViewManager = new CViewManager();
+	if (!g_pSpeedHacker)
+		g_pSpeedHacker = new CSpeedHacker();
 }
 
 void CClientHook::LoadConfig()
