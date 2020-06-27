@@ -39,9 +39,10 @@ using FnOverrideView = void(__thiscall*)(IClientMode*, CViewSetup*);
 using FnGetViewModelFOV = float(__thiscall*)(IClientMode*);
 
 // 非虚函数
-typedef void(__cdecl* FnCL_SendMove)();
-typedef void(__cdecl* FnCL_Move)(float, bool);
+using FnCL_SendMove = void(__cdecl*)();
+using FnCL_Move = void(__cdecl*)(float, bool);
 using FnWriteListenEventList = void(__thiscall*)(IGameEventManager2*, CLC_ListenEvents*);
+using FnEmitSoundInternal = void(__thiscall*)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 
 class CClientHook
 {
@@ -82,6 +83,7 @@ protected:
 	static void __fastcall Hooked_OverrideView(IClientMode*, LPVOID, CViewSetup*);
 	static float __fastcall Hooked_GetViewModelFOV(IClientMode*, LPVOID);
 	static void __fastcall Hooked_WriteListenEventList(IGameEventManager2*, LPVOID, CLC_ListenEvents*);
+	static void __fastcall Hooked_EmitSoundInternal(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -121,6 +123,7 @@ private:
 	FnOverrideView oOverrideView = nullptr;
 	FnGetViewModelFOV oGetViewModelFOV = nullptr;
 	FnWriteListenEventList oWriteListenEventList = nullptr;
+	FnEmitSoundInternal oEmitSoundInternal = nullptr;
 
 public:
 	bool* bSendPacket;

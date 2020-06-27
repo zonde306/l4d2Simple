@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
 #include <optional>
+#include <chrono>
 
 class CQuickTriggerEvent : public CBaseFeatures
 {
@@ -60,6 +61,7 @@ private:
 	float m_fChargerDistance = 300.0f;
 	float m_fWitchDistance = 50.0f;
 	float m_fRockDistance = 350.0f;
+	float m_fSmokerDistance = 750.0f;
 
 	float m_fShoveDstExtra = 25.0f;
 	float m_fMeleeDstExtra = 30.0f;
@@ -67,6 +69,7 @@ private:
 	float m_fHunterFov = 20.0f;
 	float m_fJockeyFov = 30.0f;
 
+	std::chrono::system_clock::time_point m_StartAttackTime[65];
 	CBasePlayer* m_pSmokerAttacker = nullptr;
 };
 

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
 #include <deque>
+#include <climits>
 
 class CSpeedHacker : public CBaseFeatures
 {
@@ -10,6 +11,7 @@ public:
 	
 	virtual void OnMenuDrawing() override;
 	virtual void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
+	virtual void OnEnginePaint(PaintMode_t) override;
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
@@ -29,6 +31,7 @@ private:
 	bool m_bBacktrack = false;
 	bool m_bForwardtrack = false;
 	bool m_bLACSafe = true;
+	bool m_bDebug = false;
 
 private:
 	struct _Backtrack
@@ -39,8 +42,9 @@ private:
 		_Backtrack(int tickCount, const Vector& origin);
 	};
 
-	std::deque<_Backtrack> m_Backtracking[64];
+	std::deque<_Backtrack> m_Backtracking[65];
 	int m_iBacktrackingTarget = -1;
+	int m_iTickCount = INT_MAX;
 };
 
 extern CSpeedHacker* g_pSpeedHacker;

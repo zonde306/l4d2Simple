@@ -50,13 +50,14 @@ extern time_t g_tpGameTimer;
 #define SIG_OVERRIDE_VIEW			XorStr("55 8B EC 83 EC 40 6A FF ")
 #define SIG_WRITE_LISTEN_EVENTS		XorStr("55 8B EC 8B 45 08 83 EC 08 53 56 83 C0 10 33 F6 8B D9 3B C6 74 0C 6A 40 56 50 E8 ? ? ? ? 83 C4 0C 89 75 F8")
 #define SIG_CHECK_FILE_CRC_SERVER	XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 57 8B F9 80 BF ? ? ? ? ? 0F 84 ? ? ? ? 83 7F 68 06 0F 85 ? ? ? ? FF 15 ? ? ? ? D9 95 ? ? ? ? D8 A7 ? ? ? ? D9 05 ? ? ? ? DF F1 DD D8")
+#define SIG_EMIT_SOUND				XorStr("55 8B EC 81 EC ? ? ? ? 6A 00")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove,
-	g_pDetourSendNetMsg, g_pDetourWriteListenEventList;
+	g_pDetourSendNetMsg, g_pDetourWriteListenEventList, g_pDetourEmitSoundInternal;
 
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
@@ -187,12 +188,14 @@ bool CClientHook::Init()
 		g_pHookModelRender->InstallHook();
 	}
 
+	/*
 	if (g_pInterface->Sound != nullptr && !g_pHookEngineSound)
 	{
 		g_pHookEngineSound = std::make_unique<CVmtHook>(g_pInterface->Sound);
 		oEmitSound = reinterpret_cast<FnEmitSound>(g_pHookEngineSound->HookFunction(indexes::EmitSound, Hooked_EmitSound));
 		g_pHookEngineSound->InstallHook();
 	}
+	*/
 
 	/*
 	if (g_pInterface->NetChannel != nullptr && !g_pHookNetChannel)
@@ -228,6 +231,18 @@ bool CClientHook::Init()
 		}
 	}
 	*/
+
+	if (oEmitSoundInternal == nullptr || !g_pDetourEmitSoundInternal)
+	{
+		oEmitSoundInternal = reinterpret_cast<FnEmitSoundInternal>(Utils::FindPattern(XorStr("engine.dll"), SIG_EMIT_SOUND));
+		PRINT_OFFSET(XorStr("CEngineSoundClient::EmitSoundInternal"), oEmitSoundInternal);
+
+		if (oEmitSoundInternal != nullptr)
+		{
+			g_pDetourEmitSoundInternal = std::make_unique<DetourXS>(oEmitSoundInternal, Hooked_EmitSoundInternal);
+			oEmitSoundInternal = reinterpret_cast<FnEmitSoundInternal>(g_pDetourEmitSoundInternal->GetTrampoline());
+		}
+	}
 
 	// oWriteListenEventList(g_pInterface->GameEvent, &g_ListenEvents);
 
@@ -1426,6 +1441,46 @@ void __fastcall CClientHook::Hooked_WriteListenEventList(IGameEventManager2* _ec
 		msg->m_EventArray.Set(descriptor.eventid);
 	}
 	*/
+}
+
+void __fastcall CClientHook::Hooked_EmitSoundInternal(IEngineSound* _ecx, LPVOID, IRecipientFilter& filter, int iEntIndex, int iChannel, const char* pSample,
+	float flVolume, SoundLevel_t iSoundLevel, int iFlags, int iPitch, const Vector* pOrigin, const Vector* pDirection, CUtlVector<Vector>* pUtlVecOrigins,
+	bool bUpdatePositions, float soundtime, int speakerentity)
+{
+	bool blockSound = false;
+	std::string copySample;
+	Vector copyOrigin = INVALID_VECTOR, copyDirection = INVALID_VECTOR;
+	if (pSample != nullptr)
+		copySample = pSample;
+	if (pOrigin != nullptr)
+		copyOrigin = *pOrigin;
+	if (pDirection != nullptr)
+		copyDirection = *pDirection;
+
+	for (const auto& inst : g_pClientHook->_GameHook)
+	{
+		if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundLevel, iFlags, iPitch,
+			copyOrigin, copyDirection, bUpdatePositions, soundtime))
+			blockSound = true;
+	}
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook EmitSoundInternal Success."));
+	}
+#endif
+
+	if (blockSound)
+		return;
+
+	g_pClientHook->oEmitSoundInternal(_ecx, filter, iEntIndex, iChannel, copySample.c_str(),
+		flVolume, iSoundLevel, iFlags, iPitch,
+		copyOrigin.IsValid() ? &copyOrigin : nullptr,
+		copyDirection.IsValid() ? &copyDirection : nullptr,
+		pUtlVecOrigins, bUpdatePositions, soundtime, speakerentity);
 }
 
 void CClientPrediction::Init()

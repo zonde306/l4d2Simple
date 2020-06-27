@@ -32,6 +32,9 @@ void CSpeedHacker::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("NoLerp Safe"), &m_bLACSafe);
 	IMGUI_TIPS("只有在射击/推的时候才运行，防止被检测。");
+	
+	ImGui::Checkbox(XorStr("Debug"), &m_bDebug);
+	IMGUI_TIPS("显示调试 tickcount 信息。");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("SpeedHack Active"), &m_bActive);
@@ -55,7 +58,8 @@ void CSpeedHacker::OnMenuDrawing()
 void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
 	RecordBacktracking(cmd);
-	
+	m_iTickCount = INT_MAX;
+
 	if (m_bPositionAdjustment)
 		RunPositionAdjustment(cmd, *bSendPacket);
 	
@@ -76,6 +80,24 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		g_pSpeedModifier->SetSpeed(m_fFireSpeed);
 	else
 		g_pSpeedModifier->SetSpeed(m_fOriginSpeed);
+}
+
+void CSpeedHacker::OnEnginePaint(PaintMode_t)
+{
+	if (!m_bDebug)
+		return;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	if (m_iTickCount != INT_MAX)
+	{
+		g_pDrawing->DrawText(width / 2, height / 2 + 32, CDrawing::WHITE, true, XorStr("%d"), m_iTickCount);
+	}
 }
 
 void CSpeedHacker::OnConfigLoading(const config_type & data)
@@ -145,7 +167,7 @@ void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd, bool bSendPacket)
 	if ((result - cmd->tick_count) >= -50)
 	{
 		// 优化 tick
-		cmd->tick_count = result;
+		m_iTickCount = cmd->tick_count = result;
 	}
 }
 
@@ -173,7 +195,7 @@ void CSpeedHacker::RunBacktracking(CUserCmd * cmd, bool bSendPacket)
 		if (fov < bestFov)
 		{
 			bestFov = fov;
-			cmd->tick_count = it.m_iTickCount;
+			m_iTickCount = cmd->tick_count = it.m_iTickCount;
 		}
 	}
 }
@@ -189,7 +211,7 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 	g_pInterface->Engine->GetViewAngles(myEyeAngle);
 
 	float bestFov = 361.0f;
-	for (int i = 1; i < 64; ++i)
+	for (int i = 1; i <= 64; ++i)
 	{
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
 		if (player == nullptr || !player->IsAlive())
@@ -222,7 +244,7 @@ void CSpeedHacker::RunForwardtrack(CUserCmd * cmd, bool bSendPacket)
 	if (netChan == nullptr)
 		return;
 
-	cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
+	m_iTickCount = cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
 }
 
 CSpeedHacker::_Backtrack::_Backtrack(int tickCount, const Vector & origin) :

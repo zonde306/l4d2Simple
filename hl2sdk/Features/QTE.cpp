@@ -15,6 +15,8 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
+	for (int i = 0; i < 65; ++i)
+		m_StartAttackTime[i] = std::chrono::system_clock::from_time_t(0);
 }
 
 CQuickTriggerEvent::~CQuickTriggerEvent()
@@ -28,7 +30,9 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive())
+	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive() ||
+		local->IsIncapacitated() || local->IsHangingFromLedge() ||
+		local->GetCurrentAttacker() != nullptr)
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
@@ -89,7 +93,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		{
 			if (hasMelee)
 			{
-				HandleMeleeSelfClear(local, player, cmd, distance);
+				// 近战必须提前，否则砍不到的
+				HandleMeleeSelfClear(local, player, cmd, distance / 2);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
@@ -101,7 +106,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			}
 			else if (canShove)
 			{
-				HandleShoveSelfClear(local, player, cmd, distance);
+				// 推猴子必须提前
+				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / 2 : distance));
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
@@ -113,7 +119,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		{
 			if (hasMelee)
 			{
-				HandleMeleeSelfClear(local, player, cmd, distance);
+				// 近战必须提前，否则砍不到的
+				HandleMeleeSelfClear(local, player, cmd, distance / 2);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack charger/rock(%d), dist: %.0f"), classId, distance);
 			}
@@ -205,6 +212,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Smoker SelfClear"), &m_bSmoker);
 	IMGUI_TIPS("被拉自救");
 
+	ImGui::SliderFloat(XorStr("SmokerSelfClear Distance"), &m_fSmokerDistance, 1.0f, 500.0f, ("%.1f"));
+	IMGUI_TIPS("被拉自救范围");
+
 	ImGui::Checkbox(XorStr("Hunter Skeet"), &m_bHunter);
 	IMGUI_TIPS("空爆猎人");
 
@@ -278,6 +288,7 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_fChargerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
 	m_fWitchDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	m_fRockDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+	m_fSmokerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
 
 	m_fShoveDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
 	m_fMeleeDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
@@ -305,6 +316,7 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
@@ -323,9 +335,11 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,
 	int& flags, int& pitch, Vector& origin, Vector& direction, bool& updatePosition, float& soundTime)
 {
-	if (entity > 0 && entity < 64 &&
-		(sample.find(XorStr("smoker_launchtongue")) != std::string::npos ||
-			sample.find(XorStr("smoker_tonguehit")) != std::string::npos))
+	if (entity < 1 || entity > 64)
+		return true;
+	
+	if (sample.find(XorStr("smoker_launchtongue")) != std::string::npos ||
+		sample.find(XorStr("smoker_tonguehit")) != std::string::npos)
 	{
 		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 		if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive())
@@ -350,6 +364,18 @@ bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& chan
 		}
 
 		m_pSmokerAttacker = smoker;
+	}
+
+	if (sample.find(XorStr("jockey_loudattack")) != std::string::npos ||
+		sample.find(XorStr("smoker_launchtongue")) != std::string::npos ||
+		sample.find(XorStr("smoker_tonguehit")) != std::string::npos ||
+		sample.find(XorStr("hunter_attackmix")) != std::string::npos ||
+		sample.find(XorStr("hunter_pounce")) != std::string::npos ||
+		sample.find(XorStr("charger_charge")) != std::string::npos ||
+		sample.find(XorStr("female_boomer_spotprey")) != std::string::npos ||
+		sample.find(XorStr("male_boomer_spotprey")) != std::string::npos)
+	{
+		m_StartAttackTime[entity] = std::chrono::system_clock::now();
 	}
 	
 	return true;
@@ -530,6 +556,14 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 		if (target->IsPlayer() && target->IsGhost())
 			continue;
 
+		bool isAttacking = false;
+		if (i <= 64)
+		{
+			auto now = std::chrono::system_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_StartAttackTime[i]).count();
+			isAttacking = (duration <= 1000);
+		}
+
 		Vector aimPosition = GetTargetAimPosition(target);
 		if (!aimPosition.IsValid())
 			continue;
@@ -546,10 +580,10 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 					break;
 
 				static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
-				if (distance > cvTongueRange->GetFloat())
+				if (distance > cvTongueRange->GetFloat() || distance > m_fSmokerDistance)
 					break;
 
-				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
+				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING && !isAttacking)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));
@@ -568,7 +602,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 					target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
 					break;
 
-				if (target->GetFlags() & FL_ONGROUND)
+				if ((target->GetFlags() & FL_ONGROUND) && !isAttacking)
 					break;
 
 				if (distance > m_fHunterDistance)
@@ -586,7 +620,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (!m_bJockey)
 					break;
 
-				if (target->GetFlags() & FL_ONGROUND)
+				if ((target->GetFlags() & FL_ONGROUND) && !isAttacking)
 					break;
 
 				/*
@@ -637,7 +671,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				}
 				*/
 
-				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
+				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING && !isAttacking)
 					break;
 
 				if (distance > m_fChargerDistance)

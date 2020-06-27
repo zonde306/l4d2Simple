@@ -595,7 +595,8 @@ Vector CAimBot::GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> vi
 
 bool CAimBot::CanRunAimbot(CBasePlayer * entity)
 {
-	if (entity == nullptr || !entity->IsAlive())
+	if (entity == nullptr || !entity->IsAlive() || entity->IsGhost() ||
+		entity->IsHangingFromLedge() || entity->GetCurrentAttacker() != nullptr)
 		return false;
 
 	if (entity->GetTeam() == 3)

@@ -30,7 +30,9 @@ CKnifeBot::~CKnifeBot()
 void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 {
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive())
+	if (player == nullptr || !player->IsAlive() || player->IsGhost() ||
+		player->IsIncapacitated() || player->IsHangingFromLedge() ||
+		player->GetCurrentAttacker() != nullptr)
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
