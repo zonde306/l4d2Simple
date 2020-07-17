@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <string_view>
+#include <tuple>
 
 #define TRIM_INVALID_CHAR	XorStr(" \r\n\t")
 
@@ -57,21 +59,26 @@ namespace Utils
 	std::wstring c2w(const std::string& s);
 
 	// 内存搜索相关
-	DWORD FindProccess(const std::string& proccessName);
+	DWORD FindProccess(std::string_view proccessName);
 	HMODULE GetModuleHandleSafe(const std::string& pszModuleName);
-	DWORD GetModuleBase(const std::string& ModuleName, DWORD ProcessID = 0);
-	DWORD GetModuleBase(const std::string& ModuleName, DWORD* ModuleSize, DWORD ProcessID = 0);
+	DWORD GetModuleBase(std::string_view ModuleName, DWORD ProcessID = 0);
+	DWORD GetModuleBase(std::string_view ModuleName, DWORD* ModuleSize, DWORD ProcessID = 0);
+
+	// IDA Style
 	DWORD FindPattern(const std::string& szModules, const std::string& szPattern);
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string& szPattern);
+
+	// Code Style
 	DWORD FindPattern(const std::string & szModules, const std::string & szPattern, std::string szMask);
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern, std::string szMask);
+
 	template<typename T, typename ...Arg>
 	inline T ReadMemory(Arg... offset);
 	template<typename T, typename ...Arg>
 	inline T WriteMemory(T value, Arg... offset);
 
 	// 字符串处理
-	std::vector<std::string> StringSplit(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
+	std::vector<std::string> StringSplit(std::string_view s, std::string_view delim = TRIM_INVALID_CHAR);
 	std::string StringTrim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
 	size_t StringFind(const std::string& s, const std::string& p, bool caseSensitive = true);
 	bool StringEqual(const std::string& s, std::string p, bool caseSensitive = true);
@@ -98,6 +105,9 @@ namespace Utils
 
 	// 进程相关
 	void FindWindowByProccess(DWORD ProcessID = 0);
+
+	// 获取模块地址
+	std::pair<DWORD, DWORD> GetModuleSize(const std::string& pszModuleName);
 };
 
 template<typename T, typename ...Arg>

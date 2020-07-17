@@ -34,6 +34,15 @@ bool CBaseEntity::IsValid()
 	if (net == nullptr)
 		return false;
 
+	// 检查虚函数表(client.dll)
+	static auto moduleInfo = Utils::GetModuleSize(XorStr("client.dll"));
+	if (moduleInfo.first > moduleInfo.second)
+	{
+		DWORD address = reinterpret_cast<DWORD>(Utils::GetVirtualFunction(net, indexes::IsDormant));
+		if (address < moduleInfo.first || address > moduleInfo.second)
+			return false;
+	}
+
 	try
 	{
 		return (!IsDormant() && GetIndex() > 0);
