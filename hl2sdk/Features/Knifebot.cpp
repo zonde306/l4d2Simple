@@ -267,7 +267,7 @@ bool CKnifeBot::IsShoveReady(CBasePlayer * player, CBaseWeapon * weapon)
 	if (sequence == ANIM_GRENADE_THORWING || sequence == ANIM_GRENADE_THROWED)
 		return false;
 
-	return true;
+	return player->IsReadyToShove();
 }
 
 bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
@@ -333,7 +333,8 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		if (!m_bCanShoveAttack &&
 			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
-			(classId != ET_CHARGER || canShoveCharger))
+			(classId != ET_CHARGER || canShoveCharger) &&
+			(!entity->IsPlayer() || entity->CanBeShove()))
 		{
 			// 推 (右键)
 			m_bCanShoveAttack = true;

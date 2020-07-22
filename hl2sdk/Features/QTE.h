@@ -69,6 +69,9 @@ private:
 	float m_fHunterFov = 20.0f;
 	float m_fJockeyFov = 30.0f;
 
+	float m_fJockeyScale = 2.0f;
+	float m_fMeleeScale = 2.0f;
+
 	std::chrono::system_clock::time_point m_StartAttackTime[65];
 	CBasePlayer* m_pSmokerAttacker = nullptr;
 };

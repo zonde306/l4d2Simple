@@ -101,6 +101,10 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			return;
 	}
 
+	// 防止坑队友或自己
+	if (classId == ET_BOOMER && IsNearSurvivor(m_pAimTarget))
+		return;
+
 	if (m_bBlockFriendlyFire && team == player->GetTeam() &&
 		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
 	{
@@ -457,4 +461,45 @@ bool CTriggerBot::IsVisableToPosition(CBasePlayer * local, CBasePlayer * target,
 	}
 
 	return (trace.m_pEnt == target || trace.fraction > 0.97f);
+}
+
+bool CTriggerBot::IsNearSurvivor(CBasePlayer* boomer)
+{
+	static ConVar* z_exploding_splat_radius = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+	
+	Vector position;
+	Vector origin = boomer->GetAbsOrigin();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	float radius = z_exploding_splat_radius->GetFloat();
+
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBaseEntity* entity = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntity(i));
+		if (entity == nullptr || !entity->IsValid())
+			continue;
+
+		position = entity->GetAbsOrigin();
+
+		// 爆炸比较特殊，不好进行检测，只能假设可以触发了
+		if (origin.DistTo(position) > radius)
+			continue;
+
+		if (entity->IsPlayer() && entity->GetTeam() == 2)
+		{
+			CBasePlayer* player = reinterpret_cast<CBasePlayer*>(entity);
+			if (player->IsAlive() && !player->GetCurrentAttacker())
+				return true;
+		}
+
+		int classId = entity->GetClassID();
+		if (classId == ET_WITCH)
+		{
+			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+				return true;
+		}
+
+		// TODO: 检查警报车。服务器和客户端的 classname 并不对应
+	}
+
+	return false;
 }

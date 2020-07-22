@@ -20,6 +20,7 @@ public:
 	bool HasShotgun(CBaseWeapon* weapon);
 
 	bool IsVisableToPosition(CBasePlayer* local, CBasePlayer* target, const Vector& position);
+	bool IsNearSurvivor(CBasePlayer* boomer);
 
 private:	// 菜单项
 	bool m_bActive = false;

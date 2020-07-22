@@ -94,7 +94,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			if (hasMelee)
 			{
 				// 近战必须提前，否则砍不到的
-				HandleMeleeSelfClear(local, player, cmd, distance / 2);
+				HandleMeleeSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale / m_fMeleeScale : distance / m_fMeleeScale));
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
@@ -107,7 +107,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			else if (canShove)
 			{
 				// 推猴子必须提前
-				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / 2 : distance));
+				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale : distance));
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
@@ -120,7 +120,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			if (hasMelee)
 			{
 				// 近战必须提前，否则砍不到的
-				HandleMeleeSelfClear(local, player, cmd, distance / 2);
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack charger/rock(%d), dist: %.0f"), classId, distance);
 			}
@@ -255,6 +255,12 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Jockey Lunge FOV"), &m_fJockeyFov, 1.0f, 90.0f, ("%.1f"));
 	IMGUI_TIPS("推猴视野");
 
+	ImGui::SliderFloat(XorStr("Jockey Scale"), &m_fJockeyScale, 0.0f, 5.0f, ("%.1f"), 0.1f);
+	IMGUI_TIPS("猴子距离缩放");
+
+	ImGui::SliderFloat(XorStr("Melee Scale"), &m_fMeleeScale, 0.0f, 5.0f, ("%.1f"), 0.1f);
+	IMGUI_TIPS("近战距离缩放");
+
 	ImGui::TreePop();
 }
 
@@ -295,6 +301,8 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 
 	m_fHunterFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
 	m_fJockeyFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	m_fJockeyScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	m_fMeleeScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
 }
 
 void CQuickTriggerEvent::OnConfigSave(config_type & data)
@@ -330,6 +338,8 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
 }
 
 bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,

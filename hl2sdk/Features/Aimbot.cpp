@@ -346,7 +346,7 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			continue;
 
 		Vector aimPosition = GetTargetAimPosition(entity);
-		if (!aimPosition.IsValid())
+		if (!aimPosition.IsValid() || IsNearSurvivor(entity))
 			continue;
 
 		float fov = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
@@ -748,5 +748,46 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 		*/
 	}
 	
+	return false;
+}
+
+bool CAimBot::IsNearSurvivor(CBasePlayer* boomer)
+{
+	static ConVar* z_exploding_splat_radius = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+
+	Vector position;
+	Vector origin = boomer->GetAbsOrigin();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	float radius = z_exploding_splat_radius->GetFloat();
+
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBaseEntity* entity = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntity(i));
+		if (entity == nullptr || !entity->IsValid())
+			continue;
+
+		position = entity->GetAbsOrigin();
+
+		// 爆炸比较特殊，不好进行检测，只能假设可以触发了
+		if (origin.DistTo(position) > radius)
+			continue;
+
+		if (entity->IsPlayer() && entity->GetTeam() == 2)
+		{
+			CBasePlayer* player = reinterpret_cast<CBasePlayer*>(entity);
+			if (player->IsAlive() && !player->GetCurrentAttacker())
+				return true;
+		}
+
+		int classId = entity->GetClassID();
+		if (classId == ET_WITCH)
+		{
+			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+				return true;
+		}
+
+		// TODO: 检查警报车。服务器和客户端的 classname 并不对应
+	}
+
 	return false;
 }

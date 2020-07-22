@@ -48,6 +48,7 @@ public:
 	bool CanRunAimbot(CBasePlayer* entity);
 	Vector GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
 	bool IsFatalTarget(CBasePlayer* entity);
+	bool IsNearSurvivor(CBasePlayer* boomer);
 	
 private:	// 菜单项
 	bool m_bActive = false;
