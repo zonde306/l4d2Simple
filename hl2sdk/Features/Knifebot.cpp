@@ -15,8 +15,8 @@ CKnifeBot* g_pKnifeBot = nullptr;
 #define HITBOX_SPITTER			4
 #define HITBOX_CHARGER			9
 #define HITBOX_WITCH			10
-#define ANIM_GRENADE_THORWING	4
-#define ANIM_GRENADE_THROWED	6
+#define ANIM_GRENADE_THORWING	378
+#define ANIM_GRENADE_THROWED	373
 
 CKnifeBot::CKnifeBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -117,6 +117,8 @@ void CKnifeBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Auto Shove Range"), &m_fExtraShoveRange, 0.0f, 100.0f, XorStr("%.0f"));
 	IMGUI_TIPS("右键(推/抓)范围预测。");
 
+	ImGui::Checkbox(XorStr("Debug Info"), &m_bDebug);
+
 	ImGui::TreePop();
 }
 
@@ -150,6 +152,17 @@ void CKnifeBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
+}
+
+void CKnifeBot::OnEnginePaint(PaintMode_t)
+{
+	if (!m_bDebug)
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	g_pDrawing->DrawText(width/2, height/2, CDrawing::WHITE, true, XorStr("m_iSequence=%d"), m_iSequence);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
@@ -263,8 +276,8 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 
 bool CKnifeBot::IsShoveReady(CBasePlayer * player, CBaseWeapon * weapon)
 {
-	int sequence = weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
-	if (sequence == ANIM_GRENADE_THORWING || sequence == ANIM_GRENADE_THROWED)
+	m_iSequence = player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
+	if (m_iSequence == ANIM_GRENADE_THORWING || m_iSequence == ANIM_GRENADE_THROWED)
 		return false;
 
 	return player->IsReadyToShove();
@@ -333,8 +346,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		if (!m_bCanShoveAttack &&
 			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
-			(classId != ET_CHARGER || canShoveCharger) &&
-			(!entity->IsPlayer() || entity->CanBeShove()))
+			(classId != ET_CHARGER || canShoveCharger))
 		{
 			// 推 (右键)
 			m_bCanShoveAttack = true;
