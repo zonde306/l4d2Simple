@@ -66,6 +66,7 @@ private:	// 菜单项
 	bool m_bForwardtrack = false;
 	bool m_bShowTarget = false;
 	bool m_bIgnoreTank = true;
+	bool m_bIgnoreCI = false;
 
 	float m_fAimFov = 30.0f;
 	float m_fAimDist = 3000.0f;

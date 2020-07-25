@@ -144,6 +144,9 @@ void CAimBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Ignore Tank"), &m_bIgnoreTank);
 	IMGUI_TIPS("自动瞄准不瞄准 Tank。");
 	
+	ImGui::Checkbox(XorStr("Ignore Common Infected"), &m_bIgnoreCI);
+	IMGUI_TIPS("自动瞄准不瞄准普感。");
+	
 	ImGui::Checkbox(XorStr("Shotgun Chest"), &m_bShotgunChest);
 	IMGUI_TIPS("霰弹枪瞄准身体");
 	
@@ -202,6 +205,7 @@ void CAimBot::OnConfigLoading(const config_type & data)
 	m_bFatalFirst = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
 	m_bShowTarget = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
 	m_bIgnoreTank = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
+	m_bIgnoreCI = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
 }
 
 void CAimBot::OnConfigSave(config_type & data)
@@ -226,6 +230,7 @@ void CAimBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
 	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
+	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
@@ -504,9 +509,11 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 	if (local && entity->GetClassID() == ET_TankRock && local->GetTeam() == 2)
 		return true;
 
+	int classId = entity->GetClassID();
+
 	try
 	{
-		if (!entity->IsAlive() || entity->GetClassID() == ET_TankRock)
+		if (!entity->IsAlive() || classId == ET_TankRock)
 			return false;
 	}
 	catch (...)
@@ -537,17 +544,23 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 
 	if (m_bIgnoreTank)
 	{
-		if (entity->GetClassID() == ET_TANK)
+		if (classId == ET_TANK)
 			return false;
 	}
 
 	if (m_bNonWitch)
 	{
-		if (entity->GetClassID() == ET_WITCH)
+		if (classId == ET_WITCH)
 		{
 			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
 				return false;
 		}
+	}
+
+	if (m_bIgnoreCI)
+	{
+		if (classId == ET_INFECTED)
+			return false;
 	}
 
 	return true;
