@@ -56,7 +56,7 @@ CAimBot::~CAimBot()
 
 void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive)
+	if (!m_bActive || (cmd->buttons & IN_SCORE))
 	{
 		m_bRunAutoAim = false;
 		return;
@@ -179,6 +179,9 @@ void CAimBot::OnMenuDrawing()
 	
 	ImGui::Checkbox(XorStr("AutoAim Target"), &m_bShowTarget);
 	IMGUI_TIPS("显示瞄准的目标。");
+	
+	ImGui::Checkbox(XorStr("Debug"), &m_bDebug);
+	IMGUI_TIPS("显示调试信息（目标分数）。");
 
 	ImGui::TreePop();
 }
@@ -351,6 +354,16 @@ CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles)
 			continue;
 
 		Vector aimPosition = GetTargetAimPosition(entity);
+		if (m_bDebug && aimPosition.IsValid())
+		{
+			Vector screen;
+			int score = CalcTargetScore(entity, myEyeAngles);
+			if (math::WorldToScreenEx(aimPosition, screen))
+			{
+				g_pDrawing->DrawText(screen.x, screen.y, CDrawing::RED, true, XorStr("score: %d"), score);
+			}
+		}
+
 		if (!aimPosition.IsValid() || IsNearSurvivor(entity))
 			continue;
 
@@ -465,7 +478,158 @@ CBasePlayer* CAimBot::GetAimTarget(CBasePlayer* player, const QAngle& viewAngles
 	return reinterpret_cast<CBasePlayer*>(trace.m_pEnt);
 }
 
-bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition)
+int CAimBot::CalcTargetScore(CBasePlayer* target, const QAngle& viewAngles)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || target == nullptr || !local->IsAlive() || !target->IsAlive())
+		return -2;
+
+	Vector position = target->GetHeadOrigin();
+	Vector origin = local->GetEyePosition();
+	Vector chestOirign = local->GetChestOrigin();
+
+	float distance = origin.DistTo(position);
+	if (distance > m_fAimDist)
+		return -1;
+
+	float fov = math::GetAnglesFieldOfView(viewAngles, math::CalculateAim(origin, position));
+	if (fov > m_fAimFov)
+		return -1;
+	
+	int score = 0;
+	ZombieClass_t zClass = target->GetZombieType();
+	CBasePlayer* victim = target->GetCurrentVictim();
+	int sequence = target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
+	switch (zClass)
+	{
+		case ZC_SMOKER:
+		{
+			score = 10;
+
+			if (victim != nullptr || sequence == ANIM_SMOKER_PULLING)
+				score += 20;
+			
+			static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
+			float relFov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(position, chestOirign));
+			if (victim == local)
+				score += 100;
+			else if (relFov < 30.0f && distance < cvTongueRange->GetFloat())
+				score += 100 - static_cast<int>(relFov);
+
+			break;
+		}
+		case ZC_BOOMER:
+		{
+			score = 5;
+
+			static ConVar* cvExplodeRadius = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+			if (distance < cvExplodeRadius->GetFloat() && IsTargetVisible(target, position, MASK_SOLID_BRUSHONLY))
+				score -= cvExplodeRadius->GetInt() / 10;
+
+			float relFov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(position, chestOirign));
+			if(relFov < 40.0f)
+				score += 30 - static_cast<int>(relFov);
+
+			break;
+		}
+		case ZC_HUNTER:
+		{
+			score = 7;
+
+			int flags = target->GetFlags();
+			if (flags & FL_DUCKING)
+				score += 3;
+
+			Vector velocity = target->GetVelocity();
+			float speed = velocity.Length();
+			if (velocity.z != 0.0f && speed > 220.0f && !(flags & FL_ONGROUND) && sequence == ANIM_HUNTER_LUNGING)
+				score += static_cast<int>(speed / 50);
+
+			float relFov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(position, chestOirign));
+			if(relFov < 25.0f)
+				score += 60 - static_cast<int>(relFov);
+
+			if(distance <= 200)
+				score += static_cast<int>(200 - distance);
+
+			if (victim != nullptr)
+				score += 10;
+
+			break;
+		}
+		case ZC_SPITTER:
+		{
+			score = 5;
+			break;
+		}
+		case ZC_JOCKEY:
+		{
+			score = 7;
+
+			int flags = target->GetFlags();
+			Vector velocity = target->GetVelocity();
+			float speed = velocity.Length();
+			if (velocity.z != 0.0f && speed > 220.0f && !(flags & FL_ONGROUND))
+				score += static_cast<int>(speed / 50);
+
+			float relFov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(position, chestOirign));
+			if (relFov < 40.0f)
+				score += 80 - static_cast<int>(relFov);
+
+			if (distance <= 300)
+				score += static_cast<int>(300 - distance);
+
+			if (victim != nullptr)
+				score += 8;
+
+			break;
+		}
+		case ZC_CHARGER:
+		{
+			score = 6;
+
+			Vector velocity = target->GetVelocity();
+			float speed = velocity.Length();
+			if (velocity.z != 0.0f && speed > 220.0f)
+				score += static_cast<int>(speed / 50);
+
+			float relFov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(position, chestOirign));
+			if (relFov < 40.0f)
+				score += 70 - static_cast<int>(relFov);
+
+			if (distance <= 400)
+				score += static_cast<int>(400 - distance);
+
+			if (victim != nullptr)
+				score += 6;
+
+			break;
+		}
+		case ZC_TANK:
+		{
+			score = 1;
+			break;
+		}
+		case ZC_WITCH:
+		{
+			if (target->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) >= 1.0f)
+			{
+				float relFov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(position, chestOirign));
+				if (relFov < 40.0f)
+					score += 100 - static_cast<int>(relFov);
+
+				if (distance <= 200)
+					score += static_cast<int>(200 - distance);
+			}
+
+			break;
+		}
+	}
+
+	return score;
+}
+
+bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition, unsigned int mask)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || entity == nullptr || !entity->IsAlive())
@@ -489,7 +653,7 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition)
 
 	try
 	{
-		g_pInterface->Trace->TraceRay(ray, MASK_SHOT, &filter, &trace);
+		g_pInterface->Trace->TraceRay(ray, mask, &filter, &trace);
 	}
 	catch (...)
 	{

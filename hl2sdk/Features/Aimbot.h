@@ -10,19 +10,20 @@ public:
 	CAimBot();
 	~CAimBot();
 
-	struct QueuedTarget_t
+	struct QueuedEntity_t
 	{
 		int priority = 0;
 		CBasePlayer* target = nullptr;
 		float fov = 0.0f;
 		float distance = 0.0f;
+		int tickcount = 0;
 
-		inline bool operator<(const QueuedTarget_t& t)
+		inline bool operator<(const QueuedEntity_t& t)
 		{
 			return priority < t.priority;
 		}
 
-		inline bool operator>(const QueuedTarget_t& t)
+		inline bool operator>(const QueuedEntity_t& t)
 		{
 			return priority > t.priority;
 		}
@@ -38,8 +39,9 @@ public:
 
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
 	CBasePlayer* GetAimTarget(CBasePlayer* player, const QAngle& viewAngles);
+	int CalcTargetScore(CBasePlayer* target, const QAngle& viewAngles);
 
-	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR);
+	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR, unsigned int mask = MASK_SHOT);
 	bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);
 	bool HasShotgun(CBaseWeapon* weapon);
@@ -53,6 +55,7 @@ public:
 private:	// 菜单项
 	bool m_bActive = false;
 	bool m_bOnFire = true;
+	bool m_bDebug = false;
 
 	bool m_bVisible = true;
 	bool m_bSilent = true;
@@ -81,6 +84,8 @@ private:
 	float m_fTargetFov = 0.0f;
 	float m_fTargetDistance = 0.0f;
 	int m_iEntityIndex = -1;
+
+	std::priority_queue<QueuedEntity_t> m_QueuedEntity;
 };
 
 extern CAimBot* g_pAimbot;

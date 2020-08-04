@@ -22,13 +22,13 @@ void CSpeedHacker::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Position Adjustment"), &m_bPositionAdjustment);
-	IMGUI_TIPS("根据 lerp 进行 tick 优化，提升精准度\n警告：这个能够被检测到");
+	IMGUI_TIPS("根据 lerp 进行 tick 优化，提升精准度\n效果相当于 cl_interp 0\n三选一");
 
 	ImGui::Checkbox(XorStr("Backtracking"), &m_bBacktrack);
-	IMGUI_TIPS("根据位置进行 tick 优化，适用于瞄准头部\n警告：这个或许能够被检测到");
+	IMGUI_TIPS("根据 fov 进行 tick 优化，适用于 aimbot 瞄准头部来提升精准度\n三选一");
 
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
-	IMGUI_TIPS("tick 优化，使用速度延迟预测需要这个功能。\n三种 tick 优化做的是同一种事情(方法不同)，只能选一个。");
+	IMGUI_TIPS("tick 优化，基于速度＋延迟。\n三选一");
 
 	ImGui::Checkbox(XorStr("NoLerp Safe"), &m_bLACSafe);
 	IMGUI_TIPS("只有在射击/推的时候才运行，防止被检测。");
@@ -184,9 +184,9 @@ void CSpeedHacker::RunBacktracking(CUserCmd * cmd, bool bSendPacket)
 	if (weapon == nullptr || ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : !weapon->CanFire()))
 		return;
 
-	QAngle myEyeAngle;
+	QAngle myEyeAngle = cmd->viewangles;
 	Vector myEyeOrigin = local->GetEyePosition();
-	g_pInterface->Engine->GetViewAngles(myEyeAngle);
+	//g_pInterface->Engine->GetViewAngles(myEyeAngle);
 
 	float bestFov = 361.0f;
 	for (const auto& it : m_Backtracking[m_iBacktrackingTarget])
@@ -206,15 +206,15 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 	if (local == nullptr)
 		return;
 
-	QAngle myEyeAngle;
+	QAngle myEyeAngle = cmd->viewangles;
 	Vector myEyeOrigin = local->GetEyePosition();
-	g_pInterface->Engine->GetViewAngles(myEyeAngle);
+	//g_pInterface->Engine->GetViewAngles(myEyeAngle);
 
 	float bestFov = 361.0f;
 	for (int i = 1; i <= 64; ++i)
 	{
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (player == nullptr || !player->IsAlive())
+		if (player == nullptr || !player->IsAlive() || !player->IsPlayer())
 			continue;
 
 		if (m_Backtracking[i].size() > 20)
