@@ -12,6 +12,7 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnGameEventClient(IGameEvent* event) override;
 	virtual void OnGameEvent(IGameEvent* event, bool dontBroadcast) override;
+	virtual bool OnUserMessage(int id, bf_read bf) override;
 
 protected:
 	void OnPlayerSpawn(int client);
@@ -25,6 +26,7 @@ private:
 	bool m_bLogDeath = true;
 	bool m_bLogTeam = true;
 	bool m_bLogTakeDamage = true;
+	bool m_bLogUserMsg = false;
 
 private:
 	CGEL_EventLogger *m_pEventListener;

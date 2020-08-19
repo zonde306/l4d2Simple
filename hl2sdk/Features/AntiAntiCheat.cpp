@@ -60,6 +60,9 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 	m_BlockUserMessage = {
 		0x0E,	// CLC_FileCRCCheck
 		0x14,	// SVC_CrosshairAngle
+		11,		// Shake（屏幕摇晃）
+		12,		// Fade（屏幕颜色，可制造黑屏效果）
+		46,		// BlurFade（屏幕模糊）
 	};
 }
 
