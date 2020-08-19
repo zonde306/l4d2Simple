@@ -29,6 +29,10 @@ CKnifeBot::~CKnifeBot()
 
 void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 {
+	// 防止打断救人
+	if (cmd->buttons & IN_USE)
+		return;
+	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsGhost() ||
 		player->IsIncapacitated() || player->IsHangingFromLedge() ||

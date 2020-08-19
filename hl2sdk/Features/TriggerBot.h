@@ -44,11 +44,17 @@ private:	// 菜单项
 	float m_fFollowFov = 9.0f;
 	bool m_bFollowVisible = true;
 
+	bool m_bPreventTooFast = false;
+	float m_fDiffOfChange = 10.0f;
+	int m_iPreventTicks = 3;
+
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
 	int m_iHitBox = 0;
 	int m_iHitGroup = 0;
 	Vector m_vecAimOrigin;
+	QAngle m_vecLastAngles;
+	int m_iIgnoreNumTicks = 0;
 };
 
 extern CTriggerBot* g_pTriggerBot;

@@ -37,7 +37,8 @@ CTriggerBot::~CTriggerBot()
 
 void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive)
+	// 防止救人时被打断
+	if (!m_bActive || (cmd->buttons & IN_USE))
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -46,6 +47,21 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	// QAngle viewAngles;
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
+	if (m_bPreventTooFast)
+	{
+		float diffX = std::fabsf(m_vecLastAngles.x - cmd->viewangles.x);
+		float diffY = std::fabsf(m_vecLastAngles.y - cmd->viewangles.y);
+		if (diffX > m_fDiffOfChange || diffY > m_fDiffOfChange)
+			m_iIgnoreNumTicks = m_iPreventTicks;
+		
+		m_vecLastAngles = cmd->viewangles;
+		if (m_iIgnoreNumTicks > 0)
+		{
+			m_iIgnoreNumTicks -= 1;
+			return;
+		}
+	}
+
 	GetAimTarget(cmd->viewangles);
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
@@ -220,6 +236,16 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 	IMGUI_TIPS("自动开枪尝试跟随敌人范围。");
 
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Prevent Too Fast Shot"), &m_bPreventTooFast);
+	IMGUI_TIPS("防止快速移动视角时触发开枪。");
+
+	ImGui::SliderFloat(XorStr("Difference"), &m_fDiffOfChange, 1.0f, 360.0f, ("%.1f"));
+	IMGUI_TIPS("在一个 tick 内视角变动大于多少时视为过快。");
+	
+	ImGui::SliderInt(XorStr("Ignore Ticks"), &m_iPreventTicks, 1, 128);
+	IMGUI_TIPS("忽略多少个 tick");
+
 	ImGui::TreePop();
 }
 
@@ -245,6 +271,9 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	m_bTraceWithoutMagnum = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 	m_bTraceShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	m_bPreventTooFast = g_pConfig->GetFloat(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	m_fDiffOfChange = g_pConfig->GetFloat(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	m_iPreventTicks = g_pConfig->GetInteger(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -269,6 +298,9 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
