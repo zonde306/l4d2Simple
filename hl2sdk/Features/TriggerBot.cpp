@@ -49,9 +49,9 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
 	if (m_bPreventTooFast)
 	{
-		float diffX = std::fabsf(m_vecLastAngles.x - cmd->viewangles.x);
-		float diffY = std::fabsf(m_vecLastAngles.y - cmd->viewangles.y);
-		if (diffX > m_fDiffOfChange || diffY > m_fDiffOfChange)
+		m_fAngDiffX = std::fabsf(m_vecLastAngles.x - cmd->viewangles.x);
+		m_fAngDiffY = std::fabsf(m_vecLastAngles.y - cmd->viewangles.y);
+		if (m_fAngDiffX > m_fDiffOfChange || m_fAngDiffY > m_fDiffOfChange)
 			m_iIgnoreNumTicks = m_iPreventTicks;
 		
 		m_vecLastAngles = cmd->viewangles;
@@ -246,6 +246,8 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderInt(XorStr("Ignore Ticks"), &m_iPreventTicks, 1, 128);
 	IMGUI_TIPS("忽略多少个 tick");
 
+	ImGui::Checkbox(XorStr("Debug"), &m_bDebug);
+
 	ImGui::TreePop();
 }
 
@@ -308,7 +310,7 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 	if (!m_bActive)
 		return;
 	
-	if (!m_bCrosshairs && !m_bAimPosition)
+	if (!m_bCrosshairs && !m_bAimPosition && !m_bDebug)
 		return;
 	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -332,13 +334,14 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
 	}
 
+	int width, height;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	width /= 2;
+	height /= 2;
+
 	if (m_bCrosshairs)
 	{
-		int width, height;
-		g_pInterface->Engine->GetScreenSize(width, height);
-		width /= 2;
-		height /= 2;
-
 		// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
 		// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
 		g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
@@ -362,6 +365,20 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 			if(m_pAimTarget && m_pAimTarget->IsAlive())
 				g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d, h=%d"), m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
 			*/
+		}
+	}
+
+	if (m_bDebug && m_bPreventTooFast)
+	{
+		if (m_fAngDiffX > m_fDiffOfChange || m_fAngDiffY > m_fDiffOfChange)
+		{
+			g_pDrawing->DrawText(width, height - 20,
+				CDrawing::RED, true, XorStr("dx=%.1f, dy=%.1f, tick=%d"), m_fAngDiffX, m_fAngDiffY, m_iIgnoreNumTicks);
+		}
+		else
+		{
+			g_pDrawing->DrawText(width, height - 20,
+				CDrawing::SKYBLUE, true, XorStr("dx=%.1f, dy=%.1f, tick=%d"), m_fAngDiffX, m_fAngDiffY, m_iIgnoreNumTicks);
 		}
 	}
 }

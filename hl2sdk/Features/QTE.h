@@ -43,7 +43,7 @@ private:
 	bool m_bCheckFov = true;
 	bool m_bAllowShot = true;
 	bool m_bAllowMelee = true;
-	float m_iShoveTicks = 3.0f;
+	int m_iShoveTicks = 6;
 	bool m_bMeleeAsShove = false;
 	bool m_bForceShot = false;
 
@@ -56,18 +56,18 @@ private:
 	bool m_bRock = true;
 	bool m_bLogInfo = false;
 
-	float m_fHunterDistance = 100.0f;
-	float m_fJockeyDistance = 125.0f;
+	float m_fHunterDistance = 125.0f;
+	float m_fJockeyDistance = 150.0f;
 	float m_fChargerDistance = 300.0f;
 	float m_fWitchDistance = 50.0f;
 	float m_fRockDistance = 350.0f;
 	float m_fSmokerDistance = 750.0f;
 
-	float m_fShoveDstExtra = 25.0f;
-	float m_fMeleeDstExtra = 30.0f;
+	float m_fShoveDstExtra = 40.0f;
+	float m_fMeleeDstExtra = 50.0f;
 	
-	float m_fHunterFov = 20.0f;
-	float m_fJockeyFov = 30.0f;
+	float m_fHunterFov = 25.0f;
+	float m_fJockeyFov = 40.0f;
 
 	float m_fJockeyScale = 2.0f;
 	float m_fMeleeScale = 2.0f;

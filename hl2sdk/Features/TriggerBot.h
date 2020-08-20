@@ -47,6 +47,7 @@ private:	// 菜单项
 	bool m_bPreventTooFast = false;
 	float m_fDiffOfChange = 10.0f;
 	int m_iPreventTicks = 3;
+	bool m_bDebug = false;
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
@@ -55,6 +56,9 @@ private:
 	Vector m_vecAimOrigin;
 	QAngle m_vecLastAngles;
 	int m_iIgnoreNumTicks = 0;
+
+	float m_fAngDiffX = 0.0f;
+	float m_fAngDiffY = 0.0f;
 };
 
 extern CTriggerBot* g_pTriggerBot;

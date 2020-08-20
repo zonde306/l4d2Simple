@@ -205,7 +205,7 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Melee Range Extra"), &m_fMeleeDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("近战预测范围");
 	
-	ImGui::SliderFloat(XorStr("Shove Ticks"), &m_iShoveTicks, 1.0f, 15.0f, ("%.0f"), 1.0f);
+	ImGui::SliderInt(XorStr("Shove Ticks"), &m_iShoveTicks, 1, 15);
 	IMGUI_TIPS("推 tick 数量");
 
 	ImGui::Separator();
@@ -279,7 +279,7 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bAllowMelee = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee"), m_bAllowMelee);
 	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
 	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
-	m_iShoveTicks = g_pConfig->GetFloat(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	m_iShoveTicks = g_pConfig->GetInteger(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
 
 	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
 	m_bHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
@@ -479,7 +479,7 @@ void CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tic
 	if (m_bPerfectSilent)
 	{
 		if(tick)
-			g_pViewManager->ApplySilentAngles(aimAngles, static_cast<int>(m_iShoveTicks));
+			g_pViewManager->ApplySilentAngles(aimAngles, m_iShoveTicks);
 		else
 			g_pViewManager->ApplySilentFire(aimAngles);
 	}
