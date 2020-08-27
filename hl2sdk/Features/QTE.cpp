@@ -32,7 +32,15 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive() ||
 		local->IsIncapacitated() || local->IsHangingFromLedge() ||
-		local->GetCurrentAttacker() != nullptr)
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
+		return;
+
+	CBasePlayer* player = m_pSmokerAttacker;
+	m_pSmokerAttacker = nullptr;
+
+	CBasePlayer* dominater = local->GetCurrentAttacker();
+	if (dominater != nullptr && dominater->IsValid() && dominater->IsAlive() && dominater != player)
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
@@ -40,7 +48,6 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		return;
 
 	float distance = 1000.0f;
-	CBasePlayer* player = nullptr;
 	int weaponId = weapon->GetWeaponID();
 	bool canShot = (m_bForceShot && weapon->IsFireGun() && weapon->CanFire());
 	bool canFire = (m_bAllowShot && weapon->IsFireGun() && weapon->CanFire());
@@ -73,9 +80,6 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 
 	if (m_bVelExt)
 		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
-
-	player = m_pSmokerAttacker;
-	m_pSmokerAttacker = nullptr;
 
 	if (player == nullptr)
 		player = FindTarget(local, cmd->viewangles);
@@ -374,6 +378,9 @@ bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& chan
 		}
 
 		m_pSmokerAttacker = smoker;
+
+		if(m_bLogInfo)
+			g_pDrawing->PrintInfo(CDrawing::RED, XorStr("somker(%s) attack warning"), smoker->GetName().c_str());
 	}
 
 	if (sample.find(XorStr("jockey_loudattack")) != std::string::npos ||

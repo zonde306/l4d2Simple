@@ -773,7 +773,9 @@ Vector CAimBot::GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> vi
 bool CAimBot::CanRunAimbot(CBasePlayer * entity)
 {
 	if (entity == nullptr || !entity->IsAlive() || entity->IsGhost() ||
-		entity->IsHangingFromLedge() || entity->GetCurrentAttacker() != nullptr)
+		entity->IsHangingFromLedge() || entity->GetCurrentAttacker() != nullptr ||
+		entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return false;
 
 	if (entity->GetTeam() == 3)
@@ -786,7 +788,8 @@ bool CAimBot::CanRunAimbot(CBasePlayer * entity)
 	}
 
 	CBaseWeapon* weapon = entity->GetActiveWeapon();
-	if (weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
+	if (weapon == nullptr || !weapon->IsValid() || !weapon->IsFireGun() || !weapon->CanFire() ||
+		weapon->GetNetProp<float>(XorStr("DT_BaseAnimating"), XorStr("m_flCycle")) > 0.0f)
 		return false;
 
 	return true;

@@ -42,7 +42,9 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge())
+	if (player == nullptr || !player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge() ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	// QAngle viewAngles;
@@ -65,7 +67,8 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	GetAimTarget(cmd->viewangles);
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
+	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire() ||
+		weapon->GetNetProp<float>(XorStr("DT_BaseAnimating"), XorStr("m_flCycle")) > 0.0f)
 		return;
 
 	// 检查目标是否可以被攻击

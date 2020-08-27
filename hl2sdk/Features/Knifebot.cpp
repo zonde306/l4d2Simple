@@ -36,11 +36,14 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsGhost() ||
 		player->IsIncapacitated() || player->IsHangingFromLedge() ||
-		player->GetCurrentAttacker() != nullptr)
+		player->GetCurrentAttacker() != nullptr ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (weapon == nullptr)
+	if (weapon == nullptr || !weapon->IsValid() ||
+		weapon->GetNetProp<float>(XorStr("DT_BaseAnimating"), XorStr("m_flCycle")) > 0.0f)
 		return;
 	
 	int team = player->GetTeam();
