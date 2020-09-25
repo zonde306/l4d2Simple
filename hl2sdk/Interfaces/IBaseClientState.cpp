@@ -19,7 +19,7 @@ bool NET_SetConVar::ReadFromBuffer(bf_read& buffer)
 
 bool NET_SetConVar::WriteToBuffer(bf_write& buffer)
 {
-	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS);
+	buffer.WriteUBitLong(GetType(), NETMSG_TYPE_BITS, true);
 
 	int numvars = m_ConVars.Count();
 

@@ -417,8 +417,8 @@ public:
 	virtual void		EncodeUserCmdToBuffer(bf_write& buf, int slot) = 0;
 	virtual void		DecodeUserCmdFromBuffer(bf_read& buf, int slot) = 0;
 
-	// 如果 solt 不知道就给个 0
-	virtual CUserCmd	*GetUserCmd(int solt, int sequence_number) = 0;
+	// 如果 solt 不知道就给个 -1，让它自动获取
+	virtual CUserCmd*	GetUserCmd(int solt, int sequence_number) = 0;
 
 	virtual void		MakeWeaponSelection(CBaseEntity* *weapon) = 0;
 

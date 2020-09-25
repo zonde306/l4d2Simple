@@ -37,6 +37,7 @@ inline void AssertValidWritePtr(const void* ptr, int count = 1) { }
 inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define AssertValidStringPtr AssertValidReadPtr
 #define AssertValidThis() AssertValidReadWritePtr(this,sizeof(*this))
+#define GET_MEMBER_OFFSET(c,m)		(DWORD)(&((c*)0)->m)
 
 #define COLORCODE(r, g, b, a) ((DWORD)((((r)&0xff) << 24) | (((g)&0xff) << 16) | (((b)&0xff) << 8) | ((a)&0xff)))
 #define RED(COLORCODE) ((int)(COLORCODE >> 24))

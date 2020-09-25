@@ -41,7 +41,7 @@ class SVC_Prefetch;
 
 typedef struct netpacket_s netpacket_t;
 #define MAX_USER_MSG_DATA 255
-#define NETMSG_TYPE_BITS	5	// must be 2^NETMSG_TYPE_BITS > SVC_LASTMSG
+#define NETMSG_TYPE_BITS		6	// must be 2^NETMSG_TYPE_BITS > SVC_LASTMSG
 #define MAX_EVENT_NAME_LENGTH	32		// max game event name length
 #define MAX_EVENT_BITS			9		// max bits needed for an event index
 #define MAX_EVENT_NUMBER		(1<<MAX_EVENT_BITS)		// max number of events 
@@ -338,6 +338,7 @@ public:
 protected:
 	bool m_bReliable;		   // true if message should be send reliable
 	INetChannel *m_NetChannel; // netchannel this message is from/for
+	byte __padding[68];
 };
 
 typedef enum

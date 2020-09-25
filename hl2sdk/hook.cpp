@@ -51,6 +51,7 @@ extern time_t g_tpGameTimer;
 #define SIG_WRITE_LISTEN_EVENTS		XorStr("55 8B EC 8B 45 08 83 EC 08 53 56 83 C0 10 33 F6 8B D9 3B C6 74 0C 6A 40 56 50 E8 ? ? ? ? 83 C4 0C 89 75 F8")
 #define SIG_CHECK_FILE_CRC_SERVER	XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 57 8B F9 80 BF ? ? ? ? ? 0F 84 ? ? ? ? 83 7F 68 06 0F 85 ? ? ? ? FF 15 ? ? ? ? D9 95 ? ? ? ? D8 A7 ? ? ? ? D9 05 ? ? ? ? DF F1 DD D8")
 #define SIG_EMIT_SOUND				XorStr("55 8B EC 81 EC ? ? ? ? 6A 00")
+#define SIG_VALIDATE_USERCMD		XorStr("55 8B EC 53 56 57 8B F9 8B 4D 08 E8 ? ? ? ? 8B 0D ? ? ? ? 8B D8 8B 01 8B 90 ? ? ? ? FF D2")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
@@ -242,6 +243,12 @@ bool CClientHook::Init()
 			g_pDetourEmitSoundInternal = std::make_unique<DetourXS>(oEmitSoundInternal, Hooked_EmitSoundInternal);
 			oEmitSoundInternal = reinterpret_cast<FnEmitSoundInternal>(g_pDetourEmitSoundInternal->GetTrampoline());
 		}
+	}
+
+	if (oValidateUserCmd == nullptr)
+	{
+		oValidateUserCmd = reinterpret_cast<FnValidateUserCmd>(Utils::FindPattern(XorStr("client.dll"), SIG_VALIDATE_USERCMD));
+		PRINT_OFFSET(XorStr("CInput::ValidateUserCmd"), oValidateUserCmd);
 	}
 
 	// oWriteListenEventList(g_pInterface->GameEvent, &g_ListenEvents);
@@ -641,10 +648,10 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	if (g_pClientHook->bCreateMoveFinish)
 		return;
 
-	/*
-	CVerifiedUserCmd* verified = GET_INPUT_CMD(CVerifiedUserCmd, 0xE0);
-	CUserCmd* cmd = GET_INPUT_CMD(CUserCmd, 0xDC);
-	if (cmd == nullptr || verified == nullptr)
+	// CVerifiedUserCmd* verified = GET_INPUT_CMD(CVerifiedUserCmd, 0xE0);
+	// CUserCmd* cmd = GET_INPUT_CMD(CUserCmd, 0xDC);
+	CUserCmd* cmd = g_pInterface->Input->GetUserCmd(-1, sequence_number);
+	if (cmd == nullptr/* || verified == nullptr*/)
 		return;
 
 	g_pClientPrediction->StartPrediction(cmd);
@@ -656,9 +663,9 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 
 	// 手动进行 CRC 验证
 	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
-	verified->m_cmd = *cmd;
-	verified->m_crc = cmd->GetChecksum();
-	*/
+	// verified->m_cmd = *cmd;
+	// verified->m_crc = cmd->GetChecksum();
+	g_pClientHook->oValidateUserCmd(g_pInterface->Input, cmd, sequence_number);
 }
 
 void CClientHook::InstallClientModeHook(IClientMode * pointer)
@@ -1123,15 +1130,7 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	}
 #endif
 
-	std::string value;
-	try
-	{
-		value = sc->m_szCommand;
-	}
-	catch (...)
-	{
-		return g_pClientHook->oProccessStringCmd(_ecx, sc);
-	}
+	std::string value = sc->m_szCommand;
 
 	bool blockExecute = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
