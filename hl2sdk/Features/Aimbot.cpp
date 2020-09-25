@@ -71,7 +71,7 @@ void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	// QAngle viewAngles;
 	// g_pInterface->Engine->GetViewAngles(viewAngles);
-	if(!IsValidTarget(m_pAimTarget) || !(cmd->buttons & IN_ATTACK))
+	if(!IsValidTarget(m_pAimTarget, true) || !(cmd->buttons & IN_ATTACK))
 		FindTarget(cmd->viewangles);
 
 	if (m_pAimTarget == nullptr || (m_bOnFire && !(cmd->buttons & IN_ATTACK)))
@@ -664,7 +664,7 @@ bool CAimBot::IsTargetVisible(CBasePlayer * entity, Vector aimPosition, unsigned
 	return (trace.m_pEnt == entity || trace.fraction > 0.97f);
 }
 
-bool CAimBot::IsValidTarget(CBasePlayer * entity)
+bool CAimBot::IsValidTarget(CBasePlayer * entity, bool visCheck)
 {
 	if (entity == nullptr || !entity->IsValid())
 		return false;
@@ -698,13 +698,11 @@ bool CAimBot::IsValidTarget(CBasePlayer * entity)
 			return false;
 	}
 
-	/*
-	if (m_bVisible)
+	if (visCheck && m_bVisible)
 	{
 		if (!IsTargetVisible(entity))
 			return false;
 	}
-	*/
 
 	if (m_bIgnoreTank)
 	{

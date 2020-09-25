@@ -723,10 +723,12 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 
 	g_pClientPrediction->FinishPrediction();
 
+	/*
 	// 修复移动不正确
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
+	*/
 
 	// 必须要返回 false 否则会出现 bug
 	return false;

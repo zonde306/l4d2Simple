@@ -42,7 +42,7 @@ public:
 	int CalcTargetScore(CBasePlayer* target, const QAngle& viewAngles);
 
 	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR, unsigned int mask = MASK_SHOT);
-	bool IsValidTarget(CBasePlayer* entity);
+	bool IsValidTarget(CBasePlayer* entity, bool visCheck = false);
 	bool HasValidWeapon(CBaseWeapon* weapon);
 	bool HasShotgun(CBaseWeapon* weapon);
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});

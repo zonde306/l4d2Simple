@@ -54,9 +54,6 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
 
-	if (m_bFakeLag && (GetAsyncKeyState(VK_CAPITAL) & 0x8000))
-		*bSendPacket = false;
-
 	if (!(*bSendPacket))
 	{
 		++m_iPacketBlocked;
@@ -70,6 +67,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			Utils::log(XorStr("Warring: choked commands out of range"));
 		}
 	}
+
+	if (m_bFakeLag && (GetAsyncKeyState(VK_CAPITAL) & 0x8000))
+		*bSendPacket = false;
 
 	if (*bSendPacket && m_iPacketBlocked != 0)
 		m_iPacketBlocked = 0;
