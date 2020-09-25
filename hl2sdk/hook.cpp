@@ -35,15 +35,15 @@ static CLC_ListenEvents g_ListenEvents;
 extern time_t g_tpPlayingTimer;
 extern time_t g_tpGameTimer;
 
-#define SIG_CL_MOVE					XorStr("55 8B EC 83 EC 40 A1 ? ? ? ? 33 C5 89 45 FC 56 E8")
-#define SIG_CL_SENDMOVE				XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 E8")
+#define SIG_CL_MOVE					XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 E8 ? ? ? ? 8B F0 83 7E 68 02 0F 8C ? ? ? ? E8 ? ? ? ? 84 C0 0F 84 ? ? ? ? A1 ? ? ? ? 53 33 DB 89 5D D4 89 5D D8 8B 00 3B C3 74 2B")
+#define SIG_CL_SENDMOVE				XorStr("55 8B EC B8 ? ? ? ? E8 ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 E8 ? ? ? ? 8D B0 ? ? ? ? E8 ? ? ? ? 8B 80 ? ? ? ? 8B 0E 8D 54 08 01 89 95 ? ? ? ? E8 ? ? ? ? 8B 80 ? ? ? ? 8B 0D ? ? ? ? 8B 11 89 85 ? ? ? ? 8B 42 20 FF D0")
 #define SIG_FX_FIREBULLET			XorStr("55 8B EC 8B 0D ? ? ? ? 83 EC 10 53")
 #define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 37")
 #define SIG_LOOKUP_WEAPON_INFO		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
 #define SIG_INVALOID_WEAPON_INFO	XorStr("B8 ? ? ? ? C3")
 #define SIG_GET_WEAPON_FILE_INFO	XorStr("55 8B EC 66 8B 45 08 66 3B 05 ? ? ? ? 73 1A")
 #define SIG_PROCCESS_SET_CONVAR		XorStr("55 8B EC 8B 49 08 8B 01 8B 50 18")
-#define SIG_PROCCESS_GET_CONVAR		XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 53 56 57 8B 7D 08 8B 47 10")
+#define SIG_PROCCESS_GET_CONVAR		XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC D9 EE 53 56 DD 95 ? ? ? ? 33 DB DD 95 ? ? ? ? 57 DD 9D ? ? ? ?")
 #define SIG_CREATEMOVESHARED		XorStr("55 8B EC 6A FF E8 ? ? ? ? 83 C4 04 85 C0 75 06 B0 01")
 #define SIG_SEND_NETMSG				XorStr("55 8B EC 56 8B F1 8D 8E ? ? ? ? E8 ? ? ? ? 85 C0 75 07 B0 01 5E 5D C2 0C 00 53")
 #define SIG_RANDOM_SEED				XorStr("A3 ? ? ? ? 5D C3 55")
@@ -622,8 +622,8 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	DWORD _ebp;
 	__asm mov _ebp, ebp;
 
-	// .text:100BBA20			bSendPacket = byte ptr -1
-	g_pClientHook->bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - 0x21);
+	// .text:1007D470 bSendPacket     = byte ptr -1Dh
+	g_pClientHook->bSendPacket = reinterpret_cast<bool*>(*reinterpret_cast<byte**>(_ebp) - indexes::bSendPacket);
 
 	g_pClientHook->bCreateMoveFinish = false;
 
@@ -641,20 +641,11 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	if (g_pClientHook->bCreateMoveFinish)
 		return;
 
+	/*
 	CVerifiedUserCmd* verified = GET_INPUT_CMD(CVerifiedUserCmd, 0xE0);
 	CUserCmd* cmd = GET_INPUT_CMD(CUserCmd, 0xDC);
 	if (cmd == nullptr || verified == nullptr)
 		return;
-
-	/*
-	// 验证 CRC 用的
-	CVerifiedUserCmd* verified = &((*reinterpret_cast<CVerifiedUserCmd**>(
-	reinterpret_cast<DWORD>(g_pInterface->Input) + 0xE0))[sequence_number % 150]);
-
-	// 玩家输入
-	CUserCmd* cmd = &((*reinterpret_cast<CUserCmd**>(
-	reinterpret_cast<DWORD>(g_pInterface->Input) + 0xDC))[sequence_number % 150]);
-	*/
 
 	g_pClientPrediction->StartPrediction(cmd);
 
@@ -667,6 +658,7 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 	// 如果是在 Hooked_CreateMoveShared 则不需要手动验证
 	verified->m_cmd = *cmd;
 	verified->m_crc = cmd->GetChecksum();
+	*/
 }
 
 void CClientHook::InstallClientModeHook(IClientMode * pointer)
@@ -707,7 +699,6 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 
-	/*
 	// 修复随机数种子为 0 的问题
 	cmd->random_seed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
 
@@ -736,7 +727,6 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
-	*/
 
 	// 必须要返回 false 否则会出现 bug
 	return false;
@@ -805,6 +795,21 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 
 					for (const auto& inst : g_pClientHook->_GameHook)
 						inst->OnConnect();
+
+
+#ifdef _DEBUG
+					static bool isClassUpdated = false;
+					if (!isClassUpdated)
+					{
+						std::fstream fs(Utils::BuildPath(XorStr("classid.txt")), std::ios::out | std::ios::beg | std::ios::trunc);
+						if (fs.good() && fs.is_open())
+						{
+							g_pInterface->NetProp->DumpClassID(fs);
+							fs.close();
+						}
+						isClassUpdated = true;
+					}
+#endif
 				}
 			}
 			else if (!g_pInterface->Engine->IsInGame())
@@ -1104,7 +1109,8 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 
 bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPVOID _edx, NET_StringCmd* sc)
 {
-	g_pClientHook->oProccessStringCmd(_ecx, sc);
+	// g_pClientHook->oProccessStringCmd(_ecx, sc);
+	// g_pClientHook->InstallClientStateHook(_ecx);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1115,10 +1121,20 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	}
 #endif
 
+	std::string value;
+	try
+	{
+		value = sc->m_szCommand;
+	}
+	catch (...)
+	{
+		return g_pClientHook->oProccessStringCmd(_ecx, sc);
+	}
+
 	bool blockExecute = false;
 	for (const auto& inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnProcessClientCommand(sc->m_szCommand))
+		if (!inst->OnProcessClientCommand(value))
 			blockExecute = true;
 	}
 

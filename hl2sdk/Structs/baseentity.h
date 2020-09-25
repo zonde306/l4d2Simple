@@ -86,7 +86,11 @@ public:
 	bool IsPlayer();
 	bool IsNPC();
 	MoveType_t GetMoveType();
+
+	// 注意，这个和 server 的 GetClassname 不同
 	const char* GetClassname();
+	const char* GetClientClassname();
+
 	Vector GetEyePosition();
 	const QAngle& GetEyeAngles();
 };

@@ -1129,3 +1129,19 @@ std::pair<DWORD, DWORD> Utils::GetModuleSize(const std::string& pszModuleName)
 	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
 	return { dwAddress, dwLength };
 }
+
+DWORD Utils::CalcInstAddress(DWORD inst)
+{
+	switch (*reinterpret_cast<BYTE*>(inst))
+	{
+		// call ?? ?? ?? ??
+		case 0xE8:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			DWORD next = inst + 5;
+			return target + next;
+		}
+	}
+	
+	return 0;
+}

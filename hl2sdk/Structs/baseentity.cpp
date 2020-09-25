@@ -250,6 +250,15 @@ const char * CBaseEntity::GetClassname()
 	return fn(this);
 }
 
+const char* CBaseEntity::GetClientClassname()
+{
+	ClientClass* cc = GetClientClass();
+	if (cc == nullptr)
+		return "";
+
+	return cc->m_pNetworkName;
+}
+
 Vector CBaseEntity::GetEyePosition()
 {
 	using FnEyePosition = Vector(__thiscall*)(CBaseEntity*);

@@ -13,6 +13,7 @@ namespace indexes
 	const int IN_IsKeyDown = 18;
 	const int WriteUsercmdDeltaToBuffer = 22;
 	const int RenderView = 26;
+	const int bSendPacket = 0x1D;
 
 	// Engine
 	const int GetScreenSize = 5;

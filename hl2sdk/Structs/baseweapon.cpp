@@ -7,7 +7,7 @@
 
 #define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 37")
 #define SIG_LOOKUP_WEAPON_SLOT		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
-#define SIG_GET_INVALID_SLOT		XorStr("B8 ? ? ? ? C3")
+#define SIG_GET_INVALID_SLOT		XorStr("E8 ? ? ? ? 66 3B F0")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_GET_WEAPON_DATA			XorStr("0F B7 ? ? ? ? ? 50 E8 ? ? ? ? 83 C4 ? C3")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
@@ -48,7 +48,7 @@ FileWeaponInfo_t * CBaseWeapon::GetWeaponInfo()
 	if (LookupWeaponInfoSlot == nullptr)
 	{
 		LookupWeaponInfoSlot = reinterpret_cast<FnGetSlot>(Utils::FindPattern(XorStr("client.dll"), SIG_LOOKUP_WEAPON_SLOT));
-		GetInvalidWeaponInfoHandle = reinterpret_cast<FnGetInvalidSlot>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_INVALID_SLOT));
+		GetInvalidWeaponInfoHandle = reinterpret_cast<FnGetInvalidSlot>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_GET_INVALID_SLOT)));
 		GetFileWeaponInfoFromHandle = reinterpret_cast<FnGetData>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_WEAPON_INFO));
 	}
 

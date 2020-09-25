@@ -108,6 +108,9 @@ namespace Utils
 
 	// 获取模块地址
 	std::pair<DWORD, DWORD> GetModuleSize(const std::string& pszModuleName);
+
+	// call 获取绝对地址
+	DWORD CalcInstAddress(DWORD inst);
 };
 
 template<typename T, typename ...Arg>

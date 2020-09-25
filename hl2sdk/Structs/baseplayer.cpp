@@ -99,6 +99,7 @@ int CBasePlayer::GetCrosshairID()
 
 bool CBasePlayer::IsGhost()
 {
+	// 这个是假的
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_isGhost"));
 	Assert_NetProp(offset);
 
@@ -432,7 +433,8 @@ bool CBasePlayer::IsAlive()
 	if (entityType == ET_SURVIVORBOT || entityType == ET_CTERRORPLAYER)
 	{
 		// 生还者即使是 0 血也可以活着的 (因为还有虚血)
-		return (DECL_NETPROP_GET_EX(lifeOffset, byte) == LIFE_ALIVE);
+		int life = DECL_NETPROP_GET_EX(lifeOffset, byte);
+		return (life == LIFE_ALIVE);
 	}
 
 	// 特感
