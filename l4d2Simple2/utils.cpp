@@ -1141,7 +1141,38 @@ DWORD Utils::CalcInstAddress(DWORD inst)
 			DWORD next = inst + 5;
 			return target + next;
 		}
+
+		// jmp ?? ?? ?? ??
+		case 0xE9:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			DWORD next = inst + 5;
+			return target + next;
+		}
+
+		// mov ?? ?? ?? ?? ??
+		case 0x8B:
+		{
+			switch (*reinterpret_cast<BYTE*>(inst + 1))
+			{
+				// mov ?? ?? ?? ?? ??
+				case 0x0D:
+				{
+					DWORD target = *reinterpret_cast<DWORD*>(inst + 2);
+					return target;
+				}
+			}
+
+			break;
+		}
+
+		// mov ?? ?? ?? ??
+		case 0xB9:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			return target;
+		}
 	}
 	
-	return 0;
+	return inst;
 }

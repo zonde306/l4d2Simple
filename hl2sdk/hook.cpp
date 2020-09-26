@@ -706,11 +706,16 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 
 	g_pClientHook->oCreateMoveShared(_ecx, flInputSampleTime, cmd);
 
+	// 如果这个为 0，表示 callstack 不是 CInput::CreateMove，而是 CInput::ExtraMouseSample，这个是假的，没有意义
+	if (cmd->command_number == 0)
+		return false;
+
 	// 修复随机数种子为 0 的问题
-	cmd->random_seed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+	if(cmd->random_seed == 0)
+		cmd->random_seed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
 
 	g_pClientHook->bCreateMoveFinish = true;
-
+	
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
@@ -729,7 +734,7 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
-
+	
 	/*
 	// 修复移动不正确
 	QAngle viewAngles;
