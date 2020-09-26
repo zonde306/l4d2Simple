@@ -52,6 +52,7 @@ extern time_t g_tpGameTimer;
 #define SIG_CHECK_FILE_CRC_SERVER	XorStr("55 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 57 8B F9 80 BF ? ? ? ? ? 0F 84 ? ? ? ? 83 7F 68 06 0F 85 ? ? ? ? FF 15 ? ? ? ? D9 95 ? ? ? ? D8 A7 ? ? ? ? D9 05 ? ? ? ? DF F1 DD D8")
 #define SIG_EMIT_SOUND				XorStr("55 8B EC 81 EC ? ? ? ? 6A 00")
 #define SIG_VALIDATE_USERCMD		XorStr("55 8B EC 53 56 57 8B F9 8B 4D 08 E8 ? ? ? ? 8B 0D ? ? ? ? 8B D8 8B 01 8B 90 ? ? ? ? FF D2")
+#define SIG_MD5_PSEUDORANDOM		XorStr("55 8B EC 83 EC 6C A1 ? ? ? ? 33 C5 89 45 FC 6A 58 8D 45 A4 6A 00 50 E8 ? ? ? ? 6A 04 8D 4D 08 51")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
@@ -249,6 +250,12 @@ bool CClientHook::Init()
 	{
 		oValidateUserCmd = reinterpret_cast<FnValidateUserCmd>(Utils::FindPattern(XorStr("client.dll"), SIG_VALIDATE_USERCMD));
 		PRINT_OFFSET(XorStr("CInput::ValidateUserCmd"), oValidateUserCmd);
+	}
+
+	if (oMD5PseudoRandom == nullptr)
+	{
+		oMD5PseudoRandom = reinterpret_cast<FnMD5PseudoRandom>(Utils::FindPattern(XorStr("client.dll"), SIG_MD5_PSEUDORANDOM));
+		PRINT_OFFSET(XorStr("MD5_PseudoRandom"), oMD5PseudoRandom);
 	}
 
 	// oWriteListenEventList(g_pInterface->GameEvent, &g_ListenEvents);
@@ -711,11 +718,11 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 		return false;
 
 	// 修复随机数种子为 0 的问题
-	if(cmd->random_seed == 0)
+	if(g_pClientHook->oMD5PseudoRandom)
+		cmd->random_seed = (g_pClientHook->oMD5PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+	else
 		cmd->random_seed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
 
-	g_pClientHook->bCreateMoveFinish = true;
-	
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
 	if (hasFirstEnter)
@@ -724,6 +731,8 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 		Utils::log(XorStr("Hook CreateMoveShared Success."));
 	}
 #endif
+
+	g_pClientHook->bCreateMoveFinish = true;
 
 	if (cmd == nullptr || cmd->command_number == 0)
 		return false;
@@ -734,7 +743,7 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
-	
+
 	/*
 	// 修复移动不正确
 	QAngle viewAngles;
@@ -742,7 +751,7 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
 	*/
 
-	// 必须要返回 false 否则会出现 bug
+	// 必须要返回 false 否则会被 engine->SetViewAngles 的
 	return false;
 }
 

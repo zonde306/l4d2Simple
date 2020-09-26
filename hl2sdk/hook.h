@@ -44,6 +44,7 @@ using FnCL_Move = void(__cdecl*)(float, bool);
 using FnWriteListenEventList = void(__thiscall*)(IGameEventManager2*, CLC_ListenEvents*);
 using FnEmitSoundInternal = void(__thiscall*)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 using FnValidateUserCmd = void(__thiscall*)(IInput*, CUserCmd*, int);
+using FnMD5PseudoRandom = uint32_t(__cdecl*)(uint32_t);
 
 class CClientHook
 {
@@ -125,12 +126,13 @@ private:
 	FnGetViewModelFOV oGetViewModelFOV = nullptr;
 	FnWriteListenEventList oWriteListenEventList = nullptr;
 	FnEmitSoundInternal oEmitSoundInternal = nullptr;
+	FnValidateUserCmd oValidateUserCmd = nullptr;
+	FnMD5PseudoRandom oMD5PseudoRandom = nullptr;
 
 public:
 	bool* bSendPacket;
 	FnFindMaterial oFindMaterial = nullptr;
 	FnSendNetMsg oSendNetMsg = nullptr;
-	FnValidateUserCmd oValidateUserCmd = nullptr;
 
 private:
 	bool bCreateMoveFinish = false;
