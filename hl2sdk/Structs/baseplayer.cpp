@@ -488,6 +488,7 @@ int CBasePlayer::GetMoveType()
 
 Vector& CBasePlayer::GetPunch()
 {
+	// 在 ViewPunch 里面
 	return DECL_NETPROP_GET_EX(indexes::GetPunch, Vector);
 }
 

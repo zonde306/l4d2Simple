@@ -11,6 +11,7 @@
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_GET_WEAPON_DATA			XorStr("0F B7 ? ? ? ? ? 50 E8 ? ? ? ? 83 C4 ? C3")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
+#define SIG_VIEW_PUNCH				XorStr("55 8B EC A1 ? ? ? ? 83 EC 0C 83 78 30 00 0F 85")
 
 #define IsSubMachinegun(_id)		(_id == WeaponId_SubMachinegun || _id == WeaponId_Silenced || _id == WeaponId_MP5)
 #define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
@@ -32,6 +33,7 @@
 
 float& CBaseWeapon::GetSpread()
 {
+	// 在 UpdateSpread 里面
 	return *reinterpret_cast<float*>(reinterpret_cast<DWORD>(this) + indexes::GetSpread);
 }
 
