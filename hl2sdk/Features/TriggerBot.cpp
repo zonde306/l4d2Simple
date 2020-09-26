@@ -47,16 +47,16 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
-	// QAngle viewAngles;
-	// g_pInterface->Engine->GetViewAngles(viewAngles);
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
 	if (m_bPreventTooFast)
 	{
-		m_fAngDiffX = std::fabsf(m_vecLastAngles.x - cmd->viewangles.x);
-		m_fAngDiffY = std::fabsf(m_vecLastAngles.y - cmd->viewangles.y);
+		m_fAngDiffX = std::fabsf(m_vecLastAngles.x - viewAngles.x);
+		m_fAngDiffY = std::fabsf(m_vecLastAngles.y - viewAngles.y);
 		if (m_fAngDiffX > m_fDiffOfChange || m_fAngDiffY > m_fDiffOfChange)
 			m_iIgnoreNumTicks = m_iPreventTicks;
 		
-		m_vecLastAngles = cmd->viewangles;
+		m_vecLastAngles = viewAngles;
 		if (m_iIgnoreNumTicks > 0)
 		{
 			m_iIgnoreNumTicks -= 1;
@@ -64,7 +64,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		}
 	}
 
-	GetAimTarget(cmd->viewangles);
+	GetAimTarget(viewAngles);
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
 	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire() ||
@@ -150,7 +150,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		if (!m_bFollowVisible || IsVisableToPosition(player, m_pAimTarget, aimOrigin))
 		{
 			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimOrigin);
-			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
+			if (math::GetAnglesFieldOfView(viewAngles, aimAngles) <= m_fFollowFov)
 			{
 				g_pInterface->Engine->SetViewAngles(aimAngles);
 			}
@@ -166,7 +166,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 				aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bTraceForwardtrack);
 
 			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
-			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
+			if (math::GetAnglesFieldOfView(viewAngles, aimAngles) <= m_fTraceFov)
 			{
 				if (m_bTraceSilent || canWitchHeadshot)
 					g_pViewManager->ApplySilentFire(aimAngles);

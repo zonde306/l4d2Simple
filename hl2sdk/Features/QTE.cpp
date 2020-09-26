@@ -81,8 +81,11 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	if (m_bVelExt)
 		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
 
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+
 	if (player == nullptr)
-		player = FindTarget(local, cmd->viewangles);
+		player = FindTarget(local, viewAngles);
 	if (player == nullptr)
 		return;
 

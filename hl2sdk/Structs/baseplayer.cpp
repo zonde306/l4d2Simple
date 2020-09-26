@@ -420,21 +420,24 @@ bool CBasePlayer::IsAlive()
 	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
 	static int sequenceOffset = GetNetPropOffset(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
 	static int burnOffset = GetNetPropOffset(XorStr("DT_Infected"), XorStr("m_bIsBurning"));
+	static int wanderOffset = GetNetPropOffset(XorStr("DT_Witch"), XorStr("m_wanderRage"));
 	Assert_NetProp(lifeOffset);
 	Assert_NetProp(solidOffset);
 	Assert_NetProp(sequenceOffset);
 	Assert_NetProp(burnOffset);
+	Assert_NetProp(wanderOffset);
 
 	int entityType = GetClassID();
 	if (entityType == ET_INVALID || entityType == ET_WORLD)
 		return false;
 
+	int flags = GetSolidFlags();
+
 	// 生还者
 	if (entityType == ET_SURVIVORBOT || entityType == ET_CTERRORPLAYER)
 	{
 		// 生还者即使是 0 血也可以活着的 (因为还有虚血)
-		int life = DECL_NETPROP_GET_EX(lifeOffset, byte);
-		return (life == LIFE_ALIVE);
+		return (DECL_NETPROP_GET_EX(lifeOffset, byte) == LIFE_ALIVE);
 	}
 
 	// 特感
@@ -442,6 +445,9 @@ bool CBasePlayer::IsAlive()
 		entityType == ET_SPITTER || entityType == ET_JOCKEY || entityType == ET_CHARGER ||
 		entityType == ET_TANK)
 	{
+		if (flags & SF_NOT_SOLID)
+			return false;
+		
 		if ((DECL_NETPROP_GET_EX(lifeOffset, byte) != LIFE_ALIVE) || GetHealth() <= 0 || IsGhost())
 			return false;
 
@@ -451,6 +457,13 @@ bool CBasePlayer::IsAlive()
 			if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 70 || IsIncapacitated())
 				return false;
 		}
+		/*
+		else
+		{
+			if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) == 8)
+				return true;
+		}
+		*/
 
 		return true;
 	}
@@ -458,6 +471,9 @@ bool CBasePlayer::IsAlive()
 	// 普感
 	if (entityType == ET_WITCH || entityType == ET_INFECTED)
 	{
+		if (flags & SF_NOT_SOLID)
+			return false;
+		
 		if ((DECL_NETPROP_GET_EX(solidOffset, int) & SF_NOT_SOLID) ||
 			DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 305)
 			return false;
@@ -467,6 +483,13 @@ bool CBasePlayer::IsAlive()
 			if (DECL_NETPROP_GET_EX(burnOffset, byte) != 0)
 				return false;
 		}
+		/*
+		else
+		{
+			if (DECL_NETPROP_GET_EX(wanderOffset, byte) != 0)
+				return false;
+		}
+		*/
 
 		return true;
 	}

@@ -279,3 +279,12 @@ ICollideable* CBaseEntity::GetCollideable()
 	FnGetCollideable fn = Utils::GetVTableFunction<FnGetCollideable>(this, indexes::GetCollideable);
 	return fn(this);
 }
+
+int CBaseEntity::GetSolidFlags()
+{
+	ICollideable* collideable = GetCollideable();
+	if (collideable)
+		return collideable->GetSolidFlags();
+
+	return 0;
+}

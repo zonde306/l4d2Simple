@@ -95,6 +95,7 @@ public:
 	const QAngle& GetEyeAngles();
 
 	ICollideable* GetCollideable();
+	int GetSolidFlags();
 };
 
 template<typename T>

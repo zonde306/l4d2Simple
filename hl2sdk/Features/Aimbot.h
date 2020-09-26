@@ -37,9 +37,8 @@ public:
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
 
-	CBasePlayer* FindTarget(const QAngle& myEyeAngles);
+	CBasePlayer* FindTarget(const QAngle& myEyeAngles, Vector* aimPos = nullptr);
 	CBasePlayer* GetAimTarget(CBasePlayer* player, const QAngle& viewAngles);
-	int CalcTargetScore(CBasePlayer* target, const QAngle& viewAngles);
 
 	bool IsTargetVisible(CBasePlayer* entity, Vector aimPosition = NULL_VECTOR, unsigned int mask = MASK_SHOT);
 	bool IsValidTarget(CBasePlayer* entity, bool visCheck = false);
@@ -48,7 +47,7 @@ public:
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
 
 	bool CanRunAimbot(CBasePlayer* entity);
-	Vector GetAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
+	Vector GetAimbotAimPosition(CBasePlayer* local, const Vector& eyePosition, CBasePlayer** hitEntity = nullptr);
 	bool IsFatalTarget(CBasePlayer* entity);
 	bool IsNearSurvivor(CBasePlayer* boomer);
 	
@@ -70,6 +69,9 @@ private:	// 菜单项
 	bool m_bShowTarget = false;
 	bool m_bIgnoreTank = true;
 	bool m_bIgnoreCI = false;
+	bool m_bIgnoreNearSurvivor = false;
+	bool m_bAimOfMelee = false;
+	bool m_bRemeberChoose = false;
 
 	float m_fAimFov = 30.0f;
 	float m_fAimDist = 3000.0f;
