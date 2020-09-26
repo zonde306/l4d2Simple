@@ -93,6 +93,8 @@ public:
 
 	Vector GetEyePosition();
 	const QAngle& GetEyeAngles();
+
+	ICollideable* GetCollideable();
 };
 
 template<typename T>

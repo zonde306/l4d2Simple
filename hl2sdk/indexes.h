@@ -32,6 +32,7 @@ namespace indexes
 	const int IsDrawingLoadingImage = 28;
 	const int IsTakingScreenShot = 88;
 	const int GetNetChannelInfo = 74;
+	const int ClientCmdUnrestricted = 108;
 
 	// EngineVGui
 	const int EnginePaint = 14;
@@ -140,6 +141,14 @@ namespace indexes
 	const int EyePosition = 156;
 	const int EyeAngles = 157;
 	const int IsAbilityReadyToFire = 172;
+	const int GetCollideable = 3;
+	const int GetSolidFlags = 12;
+	const int GetRenderBounds = 14;
+	const int SetAbsOrigin = 53;
+	const int SetAbsAngles = 54;
+	const int HasAmmo = 13;
+	const int GetCSWeaponData = 98;
+	const int GetPrintName = 113;
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

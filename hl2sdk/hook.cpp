@@ -460,7 +460,7 @@ void __cdecl CClientHook::Hooked_CL_Move(float accumulated_extra_samples, bool b
 
 	// 默认的 1 次调用，如果不调用会导致游戏冻结
 	// 参数 bFinalTick 相当于 bSendPacket
-	// 连续调用可以实现加速效果，但是需要破解 m_nTickBase 才能用
+	// 连续调用可以实现加速效果，但是需要改 m_nTickBase 才能正常使用
 	Call_CL_Move(_edi, _esi, accumulated_extra_samples, bFinalTick);
 }
 
@@ -473,7 +473,7 @@ void __cdecl CClientHook::Call_CL_Move(DWORD _edi, DWORD _esi, float accumulated
 
 	__asm
 	{
-		// 堆栈传参
+		// 栈传参
 		push	wFinalTick
 		push	accumulated_extra_samples
 
@@ -484,7 +484,7 @@ void __cdecl CClientHook::Call_CL_Move(DWORD _edi, DWORD _esi, float accumulated
 		// 调用原函数(其实是个蹦床)
 		call	dwOriginFunction
 
-		// 清理堆栈(需要内存对齐)
+		// 清理栈(需要内存对齐)
 		add		esp, 8
 	};
 }

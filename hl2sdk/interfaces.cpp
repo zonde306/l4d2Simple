@@ -109,8 +109,9 @@ void CClientInterface::Init()
 	{
 		DWORD funcStart = GET_VFUNC(Client, indexes::CreateMove);
 		Input = **reinterpret_cast<IInput***>(funcStart + 0x28);
-		// Input = *reinterpret_cast<IInput**>(Utils::FindPattern(XorStr("client.dll"), SIG_CINPUT) + 1);
+		IInput* InputOld = **reinterpret_cast<IInput***>(Utils::FindPattern(XorStr("client.dll"), SIG_CINPUT) + 2);
 		PRINT_OFFSET(XorStr("CInput"), Input);
+		PRINT_OFFSET(XorStr("CInputOld"), InputOld);
 
 		ClientMode = GetClientMode(-1);
 		PRINT_OFFSET(XorStr("ClientMode"), ClientMode);

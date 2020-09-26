@@ -163,49 +163,83 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 
 void CVisualPlayer::OnSceneEnd()
 {
-	if (!m_bChams)
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsValid())
 		return;
-
-	static IMaterial* chamsMaterial = nullptr;
-	if (chamsMaterial == nullptr)
+	
+	if (m_bChams)
 	{
-		if (g_pClientHook->oFindMaterial != nullptr)
+		static IMaterial* chamsMaterial = nullptr;
+		if (chamsMaterial == nullptr)
 		{
-			chamsMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
-				XorStr("debug/debugambientcube"), XorStr("Model textures"), true, nullptr);
-		}
-		else
-		{
-			chamsMaterial = g_pInterface->MaterialSystem->FindMaterial(
-				XorStr("debug/debugambientcube"), XorStr("Model textures"));
+			if (g_pClientHook->oFindMaterial != nullptr)
+			{
+				chamsMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
+					XorStr("debug/debugambientcube"), XorStr("Model textures"), true, nullptr);
+			}
+			else
+			{
+				chamsMaterial = g_pInterface->MaterialSystem->FindMaterial(
+					XorStr("debug/debugambientcube"), XorStr("Model textures"));
+			}
+
+			chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
+			chamsMaterial->ColorModulate(1.0f, 1.0f, 1.0f);
 		}
 
-		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
-		chamsMaterial->ColorModulate(1.0f, 1.0f, 1.0f);
+		if (chamsMaterial)
+		{
+			int team = local->GetTeam();
+			int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+
+			for (int i = 1; i <= maxEntity; ++i)
+			{
+				CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+				if (entity == nullptr || entity == local || !entity->IsAlive())
+					continue;
+
+				if (team == entity->GetTeam())
+					chamsMaterial->ColorModulate(0.0f, 1.0f, 1.0f);
+				else
+					chamsMaterial->ColorModulate(1.0f, 0.0f, 0.0f);
+
+				chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
+				g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
+				entity->DrawModel(STUDIO_RENDER);
+				g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+			}
+		}
 	}
 
-	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || chamsMaterial == nullptr)
-		return;
-
-	int team = local->GetTeam();
-	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-
-	for (int i = 1; i <= maxEntity; ++i)
+	if (m_bNoVomit)
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (entity == nullptr || entity == local || !entity->IsAlive())
-			continue;
+		static IMaterial* vomitMaterial = nullptr;
+		if (vomitMaterial == nullptr)
+		{
+			if (g_pClientHook->oFindMaterial != nullptr)
+			{
+				vomitMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
+					XorStr("particle/screenspaceboomervomit"), XorStr("Particle textures"),
+					true, nullptr
+				);
+			}
+			else
+			{
+				vomitMaterial = g_pInterface->MaterialSystem->FindMaterial(
+					XorStr("particle/screenspaceboomervomit"), XorStr("Particle textures")
+				);
+			}
 
-		if(team == entity->GetTeam())
-			chamsMaterial->ColorModulate(0.0f, 1.0f, 1.0f);
-		else
-			chamsMaterial->ColorModulate(1.0f, 0.0f, 0.0f);
+			vomitMaterial->SetMaterialVarFlag(MATERIAL_VAR_NO_DRAW, true);
+		}
 
-		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
-		g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
-		entity->DrawModel(STUDIO_RENDER);
-		g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+		/*
+		if (vomitMaterial)
+		{
+			g_pInterface->ModelRender->ForcedMaterialOverride(vomitMaterial);
+			g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+		}
+		*/
 	}
 }
 

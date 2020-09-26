@@ -272,3 +272,10 @@ const QAngle& CBaseEntity::GetEyeAngles()
 	FnEyeAngles fn = Utils::GetVTableFunction<FnEyeAngles>(this, indexes::EyeAngles);
 	return fn(this);
 }
+
+ICollideable* CBaseEntity::GetCollideable()
+{
+	using FnGetCollideable = ICollideable*(__thiscall*)(CBaseEntity*);
+	FnGetCollideable fn = Utils::GetVTableFunction<FnGetCollideable>(this, indexes::GetCollideable);
+	return fn(this);
+}
