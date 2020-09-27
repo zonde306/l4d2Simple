@@ -1537,8 +1537,8 @@ bool CClientPrediction::StartPrediction(CUserCmd* cmd)
 	m_iFlags = player->GetFlags();
 
 	// 设置随机数种子
-	*m_pPredictionRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
-	// *m_pPredictionRandomSeed = cmd->random_seed;
+	// *m_pPredictionRandomSeed = (MD5_PseudoRandom(cmd->command_number) & 0x7FFFFFFF);
+	*m_pPredictionRandomSeed = cmd->random_seed;
 
 	// 设置需要预测的时间（帧）
 	g_pInterface->GlobalVars->curtime = GetServerTime();

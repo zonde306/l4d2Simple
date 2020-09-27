@@ -96,9 +96,11 @@ void CClientInterface::Init()
 	GetClientState = reinterpret_cast<FnGetClientState>(Utils::FindPattern(XorStr("engine.dll"), SIG_GET_CLIENTSTATE));
 	PRINT_OFFSET(XorStr("GetClientState"), GetClientState);
 
+	/*
 	GlobalVars = FindGlobalVars();
 	if (GlobalVars == nullptr)
-		GlobalVars = **reinterpret_cast<CGlobalVarsBase***>(Utils::FindPattern(XorStr("client.dll"), SIG_GLOBAL_VARS) + 1);
+	*/
+	GlobalVars = **reinterpret_cast<CGlobalVarsBase***>(Utils::FindPattern(XorStr("client.dll"), SIG_GLOBAL_VARS) + 2);
 
 	if (GlobalVars != nullptr)
 	{
@@ -210,10 +212,11 @@ CGlobalVarsBase * CClientInterface::FindGlobalVars()
 	if (Client == nullptr)
 		return nullptr;
 
-	DWORD initAddr = GET_VFUNC(Client, 1);
+	DWORD initAddr = GET_VFUNC(Client, 0);
 	for (DWORD i = 0; i <= 0xFF; ++i)
 	{
-		if (*reinterpret_cast<PBYTE>(initAddr + i) == 0xA3)
+		// 前面有个 E8 A3 的 call，要忽略掉
+		if (*reinterpret_cast<PBYTE>(initAddr + i) == 0xA3 && *reinterpret_cast<PBYTE>(initAddr) != 0xE8)
 			return **reinterpret_cast<CGlobalVarsBase***>(initAddr + i + 1);
 	}
 

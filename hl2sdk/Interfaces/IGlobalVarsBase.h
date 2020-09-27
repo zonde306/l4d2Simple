@@ -43,8 +43,10 @@ public:
 	// Absolute time (per frame still - Use Plat_FloatTime() for a high precision real time 
 	//  perf clock, but not that it doesn't obey host_timescale/host_framerate)
 	float			realtime;
+
 	// Absolute frame counter - continues to increase even if game is paused
 	int				framecount;
+
 	// Non-paused frametime
 	float			absoluteframetime;
 
@@ -69,6 +71,7 @@ public:
 
 	// Time spent on last server or client frame (has nothing to do with think intervals)
 	float			frametime;
+
 	// current maxplayers setting
 	int				maxClients;
 
@@ -80,6 +83,7 @@ public:
 
 	// interpolation amount ( client-only ) based on fraction of next tick which has elapsed
 	float			interpolation_amount;
+
 	int				simTicksThisFrame;
 
 	int				network_protocol;
