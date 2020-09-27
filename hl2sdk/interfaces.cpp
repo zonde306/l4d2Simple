@@ -207,6 +207,7 @@ void CClientInterface::Init()
 	PRINT_OFFSET(XorStr("TerrorPlayerResource"), PlayerResource);
 }
 
+// 这个用不了，匹配到了错误的地址
 CGlobalVarsBase * CClientInterface::FindGlobalVars()
 {
 	if (Client == nullptr)
