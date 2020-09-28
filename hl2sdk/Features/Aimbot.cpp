@@ -297,15 +297,23 @@ void CAimBot::OnEnginePaint(PaintMode_t mode)
 #endif
 	}
 
-	if (m_bShowTarget && m_pAimTarget && m_pAimTarget->IsAlive())
+	if (m_bShowTarget)
 	{
-		Vector screen, origin = GetTargetAimPosition(m_pAimTarget, false);
-		if (origin.IsValid() && math::WorldToScreenEx(origin, screen))
+		QAngle viewAngles;
+		g_pInterface->Engine->GetViewAngles(viewAngles);
+		Vector aimHeadOrigin = INVALID_VECTOR;
+		if (!m_bRemeberChoose || !IsValidTarget(m_pAimTarget, true))
+			m_pAimTarget = FindTarget(viewAngles, &aimHeadOrigin);
+		else
+			aimHeadOrigin = GetTargetAimPosition(m_pAimTarget);
+
+		Vector screen;
+		if (m_pAimTarget != nullptr && aimHeadOrigin.IsValid() && math::WorldToScreenEx(aimHeadOrigin, screen))
 		{
 			if(m_bRunAutoAim)
-				g_pDrawing->DrawCircleFilled(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
+				g_pDrawing->DrawCircleFilled(static_cast<int>(screen.x), static_cast<int>(screen.y), 5, CDrawing::CYAN, 8);
 			else
-				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 4, CDrawing::CYAN, 8);
+				g_pDrawing->DrawCircle(static_cast<int>(screen.x), static_cast<int>(screen.y), 5, CDrawing::CYAN, 8);
 
 #ifdef _DEBUG
 			g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetHealth());
