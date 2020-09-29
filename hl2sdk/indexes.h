@@ -149,6 +149,7 @@ namespace indexes
 	const int HasAmmo = 13;
 	const int GetCSWeaponData = 98;
 	const int GetPrintName = 113;
+	const int MoveType = 0x144; // 在 C_BaseEntity::SetMoveType 里，this 后的第一个参数
 
 	// Entity Offset
 	const int GetSpread = 0xD0C;

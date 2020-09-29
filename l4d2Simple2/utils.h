@@ -65,10 +65,12 @@ namespace Utils
 	DWORD GetModuleBase(std::string_view ModuleName, DWORD* ModuleSize, DWORD ProcessID = 0);
 
 	// IDA Style
+	// 注意：末尾不能是 ?，否则搜索不到
 	DWORD FindPattern(const std::string& szModules, const std::string& szPattern);
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string& szPattern);
 
 	// Code Style
+	// 注意：末尾不能是 ?，否则搜索不到
 	DWORD FindPattern(const std::string & szModules, const std::string & szPattern, std::string szMask);
 	DWORD FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern, std::string szMask);
 

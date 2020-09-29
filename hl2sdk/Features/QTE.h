@@ -2,6 +2,7 @@
 #include "BaseFeatures.h"
 #include <optional>
 #include <chrono>
+#include <unordered_set>
 
 class CQuickTriggerEvent : public CBaseFeatures
 {
@@ -31,6 +32,7 @@ private:
 	bool HasShotgun(CBaseWeapon* weapon);
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
 	CBasePlayer* FindTarget(CBasePlayer* local, const QAngle& myEyeAngles);
+	std::unordered_set<CBasePlayer*> GetAllTongueSmoker();
 
 private:
 	bool m_bActive = false;
@@ -58,7 +60,7 @@ private:
 
 	float m_fHunterDistance = 125.0f;
 	float m_fJockeyDistance = 150.0f;
-	float m_fChargerDistance = 300.0f;
+	float m_fChargerDistance = 200.0f;
 	float m_fWitchDistance = 50.0f;
 	float m_fRockDistance = 350.0f;
 	float m_fSmokerDistance = 750.0f;

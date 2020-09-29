@@ -855,6 +855,8 @@ std::string CVisualPlayer::DrawDebugInfo(CBaseEntity* player)
 		ss << XorStr("vel(") << velocity.x << ", " << velocity.y << ", " << velocity.z << ") " << velocity.Length() << std::endl;
 	}
 
+	ss << XorStr("seq:") << player->GetSequence() << "\n";
+
 	return ss.str();
 }
 

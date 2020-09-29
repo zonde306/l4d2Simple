@@ -96,6 +96,8 @@ public:
 
 	ICollideable* GetCollideable();
 	int GetSolidFlags();
+
+	CBaseEntity* GetOwner();
 };
 
 template<typename T>

@@ -9,6 +9,7 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 #define HITBOX_WITCH_CHEST			8
 #define ANIM_CHARGER_CHARGING		5
 #define ANIM_SMOKER_PULLING			30
+#define ANIM_SMOKER_SHOTTING		27
 #define ANIM_HUNTER_LUNGING			67
 #define ANIM_JOCKEY_LEAPING			10
 #define ANIM_JOCKEY_RIDEING			8
@@ -36,11 +37,16 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
+	/*
 	CBasePlayer* player = m_pSmokerAttacker;
 	m_pSmokerAttacker = nullptr;
+	*/
 
+	CBasePlayer* player = nullptr;
 	CBasePlayer* dominater = local->GetCurrentAttacker();
-	if (dominater != nullptr && dominater->IsValid() && dominater->IsAlive() && dominater != player)
+
+	// 被舌头拉但还有反抗时间时也是能获取到攻击者的
+	if (dominater != nullptr && dominater->IsAlive() && dominater->GetZombieType() != ZC_SMOKER/* && dominater != player*/)
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
@@ -352,20 +358,25 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,
 	int& flags, int& pitch, Vector& origin, Vector& direction, bool& updatePosition, float& soundTime)
 {
+	/*
 	if (entity < 1 || entity > 64)
 		return true;
+	*/
 	
-	if (sample.find(XorStr("smoker_launchtongue")) != std::string::npos ||
-		sample.find(XorStr("smoker_tonguehit")) != std::string::npos)
+	/*
+	if (sample.find(XorStr("tongue")) != std::string::npos)
 	{
+		if (m_bLogInfo)
+			g_pDrawing->PrintInfo(CDrawing::RED, XorStr("EmitSound %s at entity %d, org: %.0f, %.0f, %.0f"), sample.c_str(), entity, origin[0], origin[1], origin[2]);
+		
 		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 		if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive())
 			return true;
-		
+
 		CBasePlayer* smoker = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(entity));
 		if (smoker == nullptr || !smoker->IsAlive() || smoker->GetZombieType() != ZC_SMOKER)
 			return true;
-
+		
 		Vector myOrigin = local->GetChestOrigin();
 		Vector thatEyeOrigin = smoker->GetEyePosition();
 
@@ -381,9 +392,6 @@ bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& chan
 		}
 
 		m_pSmokerAttacker = smoker;
-
-		if(m_bLogInfo)
-			g_pDrawing->PrintInfo(CDrawing::RED, XorStr("somker(%s) attack warning"), smoker->GetName().c_str());
 	}
 
 	if (sample.find(XorStr("jockey_loudattack")) != std::string::npos ||
@@ -397,6 +405,7 @@ bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& chan
 	{
 		m_StartAttackTime[entity] = std::chrono::system_clock::now();
 	}
+	*/
 	
 	return true;
 }
@@ -416,7 +425,10 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	CBasePlayer * enemy, CUserCmd * cmd, float distance)
 {
 	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
-	if (distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
+	ZombieClass_t zClass = enemy->GetZombieType();
+	
+	// 砍舌头不看距离的
+	if (zClass != ZC_SMOKER && distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
 		return;
 
 	QAngle aimAngles = GetAimAngles(self, enemy, false);
@@ -424,11 +436,9 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	{
 		cmd->buttons |= IN_ATTACK;
 
-		/*
-		// 砍舌头需要稍微往下一点，不然砍不到
-		if (enemy->GetZombieType() == ZC_SMOKER)
-			aimAngles.x += 15.0f;
-		*/
+		// 提升成功率
+		if (zClass == ZC_CHARGER || zClass == ZC_SMOKER || zClass == ZC_HUNTER || zClass == ZC_JOCKEY)
+			aimAngles.x += 10.0f;
 
 		SetAimAngles(cmd, aimAngles, m_bMeleeAsShove);
 	}
@@ -575,7 +585,14 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 
 		if (target->IsPlayer() && target->IsGhost())
 			continue;
+		
+		/*
+		CBasePlayer* victim = target->GetCurrentTongueTarget();
+		if (target->IsPlayer() && victim == local)
+			return target;
+		*/
 
+		/*
 		bool isAttacking = false;
 		if (i <= 64)
 		{
@@ -583,6 +600,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_StartAttackTime[i]).count();
 			isAttacking = (duration <= 1000);
 		}
+		*/
 
 		Vector aimPosition = GetTargetAimPosition(target);
 		if (!aimPosition.IsValid())
@@ -590,6 +608,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 
 		ZombieClass_t classId = target->GetZombieType();
 		float distance = myEyePosition.DistTo(target->GetAbsOrigin());
+		int sequence = target->GetSequence();
 		bool selected = false;
 
 		switch (classId)
@@ -603,7 +622,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (distance > cvTongueRange->GetFloat() || distance > m_fSmokerDistance)
 					break;
 
-				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING && !isAttacking)
+				if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOTTING /* && !isAttacking*/)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));
@@ -618,11 +637,10 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (!m_bHunter)
 					break;
 
-				if (!target->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
-					target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
+				if (!target->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) && sequence != ANIM_HUNTER_LUNGING)
 					break;
 
-				if ((target->GetFlags() & FL_ONGROUND) && !isAttacking)
+				if ((target->GetFlags() & FL_ONGROUND)/* && !isAttacking*/)
 					break;
 
 				if (distance > m_fHunterDistance)
@@ -640,16 +658,16 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (!m_bJockey)
 					break;
 
-				if ((target->GetFlags() & FL_ONGROUND) && !isAttacking)
+				if ((target->GetFlags() & FL_ONGROUND)/* && !isAttacking*/)
 					break;
 
 				/*
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
+				if (sequence == ANIM_JOCKEY_RIDEING)
 					continue;
 				*/
 
 				/*
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
+				if (sequence != ANIM_JOCKEY_LEAPING)
 					continue;
 				*/
 
@@ -691,7 +709,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				}
 				*/
 
-				if (target->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING && !isAttacking)
+				if (sequence != ANIM_CHARGER_CHARGING/* && !isAttacking*/)
 					break;
 
 				if (distance > m_fChargerDistance)
@@ -754,4 +772,25 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 	}
 
 	return result;
+}
+
+std::unordered_set<CBasePlayer*> CQuickTriggerEvent::GetAllTongueSmoker()
+{
+	std::unordered_set<CBasePlayer*> results;
+	
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	for (int i = 64; i <= maxEntity; ++i)
+	{
+		CBaseEntity* entity = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntity(i));
+		if (!entity->IsValid() || entity->GetClassID() != ET_Particle)
+			continue;
+
+		CBasePlayer* owner = reinterpret_cast<CBasePlayer*>(entity->GetOwner());
+		if (owner == nullptr || !owner->IsAlive() || owner->GetZombieType() != ZC_SMOKER)
+			continue;
+
+		results.insert(owner);
+	}
+
+	return results;
 }

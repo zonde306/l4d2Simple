@@ -239,8 +239,7 @@ MoveType_t CBaseEntity::GetMoveType()
 {
 	// 在 C_BaseEntity::SetMoveType 里
 	// this 后的第一个参数
-	const int offset = 0x144;
-	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + offset));
+	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + indexes::MoveType));
 }
 
 const char * CBaseEntity::GetClassname()
@@ -287,4 +286,16 @@ int CBaseEntity::GetSolidFlags()
 		return collideable->GetSolidFlags();
 
 	return 0;
+}
+
+CBaseEntity* CBaseEntity::GetOwner()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseEntity"), XorStr("m_hOwnerEntity"));
+	Assert_NetProp(offset);
+
+	CBaseHandle hdl = DECL_NETPROP_GET(CBaseHandle);
+	if (!hdl.IsValid())
+		return nullptr;
+
+	return reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(hdl));
 }

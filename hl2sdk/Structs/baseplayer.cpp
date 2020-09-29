@@ -25,6 +25,7 @@
 #define HITBOX_CHEST_WITCH			8
 
 #define SIG_IS_LUNGING				XorStr("56 E8 ? ? ? ? 8B F0 85 F6 75 04")
+#define SIG_GET_TONGUE_TARGET		XorStr("E8 ? ? ? ? 8B D0 8B 83")
 
 Vector CBasePlayer::GetEyePosition()
 {
@@ -411,18 +412,34 @@ bool CBasePlayer::IsLunging()
 	return fn(this);
 }
 
+CBasePlayer* CBasePlayer::GetCurrentTongueTarget()
+{
+	using FnGetCurrentTongueTarget = CBasePlayer * (__thiscall*)(CBaseEntity*);
+	static FnGetCurrentTongueTarget fn = reinterpret_cast<FnGetCurrentTongueTarget>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_GET_TONGUE_TARGET)));
+	
+	CBaseHandle customAbility = GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
+	if (!customAbility.IsValid())
+		return nullptr;
+
+	CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(customAbility));
+	if (ability == nullptr || !ability->IsValid() || ability->GetClassID() != ET_CTongue)
+		return nullptr;
+
+	return fn(ability);
+}
+
 bool CBasePlayer::IsAlive()
 {
 	if (!IsValid())
 		return false;
 	
 	static int lifeOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_lifeState"));
-	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
+	// static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
 	static int sequenceOffset = GetNetPropOffset(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
 	static int burnOffset = GetNetPropOffset(XorStr("DT_Infected"), XorStr("m_bIsBurning"));
 	static int wanderOffset = GetNetPropOffset(XorStr("DT_Witch"), XorStr("m_wanderRage"));
 	Assert_NetProp(lifeOffset);
-	Assert_NetProp(solidOffset);
+	// Assert_NetProp(solidOffset);
 	Assert_NetProp(sequenceOffset);
 	Assert_NetProp(burnOffset);
 	Assert_NetProp(wanderOffset);
@@ -474,8 +491,7 @@ bool CBasePlayer::IsAlive()
 		if (flags & SF_NOT_SOLID)
 			return false;
 		
-		if ((DECL_NETPROP_GET_EX(solidOffset, int) & SF_NOT_SOLID) ||
-			DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 305)
+		if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 305)
 			return false;
 
 		if (entityType == ET_INFECTED)

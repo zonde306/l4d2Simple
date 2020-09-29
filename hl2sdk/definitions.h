@@ -592,6 +592,8 @@ enum EntityType_t
 	ET_SurvivorRescue = 186,		// 复活点
 	ET_SurvivorDeathModel = 184,	// 死亡的生还者
 	ET_PropHealthCabinet = 144,		// 医疗箱
+	ET_CTongue = 246,
+	ET_Particle = 124,
 
 	// 武器 - 其他
 	ET_WeaponMountedGun = 146,

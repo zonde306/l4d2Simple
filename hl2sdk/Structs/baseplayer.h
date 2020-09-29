@@ -89,4 +89,7 @@ public:
 
 	// Hunter
 	bool IsLunging();
+
+	// Smoker
+	CBasePlayer* GetCurrentTongueTarget();
 };
