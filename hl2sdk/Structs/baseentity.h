@@ -84,7 +84,10 @@ public:
 	int GetSequence();
 	int GetTeam();
 	bool IsPlayer();
+
+	// 是否为 NextBot
 	bool IsNPC();
+
 	MoveType_t GetMoveType();
 
 	// 注意，这个和 server 的 GetClassname 不同
@@ -92,12 +95,15 @@ public:
 	const char* GetClientClassname();
 
 	Vector GetEyePosition();
-	const QAngle& GetEyeAngles();
+	QAngle GetEyeAngles();
 
 	ICollideable* GetCollideable();
 	int GetSolidFlags();
 
 	CBaseEntity* GetOwner();
+
+	// 注意：只有部分实体有 m_vecVelocity，NextBot 是没用的
+	Vector GetVelocity();
 };
 
 template<typename T>

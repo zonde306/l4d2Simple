@@ -98,22 +98,28 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 {
-	// if (stage != FRAME_RENDER_START)
-	if (stage != FRAME_NET_UPDATE_POSTDATAUPDATE_START)
-		return;
-
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive())
 		return;
 
-	m_vecPunch = local->GetPunch();
-
-	if (m_bNoVisRecoil)
+	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 	{
-		local->GetPunch().x = 0.0f;
-		local->GetPunch().y = 0.0f;
-		local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle")) = Vector(0.0f, 0.0f, 0.0f);
-		local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel")) = Vector(0.0f, 0.0f, 0.0f);
+		m_vecPunch = local->GetPunch();
+
+		if (m_bNoVisRecoil)
+		{
+			local->GetPunch().x = 0.0f;
+			local->GetPunch().y = 0.0f;
+			local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle")) = Vector(0.0f, 0.0f, 0.0f);
+			local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel")) = Vector(0.0f, 0.0f, 0.0f);
+		}
+	}
+
+	if (stage == FRAME_RENDER_START && m_bRealAngles && m_bHasFiring)
+	{
+		Vector eyeOrigin = local->GetEyePosition();
+		Vector aimOrigin = eyeOrigin + m_vecViewAngles.Forward().Scale(1000.0f);
+		g_pInterface->DebugOverlay->AddLineOverlay(eyeOrigin, aimOrigin, 255, 255, 255, false, 1.0f);
 	}
 }
 

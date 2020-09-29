@@ -29,6 +29,9 @@
 
 Vector CBasePlayer::GetEyePosition()
 {
+	if (!IsPlayer())
+		return CBaseEntity::GetEyePosition();
+	
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecViewOffset[0]"));
 	Assert_NetProp(offset);
 	return (GetAbsOrigin() + DECL_NETPROP_GET(Vector));
@@ -36,6 +39,9 @@ Vector CBasePlayer::GetEyePosition()
 
 QAngle CBasePlayer::GetEyeAngles()
 {
+	if (!IsPlayer())
+		return CBaseEntity::GetEyeAngles();
+	
 	static int offset = GetNetPropOffset(XorStr("DT_CSPlayer"), XorStr("m_angEyeAngles[0]"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(QAngle);
@@ -57,6 +63,9 @@ int CBasePlayer::GetTeam()
 
 Vector CBasePlayer::GetVelocity()
 {
+	if (!IsPlayer())
+		return CBaseEntity::GetVelocity();
+	
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecVelocity[0]"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(Vector);

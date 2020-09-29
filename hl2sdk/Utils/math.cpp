@@ -159,6 +159,9 @@ inline void FindScreenPoint(Vector &point, int screenwidth, int screenheight, in
 
 bool math::WorldToScreenEx(const Vector & origin, Vector & screen)
 {
+	if (!origin.IsValid())
+		return false;
+	
 	int iScreenWidth, iScreenHeight;
 	g_pInterface->Engine->GetScreenSize(iScreenWidth, iScreenHeight);
 
@@ -685,14 +688,13 @@ float math::DotProduct(const Vector & a, const Vector & b)
 	return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
 
-Vector math::VelocityExtrapolate(const Vector & origin, const Vector & velocity, bool forwardtrack)
+Vector math::VelocityExtrapolate(const Vector & origin, const Vector & velocity, bool forwardtrack, int tick)
 {
-	int tick = 1;
 	if (forwardtrack)
 	{
 		INetChannelInfo* netChan = g_pInterface->Engine->GetNetChannelInfo();
 		if(netChan != nullptr)
-			tick = TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
+			tick += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
 	}
 	
 	return origin + (velocity * (g_pInterface->GlobalVars->interval_per_tick * tick));

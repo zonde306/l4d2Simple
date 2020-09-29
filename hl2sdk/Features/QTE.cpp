@@ -9,7 +9,7 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 #define HITBOX_WITCH_CHEST			8
 #define ANIM_CHARGER_CHARGING		5
 #define ANIM_SMOKER_PULLING			30
-#define ANIM_SMOKER_SHOTTING		27
+#define ANIM_SMOKER_SHOOTING		27
 #define ANIM_HUNTER_LUNGING			67
 #define ANIM_JOCKEY_LEAPING			10
 #define ANIM_JOCKEY_RIDEING			8
@@ -18,6 +18,8 @@ CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
 	for (int i = 0; i < 65; ++i)
 		m_StartAttackTime[i] = std::chrono::system_clock::from_time_t(0);
+
+	m_WaitTime = std::chrono::system_clock::from_time_t(0);
 }
 
 CQuickTriggerEvent::~CQuickTriggerEvent()
@@ -72,7 +74,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 			distance = myOrigin.DistTo(player->GetAbsOrigin());
 			
 			if (hasMelee)
-				HandleMeleeSelfClear(local, player, cmd, distance);
+				HandleMeleeSelfClear(local, player, cmd, distance, weapon);
 			else if (canFire)
 				HandleShotSelfClear(local, player, cmd, distance);
 			else
@@ -84,8 +86,17 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	}
 	*/
 
+	int tickToPred = 1;
+	if (m_bSwingExt)
+	{
+		if (hasMelee && weapon->CanFire())
+			tickToPred = TIME_TO_TICKS(weapon->GetMeleeDelay());
+		if (tickToPred < 1)
+			tickToPred = 1;
+	}
+
 	if (m_bVelExt)
-		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
+		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
 
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
@@ -95,7 +106,15 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	if (player == nullptr)
 		return;
 
-	distance = myOrigin.DistTo(player->GetAbsOrigin());
+	// 计算距离时进行近战预测，实际攻击时不预测
+	Vector targetOrigin = GetTargetAimPosition(player, false);
+	if (!targetOrigin.IsValid())
+		return;
+
+	if (m_bVelExt)
+		targetOrigin = math::VelocityExtrapolate(targetOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
+
+	distance = myOrigin.DistTo(targetOrigin);
 	ZombieClass_t classId = player->GetZombieType();
 
 	switch (classId)
@@ -106,8 +125,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		{
 			if (hasMelee)
 			{
-				// 近战必须提前，否则砍不到的
-				HandleMeleeSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale / m_fMeleeScale : distance / m_fMeleeScale));
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale / m_fMeleeScale : distance / m_fMeleeScale), weapon);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
@@ -132,8 +151,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		{
 			if (hasMelee)
 			{
-				// 近战必须提前，否则砍不到的
-				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale);
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale, weapon);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack charger/rock(%d), dist: %.0f"), classId, distance);
 			}
@@ -184,6 +203,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bLagExt);
 	IMGUI_TIPS("延迟预测");
+	
+	ImGui::Checkbox(XorStr("SwingPrediction"), &m_bSwingExt);
+	IMGUI_TIPS("近战前摇预测");
 
 	ImGui::Checkbox(XorStr("Silent Aim"), &m_bSilent);
 	IMGUI_TIPS("自己看不到自动瞄准，建议开启");
@@ -207,7 +229,7 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	IMGUI_TIPS("允许近战");
 	
 	ImGui::Checkbox(XorStr("Melee TickMode"), &m_bMeleeAsShove);
-	IMGUI_TIPS("近战武器攻击使用推的形式(基于tick)，如果近战砍不到则开启");
+	IMGUI_TIPS("在 Silent 模式下必须开启");
 	
 	ImGui::Checkbox(XorStr("Show Info"), &m_bLogInfo);
 	IMGUI_TIPS("显示信息");
@@ -284,6 +306,7 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("qte_enable"), m_bActive);
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_velext"), m_bVelExt);
 	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
 	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_silent"), m_bSilent);
 	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
@@ -325,6 +348,7 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_enable"), m_bActive);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_silent"), m_bSilent);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker"), m_bSmoker);
@@ -417,12 +441,12 @@ void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
 	if (aimAngles.IsValid())
 	{
 		cmd->buttons |= IN_ATTACK;
-		SetAimAngles(cmd, aimAngles);
+		SetAimAngles(cmd, aimAngles, false);
 	}
 }
 
 void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
-	CBasePlayer * enemy, CUserCmd * cmd, float distance)
+	CBasePlayer * enemy, CUserCmd * cmd, float distance, CBaseWeapon* weapon)
 {
 	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
 	ZombieClass_t zClass = enemy->GetZombieType();
@@ -432,16 +456,59 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 		return;
 
 	QAngle aimAngles = GetAimAngles(self, enemy, false);
-	if (aimAngles.IsValid())
+	if(!aimAngles.IsValid())
+		return;
+	
+	cmd->buttons |= IN_ATTACK;
+	
+	/*
+	// 提升成功率
+	if (zClass == ZC_CHARGER || zClass == ZC_SMOKER)
+		aimAngles.x += 10.0f;
+	else if(zClass == ZC_HUNTER || zClass == ZC_JOCKEY)
+		aimAngles.x += 15.0f;
+	*/
+	
+	if (zClass == ZC_SMOKER)
+		aimAngles.x += 10.0f;
+	else if(zClass == ZC_CHARGER)
+		aimAngles.x += 15.0f;
+	else if (zClass == ZC_JOCKEY)
+		aimAngles.x -= 15.0f;
+
+	if(weapon == nullptr || !weapon->IsValid())
 	{
-		cmd->buttons |= IN_ATTACK;
-
-		// 提升成功率
-		if (zClass == ZC_CHARGER || zClass == ZC_SMOKER || zClass == ZC_HUNTER || zClass == ZC_JOCKEY)
-			aimAngles.x += 10.0f;
-
 		SetAimAngles(cmd, aimAngles, m_bMeleeAsShove);
+		return;
 	}
+	
+	if(weapon->CanFire())
+	{
+		m_iMeleeState = MAS_PreAttack;
+		return;
+	}
+	
+	auto now = std::chrono::system_clock::now();
+	if(m_iMeleeState == MAS_PreAttack)
+	{
+		float delay = weapon->GetMeleeDelay();
+		m_iMeleeState = MAS_Attacking;
+		m_WaitTime = now + std::chrono::milliseconds(static_cast<long long>(delay * 1000));
+		
+		if(m_bLogInfo)
+			g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("wait for %.1fs tick to start"), delay);
+	}
+	else if (m_iMeleeState == MAS_Attacking)
+	{
+		if (m_WaitTime <= now)
+			m_iMeleeState = MAS_PostAttack;
+
+		if (m_bLogInfo && m_iMeleeState == MAS_PostAttack)
+			g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("start swing"));
+	}
+	
+	if(m_iMeleeState == MAS_PostAttack)
+		SetAimAngles(cmd, aimAngles, m_bMeleeAsShove);
 }
 
 void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
@@ -494,20 +561,21 @@ QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy,
 	return math::CalculateAim(myEyeOrigin, aimHeadOrigin);
 }
 
-void CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick)
+bool CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick)
 {
 	if (m_bPerfectSilent)
 	{
 		if(tick)
-			g_pViewManager->ApplySilentAngles(aimAngles, m_iShoveTicks);
+			return g_pViewManager->ApplySilentAngles(aimAngles, m_iShoveTicks);
 		else
-			g_pViewManager->ApplySilentFire(aimAngles);
+			return g_pViewManager->ApplySilentFire(aimAngles);
 	}
 	else if (m_bSilent)
 		cmd->viewangles = aimAngles;
 	else
-
 		g_pInterface->Engine->SetViewAngles(aimAngles);
+	
+	return true;
 }
 
 bool CQuickTriggerEvent::IsVisibleEnemy(CBasePlayer * local, CBasePlayer * enemy, const Vector & start, const Vector & end)
@@ -570,7 +638,7 @@ Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::option
 	return NULL_VECTOR;
 }
 
-CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles)
+CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles, int tick)
 {
 	float minDistance = 65535.0f;
 	CBasePlayer* result = nullptr;
@@ -607,7 +675,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 			continue;
 
 		ZombieClass_t classId = target->GetZombieType();
-		float distance = myEyePosition.DistTo(target->GetAbsOrigin());
+		float distance = myEyePosition.DistTo(aimPosition);
 		int sequence = target->GetSequence();
 		bool selected = false;
 
@@ -622,7 +690,7 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (distance > cvTongueRange->GetFloat() || distance > m_fSmokerDistance)
 					break;
 
-				if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOTTING /* && !isAttacking*/)
+				if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOOTING /* && !isAttacking*/)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));

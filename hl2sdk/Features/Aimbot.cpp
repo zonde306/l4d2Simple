@@ -41,6 +41,7 @@ CAimBot* g_pAimbot = nullptr;
 
 #define ANIM_CHARGER_CHARGING		5
 #define ANIM_SMOKER_PULLING			30
+#define ANIM_SMOKER_SHOOTING		27
 #define ANIM_HUNTER_LUNGING			67
 #define ANIM_JOCKEY_LEAPING			10
 #define ANIM_JOCKEY_RIDEING			8
@@ -709,6 +710,7 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 	
 	ZombieClass_t classId = entity->GetZombieType();
 	float distance = local->GetAbsOrigin().DistTo(entity->GetAbsOrigin());
+	int sequence = entity->GetSequence();
 
 	switch (classId)
 	{
@@ -718,11 +720,11 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (distance > cvTongueRange->GetFloat())
 				return false;
 			
-			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
+			if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOOTING)
 				return false;
 
 			float fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
-			if (fov > 30.0f)
+			if (fov > 10.0f)
 				return false;
 
 			return true;
@@ -732,8 +734,7 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (distance > 100.0f)
 				return false;
 			
-			if (!entity->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
-				entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
+			if (!entity->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) && sequence != ANIM_HUNTER_LUNGING)
 				return false;
 
 			if (entity->GetFlags() & FL_ONGROUND)
@@ -750,14 +751,16 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (distance > 125.0f)
 				return false;
 			
-			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
+			/*
+			if (sequence == ANIM_JOCKEY_RIDEING)
 				return false;
+			*/
 
 			if (entity->GetFlags() & FL_ONGROUND)
 				return false;
 
 			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
-			if (fov > 15.0f)
+			if (fov > 20.0f)
 				return false;
 
 			return true;
@@ -780,7 +783,7 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 			if (distance > cvChargeDuration->GetFloat() * cvChargeSpeed->GetFloat())
 				return false;
 			
-			if (entity->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
+			if (sequence != ANIM_CHARGER_CHARGING)
 				return false;
 
 			float fov = math::GetAnglesFieldOfView(entity->GetVelocity().toAngles(), math::CalculateAim(entity->GetEyePosition(), local->GetChestOrigin()));
@@ -789,24 +792,24 @@ bool CAimBot::IsFatalTarget(CBasePlayer* entity)
 
 			return true;
 		}
-		/*
 		case ZC_WITCH:
 		{
-			if (distance > 1000.0f)
+			if (distance > 75.0f)
 				return false;
 			
 			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
 				return false;
 
+			/*
 			Vector eyePosition = entity->GetAbsOrigin();
 			eyePosition.z += entity->GetNetPropCollision<Vector>(XorStr("m_vecMaxs")).z;
 			float fov = math::GetAnglesFieldOfView(entity->GetAbsAngles(), math::CalculateAim(eyePosition, local->GetChestOrigin()));
 			if (fov > 10.0f)
 				return false;
+			*/
 
 			return true;
 		}
-		*/
 	}
 	
 	return false;

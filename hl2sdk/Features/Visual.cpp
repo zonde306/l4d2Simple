@@ -83,6 +83,9 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		Vector footOrigin = entity->GetAbsOrigin();
 		Vector headOrigin = entity->GetHeadOrigin();
 
+		if (!eyeOrigin.IsValid())
+			eyeOrigin = footOrigin;
+
 		if (!math::WorldToScreenEx(footOrigin, foot) ||
 			!math::WorldToScreenEx(eyeOrigin, eye) ||
 			!math::WorldToScreenEx(headOrigin, head))

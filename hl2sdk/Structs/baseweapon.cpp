@@ -4,6 +4,7 @@
 #include "../hook.h"
 #include "../indexes.h"
 #include "../../l4d2Simple2/utils.h"
+#include <unordered_map>
 
 #define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 37")
 #define SIG_LOOKUP_WEAPON_SLOT		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
@@ -30,6 +31,22 @@
 #define IsMedicalWeapon(_id)		(_id == Weapon_FirstAidKit || _id == Weapon_Defibrillator || _id == Weapon_FireAmmo || _id == Weapon_ExplodeAmmo)
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
+
+static std::unordered_map<std::string, float> g_MeleeStartTime {
+	{ XorStr("bat"), 0.1f },
+	{ XorStr("cricket_bat"), 0.1f },
+	{ XorStr("crowbar"), 0.15f },
+	{ XorStr("electric_guitar"), 0.1f },
+	{ XorStr("fireaxe"), 0.1f },
+	{ XorStr("frying_pan"), 0.15f },
+	{ XorStr("golfclub"), 0.1f },
+	{ XorStr("katana"), 0.1f },
+	{ XorStr("knife_t"), 0.1f },
+	{ XorStr("machete"), 0.1f },
+	{ XorStr("pitchfork"), 0.11f },
+	{ XorStr("shovel"), 0.1f },
+	{ XorStr("tonfa"), 0.16f },
+};
 
 float& CBaseWeapon::GetSpread()
 {
@@ -183,12 +200,15 @@ float CBaseWeapon::GetSecondryAttackDelay()
 
 bool CBaseWeapon::CanFire()
 {
+	int weaponId = GetWeaponID();
+	if(weaponId == Weapon_Melee)
+		return (GetPrimaryAttackDelay() <= 0.0f);
+	
 	// 不需要弹药的武器弹夹永远为 -1
 	// 部分武器拥有弹药设定，但是它并不是枪
 	if (GetClip() == 0)
 		return false;
-
-	int weaponId = GetWeaponID();
+	
 	bool reloading = IsReloading();
 
 	if (reloading)
@@ -216,4 +236,24 @@ bool CBaseWeapon::IsFireGun()
 bool CBaseWeapon::CanShove()
 {
 	return (GetSecondryAttackDelay() <= 0.0f);
+}
+
+float CBaseWeapon::GetMeleeDelay()
+{
+	const model_t* model = GetModel();
+	if(model == nullptr)
+		return 0.0f;
+	
+	// if(strstr(model->name, XorStr("models/weapons/melee/[wvp]_")) == model->name)
+	if (model->name[0] == 'm' && model->name[7] == 'w' && model->name[15] == 'm' &&
+		(model->name[21] == 'w' || model->name[21] == 'v' || model->name[21] == 'p') &&
+		model->name[22] == '_' && strrchr(model->name, '.') != nullptr)
+	{
+		std::string mdl = model->name;
+		auto it = g_MeleeStartTime.find(mdl.substr(23, mdl.rfind('.') - 23));
+		if(it != g_MeleeStartTime.end())
+			return it->second;
+	}
+	
+	return 0.0f;
 }

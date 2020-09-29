@@ -262,14 +262,34 @@ Vector CBaseEntity::GetEyePosition()
 {
 	using FnEyePosition = Vector(__thiscall*)(CBaseEntity*);
 	FnEyePosition fn = Utils::GetVTableFunction<FnEyePosition>(this, indexes::EyePosition);
-	return fn(this);
+
+	try
+	{
+		return fn(this);
+	}
+	catch (...)
+	{
+		
+	}
+
+	return INVALID_VECTOR;
 }
 
-const QAngle& CBaseEntity::GetEyeAngles()
+QAngle CBaseEntity::GetEyeAngles()
 {
 	using FnEyeAngles = const QAngle&(__thiscall*)(CBaseEntity*);
 	FnEyeAngles fn = Utils::GetVTableFunction<FnEyeAngles>(this, indexes::EyeAngles);
-	return fn(this);
+
+	try
+	{
+		return fn(this);
+	}
+	catch (...)
+	{
+
+	}
+
+	return INVALID_VECTOR;
 }
 
 ICollideable* CBaseEntity::GetCollideable()
@@ -298,4 +318,12 @@ CBaseEntity* CBaseEntity::GetOwner()
 		return nullptr;
 
 	return reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(hdl));
+}
+
+Vector CBaseEntity::GetVelocity()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseGrenade"), XorStr("m_vecVelocity"));
+	Assert_NetProp(offset);
+
+	return DECL_NETPROP_GET(Vector);
 }
