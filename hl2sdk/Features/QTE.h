@@ -28,11 +28,11 @@ private:
 	void HandleWitchCrown(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 
 	QAngle GetAimAngles(CBasePlayer* self, CBasePlayer* enemy, std::optional<bool> visable = {});
-	bool SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick = false);
+	bool SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick = false, bool melee = false);
 	bool IsVisibleEnemy(CBasePlayer* local, CBasePlayer* enemy, const Vector& start, const Vector& end);
 	bool HasShotgun(CBaseWeapon* weapon);
 	Vector GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible = {});
-	CBasePlayer* FindTarget(CBasePlayer* local, const QAngle& myEyeAngles, int tick = 1);
+	CBasePlayer* FindTarget(CBasePlayer* local, const QAngle& myEyeAngles, bool melee = false);
 	std::unordered_set<CBasePlayer*> GetAllTongueSmoker();
 
 private:
@@ -47,6 +47,8 @@ private:
 	bool m_bCheckFov = true;
 	int m_iShoveTicks = 6;
 	bool m_bMeleeAsShove = true;
+	bool m_bMeleeUnslienced = true;
+	float m_fMeleeUnsliencedFov = 90.0f;
 
 	bool m_bSmoker = true;
 	bool m_bHunter = true;
