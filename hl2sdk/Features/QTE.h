@@ -45,11 +45,8 @@ private:
 	bool m_bPerfectSilent = true;
 	bool m_bSilent = true;
 	bool m_bCheckFov = true;
-	bool m_bAllowShot = true;
-	bool m_bAllowMelee = true;
 	int m_iShoveTicks = 6;
 	bool m_bMeleeAsShove = true;
-	bool m_bForceShot = false;
 
 	bool m_bSmoker = true;
 	bool m_bHunter = true;
@@ -75,6 +72,20 @@ private:
 
 	float m_fJockeyScale = 2.0f;
 	float m_fMeleeScale = 2.0f;
+
+	bool m_bCanShotSmoker = true;
+	bool m_bCanShotHunter = true;
+	bool m_bCanShotJockey = true;
+	bool m_bCanShotCharger = false;
+	bool m_bCanShotRock = true;
+	bool m_bCanMeleeSmoker = true;
+	bool m_bCanMeleeHunter = true;
+	bool m_bCanMeleeJockey = true;
+	bool m_bCanMeleeCharger = true;
+	bool m_bCanMeleeRock = true;
+	bool m_bCanShoveHunter = true;
+	bool m_bCanShoveJockey = true;
+	bool m_bCanShoveSmoker = true;
 
 	std::chrono::system_clock::time_point m_StartAttackTime[65];
 	CBasePlayer* m_pSmokerAttacker = nullptr;
