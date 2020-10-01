@@ -30,7 +30,7 @@
 Vector CBasePlayer::GetEyePosition()
 {
 	if (!IsPlayer())
-		return CBaseEntity::GetEyePosition();
+		return NULL_VECTOR;
 	
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecViewOffset[0]"));
 	Assert_NetProp(offset);
@@ -40,7 +40,7 @@ Vector CBasePlayer::GetEyePosition()
 QAngle CBasePlayer::GetEyeAngles()
 {
 	if (!IsPlayer())
-		return CBaseEntity::GetEyeAngles();
+		return NULL_VECTOR;
 	
 	static int offset = GetNetPropOffset(XorStr("DT_CSPlayer"), XorStr("m_angEyeAngles[0]"));
 	Assert_NetProp(offset);

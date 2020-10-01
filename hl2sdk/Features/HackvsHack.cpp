@@ -39,7 +39,7 @@ void CHackVSHack::OnMenuDrawing()
 	IMGUI_TIPS("在空中卡住不动，按住 E 启动。");
 
 	ImGui::Checkbox(XorStr("Teleport"), &m_bTeleport);
-	IMGUI_TIPS("传送到地图外面，按 E 启动。");
+	IMGUI_TIPS("传送到地图外面，按 R 启动。用于特感传送刷CD。");
 
 	ImGui::TreePop();
 }
@@ -83,7 +83,7 @@ void CHackVSHack::RunAirStuck(CUserCmd * cmd)
 
 void CHackVSHack::RunTeleport(CUserCmd * cmd)
 {
-	if (!(cmd->buttons & IN_USE) || (cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2))
+	if (!(cmd->buttons & IN_RELOAD) || (cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2))
 		return;
 	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();

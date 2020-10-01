@@ -85,6 +85,24 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	}
 	*/
 
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+
+	if (player == nullptr)
+		player = FindTarget(local, viewAngles);
+	if (player == nullptr)
+		return;
+
+	// 计算距离时进行近战预测，实际攻击时不预测
+	Vector targetOrigin = GetTargetAimPosition(player, false);
+	if (!targetOrigin.IsValid())
+		return;
+
+	// 近战的攻击判断很迷，很难击中目标。这里改成推，成功率更高
+	float fov = math::GetAnglesFieldOfView(viewAngles, math::CalculateAim(myOrigin, targetOrigin));
+	if (hasMelee && m_bMeleeUnslienced && fov > m_fMeleeUnsliencedFov)
+		hasMelee = false;
+
 	int tickToPred = 1;
 	if (m_bSwingExt)
 	{
@@ -96,19 +114,6 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 
 	if (m_bVelExt)
 		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
-
-	QAngle viewAngles;
-	g_pInterface->Engine->GetViewAngles(viewAngles);
-
-	if (player == nullptr)
-		player = FindTarget(local, viewAngles, hasMelee);
-	if (player == nullptr)
-		return;
-
-	// 计算距离时进行近战预测，实际攻击时不预测
-	Vector targetOrigin = GetTargetAimPosition(player, false);
-	if (!targetOrigin.IsValid())
-		return;
 
 	if (m_bVelExt)
 		targetOrigin = math::VelocityExtrapolate(targetOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
@@ -761,7 +766,7 @@ Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::option
 	return NULL_VECTOR;
 }
 
-CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles, bool melee)
+CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles)
 {
 	float minDistance = 65535.0f;
 	CBasePlayer* result = nullptr;
@@ -802,8 +807,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 		int sequence = target->GetSequence();
 		bool selected = false;
 
-		float fovOfLocal = math::GetAnglesFieldOfView(myEyeAngles, math::CalculateAim(myEyePosition, aimPosition));
-
 		switch (classId)
 		{
 			case ZC_SMOKER:
@@ -816,9 +819,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 					break;
 
 				if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOOTING /* && !isAttacking*/)
-					break;
-
-				if (melee && m_bMeleeUnslienced && fovOfLocal > m_fMeleeUnsliencedFov)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));
@@ -840,9 +840,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 					break;
 
 				if (distance > m_fHunterDistance)
-					break;
-
-				if (melee && m_bMeleeUnslienced && fovOfLocal > m_fMeleeUnsliencedFov)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
@@ -871,9 +868,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				*/
 
 				if (distance > m_fJockeyDistance)
-					break;
-
-				if (melee && m_bMeleeUnslienced && fovOfLocal > m_fMeleeUnsliencedFov)
 					break;
 
 				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), local->GetHeadOrigin()));
@@ -919,9 +913,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 				if (distance > m_fChargerDistance)
 					break;
 
-				if (melee && m_bMeleeUnslienced && fovOfLocal > m_fMeleeUnsliencedFov)
-					break;
-
 				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
 				if (m_bCheckFov && fov > 30.0f)
 					break;
@@ -956,9 +947,6 @@ CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& my
 					break;
 
 				if (distance > m_fRockDistance)
-					break;
-
-				if (melee && m_bMeleeUnslienced && fovOfLocal > m_fMeleeUnsliencedFov)
 					break;
 
 				Vector velocity = target->GetVelocity();
