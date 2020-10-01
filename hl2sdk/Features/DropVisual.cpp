@@ -174,8 +174,17 @@ void CVisualDrop::DrawWeaponSpawn(CBaseWeapon * weapon, const Vector & screen)
 		return;
 	}
 
-	g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
-		CDrawing::LAWNGREEN, true, weapon->GetWeaponName());
+	int skin = weapon->GetNetProp<uint16_t>(XorStr("DT_BaseAnimating"), XorStr("m_nSkin"));
+	if (skin > 0)
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::LAWNGREEN, true, XorStr("%s(%d)"), weapon->GetWeaponName(), skin);
+	}
+	else
+	{
+		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+			CDrawing::LAWNGREEN, true, weapon->GetWeaponName());
+	}
 }
 
 void CVisualDrop::DrawUpgradeSpawn(CBaseWeapon * weapon, const Vector & screen)
@@ -253,8 +262,17 @@ void CVisualDrop::DrawMelee(CBaseWeapon * weapon, const Vector & screen)
 	{
 		std::string melee = model->name;
 		melee = melee.substr(23, melee.rfind('.') - 23);
-		g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
-			CDrawing::GREEN, true, melee.c_str());
+		int skin = weapon->GetNetProp<uint16_t>(XorStr("DT_BaseAnimating"), XorStr("m_nSkin"));
+		if (skin > 0)
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::GREEN, true, XorStr("%s(%d)"), melee.c_str(), skin);
+		}
+		else
+		{
+			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
+				CDrawing::GREEN, true, melee.c_str());
+		}
 	}
 }
 

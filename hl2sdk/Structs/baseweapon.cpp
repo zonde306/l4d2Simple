@@ -90,10 +90,7 @@ FileWeaponInfo_t * CBaseWeapon::GetWeaponData()
 const char * CBaseWeapon::GetWeaponName()
 {
 	using Fn = const char*(__cdecl*)(int);
-	static Fn WeaponIdToAlias = nullptr;
-
-	if (WeaponIdToAlias == nullptr)
-		WeaponIdToAlias = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_WEAPON_ID_TO_ALIAS));
+	static Fn WeaponIdToAlias = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_WEAPON_ID_TO_ALIAS));
 
 	return WeaponIdToAlias(GetWeaponID());
 }
