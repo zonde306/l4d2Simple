@@ -69,9 +69,12 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	CheckMeleeAttack(viewAngles);
 
-	if (m_bAutoFire && m_bCanMeleeAttack && team == 2)
+	bool isTank = (player->GetZombieType() != ZC_TANK);
+	bool isMelee = (team == 2 && weaponId == Weapon_Melee);
+
+	if (m_bAutoFire && m_bCanMeleeAttack)
 	{
-		if (weaponId == Weapon_Melee && nextAttack <= serverTime)
+		if ((isMelee || isTank) && nextAttack <= serverTime)
 		{
 			cmd->buttons |= IN_ATTACK;
 			return;
@@ -80,7 +83,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack && IsShoveReady(player, weapon))
 	{
-		if (weapon->GetSecondryAttackDelay() <= 0.0f)
+		if (!isTank && weapon->GetSecondryAttackDelay() <= 0.0f)
 		{
 			cmd->buttons |= IN_ATTACK2;
 			return;

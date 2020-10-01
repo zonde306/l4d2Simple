@@ -110,8 +110,8 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 		{
 			local->GetPunch().x = 0.0f;
 			local->GetPunch().y = 0.0f;
-			local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle")) = Vector(0.0f, 0.0f, 0.0f);
-			local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel")) = Vector(0.0f, 0.0f, 0.0f);
+			// local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle")) = Vector(0.0f, 0.0f, 0.0f);
+			// local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel")) = Vector(0.0f, 0.0f, 0.0f);
 		}
 	}
 
