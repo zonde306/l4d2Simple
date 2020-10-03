@@ -69,7 +69,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	g_pInterface->Engine->GetViewAngles(viewAngles);
 	CheckMeleeAttack(viewAngles);
 
-	bool isTank = (player->GetZombieType() != ZC_TANK);
+	bool isTank = (player->GetZombieType() == ZC_TANK);
 	bool isMelee = (team == 2 && weaponId == Weapon_Melee);
 
 	if (m_bAutoFire && m_bCanMeleeAttack)
@@ -288,6 +288,9 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 
 bool CKnifeBot::IsShoveReady(CBasePlayer * player, CBaseWeapon * weapon)
 {
+	if (player->GetTeam() == 3)
+		return true;
+	
 	m_iSequence = player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
 	if (m_iSequence == ANIM_GRENADE_THORWING || m_iSequence == ANIM_GRENADE_THROWED)
 		return false;
