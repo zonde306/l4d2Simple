@@ -412,6 +412,8 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
 	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
 	m_iShoveTicks = g_pConfig->GetInteger(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	m_bMeleeUnslienced = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	m_fMeleeUnsliencedFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
 
 	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
 	m_bHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
@@ -484,6 +486,8 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
 
 	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);

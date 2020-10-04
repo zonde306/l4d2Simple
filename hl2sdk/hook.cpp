@@ -351,15 +351,17 @@ void CClientHook::LoadConfig()
 	for (auto it = g_pConfig->begin(mainKeys); it != g_pConfig->end(mainKeys); ++it)
 		config.emplace(it->first, it->second.m_sValue);
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnConfigLoading(config);
+	for (auto inst : g_pClientHook->_GameHook)
+		if(inst)
+			inst->OnConfigLoading(config);
 }
 
 void CClientHook::SaveConfig()
 {
 	CBaseFeatures::config_type config;
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnConfigSave(config);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnConfigSave(config);
 
 	const std::string mainKeys = XorStr("Config");
 	for (const auto& it : config)
@@ -439,8 +441,9 @@ bool CClientHook::UninstallHook()
 
 void CClientHook::Shutdown()
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnShutdown();
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnShutdown();
 
 	_GameHook.clear();
 }
@@ -499,10 +502,11 @@ void __cdecl CClientHook::Call_CL_Move(DWORD _edi, DWORD _esi, float accumulated
 void CClientHook::Hooked_CL_SendMove()
 {
 	bool blockSendMovement = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnSendMove())
-			blockSendMovement = true;
+		if (inst)
+			if (!inst->OnSendMove())
+				blockSendMovement = true;
 	}
 
 	if (!blockSendMovement)
@@ -551,8 +555,9 @@ void __fastcall CClientHook::Hooked_PaintTraverse(IVPanel* _ecx, LPVOID _edx, VP
 
 	if (panel == FocusOverlayPanel || panel == MatSystemTopPanel)
 	{
-		for (const auto& inst : g_pClientHook->_GameHook)
-			inst->OnPaintTraverse(panel);
+		for (auto inst : g_pClientHook->_GameHook)
+			if (inst)
+				inst->OnPaintTraverse(panel);
 
 		/*
 		#ifdef _DEBUG
@@ -597,8 +602,9 @@ void __fastcall CClientHook::Hooked_EnginePaint(IEngineVGui* _ecx, LPVOID _edx, 
 		if (g_pWorldToScreenMatrix == nullptr)
 			g_pWorldToScreenMatrix = &g_pInterface->Engine->WorldToScreenMatrix();
 
-		for (const auto& inst : g_pClientHook->_GameHook)
-			inst->OnEnginePaint(mode);
+		for (auto inst : g_pClientHook->_GameHook)
+			if (inst)
+				inst->OnEnginePaint(mode);
 
 		/*
 		#ifdef _DEBUG
@@ -663,8 +669,9 @@ void __fastcall CClientHook::Hooked_CreateMove(IBaseClientDll *_ecx, LPVOID _edx
 
 	g_pClientPrediction->StartPrediction(cmd);
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
 
@@ -739,8 +746,9 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 
 	g_pClientPrediction->StartPrediction(cmd);
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnCreateMove(cmd, g_pClientHook->bSendPacket);
 
 	g_pClientPrediction->FinishPrediction();
 
@@ -758,10 +766,11 @@ bool __fastcall CClientHook::Hooked_CreateMoveShared(IClientMode* _ecx, LPVOID _
 bool __fastcall CClientHook::Hooked_DispatchUserMessage(IBaseClientDll* _ecx, LPVOID _edx, int msgid, bf_read* data)
 {
 	bool blockMessage = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnUserMessage(msgid, *data))
-			blockMessage = true;
+		if (inst)
+			if (!inst->OnUserMessage(msgid, *data))
+				blockMessage = true;
 	}
 
 	if (!blockMessage)
@@ -793,8 +802,9 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 	}
 #endif
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnFrameStageNotify(stage);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnFrameStageNotify(stage);
 
 	if (stage == FRAME_NET_UPDATE_END)
 	{
@@ -816,8 +826,9 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					g_pPlayerResource = nullptr;
 					g_pGameRulesProxy = nullptr;
 
-					for (const auto& inst : g_pClientHook->_GameHook)
-						inst->OnConnect();
+					for (auto inst : g_pClientHook->_GameHook)
+						if (inst)
+							inst->OnConnect();
 
 
 #ifdef _DEBUG
@@ -845,9 +856,11 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 					g_pPlayerResource = nullptr;
 					g_pGameRulesProxy = nullptr;
 
-					for (const auto& inst : g_pClientHook->_GameHook)
+					for (auto inst : g_pClientHook->_GameHook)
 					{
-						inst->OnDisconnect();
+						if (inst)
+							inst->OnDisconnect();
+
 						g_pClientHook->SaveConfig();
 					}
 				}
@@ -891,13 +904,17 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 
 	std::string newResult, tmpValue;
 	bool blockQuery = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
 		tmpValue.clear();
-		if (!inst->OnProcessGetCvarValue(gcv->m_szCvarName, tmpValue))
-			blockQuery = true;
-		else if (!tmpValue.empty())
-			newResult = std::move(tmpValue);
+
+		if (inst)
+		{
+			if (!inst->OnProcessGetCvarValue(gcv->m_szCvarName, tmpValue))
+				blockQuery = true;
+			else if (!tmpValue.empty())
+				newResult = std::move(tmpValue);
+		}
 	}
 
 	/*
@@ -1087,10 +1104,11 @@ bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPV
 	{
 		bool blockSetting = false;
 		std::string newValue = cvar.value;
-		for (const auto& inst : g_pClientHook->_GameHook)
+		for (auto inst : g_pClientHook->_GameHook)
 		{
-			if (!inst->OnProcessSetConVar(cvar.name, newValue))
-				blockSetting = true;
+			if (inst)
+				if (!inst->OnProcessSetConVar(cvar.name, newValue))
+					blockSetting = true;
 		}
 		
 		if (!blockSetting && !newValue.empty())
@@ -1147,10 +1165,11 @@ bool __fastcall CClientHook::Hooked_ProcessStringCmd(CBaseClientState* _ecx, LPV
 	std::string value = sc->m_szCommand;
 
 	bool blockExecute = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnProcessClientCommand(value))
-			blockExecute = true;
+		if (inst)
+			if (!inst->OnProcessClientCommand(value))
+				blockExecute = true;
 	}
 
 	/*
@@ -1207,8 +1226,9 @@ void __fastcall CClientHook::Hooked_SceneEnd(IVRenderView* _ecx, LPVOID _edx)
 	}
 #endif
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnSceneEnd();
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnSceneEnd();
 }
 
 IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LPVOID _edx,
@@ -1221,10 +1241,11 @@ IMaterial* __fastcall CClientHook::Hooked_FindMaterial(IMaterialSystem* _ecx, LP
 	if (pTextureGroupName != nullptr)
 		copyTextureGroupName = pTextureGroupName;
 
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
-			blockMaterial = true;
+		if (inst)
+			if (!inst->OnFindMaterial(copyMaterialName, copyTextureGroupName))
+				blockMaterial = true;
 	}
 
 #ifdef _DEBUG
@@ -1248,8 +1269,9 @@ int __fastcall CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int 
 {
 	int result = g_pClientHook->oKeyInput(_ecx, down, keynum, pszCurrentBinding);
 
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnKeyInput(down != 0, keynum, pszCurrentBinding);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnKeyInput(down != 0, keynum, pszCurrentBinding);
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1265,8 +1287,9 @@ int __fastcall CClientHook::Hooked_KeyInput(IClientMode* _ecx, LPVOID _edx, int 
 
 bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event)
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnGameEventClient(event);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnGameEventClient(event);
 	
 	bool result = g_pClientHook->oFireEventClientSide(_ecx, event);
 
@@ -1284,8 +1307,9 @@ bool __fastcall CClientHook::Hooked_FireEventClientSide(IGameEventManager2* _ecx
 
 void __fastcall CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx, const CViewSetup& view, int nClearFlags, int whatToDraw)
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnRenderView(const_cast<CViewSetup&>(view));
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnRenderView(const_cast<CViewSetup&>(view));
 
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1301,8 +1325,9 @@ void __fastcall CClientHook::Hooked_RenderView(IBaseClientDll* _ecx, LPVOID _edx
 
 bool __fastcall CClientHook::Hooked_FireEvent(IGameEventManager2* _ecx, LPVOID _edx, IGameEvent* event, bool bDontBroadcast)
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnGameEvent(event, bDontBroadcast);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnGameEvent(event, bDontBroadcast);
 	
 	bool result = g_pClientHook->oFireEvent(_ecx, event, bDontBroadcast);
 
@@ -1321,8 +1346,9 @@ bool __fastcall CClientHook::Hooked_FireEvent(IGameEventManager2* _ecx, LPVOID _
 void __fastcall CClientHook::Hooked_DrawModelExecute(IVModelRender* _ecx, LPVOID _edx,
 	const DrawModelState_t& state, const ModelRenderInfo_t& pInfo, matrix3x4_t* pCustomBoneToWorld)
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnDrawModel(const_cast<DrawModelState_t&>(state), const_cast<ModelRenderInfo_t&>(pInfo), pCustomBoneToWorld);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnDrawModel(const_cast<DrawModelState_t&>(state), const_cast<ModelRenderInfo_t&>(pInfo), pCustomBoneToWorld);
 	
 #ifdef _DEBUG
 	static bool hasFirstEnter = true;
@@ -1351,11 +1377,12 @@ void __fastcall CClientHook::Hooked_EmitSound(IEngineSound* _ecx, LPVOID _edx, I
 	if (pDirection != nullptr)
 		copyDirection = *pDirection;
 
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundlevel, iFlags, iPitch,
-			copyOrigin, copyDirection, bUpdatePositions, soundtime))
-			blockSound = true;
+		if (inst)
+			if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundlevel, iFlags, iPitch,
+				copyOrigin, copyDirection, bUpdatePositions, soundtime))
+				blockSound = true;
 	}
 	
 #ifdef _DEBUG
@@ -1383,10 +1410,11 @@ bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, I
 		g_pInterface->NetChannel = _ecx;
 	
 	bool blockNetMsg = false;
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnSendNetMsg(msg, bForceReliable, bVoice))
-			blockNetMsg = false;
+		if (inst)
+			if (!inst->OnSendNetMsg(msg, bForceReliable, bVoice))
+				blockNetMsg = false;
 	}
 
 #ifdef _DEBUG
@@ -1407,8 +1435,9 @@ bool __fastcall CClientHook::Hooked_SendNetMsg(INetChannel* _ecx, LPVOID _edx, I
 
 void __fastcall CClientHook::Hooked_OverrideView(IClientMode* _ecx, LPVOID, CViewSetup* pSetup)
 {
-	for (const auto& inst : g_pClientHook->_GameHook)
-		inst->OnOverrideView(pSetup);
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnOverrideView(pSetup);
 	
 	return g_pClientHook->oOverrideView(_ecx, pSetup);
 }
@@ -1417,10 +1446,11 @@ float __fastcall CClientHook::Hooked_GetViewModelFOV(IClientMode* _ecx, LPVOID)
 {
 	bool replace = false;
 	float fov = g_pClientHook->oGetViewModelFOV(_ecx);
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (inst->OnGetViewModelFOV(fov))
-			replace = true;
+		if (inst)
+			if (inst->OnGetViewModelFOV(fov))
+				replace = true;
 	}
 	
 	if (replace)
@@ -1488,11 +1518,12 @@ void __fastcall CClientHook::Hooked_EmitSoundInternal(IEngineSound* _ecx, LPVOID
 	if (pDirection != nullptr)
 		copyDirection = *pDirection;
 
-	for (const auto& inst : g_pClientHook->_GameHook)
+	for (auto inst : g_pClientHook->_GameHook)
 	{
-		if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundLevel, iFlags, iPitch,
-			copyOrigin, copyDirection, bUpdatePositions, soundtime))
-			blockSound = true;
+		if (inst)
+			if (!inst->OnEmitSound(copySample, iEntIndex, iChannel, flVolume, iSoundLevel, iFlags, iPitch,
+				copyOrigin, copyDirection, bUpdatePositions, soundtime))
+				blockSound = true;
 	}
 
 #ifdef _DEBUG
