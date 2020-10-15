@@ -104,14 +104,21 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 
 	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 	{
-		m_vecPunch = local->GetPunch();
+		//Vector& ViewPunch = local->GetPunch();
+		Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+		Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+
+		// m_vecPunchAngle or m_vecPunchAngleVel
+		m_vecPunch = m_vecPunchAngle + m_vecPunchAngleVel;
 
 		if (m_bNoVisRecoil)
 		{
-			local->GetPunch().x = 0.0f;
-			local->GetPunch().y = 0.0f;
-			// local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle")) = Vector(0.0f, 0.0f, 0.0f);
-			// local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel")) = Vector(0.0f, 0.0f, 0.0f);
+			//ViewPunch.x = 0.0f;
+			//ViewPunch.y = 0.0f;
+			m_vecPunchAngle.x = 0.0f;
+			m_vecPunchAngle.y = 0.0f;
+			m_vecPunchAngleVel.x = 0.0f;
+			m_vecPunchAngleVel.y = 0.0f;
 		}
 	}
 
@@ -232,6 +239,11 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 		static_cast<int>(screen.x + 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
 	g_pDrawing->DrawLine(static_cast<int>(screen.x + 10), static_cast<int>(screen.y - 10),
 		static_cast<int>(screen.x - 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
+
+	Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+	g_pDrawing->DrawText(screen.x / 2, screen.y / 3, CDrawing::RED, true, XorStr("m_vecPunchAngle = %.2f, %.2f, %.2f"), m_vecPunchAngle.x, m_vecPunchAngle.y, m_vecPunchAngle.z);
+	g_pDrawing->DrawText(screen.x / 2, screen.y / 3 + 16, CDrawing::RED, true, XorStr("m_vecPunchAngleVel = %.2f, %.2f, %.2f"), m_vecPunchAngleVel.x, m_vecPunchAngleVel.y, m_vecPunchAngleVel.z);
 }
 
 bool CViewManager::ApplySilentAngles(const QAngle& viewAngles, int ticks)
@@ -324,9 +336,16 @@ void CViewManager::RemoveRecoil(CUserCmd * cmd)
 	if (player == nullptr || !player->IsAlive())
 		return;
 
+	/*
 	Vector punch = player->GetPunch();
 	cmd->viewangles.x -= punch.x;
 	cmd->viewangles.y -= punch.y;
+	*/
+
+	Vector& m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	// Vector& m_vecPunchAngleVel = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+	cmd->viewangles.x -= m_vecPunchAngle.x;
+	cmd->viewangles.y -= m_vecPunchAngle.y;
 }
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)
