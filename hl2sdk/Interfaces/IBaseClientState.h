@@ -283,7 +283,10 @@ public:
 class CClientState : public IServerMessageHandler
 {
 public:
-
+	LPVOID __vtbl;
+	BYTE __pad[0x4A3C];
+	int lastoutgoingcommand;	// Sequence number of last outgoing command
+	int chokedcommands;			// number of choked commands
 };
 
 #define DECLARE_BASE_MESSAGE(msgtype)                \

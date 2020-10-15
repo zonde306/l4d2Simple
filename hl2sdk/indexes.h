@@ -152,8 +152,8 @@ namespace indexes
 	const int MoveType = 0x144; // 在 C_BaseEntity::SetMoveType 里，this 后的第一个参数
 
 	// Entity Offset
-	const int GetSpread = 0xD0C;
-	const int GetPunch = 0x1230;
+	const int GetSpread = 0xD0C;	// 搜索 (%.1f) spread %.1f ( avg %.1f ) ( max %.1f )，最末尾那个 this 赋值
+	const int GetPunch = 0x1230;	// 在 C_BasePlayer::ViewPunch 里，float 最小的那个偏移量
 	const int GetCrosshairsId = 0x19D8;
 	const int GetLastCrosshairsId = 0x19E8;
 	const int GetWeaponId = 0x958;
