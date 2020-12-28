@@ -16,10 +16,12 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
+	/*
 	for (int i = 0; i < 65; ++i)
 		m_StartAttackTime[i] = std::chrono::system_clock::from_time_t(0);
 
 	m_WaitTime = std::chrono::system_clock::from_time_t(0);
+	*/
 }
 
 CQuickTriggerEvent::~CQuickTriggerEvent()
@@ -44,7 +46,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	m_pSmokerAttacker = nullptr;
 	*/
 
-	CBasePlayer* player = nullptr;
+	CBasePlayer* player = m_pLastTarget;
 	CBasePlayer* dominater = local->GetCurrentAttacker();
 
 	// 被舌头拉但还有反抗时间时也是能获取到攻击者的
@@ -600,7 +602,7 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	*/
 	
 	if(zClass == ZC_SMOKER)
-		aimAngles.x = 12.99f;
+		aimAngles.x += 10.0f;
 	else if(zClass == ZC_CHARGER)
 		aimAngles.x = 9.15f;
 
@@ -613,6 +615,7 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 	if(weapon->CanFire())
 	{
 		// m_iMeleeState = MAS_PreAttack;
+		m_pLastTarget = enemy;
 		return;
 	}
 	
@@ -635,7 +638,6 @@ void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
 		if (m_bLogInfo && m_iMeleeState == MAS_PostAttack)
 			g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("start swing"));
 	}
-	
 	if(m_iMeleeState == MAS_PostAttack)
 	*/
 
@@ -695,6 +697,8 @@ QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy,
 bool CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick, bool melee)
 {
 	bool unslienced = (melee && m_bMeleeUnslienced);
+	m_pLastTarget = nullptr;
+
 	if (m_bPerfectSilent && !unslienced)
 	{
 		if(tick)

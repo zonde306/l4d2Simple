@@ -89,10 +89,13 @@ private:
 	bool m_bCanShoveJockey = true;
 	bool m_bCanShoveSmoker = true;
 
+	/*
 	std::chrono::system_clock::time_point m_StartAttackTime[65];
 	CBasePlayer* m_pSmokerAttacker = nullptr;
 	std::chrono::system_clock::time_point m_WaitTime;
+	*/
 	
+	/*
 	enum MeleeAttackState_t
 	{
 		MAS_None,
@@ -101,6 +104,9 @@ private:
 		MAS_PostAttack,	// 造成伤害
 	};
 	MeleeAttackState_t m_iMeleeState = MAS_None;
+	*/
+
+	CBasePlayer* m_pLastTarget = nullptr;
 };
 
 extern CQuickTriggerEvent* g_pQTE;

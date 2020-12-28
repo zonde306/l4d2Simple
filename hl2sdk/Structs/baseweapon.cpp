@@ -32,20 +32,21 @@
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
 
-static std::unordered_map<std::string, float> g_MeleeStartTime {
-	{ XorStr("bat"), 0.1f },
-	{ XorStr("cricket_bat"), 0.1f },
-	{ XorStr("crowbar"), 0.15f },
-	{ XorStr("electric_guitar"), 0.1f },
-	{ XorStr("fireaxe"), 0.1f },
-	{ XorStr("frying_pan"), 0.15f },
-	{ XorStr("golfclub"), 0.1f },
-	{ XorStr("katana"), 0.1f },
-	{ XorStr("knife_t"), 0.1f },
-	{ XorStr("machete"), 0.1f },
-	{ XorStr("pitchfork"), 0.11f },
-	{ XorStr("shovel"), 0.1f },
-	{ XorStr("tonfa"), 0.16f },
+static std::unordered_map<std::string, float> g_MeleeStartTime
+{
+	{ XorStr("bat"), 0.1f },				// 棒球棒
+	{ XorStr("cricket_bat"), 0.1f },		// 板球拍(船桨?)
+	{ XorStr("crowbar"), 0.15f },			// 撬棍
+	{ XorStr("electric_guitar"), 0.1f },	// 吉他
+	{ XorStr("fireaxe"), 0.1f },			// 消防斧
+	{ XorStr("frying_pan"), 0.15f },		// 平底锅
+	{ XorStr("golfclub"), 0.1f },			// 高尔夫球棍
+	{ XorStr("katana"), 0.1f },				// 武士刀
+	{ XorStr("knife_t"), 0.1f },			// 小刀
+	{ XorStr("machete"), 0.1f },			// 开山刀
+	{ XorStr("pitchfork"), 0.11f },			// 叉子
+	{ XorStr("shovel"), 0.1f },				// 铲子
+	{ XorStr("tonfa"), 0.16f },				// 警棍
 };
 
 float& CBaseWeapon::GetSpread()
