@@ -301,7 +301,17 @@ ICollideable* CBaseEntity::GetCollideable()
 
 int CBaseEntity::GetSolidFlags()
 {
-	ICollideable* collideable = GetCollideable();
+	ICollideable* collideable = nullptr;
+
+	try
+	{
+		collideable = GetCollideable();
+	}
+	catch (...)
+	{
+		return 0;
+	}
+
 	if (collideable)
 		return collideable->GetSolidFlags();
 
