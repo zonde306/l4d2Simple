@@ -24,7 +24,7 @@ DWORD proc::FindProccess(const std::string& procName)
 DWORD proc::InjectDLL(const std::string& fileName, DWORD pid)
 {
 	HANDLE proccess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-	if (proccess == INVALID_HANDLE_VALUE)
+	if (proccess == INVALID_HANDLE_VALUE || proccess == nullptr)
 		throw std::exception(GetErrorMessage(GetLastError(), u8"can't OpenProcess").c_str());
 
 	DWORD bufferSize = fileName.size() + 1;
@@ -471,4 +471,24 @@ std::pair<LPVOID, DWORD> proc::GetMemLoadLibrary2ShellCode()
 	}
 
 	return { Memx, size };
+}
+
+bool proc::EnableDebugPrivilege()
+{
+	HANDLE token = nullptr;
+	if(!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token) || token == INVALID_HANDLE_VALUE || token == nullptr)
+		throw std::exception(GetErrorMessage(GetLastError(), u8"can't OpenProcessToken").c_str());
+	
+	TOKEN_PRIVILEGES tp = { 0 };
+	tp.PrivilegeCount = 1;
+
+	if(!LookupPrivilegeValueA(nullptr, SE_DEBUG_NAME, &tp.Privileges[0].Luid))
+		throw std::exception(GetErrorMessage(GetLastError(), u8"can't LookupPrivilegeValue").c_str());
+
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	if(!AdjustTokenPrivileges(token, false, &tp, sizeof(tp), nullptr, nullptr))
+		throw std::exception(GetErrorMessage(GetLastError(), u8"can't AdjustTokenPrivileges").c_str());
+
+	CloseHandle(token);
+	return true;
 }
