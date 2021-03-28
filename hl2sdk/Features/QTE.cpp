@@ -61,7 +61,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	int weaponId = weapon->GetWeaponID();
 	bool canFire = (weapon->IsFireGun() && weapon->CanFire());
 	bool hasMelee = (weaponId == Weapon_Melee);
-	bool canShove = weapon->CanShove();
+	bool canShove = local->CanShove();
 	Vector myOrigin = local->GetEyePosition();
 
 	// 这里好像没有效果。。。
@@ -127,7 +127,13 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	{
 		case ZC_SMOKER:
 		{
-			if (hasMelee && m_bCanMeleeSmoker)
+			if (canShove && m_bCanShoveSmoker)
+			{
+				HandleShoveSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (hasMelee && m_bCanMeleeSmoker)
 			{
 				// 近战有延迟的，所以需要提前
 				HandleMeleeSelfClear(local, player, cmd, distance, weapon);
@@ -140,17 +146,17 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
-			else if (canShove && m_bCanShoveSmoker)
+			break;
+		}
+		case ZC_HUNTER:
+		{
+			if (canShove && m_bCanShoveHunter)
 			{
 				HandleShoveSelfClear(local, player, cmd, distance);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
-			break;
-		}
-		case ZC_HUNTER:
-		{
-			if (hasMelee && m_bCanMeleeHunter)
+			else if (hasMelee && m_bCanMeleeHunter)
 			{
 				// 近战有延迟的，所以需要提前
 				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale, weapon);
@@ -163,17 +169,18 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
-			else if (canShove && m_bCanShoveHunter)
-			{
-				HandleShoveSelfClear(local, player, cmd, distance);
-				if (m_bLogInfo)
-					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
-			}
 			break;
 		}
 		case ZC_JOCKEY:
 		{
-			if (hasMelee && m_bCanMeleeJockey)
+			if (canShove && m_bCanShoveJockey)
+			{
+				// 推猴子必须提前
+				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale : distance));
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (hasMelee && m_bCanMeleeJockey)
 			{
 				// 近战有延迟的，所以需要提前
 				HandleMeleeSelfClear(local, player, cmd, distance / m_fJockeyScale / m_fMeleeScale, weapon);
@@ -185,13 +192,6 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 				HandleShotSelfClear(local, player, cmd, distance);
 				if (m_bLogInfo)
 					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
-			}
-			else if (canShove && m_bCanShoveJockey)
-			{
-				// 推猴子必须提前
-				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale : distance));
-				if (m_bLogInfo)
-					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
 			break;
 		}

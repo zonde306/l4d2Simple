@@ -83,7 +83,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack && IsShoveReady(player, weapon))
 	{
-		if (!isTank && weapon->GetSecondryAttackDelay() <= 0.0f)
+		if (!isTank && player->CanShove())
 		{
 			cmd->buttons |= IN_ATTACK2;
 			return;

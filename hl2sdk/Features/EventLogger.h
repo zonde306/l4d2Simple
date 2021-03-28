@@ -21,7 +21,7 @@ protected:
 	void OnPlayerTakeDamage(int victim, int attacker, int damage);
 
 private:
-	bool m_bActive = true;
+	bool m_bActive = false;
 	bool m_bLogSpawn = true;
 	bool m_bLogDeath = true;
 	bool m_bLogTeam = true;

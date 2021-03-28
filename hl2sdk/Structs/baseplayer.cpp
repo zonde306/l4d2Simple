@@ -584,11 +584,17 @@ std::string CBasePlayer::GetName()
 
 bool CBasePlayer::CanShove()
 {
+	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_flNextShoveTime"));
+	Assert_NetProp(offset);
+	
 	CBaseWeapon* weapon = GetActiveWeapon();
 	if (weapon == nullptr)
 		return false;
 
-	return weapon->CanShove();
+	if (GetTeam() == 3)
+		return weapon->CanShove();
+
+	return DECL_NETPROP_GET(float) <= g_pClientPrediction->GetServerTime();
 }
 
 bool CBasePlayer::CanAttack()
