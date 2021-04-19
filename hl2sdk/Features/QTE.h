@@ -47,7 +47,7 @@ private:
 	bool m_bCheckFov = true;
 	int m_iShoveTicks = 6;
 	bool m_bMeleeAsShove = true;
-	bool m_bMeleeUnslienced = true;
+	bool m_bMeleeUnslienced = false;
 	float m_fMeleeUnsliencedFov = 90.0f;
 
 	bool m_bSmoker = true;

@@ -33,7 +33,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	m_pEventListener->m_bIsGameTick = false;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || !local->IsAlive())
+	if (local == nullptr || !local->IsAlive() || local->IsHangingFromLedge() ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
