@@ -4,13 +4,15 @@
 #include "../hook.h"
 #include "../indexes.h"
 #include "../../l4d2Simple2/utils.h"
+#include <unordered_map>
 
 #define SIG_WEAPON_ID_TO_ALIAS		XorStr("55 8B EC 8B 45 08 83 F8 37")
 #define SIG_LOOKUP_WEAPON_SLOT		XorStr("55 8B EC 8B 45 08 83 EC 08 85 C0")
-#define SIG_GET_INVALID_SLOT		XorStr("B8 ? ? ? ? C3")
+#define SIG_GET_INVALID_SLOT		XorStr("E8 ? ? ? ? 66 3B F0")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_GET_WEAPON_DATA			XorStr("0F B7 ? ? ? ? ? 50 E8 ? ? ? ? 83 C4 ? C3")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
+#define SIG_VIEW_PUNCH				XorStr("55 8B EC A1 ? ? ? ? 83 EC 0C 83 78 30 00 0F 85")
 
 #define IsSubMachinegun(_id)		(_id == WeaponId_SubMachinegun || _id == WeaponId_Silenced || _id == WeaponId_MP5)
 #define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
@@ -30,8 +32,26 @@
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
 
+static std::unordered_map<std::string, float> g_MeleeStartTime
+{
+	{ XorStr("bat"), 0.1f },				// 棒球棒
+	{ XorStr("cricket_bat"), 0.1f },		// 板球拍(船桨?)
+	{ XorStr("crowbar"), 0.15f },			// 撬棍
+	{ XorStr("electric_guitar"), 0.1f },	// 吉他
+	{ XorStr("fireaxe"), 0.1f },			// 消防斧
+	{ XorStr("frying_pan"), 0.15f },		// 平底锅
+	{ XorStr("golfclub"), 0.1f },			// 高尔夫球棍
+	{ XorStr("katana"), 0.1f },				// 武士刀
+	{ XorStr("knife_t"), 0.1f },			// 小刀
+	{ XorStr("machete"), 0.1f },			// 开山刀
+	{ XorStr("pitchfork"), 0.11f },			// 叉子
+	{ XorStr("shovel"), 0.1f },				// 铲子
+	{ XorStr("tonfa"), 0.16f },				// 警棍
+};
+
 float& CBaseWeapon::GetSpread()
 {
+	// 在 UpdateSpread 里面
 	return *reinterpret_cast<float*>(reinterpret_cast<DWORD>(this) + indexes::GetSpread);
 }
 
@@ -48,7 +68,7 @@ FileWeaponInfo_t * CBaseWeapon::GetWeaponInfo()
 	if (LookupWeaponInfoSlot == nullptr)
 	{
 		LookupWeaponInfoSlot = reinterpret_cast<FnGetSlot>(Utils::FindPattern(XorStr("client.dll"), SIG_LOOKUP_WEAPON_SLOT));
-		GetInvalidWeaponInfoHandle = reinterpret_cast<FnGetInvalidSlot>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_INVALID_SLOT));
+		GetInvalidWeaponInfoHandle = reinterpret_cast<FnGetInvalidSlot>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_GET_INVALID_SLOT)));
 		GetFileWeaponInfoFromHandle = reinterpret_cast<FnGetData>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_WEAPON_INFO));
 	}
 
@@ -71,10 +91,7 @@ FileWeaponInfo_t * CBaseWeapon::GetWeaponData()
 const char * CBaseWeapon::GetWeaponName()
 {
 	using Fn = const char*(__cdecl*)(int);
-	static Fn WeaponIdToAlias = nullptr;
-
-	if (WeaponIdToAlias == nullptr)
-		WeaponIdToAlias = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_WEAPON_ID_TO_ALIAS));
+	static Fn WeaponIdToAlias = reinterpret_cast<Fn>(Utils::FindPattern(XorStr("client.dll"), SIG_WEAPON_ID_TO_ALIAS));
 
 	return WeaponIdToAlias(GetWeaponID());
 }
@@ -181,16 +198,26 @@ float CBaseWeapon::GetSecondryAttackDelay()
 
 bool CBaseWeapon::CanFire()
 {
+	int weaponId = GetWeaponID();
+	if(weaponId == Weapon_Melee)
+		return (GetPrimaryAttackDelay() <= 0.0f);
+	
 	// 不需要弹药的武器弹夹永远为 -1
 	// 部分武器拥有弹药设定，但是它并不是枪
 	if (GetClip() == 0)
 		return false;
+	
+	bool reloading = IsReloading();
 
-	int weaponId = GetWeaponID();
+	if (reloading)
+	{
+		// 霰弹枪在填装的时候如果弹夹内有子弹也可以开枪的
+		if (IsShotgun(weaponId))
+			return true;
 
-	// 霰弹枪在填装的时候如果弹夹内有子弹也可以开枪的
-	if (IsShotgun(weaponId) && IsReloading())
-		return true;
+		// 非霰弹枪即使有子弹也打不了
+		return false;
+	}
 
 	return (GetPrimaryAttackDelay() <= 0.0f);
 }
@@ -202,4 +229,29 @@ bool CBaseWeapon::IsFireGun()
 
 	int weaponId = GetWeaponID();
 	return IsGunWeapon(weaponId);
+}
+
+bool CBaseWeapon::CanShove()
+{
+	return (GetSecondryAttackDelay() <= 0.0f);
+}
+
+float CBaseWeapon::GetMeleeDelay()
+{
+	const model_t* model = GetModel();
+	if(model == nullptr)
+		return 0.0f;
+	
+	// if(strstr(model->name, XorStr("models/weapons/melee/[wvp]_")) == model->name)
+	if (model->name[0] == 'm' && model->name[7] == 'w' && model->name[15] == 'm' &&
+		(model->name[21] == 'w' || model->name[21] == 'v' || model->name[21] == 'p') &&
+		model->name[22] == '_' && strrchr(model->name, '.') != nullptr)
+	{
+		std::string mdl = model->name;
+		auto it = g_MeleeStartTime.find(mdl.substr(23, mdl.rfind('.') - 23));
+		if(it != g_MeleeStartTime.end())
+			return it->second;
+	}
+	
+	return 0.0f;
 }

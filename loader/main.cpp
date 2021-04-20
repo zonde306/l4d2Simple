@@ -4,6 +4,16 @@
 
 int main(int argc, char** argv)
 {
+	try
+	{
+		proc::EnableDebugPrivilege();
+	}
+	catch (const std::exception& error)
+	{
+		std::cout << error.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+
 	std::string procName = u8"left4dead2.exe";
 	if (argc >= 2)
 		procName = argv[1];

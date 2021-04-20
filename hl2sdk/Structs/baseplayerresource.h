@@ -30,5 +30,15 @@ private:
 	LPVOID GetDataPointer();
 };
 
+class CBaseGameRulesProxy : public CBaseEntity
+{
+public:
+	static CBaseGameRulesProxy* Get();
+
+public:
+
+};
+
 // 不要直接使用这个，用 CBasePlayerResource::Get() 来获取指针
 extern CBasePlayerResource* g_pPlayerResource;
+extern CBaseGameRulesProxy* g_pGameRulesProxy;

@@ -9,12 +9,19 @@ CQuickTriggerEvent* g_pQTE = nullptr;
 #define HITBOX_WITCH_CHEST			8
 #define ANIM_CHARGER_CHARGING		5
 #define ANIM_SMOKER_PULLING			30
+#define ANIM_SMOKER_SHOOTING		27
 #define ANIM_HUNTER_LUNGING			67
 #define ANIM_JOCKEY_LEAPING			10
 #define ANIM_JOCKEY_RIDEING			8
 
 CQuickTriggerEvent::CQuickTriggerEvent() : CBaseFeatures::CBaseFeatures()
 {
+	/*
+	for (int i = 0; i < 65; ++i)
+		m_StartAttackTime[i] = std::chrono::system_clock::from_time_t(0);
+
+	m_WaitTime = std::chrono::system_clock::from_time_t(0);
+	*/
 }
 
 CQuickTriggerEvent::~CQuickTriggerEvent()
@@ -28,7 +35,22 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive())
+	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive() ||
+		local->IsIncapacitated() || local->IsHangingFromLedge() ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
+		return;
+
+	/*
+	CBasePlayer* player = m_pSmokerAttacker;
+	m_pSmokerAttacker = nullptr;
+	*/
+
+	CBasePlayer* player = m_pLastTarget;
+	CBasePlayer* dominater = local->GetCurrentAttacker();
+
+	// 被舌头拉但还有反抗时间时也是能获取到攻击者的
+	if (dominater != nullptr && dominater->IsAlive() && dominater->GetZombieType() != ZC_SMOKER/* && dominater != player*/)
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
@@ -36,207 +58,197 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		return;
 
 	float distance = 1000.0f;
-	CBasePlayer* player = nullptr;
+	int weaponId = weapon->GetWeaponID();
 	bool canFire = (weapon->IsFireGun() && weapon->CanFire());
-	bool hasMelee = (weapon->GetWeaponID() == Weapon_Melee);
+	bool hasMelee = (weaponId == Weapon_Melee);
+	bool canShove = local->CanShove();
+	Vector myOrigin = local->GetEyePosition();
+
+	// 这里好像没有效果。。。
+	/*
 	CBaseHandle handle = local->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_tongueOwner"));
 	if (handle.IsValid() && !local->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isProneTongueDrag")))
 	{
 		player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
 		if (player != nullptr)
 		{
-			distance = local->GetAbsOrigin().DistTo(player->GetAbsOrigin());
+			distance = myOrigin.DistTo(player->GetAbsOrigin());
 			
 			if (hasMelee)
-				HandleMeleeSelfClear(local, player, cmd, distance);
+				HandleMeleeSelfClear(local, player, cmd, distance, weapon);
 			else if (canFire)
 				HandleShotSelfClear(local, player, cmd, distance);
 			else
 				HandleShoveSelfClear(local, player, cmd, distance);
 
+			// 优先处理被拉自救，其他的先不管了
 			return;
 		}
 	}
+	*/
 
-	Vector myOrigin = local->GetEyePosition(), aimOrigin;
-	if (m_bVelExt)
-		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt);
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
 
-	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-	for (int i = 1; i <= maxEntity; ++i)
+	if (player == nullptr)
+		player = FindTarget(local, viewAngles);
+	if (player == nullptr)
+		return;
+
+	// 计算距离时进行近战预测，实际攻击时不预测
+	Vector targetOrigin = GetTargetAimPosition(player, false);
+	if (!targetOrigin.IsValid())
+		return;
+
+	// 近战的攻击判断很迷，很难击中目标。这里改成推，成功率更高
+	float fov = math::GetAnglesFieldOfView(viewAngles, math::CalculateAim(myOrigin, targetOrigin));
+	if (hasMelee && m_bMeleeUnslienced && fov > m_fMeleeUnsliencedFov)
+		hasMelee = false;
+
+	int tickToPred = 1;
+	if (m_bSwingExt)
 	{
-		player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (player == nullptr || player == local || !player->IsAlive() || player->GetTeam() != 3 || player->IsGhost())
-			continue;
+		if (hasMelee && weapon->CanFire())
+			tickToPred = TIME_TO_TICKS(weapon->GetMeleeDelay());
+		if (tickToPred < 1)
+			tickToPred = 1;
+	}
 
-		aimOrigin = GetTargetAimPosition(player);
-		if (!aimOrigin.IsValid())
-			continue;
+	if (m_bVelExt)
+		myOrigin = math::VelocityExtrapolate(myOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
 
-		if (m_bVelExt)
-			aimOrigin = math::VelocityExtrapolate(aimOrigin, player->GetVelocity(), m_bLagExt);
+	if (m_bVelExt)
+		targetOrigin = math::VelocityExtrapolate(targetOrigin, local->GetVelocity(), m_bLagExt, tickToPred);
 
-		ZombieClass_t classId = player->GetZombieType();
-		distance = myOrigin.DistTo(aimOrigin);
+	distance = myOrigin.DistTo(targetOrigin);
+	ZombieClass_t classId = player->GetZombieType();
 
-		/*
-		if (classId != ZC_SMOKER && classId != ZC_HUNTER && classId != ZC_JOCKEY && classId != ZC_CHARGER)
-			continue;
-		*/
-
-		switch (classId)
+	switch (classId)
+	{
+		case ZC_SMOKER:
 		{
-			case ZC_SMOKER:
-			{
-				if (!m_bSmoker)
-					continue;
-				
-				static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
-				if (distance > cvTongueRange->GetFloat())
-					continue;
-
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_SMOKER_PULLING)
-					continue;
-
-				break;
-			}
-			case ZC_HUNTER:
-			{
-				if (!m_bHunter)
-					continue;
-				
-				if (!player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) &&
-					player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_HUNTER_LUNGING)
-					continue;
-
-				if (player->GetFlags() & FL_ONGROUND)
-					continue;
-				
-				if (distance > m_fHunterDistance)
-					continue;
-
-				break;
-			}
-			case ZC_JOCKEY:
-			{
-				if (!m_bJockey)
-					continue;
-				
-				if (player->GetFlags() & FL_ONGROUND)
-					continue;
-				
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) == ANIM_JOCKEY_RIDEING)
-					continue;
-
-				/*
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_JOCKEY_LEAPING)
-					continue;
-				*/
-
-				if (distance > m_fJockeyDistance)
-					continue;
-
-				break;
-			}
-			case ZC_BOOMER:
-			{
-				if (!m_bBoomer)
-					continue;
-				
-				static ConVar* cvExplodeRange = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
-				if (distance > cvExplodeRange->GetFloat())
-					continue;
-
-				break;
-			}
-			case ZC_CHARGER:
-			{
-				if (!m_bCharger)
-					continue;
-				
-				/*
-				// 这个可能不正确
-				handle = player->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
-				if (handle.IsValid())
-				{
-					CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
-					if (ability != nullptr && !ability->GetNetProp<BYTE>(XorStr("DT_Charge"), XorStr("m_isCharging")))
-						continue;
-				}
-				*/
-
-				if (player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence")) != ANIM_CHARGER_CHARGING)
-					continue;
-
-				if (distance > m_fChargerDistance)
-					continue;
-
-				break;
-			}
-			case ZC_WITCH:
-			{
-				if (!m_bWitch)
-					continue;
-				
-				if (player->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
-					continue;
-
-				if (distance > m_fWitchDistance)
-					continue;
-
-				break;
-			}
-			case ZC_ROCK:
-			{
-				if (!m_bRock)
-					continue;
-				
-				if (distance > m_fRockDistance)
-					continue;
-
-				break;
-			}
-		}
-
-		switch (classId)
-		{
-			case ZC_SMOKER:
-			case ZC_HUNTER:
-			case ZC_JOCKEY:
-			{
-				if (hasMelee)
-					HandleMeleeSelfClear(local, player, cmd, distance);
-				else if (canFire)
-					HandleShotSelfClear(local, player, cmd, distance);
-				else
-					HandleShoveSelfClear(local, player, cmd, distance);
-
-				break;
-			}
-			case ZC_CHARGER:
-			case ZC_ROCK:
-			{
-				if (hasMelee)
-					HandleMeleeSelfClear(local, player, cmd, distance);
-				else if (canFire)
-					HandleShotSelfClear(local, player, cmd, distance);
-				
-				break;
-			}
-			case ZC_WITCH:
-			{
-				int weaponId = weapon->GetWeaponID();
-				if (canFire && IsShotgun(weaponId))
-					HandleWitchCrown(local, player, cmd, distance);
-
-				break;
-			}
-			case ZC_BOOMER:
-			case ZC_SPITTER:
+			if (canShove && m_bCanShoveSmoker)
 			{
 				HandleShoveSelfClear(local, player, cmd, distance);
-				break;
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
 			}
+			else if (hasMelee && m_bCanMeleeSmoker)
+			{
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance, weapon);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (canFire && m_bCanShotSmoker)
+			{
+				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			break;
+		}
+		case ZC_HUNTER:
+		{
+			if (canShove && m_bCanShoveHunter)
+			{
+				HandleShoveSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (hasMelee && m_bCanMeleeHunter)
+			{
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale, weapon);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (canFire && m_bCanShotHunter)
+			{
+				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			break;
+		}
+		case ZC_JOCKEY:
+		{
+			if (canShove && m_bCanShoveJockey)
+			{
+				// 推猴子必须提前
+				HandleShoveSelfClear(local, player, cmd, (classId == ZC_JOCKEY ? distance / m_fJockeyScale : distance));
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (hasMelee && m_bCanMeleeJockey)
+			{
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fJockeyScale / m_fMeleeScale, weapon);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (canFire && m_bCanShotJockey)
+			{
+				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			break;
+		}
+		case ZC_CHARGER:
+		{
+			if (hasMelee && m_bCanMeleeCharger)
+			{
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale, weapon);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			else if (canFire && m_bCanShotCharger)
+			{
+				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot %s, dist: %.0f"), player->GetCharacterName().c_str(), distance);
+			}
+			break;
+		}
+		case ZC_ROCK:
+		{
+			if (hasMelee && m_bCanMeleeRock)
+			{
+				// 近战有延迟的，所以需要提前
+				HandleMeleeSelfClear(local, player, cmd, distance / m_fMeleeScale, weapon);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("melee attack charger/rock(%d), dist: %.0f"), classId, distance);
+			}
+			else if (canFire && m_bCanShotRock)
+			{
+				HandleShotSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot charger/rock(%d), dist: %.0f"), classId, distance);
+			}
+			break;
+		}
+		case ZC_WITCH:
+		{
+			if (canFire && IsShotgun(weaponId))
+			{
+				HandleWitchCrown(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("gun shot witch, dist: %.0f"), distance);
+			}
+			break;
+		}
+		case ZC_BOOMER:
+		case ZC_SPITTER:
+		{
+			if (canShove)
+			{
+				HandleShoveSelfClear(local, player, cmd, distance);
+				if (m_bLogInfo)
+					g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("shove boomer/spitter(%d), dist: %.0f"), classId, distance);
+			}
+			break;
 		}
 	}
 }
@@ -254,6 +266,9 @@ void CQuickTriggerEvent::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bLagExt);
 	IMGUI_TIPS("延迟预测");
+	
+	ImGui::Checkbox(XorStr("SwingPrediction"), &m_bSwingExt);
+	IMGUI_TIPS("近战前摇预测");
 
 	ImGui::Checkbox(XorStr("Silent Aim"), &m_bSilent);
 	IMGUI_TIPS("自己看不到自动瞄准，建议开启");
@@ -263,49 +278,124 @@ void CQuickTriggerEvent::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Visible Only"), &m_bOnlyVisible);
 	IMGUI_TIPS("可见检查");
+	
+	ImGui::Checkbox(XorStr("Target Check"), &m_bCheckFov);
+	IMGUI_TIPS("目标检查");
+	
+	ImGui::Checkbox(XorStr("Melee TickMode"), &m_bMeleeAsShove);
+	IMGUI_TIPS("在 Silent 模式下必须开启");
+	
+	ImGui::Checkbox(XorStr("Show Info"), &m_bLogInfo);
+	IMGUI_TIPS("显示信息");
 
 	ImGui::SliderFloat(XorStr("Shove Range Extra"), &m_fShoveDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("推预测范围");
 
 	ImGui::SliderFloat(XorStr("Melee Range Extra"), &m_fMeleeDstExtra, 1.0f, 300.0f, ("%.1f"));
 	IMGUI_TIPS("近战预测范围");
+	
+	ImGui::SliderInt(XorStr("Shove Ticks"), &m_iShoveTicks, 1, 15);
+	IMGUI_TIPS("推 tick 数量");
+
+	ImGui::Checkbox(XorStr("Melee Unslienced"), &m_bMeleeUnslienced);
+	IMGUI_TIPS("近战不使用 Slient 模式(解决刀不中的问题)");
+
+	ImGui::SliderFloat(XorStr("Melee Unslienced FOV"), &m_fMeleeUnsliencedFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("近战不使用 Slient 模式视野");
 
 	ImGui::Separator();
-	ImGui::Checkbox(XorStr("Smoker SelfClear"), &m_bSmoker);
-	IMGUI_TIPS("被拉自救");
 
-	ImGui::Checkbox(XorStr("Hunter Skeet"), &m_bHunter);
-	IMGUI_TIPS("空爆猎人");
+	ImGui::Checkbox(XorStr("Allow Shot Smoker"), &m_bCanShotSmoker);
+	IMGUI_TIPS("开启射击舌头");
+	
+	ImGui::Checkbox(XorStr("Allow Shot Hunter"), &m_bCanShotHunter);
+	IMGUI_TIPS("开启射击猎人");
+	
+	ImGui::Checkbox(XorStr("Allow Shot Jockey"), &m_bCanShotJockey);
+	IMGUI_TIPS("开启射击猴子");
+	
+	ImGui::Checkbox(XorStr("Allow Shot Charger"), &m_bCanShotCharger);
+	IMGUI_TIPS("开启射击牛");
+	
+	ImGui::Checkbox(XorStr("Allow Shot Rock"), &m_bCanShotRock);
+	IMGUI_TIPS("开启射击坦克石头");
+	
+	ImGui::Checkbox(XorStr("Allow Cut Smoker"), &m_bCanMeleeSmoker);
+	IMGUI_TIPS("开启刀舌头");
+	
+	ImGui::Checkbox(XorStr("Allow Cut Hunter"), &m_bCanMeleeHunter);
+	IMGUI_TIPS("开启刀猎人");
+	
+	ImGui::Checkbox(XorStr("Allow Cut Jockey"), &m_bCanMeleeJockey);
+	IMGUI_TIPS("开启刀猴子");
+	
+	ImGui::Checkbox(XorStr("Allow Cut Charger"), &m_bCanMeleeCharger);
+	IMGUI_TIPS("开启刀牛");
+	
+	ImGui::Checkbox(XorStr("Allow Cut Rock"), &m_bCanMeleeRock);
+	IMGUI_TIPS("开启刀石头");
+	
+	ImGui::Checkbox(XorStr("Allow Shove Hunter"), &m_bCanShoveHunter);
+	IMGUI_TIPS("开启推猎人");
+	
+	ImGui::Checkbox(XorStr("Allow Shove Jockey"), &m_bCanShoveJockey);
+	IMGUI_TIPS("开启推猴子");
+	
+	ImGui::Checkbox(XorStr("Allow Shove Smoker"), &m_bCanShoveSmoker);
+	IMGUI_TIPS("开启推舌头");
 
-	ImGui::SliderFloat(XorStr("HunterSkeet Distance"), &m_fHunterDistance, 1.0f, 500.0f, ("%.1f"));
-	IMGUI_TIPS("空爆猎人范围");
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Handle Smoker"), &m_bSmoker);
+	IMGUI_TIPS("处理舌头");
 
-	ImGui::Checkbox(XorStr("Jockey Skeet"), &m_bJockey);
-	IMGUI_TIPS("推猴子");
+	ImGui::SliderFloat(XorStr("Smoker Distance"), &m_fSmokerDistance, 1.0f, 500.0f, ("%.1f"));
+	IMGUI_TIPS("处理舌头范围");
 
-	ImGui::SliderFloat(XorStr("JockeySkeet Distance"), &m_fJockeyDistance, 1.0f, 500.0f, ("%.1f"));
-	IMGUI_TIPS("推猴范围");
+	ImGui::Checkbox(XorStr("Handle Skeet"), &m_bHunter);
+	IMGUI_TIPS("处理猎人");
 
-	ImGui::Checkbox(XorStr("Charge Level"), &m_bCharger);
-	IMGUI_TIPS("近战秒牛");
+	ImGui::SliderFloat(XorStr("Hunter Distance"), &m_fHunterDistance, 1.0f, 500.0f, ("%.1f"));
+	IMGUI_TIPS("处理猎人范围");
 
-	ImGui::SliderFloat(XorStr("ChargeLevel Distance"), &m_fChargerDistance, 1.0f, 500.0f, ("%.1f"));
-	IMGUI_TIPS("秒牛范围");
+	ImGui::Checkbox(XorStr("Handle Jockey"), &m_bJockey);
+	IMGUI_TIPS("处理猴子");
 
-	ImGui::Checkbox(XorStr("Witch Crown"), &m_bWitch);
-	IMGUI_TIPS("引秒萌妹");
+	ImGui::SliderFloat(XorStr("Jockey Distance"), &m_fJockeyDistance, 1.0f, 500.0f, ("%.1f"));
+	IMGUI_TIPS("处理猴子范围");
 
-	ImGui::SliderFloat(XorStr("WitchCrown Distance"), &m_fWitchDistance, 1.0f, 200.0f, ("%.1f"));
-	IMGUI_TIPS("秒妹范围");
+	ImGui::Checkbox(XorStr("Handle Charger"), &m_bCharger);
+	IMGUI_TIPS("处理牛");
 
-	ImGui::Checkbox(XorStr("BoomerPop"), &m_bBoomer);
+	ImGui::SliderFloat(XorStr("Charger Distance"), &m_fChargerDistance, 1.0f, 500.0f, ("%.1f"));
+	IMGUI_TIPS("处理牛范围");
+
+	ImGui::Checkbox(XorStr("Handle Witch"), &m_bWitch);
+	IMGUI_TIPS("处理萌妹");
+
+	ImGui::SliderFloat(XorStr("Witch Distance"), &m_fWitchDistance, 1.0f, 200.0f, ("%.1f"));
+	IMGUI_TIPS("处理妹范围");
+
+	ImGui::Checkbox(XorStr("Handle Boomer"), &m_bBoomer);
 	IMGUI_TIPS("推胖子");
 
-	ImGui::Checkbox(XorStr("Rock Skeet"), &m_bRock);
-	IMGUI_TIPS("反坦克石头");
+	ImGui::Checkbox(XorStr("Handle Rock"), &m_bRock);
+	IMGUI_TIPS("处理坦克石头");
 
-	ImGui::SliderFloat(XorStr("RockSkeet Distance"), &m_fRockDistance, 1.0f, 500.0f, ("%.1f"));
+	ImGui::SliderFloat(XorStr("Handle Rock Distance"), &m_fRockDistance, 1.0f, 500.0f, ("%.1f"));
 	IMGUI_TIPS("打石头范围");
+
+	ImGui::Separator();
+	ImGui::SliderFloat(XorStr("Hunter Lunge FOV"), &m_fHunterFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("推猎人视野");
+
+	ImGui::SliderFloat(XorStr("Jockey Lunge FOV"), &m_fJockeyFov, 1.0f, 90.0f, ("%.1f"));
+	IMGUI_TIPS("推猴视野");
+
+	ImGui::SliderFloat(XorStr("Jockey Scale"), &m_fJockeyScale, 0.0f, 5.0f, ("%.1f"), 0.1f);
+	IMGUI_TIPS("猴子距离缩放");
+
+	ImGui::SliderFloat(XorStr("Melee Scale"), &m_fMeleeScale, 0.0f, 5.0f, ("%.1f"), 0.1f);
+	IMGUI_TIPS("近战距离缩放");
 
 	ImGui::TreePop();
 }
@@ -317,9 +407,15 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("qte_enable"), m_bActive);
 	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_velext"), m_bVelExt);
 	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
 	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_silent"), m_bSilent);
 	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
+	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
+	m_iShoveTicks = g_pConfig->GetInteger(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	m_bMeleeUnslienced = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	m_fMeleeUnsliencedFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
 
 	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
 	m_bHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
@@ -334,9 +430,29 @@ void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
 	m_fChargerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
 	m_fWitchDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	m_fRockDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+	m_fSmokerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
 
 	m_fShoveDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
 	m_fMeleeDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
+
+	m_fHunterFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	m_fJockeyFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	m_fJockeyScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	m_fMeleeScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
+
+	m_bCanShotSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
+	m_bCanShotHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
+	m_bCanShotJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
+	m_bCanShotCharger = g_pConfig->GetBoolean(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
+	m_bCanShotRock = g_pConfig->GetBoolean(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
+	m_bCanMeleeSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
+	m_bCanMeleeHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
+	m_bCanMeleeJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
+	m_bCanMeleeCharger = g_pConfig->GetBoolean(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
+	m_bCanMeleeRock = g_pConfig->GetBoolean(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
+	m_bCanShoveHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
+	m_bCanShoveJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
+	m_bCanShoveSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
 }
 
 void CQuickTriggerEvent::OnConfigSave(config_type & data)
@@ -346,6 +462,7 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_enable"), m_bActive);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_velext"), m_bVelExt);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_silent"), m_bSilent);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker"), m_bSmoker);
@@ -358,11 +475,90 @@ void CQuickTriggerEvent::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 	g_pConfig->SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
+
+	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
+	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
+}
+
+bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,
+	int& flags, int& pitch, Vector& origin, Vector& direction, bool& updatePosition, float& soundTime)
+{
+	/*
+	if (entity < 1 || entity > 64)
+		return true;
+	*/
+	
+	/*
+	if (sample.find(XorStr("tongue")) != std::string::npos)
+	{
+		if (m_bLogInfo)
+			g_pDrawing->PrintInfo(CDrawing::RED, XorStr("EmitSound %s at entity %d, org: %.0f, %.0f, %.0f"), sample.c_str(), entity, origin[0], origin[1], origin[2]);
+		
+		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+		if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive())
+			return true;
+
+		CBasePlayer* smoker = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(entity));
+		if (smoker == nullptr || !smoker->IsAlive() || smoker->GetZombieType() != ZC_SMOKER)
+			return true;
+		
+		Vector myOrigin = local->GetChestOrigin();
+		Vector thatEyeOrigin = smoker->GetEyePosition();
+
+		static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
+		if (myOrigin.DistTo(thatEyeOrigin) > cvTongueRange->GetFloat())
+			return true;
+
+		if (m_bCheckFov)
+		{
+			float fov = math::GetAnglesFieldOfView(smoker->GetEyeAngles(), math::CalculateAim(thatEyeOrigin, myOrigin));
+			if (fov > 30.0f)
+				return true;
+		}
+
+		m_pSmokerAttacker = smoker;
+	}
+
+	if (sample.find(XorStr("jockey_loudattack")) != std::string::npos ||
+		sample.find(XorStr("smoker_launchtongue")) != std::string::npos ||
+		sample.find(XorStr("smoker_tonguehit")) != std::string::npos ||
+		sample.find(XorStr("hunter_attackmix")) != std::string::npos ||
+		sample.find(XorStr("hunter_pounce")) != std::string::npos ||
+		sample.find(XorStr("charger_charge")) != std::string::npos ||
+		sample.find(XorStr("female_boomer_spotprey")) != std::string::npos ||
+		sample.find(XorStr("male_boomer_spotprey")) != std::string::npos)
+	{
+		m_StartAttackTime[entity] = std::chrono::system_clock::now();
+	}
+	*/
+	
+	return true;
 }
 
 void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
@@ -372,28 +568,80 @@ void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
 	if (aimAngles.IsValid())
 	{
 		cmd->buttons |= IN_ATTACK;
-		SetAimAngles(cmd, aimAngles);
+		SetAimAngles(cmd, aimAngles, false);
 	}
 }
 
 void CQuickTriggerEvent::HandleMeleeSelfClear(CBasePlayer * self,
-	CBasePlayer * enemy, CUserCmd * cmd, float distance)
+	CBasePlayer * enemy, CUserCmd * cmd, float distance, CBaseWeapon* weapon)
 {
 	static ConVar* cvMeleeRange = g_pInterface->Cvar->FindVar(XorStr("melee_range"));
-	if (distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
+	ZombieClass_t zClass = enemy->GetZombieType();
+	
+	// 砍舌头不看距离的
+	if (zClass != ZC_SMOKER && distance > cvMeleeRange->GetFloat() + m_fMeleeDstExtra)
 		return;
 
 	QAngle aimAngles = GetAimAngles(self, enemy, false);
-	if (aimAngles.IsValid())
+	if(!aimAngles.IsValid())
+		return;
+	
+	cmd->buttons |= IN_ATTACK;
+	
+	/*
+	if (zClass == ZC_SMOKER && enemy->GetSequence() == ANIM_SMOKER_SHOOTING)
+		return;
+	*/
+
+	/*
+	// 提升成功率
+	if (zClass == ZC_CHARGER || zClass == ZC_SMOKER)
+		aimAngles.x += 10.0f;
+	else if(zClass == ZC_HUNTER || zClass == ZC_JOCKEY)
+		aimAngles.x += 15.0f;
+	*/
+	
+	if(zClass == ZC_SMOKER)
+		aimAngles.x += 10.0f;
+	else if(zClass == ZC_CHARGER)
+		aimAngles.x = 9.15f;
+
+	if(weapon == nullptr || !weapon->IsValid())
 	{
-		cmd->buttons |= IN_ATTACK;
-
-		// 砍舌头需要稍微往下一点，不然砍不到
-		if (enemy->GetZombieType() == ZC_SMOKER)
-			aimAngles.x += 10.0f;
-
-		SetAimAngles(cmd, aimAngles);
+		SetAimAngles(cmd, aimAngles, m_bMeleeAsShove, true);
+		return;
 	}
+	
+	if(weapon->CanFire())
+	{
+		// m_iMeleeState = MAS_PreAttack;
+		m_pLastTarget = enemy;
+		return;
+	}
+	
+	/*
+	auto now = std::chrono::system_clock::now();
+	if(m_iMeleeState == MAS_PreAttack)
+	{
+		float delay = weapon->GetMeleeDelay();
+		m_iMeleeState = MAS_Attacking;
+		m_WaitTime = now + std::chrono::milliseconds(static_cast<long long>(delay * 1000));
+		
+		if(m_bLogInfo)
+			g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("wait for %.1fs tick to start"), delay);
+	}
+	else if (m_iMeleeState == MAS_Attacking)
+	{
+		if (m_WaitTime <= now)
+			m_iMeleeState = MAS_PostAttack;
+
+		if (m_bLogInfo && m_iMeleeState == MAS_PostAttack)
+			g_pDrawing->PrintInfo(CDrawing::WHITE, XorStr("start swing"));
+	}
+	if(m_iMeleeState == MAS_PostAttack)
+	*/
+
+	SetAimAngles(cmd, aimAngles, m_bMeleeAsShove, true);
 }
 
 void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
@@ -407,7 +655,7 @@ void CQuickTriggerEvent::HandleShoveSelfClear(CBasePlayer * self,
 	if (aimAngles.IsValid() && self->CanShove())
 	{
 		cmd->buttons |= IN_ATTACK2;
-		SetAimAngles(cmd, aimAngles);
+		SetAimAngles(cmd, aimAngles, true);
 	}
 }
 
@@ -422,7 +670,7 @@ void CQuickTriggerEvent::HandleWitchCrown(CBasePlayer * self,
 	if (m_bVelExt)
 	{
 		myEyeOrigin = math::VelocityExtrapolate(myEyeOrigin, self->GetVelocity(), m_bLagExt);
-		aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, enemy->GetVelocity(), m_bLagExt);
+		// aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, enemy->GetVelocity(), m_bLagExt);
 	}
 
 	QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
@@ -446,14 +694,24 @@ QAngle CQuickTriggerEvent::GetAimAngles(CBasePlayer * self, CBasePlayer * enemy,
 	return math::CalculateAim(myEyeOrigin, aimHeadOrigin);
 }
 
-void CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles)
+bool CQuickTriggerEvent::SetAimAngles(CUserCmd* cmd, QAngle& aimAngles, bool tick, bool melee)
 {
-	if (m_bPerfectSilent)
-		g_pViewManager->ApplySilentFire(aimAngles);
-	else if (m_bSilent)
+	bool unslienced = (melee && m_bMeleeUnslienced);
+	m_pLastTarget = nullptr;
+
+	if (m_bPerfectSilent && !unslienced)
+	{
+		if(tick)
+			return g_pViewManager->ApplySilentAngles(aimAngles, m_iShoveTicks);
+		else
+			return g_pViewManager->ApplySilentFire(aimAngles);
+	}
+	else if (m_bSilent && !unslienced)
 		cmd->viewangles = aimAngles;
 	else
 		g_pInterface->Engine->SetViewAngles(aimAngles);
+	
+	return true;
 }
 
 bool CQuickTriggerEvent::IsVisibleEnemy(CBasePlayer * local, CBasePlayer * enemy, const Vector & start, const Vector & end)
@@ -490,12 +748,21 @@ bool CQuickTriggerEvent::HasShotgun(CBaseWeapon* weapon)
 Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::optional<bool> visible)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || entity == nullptr || !entity->IsAlive())
+	if (local == nullptr || entity == nullptr || !entity->IsValid())
 		return NULL_VECTOR;
 
+	if (entity->GetClassID() == ET_TankRock)
+	{
+		// 石头其实是 grenade 类的， traceray 无法命中它
+		return entity->GetAbsOrigin();
+	}
+
+	if (!entity->IsAlive() || (entity->GetClassID() == ET_CTERRORPLAYER && entity->IsGhost()))
+		return NULL_VECTOR;
+	
+	Vector startPosition = local->GetEyePosition();
 	bool vis = visible.value_or(m_bOnlyVisible);
 	bool chestFirst = HasShotgun(local->GetActiveWeapon());
-	Vector startPosition = local->GetEyePosition();
 	Vector aimPosition = (chestFirst ? entity->GetChestOrigin() : entity->GetHeadOrigin());
 	if (!vis || IsVisibleEnemy(local, entity, startPosition, aimPosition))
 		return aimPosition;
@@ -505,4 +772,231 @@ Vector CQuickTriggerEvent::GetTargetAimPosition(CBasePlayer* entity, std::option
 		return aimPosition;
 
 	return NULL_VECTOR;
+}
+
+CBasePlayer* CQuickTriggerEvent::FindTarget(CBasePlayer* local, const QAngle& myEyeAngles)
+{
+	float minDistance = 65535.0f;
+	CBasePlayer* result = nullptr;
+	Vector myEyePosition = local->GetEyePosition();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBasePlayer* target = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+		if (target == local || target == nullptr || !target->IsAlive())
+			continue;
+
+		if (target->IsPlayer() && target->IsGhost())
+			continue;
+		
+		/*
+		CBasePlayer* victim = target->GetCurrentTongueTarget();
+		if (target->IsPlayer() && victim == local)
+			return target;
+		*/
+
+		/*
+		bool isAttacking = false;
+		if (i <= 64)
+		{
+			auto now = std::chrono::system_clock::now();
+			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_StartAttackTime[i]).count();
+			isAttacking = (duration <= 1000);
+		}
+		*/
+
+		Vector aimPosition = GetTargetAimPosition(target);
+		if (!aimPosition.IsValid())
+			continue;
+
+		ZombieClass_t classId = target->GetZombieType();
+		float distance = myEyePosition.DistTo(aimPosition);
+		int sequence = target->GetSequence();
+		bool selected = false;
+
+		switch (classId)
+		{
+			case ZC_SMOKER:
+			{
+				if (!m_bSmoker)
+					break;
+
+				static ConVar* cvTongueRange = g_pInterface->Cvar->FindVar(XorStr("tongue_range"));
+				if (distance > cvTongueRange->GetFloat() || distance > m_fSmokerDistance)
+					break;
+
+				if (sequence != ANIM_SMOKER_PULLING && sequence != ANIM_SMOKER_SHOOTING /* && !isAttacking*/)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetEyeAngles(), math::CalculateAim(target->GetEyePosition(), myEyePosition));
+				if (m_bCheckFov && fov > 10.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_HUNTER:
+			{
+				if (!m_bHunter)
+					break;
+
+				if (!target->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_isAttemptingToPounce")) && sequence != ANIM_HUNTER_LUNGING)
+					break;
+
+				if ((target->GetFlags() & FL_ONGROUND)/* && !isAttacking*/)
+					break;
+
+				if (distance > m_fHunterDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > m_fHunterFov)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_JOCKEY:
+			{
+				if (!m_bJockey)
+					break;
+
+				if ((target->GetFlags() & FL_ONGROUND)/* && !isAttacking*/)
+					break;
+
+				/*
+				if (sequence == ANIM_JOCKEY_RIDEING)
+					continue;
+				*/
+
+				/*
+				if (sequence != ANIM_JOCKEY_LEAPING)
+					continue;
+				*/
+
+				if (distance > m_fJockeyDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), local->GetHeadOrigin()));
+				if (m_bCheckFov && fov > m_fJockeyFov)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_BOOMER:
+			{
+				if (!m_bBoomer)
+					break;
+
+				/*
+				static ConVar* cvExplodeRange = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+				if (distance > cvExplodeRange->GetFloat())
+					break;
+				*/
+
+				selected = true;
+				break;
+			}
+			case ZC_CHARGER:
+			{
+				if (!m_bCharger)
+					break;
+
+				/*
+				// 这个可能不正确
+				handle = player->GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
+				if (handle.IsValid())
+				{
+					CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(handle));
+					if (ability != nullptr && !ability->GetNetProp<BYTE>(XorStr("DT_Charge"), XorStr("m_isCharging")))
+						continue;
+				}
+				*/
+
+				if (sequence != ANIM_CHARGER_CHARGING/* && !isAttacking*/)
+					break;
+
+				if (distance > m_fChargerDistance)
+					break;
+
+				float fov = math::GetAnglesFieldOfView(target->GetVelocity().toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > 30.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+			case ZC_WITCH:
+			{
+				if (!m_bWitch)
+					break;
+
+				if (target->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+					break;
+
+				if (distance > m_fWitchDistance)
+					break;
+
+				/*
+				CBaseEntity* entity = static_cast<CBaseEntity*>(player);
+				fov = math::GetAnglesFieldOfView(entity->GetEyeAngles(), math::CalculateAim(entity->GetEyePosition(), myOrigin));
+				if (m_bCheckFov && fov > 15.0f)
+					continue;
+				*/
+
+				selected = true;
+				break;
+			}
+			case ZC_ROCK:
+			{
+				if (!m_bRock)
+					break;
+
+				if (distance > m_fRockDistance)
+					break;
+
+				Vector velocity = target->GetVelocity();
+				float fov = math::GetAnglesFieldOfView(velocity.toAngles(), math::CalculateAim(target->GetAbsOrigin(), myEyePosition));
+				if (m_bCheckFov && fov > 15.0f)
+					break;
+
+				selected = true;
+				break;
+			}
+		}
+
+		if (selected && distance < minDistance)
+		{
+			result = target;
+			minDistance = distance;
+		}
+
+		if (i > 64 && result)
+			break;
+	}
+
+	return result;
+}
+
+std::unordered_set<CBasePlayer*> CQuickTriggerEvent::GetAllTongueSmoker()
+{
+	std::unordered_set<CBasePlayer*> results;
+	
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	for (int i = 64; i <= maxEntity; ++i)
+	{
+		CBaseEntity* entity = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntity(i));
+		if (!entity->IsValid() || entity->GetClassID() != ET_Particle)
+			continue;
+
+		CBasePlayer* owner = reinterpret_cast<CBasePlayer*>(entity->GetOwner());
+		if (owner == nullptr || !owner->IsAlive() || owner->GetZombieType() != ZC_SMOKER)
+			continue;
+
+		results.insert(owner);
+	}
+
+	return results;
 }

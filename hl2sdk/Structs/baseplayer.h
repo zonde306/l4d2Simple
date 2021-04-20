@@ -86,4 +86,10 @@ public:
 
 	// 获取身体位置
 	Vector GetChestOrigin();
+
+	// Hunter
+	bool IsLunging();
+
+	// Smoker
+	CBasePlayer* GetCurrentTongueTarget();
 };

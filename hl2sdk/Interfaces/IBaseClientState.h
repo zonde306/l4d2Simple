@@ -3,6 +3,7 @@
 #include "../Structs/handle.h"
 #include "../Utils/checksum_crc.h"
 #include "../Utils/utlvector.h"
+#include "../Utils/utlbitvec.h"
 #include "../../l4d2Simple2/xorstr.h"
 #include "../../l4d2Simple2/vector.h"
 
@@ -40,6 +41,10 @@ class SVC_Prefetch;
 
 typedef struct netpacket_s netpacket_t;
 #define MAX_USER_MSG_DATA 255
+#define NETMSG_TYPE_BITS		6	// must be 2^NETMSG_TYPE_BITS > SVC_LASTMSG
+#define MAX_EVENT_NAME_LENGTH	32		// max game event name length
+#define MAX_EVENT_BITS			9		// max bits needed for an event index
+#define MAX_EVENT_NUMBER		(1<<MAX_EVENT_BITS)		// max number of events 
 
 class IConnectionlessPacketHandler
 {
@@ -159,11 +164,13 @@ class PackedEntity;
 class CServerClassInfo;
 class CNetworkStringTableContainer;
 
-class CBaseClientState : public INetChannelHandler, public IConnectionlessPacketHandler, public IServerMessageHandler
+class CBaseClientState : /*public INetChannelHandler, public IConnectionlessPacketHandler,*/ public IServerMessageHandler
 {
 public:
 	virtual ~CBaseClientState() = 0;
 	
+	/*
+	// Windows 下 CBaseClientState 被分成了两个，这个没有继承 INetChannelHandler 和 IConnectionlessPacketHandler
 public:		// INetMsgHandler
 	virtual void ConnectionStart(INetChannel *chan) = 0;
 	virtual void ConnectionClosing(const char *reason) = 0;
@@ -179,6 +186,7 @@ public:		// INetMsgHandler
 
 public:		// IConnectionlessPacketHandler
 	virtual bool ProcessConnectionlessPacket(struct netpacket_s *packet) = 0;
+	*/
 
 public:		// IServerMessageHandlers
 	virtual bool ProcessTick(NET_Tick*) = 0;
@@ -226,7 +234,7 @@ public:
 	virtual void HandleReserveServerChallengeResponse(int) = 0;
 	virtual void SetServerReservationCookie(unsigned long long) = 0;
 	
-	public:
+public:
 	// Connection to server.			
 	int				m_Socket;		// network socket 
 	INetChannel		*m_NetChannel;		// Our sequenced channel to the remote server.
@@ -275,7 +283,10 @@ public:
 class CClientState : public IServerMessageHandler
 {
 public:
-
+	LPVOID __vtbl;
+	BYTE __pad[0x4A3C];
+	int lastoutgoingcommand;	// Sequence number of last outgoing command
+	int chokedcommands;			// number of choked commands
 };
 
 #define DECLARE_BASE_MESSAGE(msgtype)                \
@@ -330,6 +341,7 @@ public:
 protected:
 	bool m_bReliable;		   // true if message should be send reliable
 	INetChannel *m_NetChannel; // netchannel this message is from/for
+	byte __padding[68];
 };
 
 typedef enum
@@ -368,16 +380,6 @@ public:
 	CUtlVector<cvar_t> m_ConVars;
 };
 
-inline bool NET_SetConVar::ReadFromBuffer(bf_read& buffer)
-{
-	return false;
-}
-
-inline bool NET_SetConVar::WriteToBuffer(bf_write& buffer)
-{
-	return false;
-}
-
 class SVC_GetCvarValue : public CNetMessage
 {
 public:
@@ -410,16 +412,6 @@ private:
 	char		m_szCvarNameBuffer[256];
 	char		m_szCvarValueBuffer[256];
 };
-
-inline bool CLC_RespondCvarValue::ReadFromBuffer(bf_read& buffer)
-{
-	return false;
-}
-
-inline bool CLC_RespondCvarValue::WriteToBuffer(bf_write& buffer)
-{
-	return false;
-}
 
 class NET_StringCmd : public CNetMessage
 {
@@ -716,4 +708,29 @@ public:
 	int			m_nTick;
 	float		m_flHostFrameTime;
 	float		m_flHostFrameTimeStdDeviation;
+};
+
+class CLC_ListenEvents : public CNetMessage
+{
+	DECLARE_CLC_MESSAGE(ListenEvents);
+
+	int	GetGroup() const { return INetChannelInfo::SIGNON; }
+	int GetType(void) const { return 0x0C; };
+
+public:
+	CBitVec<MAX_EVENT_NUMBER> m_EventArray;
+};
+
+class CLC_ClientInfo : public CNetMessage
+{
+	DECLARE_CLC_MESSAGE(ClientInfo);
+	int GetType(void) const { return 0x8; };
+
+public:
+	CRC32_t			m_nSendTableCRC;
+	int				m_nServerCount;
+	bool			m_bIsHLTV;
+	uint32_t			m_nFriendsID;
+	char			m_FriendsName[MAX_PLAYER_NAME_LENGTH];
+	CRC32_t			m_nCustomFiles[MAX_CUSTOM_FILES];
 };

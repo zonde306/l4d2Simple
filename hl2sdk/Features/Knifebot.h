@@ -12,6 +12,7 @@ public:
 
 	virtual void OnConfigLoading(const config_type& data) override;
 	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnEnginePaint(PaintMode_t) override;
 
 	bool CheckMeleeAttack(const QAngle& myEyeAngles);
 	bool RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime);
@@ -30,6 +31,9 @@ private:
 	float m_fExtraMeleeRange = 9.0f;
 	float m_fShoveFOV = 90.0f;
 	float m_fMeleeFOV = 70.0f;
+
+	bool m_bDebug = false;
+	int m_iSequence = -1;
 
 private:
 	enum FastMeleeStage_t

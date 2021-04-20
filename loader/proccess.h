@@ -40,4 +40,5 @@ namespace proc
 	DWORDX WINAPI MemLoadLibrary2(PARAMX* X);
 	DWORD InjectDLLEx(const std::string& fileName, DWORD pid);
 	std::pair<LPVOID, DWORD> GetMemLoadLibrary2ShellCode();
+	bool EnableDebugPrivilege();
 }

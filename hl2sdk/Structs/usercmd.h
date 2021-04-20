@@ -24,6 +24,8 @@ public:
 	int32_t random_seed;		// 0x34	For shared random functions
 	int16_t mousedx;			// 0x38	mouse accum in x from create move
 	int16_t mousedy;			// 0x3A	mouse accum in y from create move
+
+	// 这几个不参与CRC验证的
 	bool hasbeenpredicted;		// 0x3C
 	Vector headangles;			// 0x40
 	Vector headoffset;			// 0x4C

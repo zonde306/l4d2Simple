@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include "../Utils/utlvector.h"
 
 #define INTERFACEVERSION_GAMEEVENTSMANAGER	"GAMEEVENTSMANAGER002"
 
@@ -8,6 +9,35 @@
 #undef CreateEvent
 
 class KeyValues;
+#define MAX_EVENT_NAME_LENGTH	32		// max game event name length
+
+class CGameEventCallback
+{
+public:
+	void*				m_pCallback;				// callback pointer
+	int					m_nListenerType;			// client or server side ?
+};
+
+class CGameEventDescriptor
+{
+public:
+	CGameEventDescriptor()
+	{
+		name[0] = 0;
+		eventid = -1;
+		keys = NULL;
+		local = false;
+		reliable = true;
+	}
+
+public:
+	char		name[MAX_EVENT_NAME_LENGTH];	// name of this event
+	int			eventid;	// network index number, -1 = not networked
+	KeyValues* keys;		// KeyValue describing data types, if NULL only name 
+	bool		local;		// local event, never tell clients about that
+	bool		reliable;	// send this event as reliable message
+	CUtlVector<CGameEventCallback*>	listeners;	// registered listeners
+};
 
 class IBaseInterface
 {
@@ -95,6 +125,23 @@ public:
 	virtual IGameEvent *UnserializeEvent(void* buf) = 0; // create new KeyValues, must be deleted
 
 	virtual KeyValues* GetEventDataTypes(IGameEvent* event) = 0;
+
+public:
+	enum
+	{
+		SERVERSIDE = 0,		// this is a server side listener, event logger etc
+		CLIENTSIDE,			// this is a client side listenet, HUD element etc
+		CLIENTSTUB,			// this is a serverside stub for a remote client listener (used by engine only)
+		SERVERSIDE_OLD,		// legacy support for old server event listeners
+		CLIENTSIDE_OLD,		// legecy support for old client event listeners
+	};
+	
+	CUtlVector<CGameEventDescriptor>	m_GameEvents;	// list of all known events
+	CUtlVector<CGameEventCallback*>		m_Listeners;	// list of all registered listeners
+	// CUtlSymbolTable						m_EventFiles;	// list of all loaded event files
+	// CUtlVector<CUtlSymbol>				m_EventFileNames;
+
+	// bool	m_bClientListenersChanged;	// true every time client changed listeners
 };
 
 class IGameEventListener

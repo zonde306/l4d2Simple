@@ -54,7 +54,7 @@ public:	// NetProp
 	template<typename T>
 	T& GetNetPropCollision(const std::string& prop, size_t element = 0);
 
-	static int GetNetPropOffset(const std::string& table, const std::string& prop);
+	static int GetNetPropOffset(const std::string& table, const std::string& prop, bool cache = false);
 
 	template<typename ...T>
 	static int GetNetPropOffsetEx(const std::string& table, const std::string& prop, const T& ...more);
@@ -69,6 +69,7 @@ public:
 	inline IClientNetworkable* GetNetworkable();
 
 public:
+	bool IsValid();
 	bool IsDormant();
 	int GetIndex();
 	bool SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime);
@@ -83,9 +84,26 @@ public:
 	int GetSequence();
 	int GetTeam();
 	bool IsPlayer();
+
+	// 是否为 NextBot
 	bool IsNPC();
+
 	MoveType_t GetMoveType();
+
+	// 注意，这个和 server 的 GetClassname 不同
 	const char* GetClassname();
+	const char* GetClientClassname();
+
+	Vector GetEyePosition();
+	QAngle GetEyeAngles();
+
+	ICollideable* GetCollideable();
+	int GetSolidFlags();
+
+	CBaseEntity* GetOwner();
+
+	// 注意：只有部分实体有 m_vecVelocity，NextBot 是没用的
+	Vector GetVelocity();
 };
 
 template<typename T>

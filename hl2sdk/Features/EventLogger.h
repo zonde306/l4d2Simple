@@ -10,6 +10,9 @@ public:
 	friend CGEL_EventLogger;
 
 	virtual void OnMenuDrawing() override;
+	virtual void OnGameEventClient(IGameEvent* event) override;
+	virtual void OnGameEvent(IGameEvent* event, bool dontBroadcast) override;
+	virtual bool OnUserMessage(int id, bf_read bf) override;
 
 protected:
 	void OnPlayerSpawn(int client);
@@ -18,11 +21,12 @@ protected:
 	void OnPlayerTakeDamage(int victim, int attacker, int damage);
 
 private:
-	bool m_bActive = true;
+	bool m_bActive = false;
 	bool m_bLogSpawn = true;
 	bool m_bLogDeath = true;
 	bool m_bLogTeam = true;
 	bool m_bLogTakeDamage = true;
+	bool m_bLogUserMsg = false;
 
 private:
 	CGEL_EventLogger *m_pEventListener;

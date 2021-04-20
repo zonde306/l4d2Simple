@@ -83,6 +83,9 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		Vector footOrigin = entity->GetAbsOrigin();
 		Vector headOrigin = entity->GetHeadOrigin();
 
+		if (!eyeOrigin.IsValid())
+			eyeOrigin = footOrigin;
+
 		if (!math::WorldToScreenEx(footOrigin, foot) ||
 			!math::WorldToScreenEx(eyeOrigin, eye) ||
 			!math::WorldToScreenEx(headOrigin, head))
@@ -146,6 +149,12 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 		if (m_bDistance)
 			ss << DrawDistance(entity, dist);
 
+		if (m_bFieldOfView)
+			ss << DrawFOV(entity, local);
+
+		if (m_bDebug)
+			ss << "\n" << DrawDebugInfo(entity);
+
 		if (ss.str().empty())
 			continue;
 
@@ -157,49 +166,83 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 
 void CVisualPlayer::OnSceneEnd()
 {
-	if (!m_bChams)
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsValid())
 		return;
-
-	static IMaterial* chamsMaterial = nullptr;
-	if (chamsMaterial == nullptr)
+	
+	if (m_bChams)
 	{
-		if (g_pClientHook->oFindMaterial != nullptr)
+		static IMaterial* chamsMaterial = nullptr;
+		if (chamsMaterial == nullptr)
 		{
-			chamsMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
-				XorStr("debug/debugambientcube"), XorStr("Model textures"), true, nullptr);
-		}
-		else
-		{
-			chamsMaterial = g_pInterface->MaterialSystem->FindMaterial(
-				XorStr("debug/debugambientcube"), XorStr("Model textures"));
+			if (g_pClientHook->oFindMaterial != nullptr)
+			{
+				chamsMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
+					XorStr("debug/debugambientcube"), XorStr("Model textures"), true, nullptr);
+			}
+			else
+			{
+				chamsMaterial = g_pInterface->MaterialSystem->FindMaterial(
+					XorStr("debug/debugambientcube"), XorStr("Model textures"));
+			}
+
+			chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
+			chamsMaterial->ColorModulate(1.0f, 1.0f, 1.0f);
 		}
 
-		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
-		chamsMaterial->ColorModulate(1.0f, 1.0f, 1.0f);
+		if (chamsMaterial)
+		{
+			int team = local->GetTeam();
+			int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+
+			for (int i = 1; i <= maxEntity; ++i)
+			{
+				CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
+				if (entity == nullptr || entity == local || !entity->IsAlive())
+					continue;
+
+				if (team == entity->GetTeam())
+					chamsMaterial->ColorModulate(0.0f, 1.0f, 1.0f);
+				else
+					chamsMaterial->ColorModulate(1.0f, 0.0f, 0.0f);
+
+				chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
+				g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
+				entity->DrawModel(STUDIO_RENDER);
+				g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+			}
+		}
 	}
 
-	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || chamsMaterial == nullptr)
-		return;
-
-	int team = local->GetTeam();
-	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
-
-	for (int i = 1; i <= maxEntity; ++i)
+	if (m_bNoVomit)
 	{
-		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (entity == nullptr || entity == local || !entity->IsAlive())
-			continue;
+		static IMaterial* vomitMaterial = nullptr;
+		if (vomitMaterial == nullptr)
+		{
+			if (g_pClientHook->oFindMaterial != nullptr)
+			{
+				vomitMaterial = g_pClientHook->oFindMaterial(g_pInterface->MaterialSystem,
+					XorStr("particle/screenspaceboomervomit"), XorStr("Particle textures"),
+					true, nullptr
+				);
+			}
+			else
+			{
+				vomitMaterial = g_pInterface->MaterialSystem->FindMaterial(
+					XorStr("particle/screenspaceboomervomit"), XorStr("Particle textures")
+				);
+			}
 
-		if(team == entity->GetTeam())
-			chamsMaterial->ColorModulate(0.0f, 1.0f, 1.0f);
-		else
-			chamsMaterial->ColorModulate(1.0f, 0.0f, 0.0f);
+			vomitMaterial->SetMaterialVarFlag(MATERIAL_VAR_NO_DRAW, true);
+		}
 
-		chamsMaterial->SetMaterialVarFlag(MATERIAL_VAR_IGNOREZ, true);
-		g_pInterface->ModelRender->ForcedMaterialOverride(chamsMaterial);
-		entity->DrawModel(STUDIO_RENDER);
-		g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+		/*
+		if (vomitMaterial)
+		{
+			g_pInterface->ModelRender->ForcedMaterialOverride(vomitMaterial);
+			g_pInterface->ModelRender->ForcedMaterialOverride(nullptr);
+		}
+		*/
 	}
 }
 
@@ -228,6 +271,9 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("Player Distance"), &m_bDistance);
 	IMGUI_TIPS("玩家显示距离。");
+	
+	ImGui::Checkbox(XorStr("Player In FOV"), &m_bFieldOfView);
+	IMGUI_TIPS("玩家显示瞄准角度。");
 
 	ImGui::Checkbox(XorStr("Player Weapon"), &m_bWeapon);
 	IMGUI_TIPS("玩家显示武器和弹药。");
@@ -240,6 +286,19 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("My Spectator"), &m_bSpectator);
 	IMGUI_TIPS("显示当前观察者。");
+	
+	ImGui::Checkbox(XorStr("Show Position"), &m_bDebug);
+	IMGUI_TIPS("显示位置/角度/速度。");
+	
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Fov Changer"), &m_bFovChanger);
+	IMGUI_TIPS("修改 FOV");
+	
+	ImGui::SliderFloat(XorStr("Fov"), &m_fFov, 90.0f, 150.0f, XorStr("%.0f"));
+	IMGUI_TIPS("修改 FOV");
+	
+	ImGui::SliderFloat(XorStr("Viewmodel Fov"), &m_fViewFov, 10.0f, 130.0f, XorStr("%.0f"));
+	IMGUI_TIPS("修改 Viewmodel FOV");
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Player Barrel"), &m_bBarrel);
@@ -250,7 +309,7 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("No Vomit Effect"), &m_bNoVomit);
-	IMGUI_TIPS("去除胆子屏幕效果。");
+	IMGUI_TIPS("去除胆汁屏幕效果。");
 
 	ImGui::Checkbox(XorStr("No Infected Vision"), &m_bCleanVision);
 	IMGUI_TIPS("去除特感黄色屏幕。");
@@ -285,6 +344,10 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_bCleanVision = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	m_bCleanGhost = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 	m_bNoFog = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	m_fFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	m_fViewFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	m_bFovChanger = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	m_bFieldOfView = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -308,6 +371,10 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -351,6 +418,32 @@ bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & tex
 		textureGroupName.clear();
 	}
 
+	return true;
+}
+
+void CVisualPlayer::OnOverrideView(CViewSetup* setup)
+{
+	if (!m_bFovChanger)
+		return;
+	
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+	
+	setup->m_fov = m_fFov;
+	// setup->m_viewmodelfov = m_fViewFov;
+}
+
+bool CVisualPlayer::OnGetViewModelFOV(float& fov)
+{
+	if (!m_bFovChanger)
+		return false;
+	
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return false;
+	
+	fov = m_fViewFov;
 	return true;
 }
 
@@ -743,4 +836,46 @@ bool CVisualPlayer::DrawSpectator(CBasePlayer * player, CBasePlayer* local, int 
 		color, false, ss.str().c_str());
 
 	return true;
+}
+
+std::string CVisualPlayer::DrawDebugInfo(CBaseEntity* player)
+{
+	std::stringstream ss;
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+
+	Vector origin = player->GetAbsOrigin();
+	ss << XorStr("pos(") << origin.x << ", " << origin.y << ", " << origin.z << ")\n";
+
+	QAngle angles = player->GetEyeAngles();
+	ss << XorStr("ang(") << angles.x << ", " << angles.y << ", " << angles.z << ")\n";
+
+	if (player->IsPlayer())
+	{
+		Vector velocity = reinterpret_cast<CBasePlayer*>(player)->GetVelocity();
+		ss << XorStr("vel(") << velocity.x << ", " << velocity.y << ", " << velocity.z << ") " << velocity.Length() << std::endl;
+	}
+
+	ss << XorStr("seq:") << player->GetSequence() << "\n";
+
+	return ss.str();
+}
+
+std::string CVisualPlayer::DrawFOV(CBasePlayer* player, CBasePlayer* local)
+{
+	QAngle eyeAngles/* = local->GetEyeAngles()*/;
+	g_pInterface->Engine->GetViewAngles(eyeAngles);
+	Vector eyePosition = local->GetEyePosition();
+	Vector aimPosition = player->GetHeadOrigin();
+
+	std::stringstream ss;
+	ss.sync_with_stdio(false);
+	ss.tie(nullptr);
+	ss.setf(std::ios::fixed);
+	ss.precision(0);
+
+	ss << "(" << math::GetAnglesFieldOfView(eyeAngles, math::CalculateAim(eyePosition, aimPosition)) << ")";
+	return ss.str();
 }

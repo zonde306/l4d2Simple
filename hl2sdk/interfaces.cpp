@@ -1,6 +1,7 @@
 ﻿#include "interfaces.h"
 #include "indexes.h"
 #include "../l4d2Simple2/xorstr.h"
+#include <fstream>
 
 std::unique_ptr<CClientInterface> g_pInterface;
 
@@ -10,14 +11,15 @@ std::unique_ptr<CClientInterface> g_pInterface;
 
 #define GET_VFUNC(_ptr,_off)	((*reinterpret_cast<PDWORD*>(_ptr))[_off])
 
-#define SIG_GET_CLIENTMODE			XorStr("8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? C3")
+#define SIG_GET_CLIENTMODE			XorStr("55 8B EC 8B 45 08 83 F8 FF 75 10 8B 0D ? ? ? ? 8B 01 8B 90 ? ? ? ? FF D2 8B 04 85 ? ? ? ? 5D C3")
 #define SIG_GET_CLIENTSTATE			XorStr("A1 ? ? ? ? 83 C0 08 C3")
 #define SIG_MOVE_HELPER				XorStr("A1 ? ? ? ? 8B 10 8B 52 ? 81 C1")
 #define SIG_GLOBAL_VARS				XorStr("8B 0D ? ? ? ? D9 41 ? 8B 55 ? 8B 45")
 #define SIG_WRITE_USERCMD			XorStr("55 8B EC A1 ? ? ? ? 83 78 30 00 53 8B 5D 10")
 #define SIG_START_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC 14 56 57 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 8B F9 80 3D")
 #define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 51 56 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 6A 00")
-#define SIG_SHARED_RANDOM_FLOAT		XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
+#define SIG_SHARED_RANDOM_FLOAT_OLD	XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
+#define SIG_SHARED_RANDOM_FLOAT		XorStr("E8 ? ? ? ? DC C0 8D 55 FC")
 #define SIG_SET_RANDOM_SEED			XorStr("55 8B EC 8B 45 08 85 C0 75 0C")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
@@ -25,8 +27,9 @@ std::unique_ptr<CClientInterface> g_pInterface;
 #define SIG_TRACE_LINE				XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 83 EC 5C 56 8B 43 08")
 #define SIG_CLIP_TRACE_PLAYER		XorStr("53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? A1 ? ? ? ? 33 C5 89 45 FC 56 57 8B 53 14")
 #define SIG_RESOURCE_POINTER		XorStr("A1 ? ? ? ? 89 45 F4 85 C0")
+#define SIG_CINPUT					XorStr("8B 0D ? ? ? ? 8B 11 8B 42 74 6A FF FF D0 8B 0D")
 
-typedef IClientMode*(__cdecl *FnGetClientMode)();
+typedef IClientMode*(__cdecl *FnGetClientMode)(int);
 static FnGetClientMode GetClientMode = nullptr;
 
 typedef CBaseClientState*(__cdecl *FnGetClientState)();
@@ -93,9 +96,11 @@ void CClientInterface::Init()
 	GetClientState = reinterpret_cast<FnGetClientState>(Utils::FindPattern(XorStr("engine.dll"), SIG_GET_CLIENTSTATE));
 	PRINT_OFFSET(XorStr("GetClientState"), GetClientState);
 
+	/*
 	GlobalVars = FindGlobalVars();
 	if (GlobalVars == nullptr)
-		GlobalVars = **reinterpret_cast<CGlobalVarsBase***>(Utils::FindPattern(XorStr("client.dll"), SIG_GLOBAL_VARS) + 1);
+	*/
+	GlobalVars = **reinterpret_cast<CGlobalVarsBase***>(Utils::FindPattern(XorStr("client.dll"), SIG_GLOBAL_VARS) + 2);
 
 	if (GlobalVars != nullptr)
 	{
@@ -106,9 +111,11 @@ void CClientInterface::Init()
 	{
 		DWORD funcStart = GET_VFUNC(Client, indexes::CreateMove);
 		Input = **reinterpret_cast<IInput***>(funcStart + 0x28);
+		// IInput* InputOld = **reinterpret_cast<IInput***>(Utils::FindPattern(XorStr("client.dll"), SIG_CINPUT) + 2);
 		PRINT_OFFSET(XorStr("CInput"), Input);
+		// PRINT_OFFSET(XorStr("CInputOld"), InputOld);
 
-		ClientMode = GetClientMode();
+		ClientMode = GetClientMode(-1);
 		PRINT_OFFSET(XorStr("ClientMode"), ClientMode);
 
 		ClientState = GetClientState();
@@ -173,8 +180,10 @@ void CClientInterface::Init()
 	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
 	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
 
-	SharedRandomFloat = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT));
+	FnSharedRandomFloat SharedRandomFloatOld = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT_OLD));
+	SharedRandomFloat = reinterpret_cast<FnSharedRandomFloat>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT)));
 	PRINT_OFFSET(XorStr("SharedRandomFloat"), SharedRandomFloat);
+	PRINT_OFFSET(XorStr("SharedRandomFloatOld"), SharedRandomFloatOld);
 
 	SetPredictionRandomSeed = reinterpret_cast<FnSetPredictionRandomSeed>(Utils::FindPattern(XorStr("client.dll"), SIG_SET_RANDOM_SEED));
 	PRINT_OFFSET(XorStr("SetPredictionRandomSeed"), SetPredictionRandomSeed);
@@ -194,10 +203,11 @@ void CClientInterface::Init()
 		PRINT_OFFSET(XorStr("KeyValueSystem"), KeyValueSystem);
 	}
 
-	PlayerResource = *reinterpret_cast<CBasePlayerResource**>(Utils::FindPattern(XorStr("client.dll"), SIG_RESOURCE_POINTER) + 1);
+	PlayerResource = **reinterpret_cast<CBasePlayerResource***>(Utils::FindPattern(XorStr("client.dll"), SIG_RESOURCE_POINTER) + 1);
 	PRINT_OFFSET(XorStr("TerrorPlayerResource"), PlayerResource);
 }
 
+// 这个用不了，匹配到了错误的地址
 CGlobalVarsBase * CClientInterface::FindGlobalVars()
 {
 	if (Client == nullptr)
@@ -206,7 +216,8 @@ CGlobalVarsBase * CClientInterface::FindGlobalVars()
 	DWORD initAddr = GET_VFUNC(Client, 0);
 	for (DWORD i = 0; i <= 0xFF; ++i)
 	{
-		if (*reinterpret_cast<PBYTE>(initAddr + i) == 0xA3)
+		// 前面有个 E8 A3 的 call，要忽略掉
+		if (*reinterpret_cast<PBYTE>(initAddr + i) == 0xA3 && *reinterpret_cast<PBYTE>(initAddr) != 0xE8)
 			return **reinterpret_cast<CGlobalVarsBase***>(initAddr + i + 1);
 	}
 

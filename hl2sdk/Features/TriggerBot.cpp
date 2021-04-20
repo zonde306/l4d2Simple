@@ -24,6 +24,7 @@ CTriggerBot* g_pTriggerBot = nullptr;
 #define IsMedicalWeapon(_id)		(_id == Weapon_FirstAidKit || _id == Weapon_Defibrillator || _id == Weapon_FireAmmo || _id == Weapon_ExplodeAmmo)
 #define IsPillsWeapon(_id)			(_id == Weapon_PainPills || _id == Weapon_Adrenaline)
 #define IsCarryWeapon(_id)			(_id == Weapon_Gascan || _id == Weapon_Fireworkcrate || _id == Weapon_Propanetank || _id == Weapon_Oxygentank || _id == Weapon_Gnome || _id == Weapon_Cola)
+#define IsSpecialInfected(_id)		(_id == ET_BOOMER || _id == ET_HUNTER || _id == ET_SMOKER || _id == ET_SPITTER || _id == ET_JOCKEY || _id == ET_CHARGER || _id == ET_TANK)
 
 CTriggerBot::CTriggerBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -36,28 +37,47 @@ CTriggerBot::~CTriggerBot()
 
 void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive)
+	// 防止救人时被打断
+	if (!m_bActive || (cmd->buttons & IN_USE))
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr)
+	if (player == nullptr || !player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge() ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
-	// QAngle viewAngles;
-	// g_pInterface->Engine->GetViewAngles(viewAngles);
-	GetAimTarget(cmd->viewangles);
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+	if (m_bPreventTooFast)
+	{
+		m_fAngDiffX = std::fabsf(m_vecLastAngles.x - viewAngles.x);
+		m_fAngDiffY = std::fabsf(m_vecLastAngles.y - viewAngles.y);
+		if (m_fAngDiffX > m_fDiffOfChange || m_fAngDiffY > m_fDiffOfChange)
+			m_iIgnoreNumTicks = m_iPreventTicks;
+		
+		m_vecLastAngles = viewAngles;
+		if (m_iIgnoreNumTicks > 0)
+		{
+			m_iIgnoreNumTicks -= 1;
+			return;
+		}
+	}
 
-	if (!player->IsAlive() || player->GetCurrentAttacker() != nullptr || player->IsHangingFromLedge())
-		return;
+	GetAimTarget(viewAngles);
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire())
+	if (m_pAimTarget == nullptr || weapon == nullptr || !weapon->IsFireGun() || !weapon->CanFire() ||
+		weapon->GetNetProp<float>(XorStr("DT_BaseAnimating"), XorStr("m_flCycle")) > 0.0f)
 		return;
 
 	// 检查目标是否可以被攻击
 	int team = m_pAimTarget->GetTeam();
 	int classId = m_pAimTarget->GetClassID();
-	if (team == 4 || (team == 3 && classId != ET_TankRock && m_pAimTarget->IsGhost()))
+	if (classId == ET_TankRock)
+		team = 3;
+
+	if (team >= 4 || team <= 1)
 		return;
 
 	// 检查队友是否被控
@@ -100,6 +120,10 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			return;
 	}
 
+	// 防止坑队友或自己
+	if (classId == ET_BOOMER && IsNearSurvivor(m_pAimTarget))
+		return;
+
 	if (m_bBlockFriendlyFire && team == player->GetTeam() &&
 		!player->IsIncapacitated() && player->GetCurrentAttacker() == nullptr)
 	{
@@ -126,7 +150,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		if (!m_bFollowVisible || IsVisableToPosition(player, m_pAimTarget, aimOrigin))
 		{
 			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimOrigin);
-			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fFollowFov)
+			if (math::GetAnglesFieldOfView(viewAngles, aimAngles) <= m_fFollowFov)
 			{
 				g_pInterface->Engine->SetViewAngles(aimAngles);
 			}
@@ -142,7 +166,7 @@ void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 				aimHeadOrigin = math::VelocityExtrapolate(aimHeadOrigin, m_pAimTarget->GetVelocity(), m_bTraceForwardtrack);
 
 			QAngle aimAngles = math::CalculateAim(myEyeOrigin, aimHeadOrigin);
-			if (math::GetAnglesFieldOfView(cmd->viewangles, aimAngles) <= m_fTraceFov)
+			if (math::GetAnglesFieldOfView(viewAngles, aimAngles) <= m_fTraceFov)
 			{
 				if (m_bTraceSilent || canWitchHeadshot)
 					g_pViewManager->ApplySilentFire(aimAngles);
@@ -168,7 +192,7 @@ void CTriggerBot::OnMenuDrawing()
 	IMGUI_TIPS("防止黑枪，瞄准队友时禁止开枪。");
 
 	ImGui::Checkbox(XorStr("Trigger No Witchs"), &m_bNonWitch);
-	IMGUI_TIPS("自动开枪不会射击队友。");
+	IMGUI_TIPS("自动开枪不会射击Witch。");
 
 	ImGui::Checkbox(XorStr("Trigger Position"), &m_bAimPosition);
 	IMGUI_TIPS("显示瞄准的位置，调试用。");
@@ -215,6 +239,18 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Follow FOV"), &m_fFollowFov, 1.0f, 90.0f, ("%.1f"));
 	IMGUI_TIPS("自动开枪尝试跟随敌人范围。");
 
+	ImGui::Separator();
+	ImGui::Checkbox(XorStr("Prevent Too Fast Shot"), &m_bPreventTooFast);
+	IMGUI_TIPS("防止快速移动视角时触发开枪。");
+
+	ImGui::SliderFloat(XorStr("Difference"), &m_fDiffOfChange, 1.0f, 360.0f, ("%.1f"));
+	IMGUI_TIPS("在一个 tick 内视角变动大于多少时视为过快。");
+	
+	ImGui::SliderInt(XorStr("Ignore Ticks"), &m_iPreventTicks, 1, 128);
+	IMGUI_TIPS("忽略多少个 tick");
+
+	ImGui::Checkbox(XorStr("Debug"), &m_bDebug);
+
 	ImGui::TreePop();
 }
 
@@ -240,6 +276,9 @@ void CTriggerBot::OnConfigLoading(const config_type & data)
 	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	m_bTraceWithoutMagnum = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 	m_bTraceShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	m_bPreventTooFast = g_pConfig->GetFloat(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	m_fDiffOfChange = g_pConfig->GetFloat(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	m_iPreventTicks = g_pConfig->GetInteger(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
 void CTriggerBot::OnConfigSave(config_type & data)
@@ -264,6 +303,9 @@ void CTriggerBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
 	g_pConfig->SetValue(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -271,7 +313,7 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 	if (!m_bActive)
 		return;
 	
-	if (!m_bCrosshairs && !m_bAimPosition)
+	if (!m_bCrosshairs && !m_bAimPosition && !m_bDebug)
 		return;
 	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -295,17 +337,23 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		// g_pInterface->Surface->DrawSetColor(255, 0, 0, 255);
 	}
 
+	int width, height;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	width /= 2;
+	height /= 2;
+
 	if (m_bCrosshairs)
 	{
-		int width, height;
-		g_pInterface->Engine->GetScreenSize(width, height);
-		width /= 2;
-		height /= 2;
-
 		// g_pInterface->Surface->DrawLine(width - 5, height, width + 5, height);
 		// g_pInterface->Surface->DrawLine(width, height - 5, width, height + 5);
 		g_pDrawing->DrawLine(width - 10, height, width + 10, height, color);
 		g_pDrawing->DrawLine(width, height - 10, width, height + 10, color);
+
+#ifdef _DEBUG
+		if(m_pAimTarget && m_pAimTarget->IsValid())
+			g_pDrawing->DrawText(width, height - 26, CDrawing::WHITE, true, XorStr("%s(%d)"), m_pAimTarget->GetClassname(), m_pAimTarget->GetIndex());
+#endif
 	}
 
 	if (m_bAimPosition)
@@ -315,6 +363,25 @@ void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 		{
 			g_pDrawing->DrawText(static_cast<int>(screen.x), static_cast<int>(screen.y),
 				color, true, XorStr("O"));
+
+			/*
+			if(m_pAimTarget && m_pAimTarget->IsAlive())
+				g_pDrawing->DrawText(screen.x, screen.y - 16, CDrawing::CYAN, true, XorStr("i=%d, h=%d"), m_pAimTarget->GetIndex(), m_pAimTarget->GetHealth());
+			*/
+		}
+	}
+
+	if (m_bDebug && m_bPreventTooFast)
+	{
+		if (m_fAngDiffX > m_fDiffOfChange || m_fAngDiffY > m_fDiffOfChange)
+		{
+			g_pDrawing->DrawText(width, height - 20,
+				CDrawing::RED, true, XorStr("dx=%.1f, dy=%.1f, tick=%d"), m_fAngDiffX, m_fAngDiffY, m_iIgnoreNumTicks);
+		}
+		else
+		{
+			g_pDrawing->DrawText(width, height - 20,
+				CDrawing::SKYBLUE, true, XorStr("dx=%.1f, dy=%.1f, tick=%d"), m_fAngDiffX, m_fAngDiffY, m_iIgnoreNumTicks);
 		}
 	}
 }
@@ -327,14 +394,22 @@ public:
 		if (pEntityHandle == pSkip1)
 			return false;
 		
+		int classId = -1;
+
 		try
 		{
-			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+			classId = pEntityHandle->GetClassID();
 		}
 		catch (...)
 		{
 			return true;
 		}
+
+		if (classId == ET_SurvivorRescue)
+			return false;
+
+		if (classId == ET_CTERRORPLAYER && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+			return false;
 
 		return true;
 	}
@@ -387,10 +462,13 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 
 bool CTriggerBot::IsValidTarget(CBasePlayer * entity)
 {
-	if (entity == nullptr || !entity->IsAlive())
+	if (entity == nullptr || !entity->IsValid())
 		return false;
 
-	return true;
+	if(entity->GetClassID() == ET_TankRock || entity->IsAlive())
+		return true;
+
+	return false;
 }
 
 bool CTriggerBot::HasValidWeapon(CBaseWeapon * weapon)
@@ -435,4 +513,45 @@ bool CTriggerBot::IsVisableToPosition(CBasePlayer * local, CBasePlayer * target,
 	}
 
 	return (trace.m_pEnt == target || trace.fraction > 0.97f);
+}
+
+bool CTriggerBot::IsNearSurvivor(CBasePlayer* boomer)
+{
+	static ConVar* z_exploding_splat_radius = g_pInterface->Cvar->FindVar(XorStr("z_exploding_splat_radius"));
+	
+	Vector position;
+	Vector origin = boomer->GetAbsOrigin();
+	int maxEntity = g_pInterface->EntList->GetHighestEntityIndex();
+	float radius = z_exploding_splat_radius->GetFloat();
+
+	for (int i = 1; i <= maxEntity; ++i)
+	{
+		CBaseEntity* entity = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntity(i));
+		if (entity == nullptr || !entity->IsValid())
+			continue;
+
+		position = entity->GetAbsOrigin();
+
+		// 爆炸比较特殊，不好进行检测，只能假设可以触发了
+		if (origin.DistTo(position) > radius)
+			continue;
+
+		if (entity->IsPlayer() && entity->GetTeam() == 2)
+		{
+			CBasePlayer* player = reinterpret_cast<CBasePlayer*>(entity);
+			if (player->IsAlive() && !player->GetCurrentAttacker())
+				return true;
+		}
+
+		int classId = entity->GetClassID();
+		if (classId == ET_WITCH)
+		{
+			if (entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) < 1.0f)
+				return true;
+		}
+
+		// TODO: 检查警报车。服务器和客户端的 classname 并不对应
+	}
+
+	return false;
 }

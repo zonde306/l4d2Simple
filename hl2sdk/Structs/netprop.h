@@ -1,6 +1,7 @@
 #pragma once
 #include "clientclass.h"
 #include <vector>
+#include <iostream>
 
 #undef GetProp
 
@@ -10,6 +11,8 @@ public:
 	CNetVars();
 	int GetOffset(const char* tableName, const char* propName);
 	size_t GetCount();
+
+	void DumpClassID(std::ostream& out);
 private:
 	int GetProp(const char* tableName, const char* propName, RecvProp **prop = 0);
 	int GetProp(RecvTable *recvTable, const char *propName, RecvProp **prop = 0);

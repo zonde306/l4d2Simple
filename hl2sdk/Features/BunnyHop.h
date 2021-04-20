@@ -28,6 +28,7 @@ protected:
 	void DoFullAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
 
 	void DoEdgeJump(CUserCmd* pCmd, int flags);
+	bool IsOnLadder(CBasePlayer* player);
 
 private:
 	bool m_bShowMenu = false;

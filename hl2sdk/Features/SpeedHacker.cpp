@@ -22,14 +22,21 @@ void CSpeedHacker::OnMenuDrawing()
 		return;
 
 	ImGui::Checkbox(XorStr("Position Adjustment"), &m_bPositionAdjustment);
-	IMGUI_TIPS("tick 优化，使 tick 达到允许的最大值。\n一般情况下建议关闭，除非 triggerbot/aimbot 出现了问题。");
+	IMGUI_TIPS("根据 lerp 进行 tick 优化，提升精准度\n效果相当于 cl_interp 0\n三选一");
 
 	ImGui::Checkbox(XorStr("Backtracking"), &m_bBacktrack);
-	IMGUI_TIPS("另一种 tick 优化，在之前最好的 tick 里面选择一个合适现在的。\n一般情况下建议关闭，除非 triggerbot/aimbot 出现了问题。");
+	IMGUI_TIPS("根据 fov 进行 tick 优化，适用于 aimbot 瞄准头部来提升精准度\n三选一");
 
 	ImGui::Checkbox(XorStr("Forwardtrack"), &m_bForwardtrack);
-	IMGUI_TIPS("tick 优化，使用速度延迟预测需要这个功能。\n三种 tick 优化做的是同一种事情(方法不同)，只能选一个。");
+	IMGUI_TIPS("tick 优化，基于速度＋延迟。\n三选一");
 
+	ImGui::Checkbox(XorStr("NoLerp Safe"), &m_bLACSafe);
+	IMGUI_TIPS("只有在射击/推的时候才运行，防止被检测。");
+	
+	ImGui::Checkbox(XorStr("Debug"), &m_bDebug);
+	IMGUI_TIPS("显示调试 tickcount 信息。");
+
+	ImGui::Separator();
 	ImGui::Checkbox(XorStr("SpeedHack Active"), &m_bActive);
 	IMGUI_TIPS("加速，勾上后下面的东西才有效果。");
 
@@ -48,18 +55,19 @@ void CSpeedHacker::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
+void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
 	RecordBacktracking(cmd);
-	
+	m_iTickCount = INT_MAX;
+
 	if (m_bPositionAdjustment)
-		RunPositionAdjustment(cmd);
+		RunPositionAdjustment(cmd, *bSendPacket);
 	
 	if (m_bBacktrack)
-		RunBacktracking(cmd);
+		RunBacktracking(cmd, *bSendPacket);
 
 	if (m_bForwardtrack)
-		RunForwardtrack(cmd);
+		RunForwardtrack(cmd, *bSendPacket);
 
 	if (!m_bActive)
 		return;
@@ -74,6 +82,24 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool *)
 		g_pSpeedModifier->SetSpeed(m_fOriginSpeed);
 }
 
+void CSpeedHacker::OnEnginePaint(PaintMode_t)
+{
+	if (!m_bDebug)
+		return;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	if (m_iTickCount != INT_MAX)
+	{
+		g_pDrawing->DrawText(width / 2, height / 2 + 32, CDrawing::WHITE, true, XorStr("%d"), m_iTickCount);
+	}
+}
+
 void CSpeedHacker::OnConfigLoading(const config_type & data)
 {
 	const std::string mainKeys = XorStr("SpeedHacks");
@@ -85,7 +111,8 @@ void CSpeedHacker::OnConfigLoading(const config_type & data)
 	m_fUseSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
 	m_fWalkSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	m_fFireSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
-	m_bForwardtrack = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	m_bLACSafe = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
 void CSpeedHacker::OnConfigSave(config_type & data)
@@ -100,12 +127,16 @@ void CSpeedHacker::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
 	g_pConfig->SetValue(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	g_pConfig->SetValue(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
-void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
+void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd, bool bSendPacket)
 {
+	if (m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket)
+		return;
+	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr)
+	if (local == nullptr || !local->IsAlive())
 		return;
 
 	static ConVar* cvar_cl_interp = g_pInterface->Cvar->FindVar(XorStr("cl_interp"));
@@ -136,13 +167,13 @@ void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd)
 	if ((result - cmd->tick_count) >= -50)
 	{
 		// 优化 tick
-		cmd->tick_count = result;
+		m_iTickCount = cmd->tick_count = result;
 	}
 }
 
-void CSpeedHacker::RunBacktracking(CUserCmd * cmd)
+void CSpeedHacker::RunBacktracking(CUserCmd * cmd, bool bSendPacket)
 {
-	if (!(cmd->buttons & IN_ATTACK) || m_iBacktrackingTarget <= 0)
+	if ((m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket) || m_iBacktrackingTarget <= 0)
 		return;
 	
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -150,12 +181,12 @@ void CSpeedHacker::RunBacktracking(CUserCmd * cmd)
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
-	if (weapon == nullptr || !weapon->CanFire())
+	if (weapon == nullptr || ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : !weapon->CanFire()))
 		return;
 
-	QAngle myEyeAngle;
+	QAngle myEyeAngle = cmd->viewangles;
 	Vector myEyeOrigin = local->GetEyePosition();
-	g_pInterface->Engine->GetViewAngles(myEyeAngle);
+	//g_pInterface->Engine->GetViewAngles(myEyeAngle);
 
 	float bestFov = 361.0f;
 	for (const auto& it : m_Backtracking[m_iBacktrackingTarget])
@@ -164,7 +195,7 @@ void CSpeedHacker::RunBacktracking(CUserCmd * cmd)
 		if (fov < bestFov)
 		{
 			bestFov = fov;
-			cmd->tick_count = it.m_iTickCount;
+			m_iTickCount = cmd->tick_count = it.m_iTickCount;
 		}
 	}
 }
@@ -175,15 +206,15 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 	if (local == nullptr)
 		return;
 
-	QAngle myEyeAngle;
+	QAngle myEyeAngle = cmd->viewangles;
 	Vector myEyeOrigin = local->GetEyePosition();
-	g_pInterface->Engine->GetViewAngles(myEyeAngle);
+	//g_pInterface->Engine->GetViewAngles(myEyeAngle);
 
 	float bestFov = 361.0f;
-	for (int i = 1; i < 64; ++i)
+	for (int i = 1; i <= 64; ++i)
 	{
 		CBasePlayer* player = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
-		if (player == nullptr || !player->IsAlive())
+		if (player == nullptr || !player->IsAlive() || !player->IsPlayer())
 			continue;
 
 		if (m_Backtracking[i].size() > 20)
@@ -204,13 +235,16 @@ void CSpeedHacker::RecordBacktracking(CUserCmd * cmd)
 	}
 }
 
-void CSpeedHacker::RunForwardtrack(CUserCmd * cmd)
+void CSpeedHacker::RunForwardtrack(CUserCmd * cmd, bool bSendPacket)
 {
+	if (m_bLACSafe && !(cmd->buttons & IN_ATTACK) && !(cmd->buttons & IN_ATTACK2) && bSendPacket)
+		return;
+	
 	INetChannelInfo* netChan = g_pInterface->Engine->GetNetChannelInfo();
 	if (netChan == nullptr)
 		return;
 
-	cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
+	m_iTickCount = cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
 }
 
 CSpeedHacker::_Backtrack::_Backtrack(int tickCount, const Vector & origin) :

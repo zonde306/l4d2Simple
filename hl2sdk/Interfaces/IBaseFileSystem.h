@@ -214,7 +214,7 @@ template <typename T>
 class CInterlockedIntT
 {
 public:
-	CInterlockedIntT() : m_value(0) { COMPILE_TIME_ASSERT(sizeof(T) == sizeof(long)); }
+	CInterlockedIntT() : m_value(0) { /*COMPILE_TIME_ASSERT(sizeof(T) == sizeof(long));*/ }
 	CInterlockedIntT(T value) : m_value(value) {}
 
 	T GetRaw() const { return m_value; }

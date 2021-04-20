@@ -8,11 +8,12 @@ CEventLogger::CEventLogger() : CBaseFeatures::CBaseFeatures()
 	m_pEventListener = new CGEL_EventLogger();
 	m_pEventListener->m_pParent = this;
 
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_death"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_hurt"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_spawn"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_first_spawn"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_death"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_hurt"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("player_team"), false);
+	g_pClientHook->m_ProtectedEventListeners.insert(m_pEventListener);
 }
 
 CEventLogger::~CEventLogger()
@@ -35,8 +36,33 @@ void CEventLogger::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Subscription Death/Killed"), &m_bLogDeath);
 	ImGui::Checkbox(XorStr("Subscription Change Team"), &m_bLogTeam);
 	ImGui::Checkbox(XorStr("Subscription Attack Damage"), &m_bLogTakeDamage);
+	ImGui::Checkbox(XorStr("Subscription UserMessage"), &m_bLogUserMsg);
 
 	ImGui::TreePop();
+}
+
+void CEventLogger::OnGameEventClient(IGameEvent* event)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("player_spawn") || name == XorStr("player_first_spawn") || name == XorStr("player_death") ||
+		name == XorStr("player_hurt") || name == XorStr("player_team"))
+		m_pEventListener->FireGameEvent(event);
+}
+
+void CEventLogger::OnGameEvent(IGameEvent* event, bool dontBroadcast)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("player_spawn") || name == XorStr("player_first_spawn") || name == XorStr("player_death") ||
+		name == XorStr("player_hurt") || name == XorStr("player_team"))
+		m_pEventListener->FireGameEvent(event);
+}
+
+bool CEventLogger::OnUserMessage(int id, bf_read bf)
+{
+	if(m_bLogUserMsg)
+		g_pDrawing->PrintInfo(CDrawing::ORANGE, XorStr("UserMsg: index %d, size %d"), id, bf.m_nDataBytes);
+	
+	return true;
 }
 
 void CEventLogger::OnPlayerSpawn(int client)

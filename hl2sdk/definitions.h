@@ -37,6 +37,7 @@ inline void AssertValidWritePtr(const void* ptr, int count = 1) { }
 inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define AssertValidStringPtr AssertValidReadPtr
 #define AssertValidThis() AssertValidReadWritePtr(this,sizeof(*this))
+#define GET_MEMBER_OFFSET(c,m)		(DWORD)(&((c*)0)->m)
 
 #define COLORCODE(r, g, b, a) ((DWORD)((((r)&0xff) << 24) | (((g)&0xff) << 16) | (((b)&0xff) << 8) | ((a)&0xff)))
 #define RED(COLORCODE) ((int)(COLORCODE >> 24))
@@ -52,7 +53,13 @@ inline void AssertValidReadWritePtr(const void* ptr, int count = 1) { }
 #define FORWARD_DECLARE_HANDLE(name) typedef struct name##__ *name
 
 #define TIME_TO_TICKS(dt)		((int)(0.5f + (float)(dt) / g_pInterface->GlobalVars->interval_per_tick))
+#define TICKS_TO_TIME(t)		(g_pInterface->GlobalVars->interval_per_tick * t)
 #define FORWARD_TRACK			(TIME_TO_TICKS(g_pNetChannelInfo->GetLatency(NetFlow_Incoming) + g_pNetChannelInfo->GetLatency(NetFlow_Outgoing)))
+#define MAX_PLAYER_NAME_LENGTH		32
+
+// a client can have up to 4 customization files (logo, sounds, models, txt).
+#define MAX_CUSTOM_FILES		4		// max 4 files
+#define MAX_CUSTOM_FILE_SIZE	524288	// Half a megabyte
 
 // These defines are for client button presses
 // CUserCommand::buttons
@@ -548,61 +555,63 @@ enum WeaponID_t
 enum EntityType_t
 {
 	ET_INVALID = -1,
-	ET_WORLD = 260,
-	ET_TerrorGameRulesProxy = 228,
-	ET_TerrorPlayerResource = 232,
+	ET_WORLD = 261,
+	ET_TerrorGameRulesProxy = 229,
+	ET_TerrorPlayerResource = 233,
 	ET_PlayerResource = 133,
 	ET_CSGameRulesProxy = 47,
 	ET_GameRulesProxy = 93,
 	ET_FogController = 75,
 
 	// 生还者
-	ET_CTERRORPLAYER = 231,
-	ET_SURVIVORBOT = 274,
+	ET_CTERRORPLAYER = 232,
+	ET_SURVIVORBOT = 275,
 
 	// 普感
-	ET_INFECTED = 263,
-	ET_WITCH = 276,
+	ET_INFECTED = 264,
+	ET_WITCH = 277,
 
 	// 特感
 	ET_BOOMER = 0,
-	ET_TANK = 275,
-	ET_JOCKEY = 264,
-	ET_SPITTER = 271,
+	ET_TANK = 276,
+	ET_JOCKEY = 265,
+	ET_SPITTER = 272,
 	ET_CHARGER = 99,
-	ET_HUNTER = 262,
-	ET_SMOKER = 269,
+	ET_HUNTER = 263,
+	ET_SMOKER = 270,
 
 	// 飞行物
-	ET_TankRock = 13,				// 克的石头
-	ET_VomitJarProjectile = 251,	// 胆汁
-	ET_SpitterProjectile = 175,		// 口水的酸液球
+	ET_TankRock = 13,				// 克的石头(CBaseCSGrenadeProjectile)
+	ET_VomitJarProjectile = 252,	// 胆汁
+	ET_SpitterProjectile = 176,		// 口水的酸液球
 	ET_PipeBombProjectile = 130,	// 土雷
 	ET_MolotovProjectile = 119,		// 火瓶
 	ET_GrenadeProjectile = 97,		// 榴弹发射器的榴弹
 
 	// 杂物
 	ET_DoorCheckpoint = 143,		// 安全门
-	ET_SurvivorRescue = 185,		// 复活点
-	ET_SurvivorDeathModel = 183,	// 死亡的生还者
+	ET_SurvivorRescue = 186,		// 复活点
+	ET_SurvivorDeathModel = 184,	// 死亡的生还者
 	ET_PropHealthCabinet = 144,		// 医疗箱
+	ET_CTongue = 246,
+	ET_Particle = 124,
 
 	// 武器 - 其他
 	ET_WeaponMountedGun = 146,
 	ET_WeaponMinigun = 145,
-	ET_WeaponAmmoSpawn = 255,
-	ET_WeaponSpawn = 259,
-	ET_ScavengeItemSpawn = 258,
+	ET_WeaponAmmoSpawn = 256,
+	ET_WeaponSpawn = 260,
+	ET_ScavengeItemSpawn = 259,
 	ET_BaseUpgradeItem = 29,
 
 	// 武器 - 冲锋枪
-	ET_WeaponMP5 = 164,
-	ET_WeaponSilenced = 165,
+	ET_WeaponMP5 = 165,
+	ET_WeaponSilenced = 166,
 
 	// 武器 - 霰弹枪
 	ET_WeaponAuto = 2,
-	ET_WeaponSpas = 162,
-	ET_WeaponChrome = 161,
+	ET_WeaponSpas = 163,
+	ET_WeaponChrome = 162,
 	ET_WeaponPump = 148,
 
 	// 武器 - 步枪
@@ -614,9 +623,9 @@ enum EntityType_t
 	ET_WeaponGrenadeLauncher = 96,
 
 	// 武器 - 狙击枪
-	ET_WeaponScout = 170,
-	ET_WeaponMilitary = 169,
-	ET_WeaponAWP = 168,
+	ET_WeaponScout = 171,
+	ET_WeaponMilitary = 170,
+	ET_WeaponAWP = 169,
 
 	// 武器 - 手枪
 	ET_WeaponMagnum = 116,
@@ -624,7 +633,7 @@ enum EntityType_t
 
 	// 武器 - 近战武器
 	ET_WeaponChainsaw = 39,
-	ET_WeaponMelee = 230,
+	ET_WeaponMelee = 231,
 
 	// 武器 - 投掷武器
 	ET_WeaponPipeBomb = 129,
@@ -632,8 +641,8 @@ enum EntityType_t
 	ET_WeaponVomitjar = 106,
 	ET_ProjectilePipeBomb = 130,
 	ET_ProjectileMolotov = 119,
-	ET_ProjectileVomitJar = 251,
-	ET_ProjectileSpitter = 175,
+	ET_ProjectileVomitJar = 252,
+	ET_ProjectileSpitter = 176,
 	ET_ProjectileGrenadeLauncher = 97,
 	ET_ProjectileGrenade = 13,
 
@@ -655,6 +664,7 @@ enum EntityType_t
 	ET_WeaponFirework = 72,
 	ET_WeaponCola = 44,
 	ET_PhysicsProp = 127,
+	ET_WeaponPropaneTank = 142,
 };
 
 // CTerrorPlayer::m_zombieClass

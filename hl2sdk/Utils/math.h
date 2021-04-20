@@ -42,7 +42,7 @@ namespace math
 	Vector DoEnemyCircle(const Vector &vecDelta, float *flRotation = nullptr);
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	float DotProduct(const Vector & a, const Vector & b);
-	Vector VelocityExtrapolate(const Vector& origin, const Vector& velocity, bool forwardtrack = false);
+	Vector VelocityExtrapolate(const Vector& origin, const Vector& velocity, bool forwardtrack = false, int tick = 1);
 
 	void VectorRotate(const Vector &in1, const matrix3x4_t& in2, Vector &out);
 	void VectorRotate(const Vector &in1, const QAngle &in2, Vector &out);

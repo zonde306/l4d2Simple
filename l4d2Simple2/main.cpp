@@ -157,7 +157,7 @@ LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
 {
 	if (!IsDebuggerPresent())
 	{
-		HANDLE file = CreateFileA(Utils::BuildPath(XorStr("\\crash_dump.dmp")).c_str(),
+		HANDLE file = CreateFileA(Utils::BuildPath(XorStr("\\l4d2_crash_dump.dmp")).c_str(),
 			GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 		if (file != NULL && file != INVALID_HANDLE_VALUE)
@@ -167,7 +167,7 @@ LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
 			mdei.ExceptionPointers = pExceptionInfo;
 			mdei.ClientPointers = NULL;
 
-			MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, MiniDumpWithFullMemory,
+			MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), file, MiniDumpNormal,
 				(pExceptionInfo != nullptr ? &mdei : NULL), NULL, NULL);
 
 			CloseHandle(file);

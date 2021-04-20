@@ -7,8 +7,11 @@ std::map<std::string, int> g_mPropOffset;
 #define SIG_SET_MOVETYPE	XorStr("55 8B EC 8A 45 08 8A 55 0C 88 81")
 #define SIG_GET_CLASSNAME	XorStr("57 8B F9 C6 05")
 
-int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop)
+int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop, bool cache)
 {
+	if (!cache)
+		return g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str());
+	
 	auto it = g_mPropOffset.find(prop);
 	if (it == g_mPropOffset.end())
 		g_mPropOffset.emplace(prop, g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str()));
@@ -20,6 +23,35 @@ int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string &
 	Utils::log(ss.str().c_str());
 
 	return g_mPropOffset[prop];
+}
+
+bool CBaseEntity::IsValid()
+{
+	if (this == nullptr)
+		return false;
+
+	IClientNetworkable* net = GetNetworkable();
+	if (net == nullptr)
+		return false;
+
+	// 检查虚函数表(client.dll)
+	static auto moduleInfo = Utils::GetModuleSize(XorStr("client.dll"));
+	if (moduleInfo.first > moduleInfo.second)
+	{
+		DWORD address = reinterpret_cast<DWORD>(Utils::GetVirtualFunction(net, indexes::IsDormant));
+		if (address < moduleInfo.first || address > moduleInfo.second)
+			return false;
+	}
+
+	try
+	{
+		return (!IsDormant() && GetIndex() > 0);
+	}
+	catch (...)
+	{
+	}
+
+	return false;
 }
 
 bool CBaseEntity::IsDormant()
@@ -207,8 +239,7 @@ MoveType_t CBaseEntity::GetMoveType()
 {
 	// 在 C_BaseEntity::SetMoveType 里
 	// this 后的第一个参数
-	const int offset = 0x144;
-	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + offset));
+	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + indexes::MoveType));
 }
 
 const char * CBaseEntity::GetClassname()
@@ -216,4 +247,93 @@ const char * CBaseEntity::GetClassname()
 	using FnGetClassname = const char*(__thiscall*)(CBaseEntity*);
 	static FnGetClassname fn = reinterpret_cast<FnGetClassname>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLASSNAME));
 	return fn(this);
+}
+
+const char* CBaseEntity::GetClientClassname()
+{
+	ClientClass* cc = GetClientClass();
+	if (cc == nullptr)
+		return "";
+
+	return cc->m_pNetworkName;
+}
+
+Vector CBaseEntity::GetEyePosition()
+{
+	using FnEyePosition = Vector(__thiscall*)(CBaseEntity*);
+	FnEyePosition fn = Utils::GetVTableFunction<FnEyePosition>(this, indexes::EyePosition);
+
+	try
+	{
+		return fn(this);
+	}
+	catch (...)
+	{
+		
+	}
+
+	return INVALID_VECTOR;
+}
+
+QAngle CBaseEntity::GetEyeAngles()
+{
+	using FnEyeAngles = const QAngle&(__thiscall*)(CBaseEntity*);
+	FnEyeAngles fn = Utils::GetVTableFunction<FnEyeAngles>(this, indexes::EyeAngles);
+
+	try
+	{
+		return fn(this);
+	}
+	catch (...)
+	{
+
+	}
+
+	return INVALID_VECTOR;
+}
+
+ICollideable* CBaseEntity::GetCollideable()
+{
+	using FnGetCollideable = ICollideable*(__thiscall*)(CBaseEntity*);
+	FnGetCollideable fn = Utils::GetVTableFunction<FnGetCollideable>(this, indexes::GetCollideable);
+	return fn(this);
+}
+
+int CBaseEntity::GetSolidFlags()
+{
+	ICollideable* collideable = nullptr;
+
+	try
+	{
+		collideable = GetCollideable();
+	}
+	catch (...)
+	{
+		return 0;
+	}
+
+	if (collideable)
+		return collideable->GetSolidFlags();
+
+	return 0;
+}
+
+CBaseEntity* CBaseEntity::GetOwner()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseEntity"), XorStr("m_hOwnerEntity"));
+	Assert_NetProp(offset);
+
+	CBaseHandle hdl = DECL_NETPROP_GET(CBaseHandle);
+	if (!hdl.IsValid())
+		return nullptr;
+
+	return reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(hdl));
+}
+
+Vector CBaseEntity::GetVelocity()
+{
+	static int offset = GetNetPropOffset(XorStr("DT_BaseGrenade"), XorStr("m_vecVelocity"));
+	Assert_NetProp(offset);
+
+	return DECL_NETPROP_GET(Vector);
 }

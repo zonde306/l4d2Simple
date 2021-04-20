@@ -73,4 +73,10 @@ public:
 
 	// 是否为枪械
 	bool IsFireGun();
+
+	// 现在是否可以推(或者抓)
+	bool CanShove();
+	
+	// 获取近战武器前摇时间(伤害造成的延迟)
+	float GetMeleeDelay();
 };

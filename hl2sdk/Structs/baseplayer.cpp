@@ -24,8 +24,14 @@
 #define HITBOX_CHEST_TANK			9
 #define HITBOX_CHEST_WITCH			8
 
+#define SIG_IS_LUNGING				XorStr("56 E8 ? ? ? ? 8B F0 85 F6 75 04")
+#define SIG_GET_TONGUE_TARGET		XorStr("E8 ? ? ? ? 8B D0 8B 83")
+
 Vector CBasePlayer::GetEyePosition()
 {
+	if (!IsPlayer())
+		return NULL_VECTOR;
+	
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecViewOffset[0]"));
 	Assert_NetProp(offset);
 	return (GetAbsOrigin() + DECL_NETPROP_GET(Vector));
@@ -33,6 +39,9 @@ Vector CBasePlayer::GetEyePosition()
 
 QAngle CBasePlayer::GetEyeAngles()
 {
+	if (!IsPlayer())
+		return NULL_VECTOR;
+	
 	static int offset = GetNetPropOffset(XorStr("DT_CSPlayer"), XorStr("m_angEyeAngles[0]"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(QAngle);
@@ -54,6 +63,9 @@ int CBasePlayer::GetTeam()
 
 Vector CBasePlayer::GetVelocity()
 {
+	if (!IsPlayer())
+		return CBaseEntity::GetVelocity();
+	
 	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_vecVelocity[0]"));
 	Assert_NetProp(offset);
 	return DECL_NETPROP_GET(Vector);
@@ -97,11 +109,12 @@ int CBasePlayer::GetCrosshairID()
 
 bool CBasePlayer::IsGhost()
 {
-	using FnIsGhost = bool(__thiscall*)(CBasePlayer*);
+	// 这个是假的
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_isGhost"));
-	FnIsGhost fn = Utils::GetVTableFunction<FnIsGhost>(this, indexes::IsGhost);
 	Assert_NetProp(offset);
 
+	using FnIsGhost = bool(__thiscall*)(CBasePlayer*);
+	FnIsGhost fn = Utils::GetVTableFunction<FnIsGhost>(this, indexes::IsGhost);
 	if(fn != nullptr)
 		return fn(this);
 
@@ -335,7 +348,17 @@ ZombieClass_t CBasePlayer::GetZombieType()
 	
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_zombieClass"));
 	Assert_NetProp(offset);
-	return static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));
+
+	ZombieClass_t zc = static_cast<ZombieClass_t>(DECL_NETPROP_GET(byte));
+
+	/*
+	int index = GetIndex();
+	CBasePlayerResource* ps = CBasePlayerResource::Get();
+	if ((zc < ZC_SMOKER || zc > ZC_SURVIVORBOT || zc == ZC_WITCH) && (index >= 1 && index <= 32) && ps && ps->IsConnected(index))
+		return static_cast<ZombieClass_t>(ps->GetZombie(index));
+	*/
+
+	return zc;
 }
 
 bool CBasePlayer::IsSurvivor()
@@ -390,31 +413,51 @@ Vector CBasePlayer::GetChestOrigin()
 	return GetAbsOrigin();
 }
 
+bool CBasePlayer::IsLunging()
+{
+	using FnIsLunging = bool (__thiscall*)(CBasePlayer*);
+	static FnIsLunging fn = reinterpret_cast<FnIsLunging>(Utils::FindPattern(XorStr("client.dll"), SIG_IS_LUNGING));
+	
+	return fn(this);
+}
+
+CBasePlayer* CBasePlayer::GetCurrentTongueTarget()
+{
+	using FnGetCurrentTongueTarget = CBasePlayer * (__thiscall*)(CBaseEntity*);
+	static FnGetCurrentTongueTarget fn = reinterpret_cast<FnGetCurrentTongueTarget>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_GET_TONGUE_TARGET)));
+	
+	CBaseHandle customAbility = GetNetProp<CBaseHandle>(XorStr("DT_TerrorPlayer"), XorStr("m_customAbility"));
+	if (!customAbility.IsValid())
+		return nullptr;
+
+	CBaseEntity* ability = reinterpret_cast<CBaseEntity*>(g_pInterface->EntList->GetClientEntityFromHandle(customAbility));
+	if (ability == nullptr || !ability->IsValid() || ability->GetClassID() != ET_CTongue)
+		return nullptr;
+
+	return fn(ability);
+}
+
 bool CBasePlayer::IsAlive()
 {
-	try
-	{
-		// 不知道为什么，这里会出现 nullptr 异常
-		if (this == nullptr || IsDormant())
-			return false;
-	}
-	catch (...)
-	{
+	if (!IsValid())
 		return false;
-	}
 	
 	static int lifeOffset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("m_lifeState"));
-	static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
+	// static int solidOffset = GetNetPropOffset(XorStr("DT_BaseCombatCharacter"), XorStr("m_usSolidFlags"));
 	static int sequenceOffset = GetNetPropOffset(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
 	static int burnOffset = GetNetPropOffset(XorStr("DT_Infected"), XorStr("m_bIsBurning"));
+	static int wanderOffset = GetNetPropOffset(XorStr("DT_Witch"), XorStr("m_wanderRage"));
 	Assert_NetProp(lifeOffset);
-	Assert_NetProp(solidOffset);
+	// Assert_NetProp(solidOffset);
 	Assert_NetProp(sequenceOffset);
 	Assert_NetProp(burnOffset);
+	Assert_NetProp(wanderOffset);
 
 	int entityType = GetClassID();
 	if (entityType == ET_INVALID || entityType == ET_WORLD)
 		return false;
+
+	int flags = GetSolidFlags();
 
 	// 生还者
 	if (entityType == ET_SURVIVORBOT || entityType == ET_CTERRORPLAYER)
@@ -428,6 +471,9 @@ bool CBasePlayer::IsAlive()
 		entityType == ET_SPITTER || entityType == ET_JOCKEY || entityType == ET_CHARGER ||
 		entityType == ET_TANK)
 	{
+		if (flags & SF_NOT_SOLID)
+			return false;
+		
 		if ((DECL_NETPROP_GET_EX(lifeOffset, byte) != LIFE_ALIVE) || GetHealth() <= 0 || IsGhost())
 			return false;
 
@@ -437,6 +483,13 @@ bool CBasePlayer::IsAlive()
 			if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 70 || IsIncapacitated())
 				return false;
 		}
+		/*
+		else
+		{
+			if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) == 8)
+				return true;
+		}
+		*/
 
 		return true;
 	}
@@ -444,8 +497,10 @@ bool CBasePlayer::IsAlive()
 	// 普感
 	if (entityType == ET_WITCH || entityType == ET_INFECTED)
 	{
-		if ((DECL_NETPROP_GET_EX(solidOffset, int) & SF_NOT_SOLID) ||
-			DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 305)
+		if (flags & SF_NOT_SOLID)
+			return false;
+		
+		if (DECL_NETPROP_GET_EX(sequenceOffset, WORD) > 305)
 			return false;
 
 		if (entityType == ET_INFECTED)
@@ -453,6 +508,13 @@ bool CBasePlayer::IsAlive()
 			if (DECL_NETPROP_GET_EX(burnOffset, byte) != 0)
 				return false;
 		}
+		/*
+		else
+		{
+			if (DECL_NETPROP_GET_EX(wanderOffset, byte) != 0)
+				return false;
+		}
+		*/
 
 		return true;
 	}
@@ -474,6 +536,7 @@ int CBasePlayer::GetMoveType()
 
 Vector& CBasePlayer::GetPunch()
 {
+	// 在 ViewPunch 里面
 	return DECL_NETPROP_GET_EX(indexes::GetPunch, Vector);
 }
 
@@ -521,11 +584,17 @@ std::string CBasePlayer::GetName()
 
 bool CBasePlayer::CanShove()
 {
+	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_flNextShoveTime"));
+	Assert_NetProp(offset);
+	
 	CBaseWeapon* weapon = GetActiveWeapon();
 	if (weapon == nullptr)
 		return false;
 
-	return (weapon->GetSecondryAttackDelay() <= 0.0f);
+	if (GetTeam() == 3)
+		return weapon->CanShove();
+
+	return DECL_NETPROP_GET(float) <= g_pClientPrediction->GetServerTime();
 }
 
 bool CBasePlayer::CanAttack()

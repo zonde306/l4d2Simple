@@ -15,8 +15,9 @@ CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
 	m_vecAngles.Invalidate();
 	m_pEventListener = new CVM_ShotgunSound();
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("weapon_fire"), false);
-	g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("bullet_impact"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("weapon_fire"), false);
+	//g_pInterface->GameEvent->AddListener(m_pEventListener, XorStr("bullet_impact"), false);
+	g_pClientHook->m_ProtectedEventListeners.insert(m_pEventListener);
 }
 
 CViewManager::~CViewManager()
@@ -32,7 +33,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	m_pEventListener->m_bIsGameTick = false;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-	if (local == nullptr || !local->IsAlive())
+	if (local == nullptr || !local->IsAlive() || local->IsHangingFromLedge() ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
@@ -42,18 +45,16 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_bRapidFire)
 		RunRapidFire(cmd, local, weapon);
 
-	bool canFire = weapon->CanFire();
+	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
-	if (weapon->IsFireGun() && canFire && m_bHasFiring)
+	// 推没有后坐力的
+	if (weapon->IsFireGun() && canFire && m_bHasFiring && (cmd->buttons & IN_ATTACK))
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
 
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
-
-	if (m_bFakeLag && (GetAsyncKeyState(VK_CAPITAL) & 0x8000))
-		*bSendPacket = false;
 
 	if (!(*bSendPacket))
 	{
@@ -68,6 +69,9 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			Utils::log(XorStr("Warring: choked commands out of range"));
 		}
 	}
+
+	if (m_bFakeLag && (GetAsyncKeyState(VK_CAPITAL) & 0x8000))
+		*bSendPacket = false;
 
 	if (*bSendPacket && m_iPacketBlocked != 0)
 		m_iPacketBlocked = 0;
@@ -96,20 +100,35 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 {
-	// if (stage != FRAME_RENDER_START)
-	if (stage != FRAME_NET_UPDATE_POSTDATAUPDATE_START)
-		return;
-
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive())
 		return;
 
-	m_vecPunch = local->GetPunch();
-
-	if (m_bNoVisRecoil)
+	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 	{
-		local->GetPunch().x = 0.0f;
-		local->GetPunch().y = 0.0f;
+		//Vector& ViewPunch = local->GetPunch();
+		Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+		Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+
+		// m_vecPunchAngle or m_vecPunchAngleVel
+		m_vecPunch = m_vecPunchAngle + m_vecPunchAngleVel;
+
+		if (m_bNoVisRecoil)
+		{
+			//ViewPunch.x = 0.0f;
+			//ViewPunch.y = 0.0f;
+			m_vecPunchAngle.x = 0.0f;
+			m_vecPunchAngle.y = 0.0f;
+			m_vecPunchAngleVel.x = 0.0f;
+			m_vecPunchAngleVel.y = 0.0f;
+		}
+	}
+
+	if (stage == FRAME_RENDER_START && m_bRealAngles && m_bHasFiring)
+	{
+		Vector eyeOrigin = local->GetEyePosition();
+		Vector aimOrigin = eyeOrigin + m_vecViewAngles.Forward().Scale(1000.0f);
+		g_pInterface->DebugOverlay->AddLineOverlay(eyeOrigin, aimOrigin, 255, 255, 255, false, 1.0f);
 	}
 }
 
@@ -186,6 +205,20 @@ void CViewManager::OnDisconnect()
 	m_bFakeAngleBug = false;
 }
 
+void CViewManager::OnGameEventClient(IGameEvent* event)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
+		m_pEventListener->FireGameEvent(event);
+}
+
+void CViewManager::OnGameEvent(IGameEvent* event, bool dontBroadcast)
+{
+	std::string_view name = event->GetName();
+	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
+		m_pEventListener->FireGameEvent(event);
+}
+
 void CViewManager::OnEnginePaint(PaintMode_t mode)
 {
 	if (!m_bRealAngles || !m_bHasFiring)
@@ -208,21 +241,26 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 		static_cast<int>(screen.x + 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
 	g_pDrawing->DrawLine(static_cast<int>(screen.x + 10), static_cast<int>(screen.y - 10),
 		static_cast<int>(screen.x - 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
+
+	Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+	g_pDrawing->DrawText(screen.x / 2, screen.y / 3, CDrawing::RED, true, XorStr("m_vecPunchAngle = %.2f, %.2f, %.2f"), m_vecPunchAngle.x, m_vecPunchAngle.y, m_vecPunchAngle.z);
+	g_pDrawing->DrawText(screen.x / 2, screen.y / 3 + 16, CDrawing::RED, true, XorStr("m_vecPunchAngleVel = %.2f, %.2f, %.2f"), m_vecPunchAngleVel.x, m_vecPunchAngleVel.y, m_vecPunchAngleVel.z);
 }
 
-bool CViewManager::ApplySilentAngles(const QAngle & viewAngles)
+bool CViewManager::ApplySilentAngles(const QAngle& viewAngles, int ticks)
 {
-	if (m_bSilentFire || m_bSilentOnce)
+	if (m_bSilentFire || m_iSilentTicks > -1 || ticks < 1)
 		return false;
 
-	m_bSilentOnce = true;
+	m_iSilentTicks = ticks;
 	m_vecSilentAngles = viewAngles;
 	return true;
 }
 
-bool CViewManager::ApplySilentFire(const QAngle & viewAngles)
+bool CViewManager::ApplySilentFire(const QAngle& viewAngles)
 {
-	if (m_bSilentFire || m_bSilentOnce)
+	if (m_bSilentFire || m_iSilentTicks > -1)
 		return false;
 
 	m_bSilentFire = true;
@@ -300,9 +338,16 @@ void CViewManager::RemoveRecoil(CUserCmd * cmd)
 	if (player == nullptr || !player->IsAlive())
 		return;
 
+	/*
 	Vector punch = player->GetPunch();
 	cmd->viewangles.x -= punch.x;
 	cmd->viewangles.y -= punch.y;
+	*/
+
+	Vector& m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	// Vector& m_vecPunchAngleVel = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+	cmd->viewangles.x -= m_vecPunchAngle.x;
+	cmd->viewangles.y -= m_vecPunchAngle.y;
 }
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)
@@ -351,21 +396,22 @@ void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFir
 			m_vecSilentAngles.Invalidate();
 		}
 	}
-	else if (m_bSilentOnce)
+	else if (m_iSilentTicks > -1)
 	{
-		if (m_vecSilentAngles.IsValid())
+		if (m_iSilentTicks > 0 && m_vecSilentAngles.IsValid())
 		{
 			StartSilent(cmd);
 			cmd->viewangles = m_vecSilentAngles;
 			*bSendPacket = false;
-			m_vecSilentAngles.Invalidate();
 		}
 		else
 		{
-			m_bSilentOnce = false;
+			m_iSilentTicks = -1;
 			FinishSilent(cmd);
 			m_vecSilentAngles.Invalidate();
 		}
+
+		m_iSilentTicks -= 1;
 	}
 }
 

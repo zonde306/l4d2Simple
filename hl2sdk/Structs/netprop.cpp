@@ -48,6 +48,22 @@ size_t CNetVars::GetCount()
 	return _tables.size();
 }
 
+void CNetVars::DumpClassID(std::ostream& out)
+{
+	ClientClass* clientClass = g_pInterface->Client->GetAllClasses();
+	if (clientClass == nullptr)
+	{
+		Utils::log(XorStr("ERROR: ClientClass was not found"));
+		return;
+	}
+
+	while (clientClass)
+	{
+		out << clientClass->m_pNetworkName << XorStr(" = ") << clientClass->m_ClassID << std::endl;
+		clientClass = clientClass->m_pNext;
+	}
+}
+
 int CNetVars::GetProp(const char* tableName, const char* propName, RecvProp **prop)
 {
 	RecvTable* recvTable = GetTable(tableName);

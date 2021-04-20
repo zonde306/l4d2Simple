@@ -35,11 +35,16 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge() ||
-		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() > 2)
+		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() > 2 || player->GetCurrentAttacker() != nullptr)
 		return;
 
 	// int flags = player->GetFlags();
 	int flags = g_pClientPrediction->GetFlags();
+
+	/*
+	if (!(flags & FL_ONGROUND) && IsOnLadder(player))
+		return;
+	*/
 
 	// 空格键连跳
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
@@ -90,7 +95,7 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 		}
 	}
 
-	if (m_bEdgeJump && (pCmd->buttons & IN_FORWARD))
+	if (m_bEdgeJump && (pCmd->buttons & (IN_FORWARD|IN_BACK|IN_LEFT|IN_RIGHT)))
 		DoEdgeJump(pCmd, flags);
 
 	// Charger 用的
@@ -437,4 +442,31 @@ void CBunnyHop::DoEdgeJump(CUserCmd * pCmd, int flags)
 
 	if (trace.fraction == 1.0f)
 		pCmd->buttons |= IN_JUMP;
+}
+
+bool CBunnyHop::IsOnLadder(CBasePlayer* player)
+{
+	Ray_t ray;
+	Vector origin = player->GetAbsOrigin();
+	ray.Init(origin, origin + Vector(0, 0, -32));
+
+	CTraceFilter filter;
+	filter.pSkip1 = player;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, CONTENTS_LADDER, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CBunnyHop.IsOnLadder.TraceRay Error."));
+		return false;
+	}
+
+	if (trace.DidHit())
+		return true;
+
+	return false;
 }

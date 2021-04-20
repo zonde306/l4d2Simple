@@ -896,7 +896,7 @@ CUtlMemoryAligned<T, nAlignment>::CUtlMemoryAligned(int nGrowSize, int nInitAllo
 	this->ValidateGrowSize();
 
 	// Alignment must be a power of two
-	COMPILE_TIME_ASSERT((nAlignment & (nAlignment - 1)) == 0);
+	//COMPILE_TIME_ASSERT((nAlignment & (nAlignment - 1)) == 0);
 	Assert((nGrowSize >= 0) && (nGrowSize != CUtlMemory<T>::EXTERNAL_BUFFER_MARKER));
 	if (CUtlMemory<T>::m_nAllocationCount)
 	{

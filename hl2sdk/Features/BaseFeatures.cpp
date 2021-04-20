@@ -119,3 +119,12 @@ void CBaseFeatures::OnGameEvent(IGameEvent *, bool)
 void CBaseFeatures::OnDrawModel(DrawModelState_t &, ModelRenderInfo_t &, matrix3x4_t *)
 {
 }
+
+void CBaseFeatures::OnOverrideView(CViewSetup*)
+{
+}
+
+bool CBaseFeatures::OnGetViewModelFOV(float& fov)
+{
+	return false;
+}

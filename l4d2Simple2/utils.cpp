@@ -369,7 +369,7 @@ std::wstring Utils::c2w(const std::string & s)
 	return result;
 }
 
-DWORD Utils::FindProccess(const std::string & proccessName)
+DWORD Utils::FindProccess(std::string_view proccessName)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 	PROCESSENTRY32 pe;
@@ -404,7 +404,7 @@ HMODULE Utils::GetModuleHandleSafe(const std::string & pszModuleName)
 	return hmModuleHandle;
 }
 
-DWORD Utils::GetModuleBase(const std::string & ModuleName, DWORD ProcessID)
+DWORD Utils::GetModuleBase(std::string_view ModuleName, DWORD ProcessID)
 {
 	if (ProcessID == 0)
 		ProcessID = GetCurrentProcessId();
@@ -429,7 +429,7 @@ DWORD Utils::GetModuleBase(const std::string & ModuleName, DWORD ProcessID)
 	return NULL;
 }
 
-DWORD Utils::GetModuleBase(const std::string & ModuleName, DWORD * ModuleSize, DWORD ProcessID)
+DWORD Utils::GetModuleBase(std::string_view ModuleName, DWORD * ModuleSize, DWORD ProcessID)
 {
 	if (ProcessID == 0)
 		ProcessID = GetCurrentProcessId();
@@ -457,14 +457,8 @@ DWORD Utils::GetModuleBase(const std::string & ModuleName, DWORD * ModuleSize, D
 
 DWORD Utils::FindPattern(const std::string & szModules, const std::string & szPattern)
 {
-	HMODULE hmModule = GetModuleHandleSafe(szModules);
-	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hmModule;
-	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)hmModule) + pDOSHeader->e_lfanew);
-
-	DWORD dwAddress = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode;
-	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
-
-	return FindPattern(dwAddress, dwLength, szPattern);
+	auto info = GetModuleSize(szModules);
+	return FindPattern(info.first, info.second, szPattern);
 }
 
 DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern)
@@ -498,14 +492,8 @@ DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPatte
 
 DWORD Utils::FindPattern(const std::string & szModules, const std::string & szPattern, std::string szMask)
 {
-	HMODULE hmModule = GetModuleHandleSafe(szModules);
-	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hmModule;
-	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)hmModule) + pDOSHeader->e_lfanew);
-
-	DWORD dwAddress = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode;
-	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
-
-	return FindPattern(dwAddress, dwLength, szPattern, szMask);
+	auto info = GetModuleSize(szModules);
+	return FindPattern(info.first, info.second, szPattern, szMask);
 }
 
 DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPattern, std::string szMask)
@@ -551,20 +539,20 @@ DWORD Utils::FindPattern(DWORD dwBegin, DWORD dwEnd, const std::string & szPatte
 	return NULL;
 }
 
-std::vector<std::string> Utils::StringSplit(const std::string & s, const std::string & delim)
+std::vector<std::string> Utils::StringSplit(std::string_view s, std::string_view delim)
 {
 	std::vector<std::string> result;
 	size_t last = 0;
 	size_t index = s.find_first_of(delim, last);
 	while (index != std::string::npos)
 	{
-		result.push_back(s.substr(last, index - last));
+		result.emplace_back(s.substr(last, index - last));
 		last = index + 1;
 		index = s.find_first_of(delim, last);
 	}
 	if (index - last > 0)
 	{
-		result.push_back(s.substr(last, index - last));
+		result.emplace_back(s.substr(last, index - last));
 	}
 
 	return result;
@@ -1129,4 +1117,62 @@ void Utils::FindWindowByProccess(DWORD ProcessID)
 	
 	g_hCurrentWindow = NULL;
 	EnumWindows(__EnumWindowsCallback, ProcessID);
+}
+
+std::pair<DWORD, DWORD> Utils::GetModuleSize(const std::string& pszModuleName)
+{
+	HMODULE hmModule = GetModuleHandleSafe(pszModuleName);
+	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hmModule;
+	PIMAGE_NT_HEADERS pNTHeaders = (PIMAGE_NT_HEADERS)(((DWORD)hmModule) + pDOSHeader->e_lfanew);
+
+	DWORD dwAddress = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.BaseOfCode;
+	DWORD dwLength = ((DWORD)hmModule) + pNTHeaders->OptionalHeader.SizeOfCode;
+	return { dwAddress, dwLength };
+}
+
+DWORD Utils::CalcInstAddress(DWORD inst)
+{
+	switch (*reinterpret_cast<BYTE*>(inst))
+	{
+		// call ?? ?? ?? ??
+		case 0xE8:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			DWORD next = inst + 5;
+			return target + next;
+		}
+
+		// jmp ?? ?? ?? ??
+		case 0xE9:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			DWORD next = inst + 5;
+			return target + next;
+		}
+
+		// mov ?? ?? ?? ?? ??
+		case 0x8B:
+		{
+			switch (*reinterpret_cast<BYTE*>(inst + 1))
+			{
+				// mov ?? ?? ?? ?? ??
+				case 0x0D:
+				{
+					DWORD target = *reinterpret_cast<DWORD*>(inst + 2);
+					return target;
+				}
+			}
+
+			break;
+		}
+
+		// mov ?? ?? ?? ??
+		case 0xB9:
+		{
+			DWORD target = *reinterpret_cast<DWORD*>(inst + 1);
+			return target;
+		}
+	}
+	
+	return inst;
 }

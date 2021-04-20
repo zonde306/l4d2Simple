@@ -15,8 +15,8 @@ CKnifeBot* g_pKnifeBot = nullptr;
 #define HITBOX_SPITTER			4
 #define HITBOX_CHARGER			9
 #define HITBOX_WITCH			10
-#define ANIM_GRENADE_THORWING	4
-#define ANIM_GRENADE_THROWED	6
+#define ANIM_GRENADE_THORWING	378
+#define ANIM_GRENADE_THROWED	373
 
 CKnifeBot::CKnifeBot() : CBaseFeatures::CBaseFeatures()
 {
@@ -29,12 +29,21 @@ CKnifeBot::~CKnifeBot()
 
 void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 {
+	// 防止打断救人
+	if (cmd->buttons & IN_USE)
+		return;
+	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
-	if (player == nullptr || !player->IsAlive())
+	if (player == nullptr || !player->IsAlive() || player->IsGhost() ||
+		player->IsIncapacitated() || player->IsHangingFromLedge() ||
+		player->GetCurrentAttacker() != nullptr ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (weapon == nullptr)
+	if (weapon == nullptr || !weapon->IsValid() ||
+		weapon->GetNetProp<float>(XorStr("DT_BaseAnimating"), XorStr("m_flCycle")) > 0.0f)
 		return;
 	
 	int team = player->GetTeam();
@@ -56,11 +65,16 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	if (cmd->buttons & IN_ATTACK)
 		return;
 
-	CheckMeleeAttack(cmd->viewangles);
+	QAngle viewAngles;
+	g_pInterface->Engine->GetViewAngles(viewAngles);
+	CheckMeleeAttack(viewAngles);
 
-	if (m_bAutoFire && m_bCanMeleeAttack && team == 2)
+	bool isTank = (player->GetZombieType() == ZC_TANK);
+	bool isMelee = (team == 2 && weaponId == Weapon_Melee);
+
+	if (m_bAutoFire && m_bCanMeleeAttack)
 	{
-		if (weaponId == Weapon_Melee && nextAttack <= serverTime)
+		if ((isMelee || isTank) && nextAttack <= serverTime)
 		{
 			cmd->buttons |= IN_ATTACK;
 			return;
@@ -69,7 +83,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 
 	if (m_bAutoShove && m_bCanShoveAttack && IsShoveReady(player, weapon))
 	{
-		if (weapon->GetSecondryAttackDelay() <= 0.0f)
+		if (!isTank && player->CanShove())
 		{
 			cmd->buttons |= IN_ATTACK2;
 			return;
@@ -115,6 +129,8 @@ void CKnifeBot::OnMenuDrawing()
 	ImGui::SliderFloat(XorStr("Auto Shove Range"), &m_fExtraShoveRange, 0.0f, 100.0f, XorStr("%.0f"));
 	IMGUI_TIPS("右键(推/抓)范围预测。");
 
+	ImGui::Checkbox(XorStr("Debug Info"), &m_bDebug);
+
 	ImGui::TreePop();
 }
 
@@ -148,6 +164,17 @@ void CKnifeBot::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
 	g_pConfig->SetValue(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
+}
+
+void CKnifeBot::OnEnginePaint(PaintMode_t)
+{
+	if (!m_bDebug)
+		return;
+
+	int width = 0, height = 0;
+	g_pInterface->Engine->GetScreenSize(width, height);
+
+	g_pDrawing->DrawText(width/2, height/2, CDrawing::WHITE, true, XorStr("m_iSequence=%d"), m_iSequence);
 }
 
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
@@ -212,14 +239,22 @@ public:
 		if (pEntityHandle == pSkip1)
 			return false;
 
+		int classId = -1;
+
 		try
 		{
-			return (pEntityHandle->GetClassID() != ET_SurvivorRescue);
+			classId = pEntityHandle->GetClassID();
 		}
 		catch (...)
 		{
 			return true;
 		}
+
+		if (classId == ET_SurvivorRescue)
+			return false;
+
+		if (classId == ET_CTERRORPLAYER && reinterpret_cast<CBasePlayer*>(pEntityHandle)->IsGhost())
+			return false;
 
 		return true;
 	}
@@ -253,11 +288,14 @@ bool CKnifeBot::HasEnemyVisible(CBasePlayer* entity, const Vector& position)
 
 bool CKnifeBot::IsShoveReady(CBasePlayer * player, CBaseWeapon * weapon)
 {
-	int sequence = weapon->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
-	if (sequence == ANIM_GRENADE_THORWING || sequence == ANIM_GRENADE_THROWED)
+	if (player->GetTeam() == 3)
+		return true;
+	
+	m_iSequence = player->GetNetProp<WORD>(XorStr("DT_BaseAnimating"), XorStr("m_nSequence"));
+	if (m_iSequence == ANIM_GRENADE_THORWING || m_iSequence == ANIM_GRENADE_THROWED)
 		return false;
 
-	return true;
+	return player->IsReadyToShove();
 }
 
 bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
@@ -294,6 +332,9 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 			entity->GetClassID() == ET_TankRock)
 			continue;
 
+		if (entity->IsPlayer() && entity->IsGhost())
+			continue;
+
 		int targetTeam = entity->GetTeam();
 		if (targetTeam == 4 || (targetTeam == 3 && entity->IsGhost()))
 			continue;
@@ -311,7 +352,7 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 
 		if (!m_bCanMeleeAttack &&
 			dist <= meleeRange && fov <= m_fMeleeFOV &&
-			classId != ET_BOOMER && classId != ET_WITCH)
+			classId != ET_BOOMER && (classId != ET_WITCH || entity->GetNetProp<float>(XorStr("DT_Witch"), XorStr("m_rage")) >= 1.0f))
 		{
 			// 近战武器攻击 (左键)
 			m_bCanMeleeAttack = true;

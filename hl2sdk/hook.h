@@ -9,33 +9,42 @@
 #include <unordered_map>
 #include <map>
 #include <optional>
+#include <set>
+
+class CLC_ListenEvents;
 
 // 虚函数
-typedef void(__thiscall* FnPaintTraverse)(IVPanel*, VPANEL, bool, bool);
-typedef bool(__thiscall* FnCreateMoveShared)(IClientMode*, float, CUserCmd*);
-typedef void(__thiscall* FnCreateMove)(IBaseClientDll*, int, float, bool);
-typedef void(__thiscall* FnFrameStageNotify)(IBaseClientDll*, ClientFrameStage_t);
-typedef void(__thiscall* FnRunCommand)(IPrediction*, CBaseEntity*, CUserCmd*, IMoveHelper*);
-typedef bool(__thiscall* FnDispatchUserMessage)(IBaseClientDll*, int, bf_read*);
-typedef void(__thiscall* FnEnginePaint)(IEngineVGui*, PaintMode_t);
-typedef bool(__thiscall* FnEngineKeyEvent)(IEngineVGui*, const InputEvent_t&);
-typedef bool(__thiscall* FnProcessGetCvarValue)(CBaseClientState*, SVC_GetCvarValue*);
-typedef bool(__thiscall* FnProcessSetConVar)(CBaseClientState*, NET_SetConVar*);
-typedef bool(__thiscall* FnProccessStringCmd)(CBaseClientState*, NET_StringCmd*);
-typedef bool(__thiscall* FnWriteUsercmdDeltaToBuffer)(IBaseClientDll*, bf_write*, int, int, bool);
-typedef void(__thiscall* FnSceneEnd)(IVRenderView*);
-typedef IMaterial*(__thiscall* FnFindMaterial)(IMaterialSystem*, char const*, const char*, bool, const char*);
-typedef int(__thiscall* FnKeyInput)(IClientMode*, int, ButtonCode_t, const char*);
-typedef bool(__thiscall* FnFireEventClientSide)(IGameEventManager2*, IGameEvent*);
-typedef void(__thiscall* FnRenderView)(IBaseClientDll*, const CViewSetup&, int, int);
-typedef bool(__thiscall* FnFireEvent)(IGameEventManager2*, IGameEvent*, bool);
-typedef void(__thiscall* FnDrawModelExecute)(IVModelRender*, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
-typedef void(__thiscall* FnEmitSound)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
-typedef bool(__thiscall* FnSendNetMsg)(INetChannel*, INetMessage&, bool, bool);
+using FnPaintTraverse = void(__thiscall*)(IVPanel*, VPANEL, bool, bool);
+using FnCreateMoveShared = bool(__thiscall*)(IClientMode*, float, CUserCmd*);
+using FnCreateMove = void(__thiscall*)(IBaseClientDll*, int, float, bool);
+using FnFrameStageNotify = void(__thiscall*)(IBaseClientDll*, ClientFrameStage_t);
+using FnRunCommand = void(__thiscall*)(IPrediction*, CBaseEntity*, CUserCmd*, IMoveHelper*);
+using FnDispatchUserMessage = bool(__thiscall*)(IBaseClientDll*, int, bf_read*);
+using FnEnginePaint = void(__thiscall*)(IEngineVGui*, PaintMode_t);
+using FnEngineKeyEvent = bool(__thiscall*)(IEngineVGui*, const InputEvent_t&);
+using FnProcessGetCvarValue = bool(__thiscall*)(CBaseClientState*, SVC_GetCvarValue*);
+using FnProcessSetConVar = bool(__thiscall*)(CBaseClientState*, NET_SetConVar*);
+using FnProccessStringCmd = bool(__thiscall*)(CBaseClientState*, NET_StringCmd*);
+using FnWriteUsercmdDeltaToBuffer = bool(__thiscall*)(IBaseClientDll*, bf_write*, int, int, bool);
+using FnSceneEnd = void(__thiscall*)(IVRenderView*);
+using FnFindMaterial = IMaterial*(__thiscall*)(IMaterialSystem*, char const*, const char*, bool, const char*);
+using FnKeyInput = int(__thiscall*)(IClientMode*, int, ButtonCode_t, const char*);
+using FnFireEventClientSide = bool(__thiscall*)(IGameEventManager2*, IGameEvent*);
+using FnRenderView = void(__thiscall*)(IBaseClientDll*, const CViewSetup&, int, int);
+using FnFireEvent = bool(__thiscall*)(IGameEventManager2*, IGameEvent*, bool);
+using FnDrawModelExecute = void(__thiscall*)(IVModelRender*, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
+using FnEmitSound = void(__thiscall*)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
+using FnSendNetMsg = bool(__thiscall*)(INetChannel*, INetMessage&, bool, bool);
+using FnOverrideView = void(__thiscall*)(IClientMode*, CViewSetup*);
+using FnGetViewModelFOV = float(__thiscall*)(IClientMode*);
 
 // 非虚函数
-typedef void(__cdecl* FnCL_SendMove)();
-typedef void(__cdecl* FnCL_Move)(float, bool);
+using FnCL_SendMove = void(__cdecl*)();
+using FnCL_Move = void(__cdecl*)(float, bool);
+using FnWriteListenEventList = void(__thiscall*)(IGameEventManager2*, CLC_ListenEvents*);
+using FnEmitSoundInternal = void(__thiscall*)(IEngineSound*, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
+using FnValidateUserCmd = void(__thiscall*)(IInput*, CUserCmd*, int);
+using FnMD5PseudoRandom = uint32_t(__cdecl*)(uint32_t);
 
 class CClientHook
 {
@@ -73,9 +82,14 @@ protected:
 	static void __fastcall Hooked_DrawModelExecute(IVModelRender*, LPVOID, const DrawModelState_t&, const ModelRenderInfo_t&, matrix3x4_t*);
 	static void __fastcall Hooked_EmitSound(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 	static bool __fastcall Hooked_SendNetMsg(INetChannel*, LPVOID, INetMessage&, bool, bool);
+	static void __fastcall Hooked_OverrideView(IClientMode*, LPVOID, CViewSetup*);
+	static float __fastcall Hooked_GetViewModelFOV(IClientMode*, LPVOID);
+	static void __fastcall Hooked_WriteListenEventList(IGameEventManager2*, LPVOID, CLC_ListenEvents*);
+	static void __fastcall Hooked_EmitSoundInternal(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
+	std::set<void*> m_ProtectedEventListeners;
 
 public:
 	void InitFeature();
@@ -108,6 +122,12 @@ private:
 	FnFireEvent oFireEvent = nullptr;
 	FnDrawModelExecute oDrawModelExecute = nullptr;
 	FnEmitSound oEmitSound = nullptr;
+	FnOverrideView oOverrideView = nullptr;
+	FnGetViewModelFOV oGetViewModelFOV = nullptr;
+	FnWriteListenEventList oWriteListenEventList = nullptr;
+	FnEmitSoundInternal oEmitSoundInternal = nullptr;
+	FnValidateUserCmd oValidateUserCmd = nullptr;
+	FnMD5PseudoRandom oMD5PseudoRandom = nullptr;
 
 public:
 	bool* bSendPacket;
