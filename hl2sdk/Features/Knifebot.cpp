@@ -57,9 +57,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	if (m_bFastMelee && team == 2 && (cmd->buttons & IN_RELOAD))
 	{
 		RunFastMelee(cmd, weaponId, nextAttack, serverTime);
-
-		if(!weapon->IsReloading())
-			return;
+		return;
 	}
 
 	if (cmd->buttons & IN_ATTACK)
