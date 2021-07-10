@@ -49,6 +49,8 @@ public:
 
 	Vector GetSeePosition(CBasePlayer* player, const Vector& eyePosition, const QAngle& eyeAngles);
 
+	void UpdateConVar();
+
 private:
 	bool m_bBox = false;
 	bool m_bName = false;
@@ -71,6 +73,11 @@ private:
 	bool m_bCleanVision = true;
 	bool m_bCleanGhost = true;
 	bool m_bNoFog = false;
+	bool m_bNoMud = false;
+	bool m_bNoBlood = false;
+	bool m_bFullBright = false;
+	bool m_bFullFlashlight = false;
+	bool m_bNoFlash = false;
 
 	bool m_bFovChanger = false;
 	float m_fFov = 90.0f;

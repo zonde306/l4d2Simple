@@ -319,8 +319,25 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No Fog"), &m_bNoFog);
 	IMGUI_TIPS("去除灵魂特感蓝色屏幕。");
+	
+	ImGui::Checkbox(XorStr("No Mud"), &m_bNoMud);
+	IMGUI_TIPS("去除泥浆屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("No Blood"), &m_bNoBlood);
+	IMGUI_TIPS("去除血腥屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("No Explosion Flash"), &m_bNoFlash);
+	IMGUI_TIPS("去除爆炸闪光屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("Full Bright"), &m_bFullBright);
+	IMGUI_TIPS("地图高亮。");
+	
+	ImGui::Checkbox(XorStr("Full Flashlight"), &m_bFullFlashlight);
+	IMGUI_TIPS("手电全屏。");
 
 	ImGui::TreePop();
+
+	UpdateConVar();
 }
 
 void CVisualPlayer::OnConfigLoading(const config_type & data)
@@ -348,6 +365,11 @@ void CVisualPlayer::OnConfigLoading(const config_type & data)
 	m_fViewFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
 	m_bFovChanger = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
 	m_bFieldOfView = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	m_bNoMud = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_mud"), m_bNoMud);
+	m_bNoBlood = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_blood"), m_bNoBlood);
+	m_bFullBright = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fullbright"), m_bFullBright);
+	m_bFullFlashlight = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fullflashlight"), m_bFullFlashlight);
+	m_bNoFlash = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_flash"), m_bNoFlash);
 }
 
 void CVisualPlayer::OnConfigSave(config_type & data)
@@ -375,6 +397,11 @@ void CVisualPlayer::OnConfigSave(config_type & data)
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
 	g_pConfig->SetValue(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_mud"), m_bNoMud);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_blood"), m_bNoBlood);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fullbright"), m_bFullBright);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fullflashlight"), m_bFullFlashlight);
+	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_flash"), m_bNoFlash);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -409,9 +436,13 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 
 bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & textureGroupName)
 {
-	if ((m_bNoVomit && materialName.find("vomitscreensplash") != std::string::npos) ||
-		(m_bCleanVision && materialName.find("flashlight001_infected") != std::string::npos) ||
-		(m_bCleanGhost && materialName.find("flashlight001_ghost") != std::string::npos))
+	if ((m_bNoVomit && materialName.find(XorStr("vomitscreensplash")) != std::string::npos) ||
+		(m_bCleanVision && materialName.find(XorStr("flashlight001_infected")) != std::string::npos) ||
+		(m_bCleanGhost && materialName.find(XorStr("flashlight001_ghost")) != std::string::npos) ||
+		(m_bNoMud && materialName.find(XorStr("droplets")) != std::string::npos) ||
+		(m_bNoBlood && materialName.find(XorStr("bloodsplatter")) != std::string::npos) ||
+		(m_bNoFlash && materialName.find(XorStr("particle_flare_001")) != std::string::npos) ||
+		(m_bNoFlash && materialName.find(XorStr("particle_flare_004b_mod")) != std::string::npos))
 	{
 		// 替换成透明的材质
 		materialName = XorStr("dev/clearalpha");
@@ -699,6 +730,38 @@ Vector CVisualPlayer::GetSeePosition(CBasePlayer * player, const Vector & eyePos
 	}
 
 	return trace.end;
+}
+
+void CVisualPlayer::UpdateConVar()
+{
+	static bool bright = false, flashlight = false;
+
+	if (m_bFullBright != bright)
+	{
+		bright = m_bFullBright;
+		static ConVar* mat_fullbright = g_pInterface->Cvar->FindVar(XorStr("mat_fullbright"));
+		mat_fullbright->SetValue(bright);
+	}
+	if (m_bFullFlashlight != flashlight)
+	{
+		flashlight = m_bFullFlashlight;
+		static ConVar* r_flashlightfov = g_pInterface->Cvar->FindVar(XorStr("r_flashlightfov"));
+		static ConVar* r_flashlightconstant = g_pInterface->Cvar->FindVar(XorStr("r_flashlightconstant"));
+		static ConVar* cl_max_shadow_renderable_dist = g_pInterface->Cvar->FindVar(XorStr("cl_max_shadow_renderable_dist"));
+
+		if (flashlight)
+		{
+			r_flashlightfov->SetValue(120);
+			r_flashlightconstant->SetValue(1);
+			cl_max_shadow_renderable_dist->SetValue(0);
+		}
+		else
+		{
+			r_flashlightfov->SetValue(53);
+			r_flashlightconstant->SetValue(0);
+			cl_max_shadow_renderable_dist->SetValue(3000);
+		}
+	}
 }
 
 std::string CVisualPlayer::DrawName(int index, bool separator)

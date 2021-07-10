@@ -44,6 +44,9 @@ CAntiAntiCheat::CAntiAntiCheat() : CBaseFeatures::CBaseFeatures()
 		{ XorStr("r_modelwireframedecal"), "0" },
 		{ XorStr("sv_pure"), "2" },
 		{ XorStr("sv_consistency"), "1" },
+		{ XorStr("r_flashlightfov"), "53" },
+		{ XorStr("r_flashlightconstant"), "0" },
+		{ XorStr("cl_max_shadow_renderable_dist"), "3000" },
 	};
 
 	m_BlockSetting = {
