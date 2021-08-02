@@ -447,30 +447,30 @@ void CAntiAntiCheat::OnGameEvent(IGameEvent* event, bool dontBroadcast)
 		m_pEventListener->FireGameEvent(event);
 }
 
-void CAntiAntiCheat::OnConfigLoading(const config_type & data)
+void CAntiAntiCheat::OnConfigLoading(CProfile& cfg)
 {
-	if (auto values = g_pConfig->GetMainKey(XorStr("AntiQuery")); !values.empty())
+	if (auto values = cfg.GetMainKey(XorStr("AntiQuery")); !values.empty())
 	{
 		m_BlockQuery.clear();
 		for (const auto& it : values)
 			m_BlockQuery.emplace_back(it.first, it.second.m_sValue);
 	}
 
-	if (auto values = g_pConfig->GetMainKey(XorStr("AntiSetting")); !values.empty())
+	if (auto values = cfg.GetMainKey(XorStr("AntiSetting")); !values.empty())
 	{
 		m_BlockSetting.clear();
 		for (const auto& it : values)
 			m_BlockSetting.emplace_back(it.first, it.second.m_sValue);
 	}
 
-	if (auto values = g_pConfig->GetMainKey(XorStr("AntiExecute")); !values.empty())
+	if (auto values = cfg.GetMainKey(XorStr("AntiExecute")); !values.empty())
 	{
 		m_BlockExecute.clear();
 		for (const auto& it : values)
 			m_BlockExecute.emplace_back(it.first);
 	}
 
-	if (auto values = g_pConfig->GetMainKey(XorStr("AntiUserMsg")); !values.empty())
+	if (auto values = cfg.GetMainKey(XorStr("AntiUserMsg")); !values.empty())
 	{
 		m_BlockUserMessage.clear();
 		for (const auto& it : values)
@@ -478,48 +478,48 @@ void CAntiAntiCheat::OnConfigLoading(const config_type & data)
 	}
 
 	const std::string mainKeys = XorStr("AntiAntiCheat");
-	m_bBlockCRCCheck = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
-	m_bBlockNullSound = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
-	m_bNoHeartbeat = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
-	m_bPatchThirdPerson = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
-	m_bLogConVarInfo = g_pConfig->GetBoolean(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
+	m_bBlockCRCCheck = cfg.GetBoolean(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	m_bBlockNullSound = cfg.GetBoolean(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
+	m_bNoHeartbeat = cfg.GetBoolean(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
+	m_bPatchThirdPerson = cfg.GetBoolean(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
+	m_bLogConVarInfo = cfg.GetBoolean(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
 
 	if(m_bPatchThirdPerson)
 		UpdatePatchThirdPerson(true);
 }
 
-void CAntiAntiCheat::OnConfigSave(config_type & data)
+void CAntiAntiCheat::OnConfigSave(CProfile& cfg)
 {
 	std::string mainKeys = XorStr("AntiQuery");
 	for (const auto& it : m_BlockQuery)
 	{
-		g_pConfig->SetValue(mainKeys, it.first, it.second);
+		cfg.SetValue(mainKeys, it.first, it.second);
 	}
 
 	mainKeys = XorStr("AntiSetting");
 	for (const auto& it : m_BlockSetting)
 	{
-		g_pConfig->SetValue(mainKeys, it.first, it.second);
+		cfg.SetValue(mainKeys, it.first, it.second);
 	}
 
 	mainKeys = XorStr("AntiExecute");
 	for (const auto& it : m_BlockExecute)
 	{
-		g_pConfig->SetValue(mainKeys, it, "");
+		cfg.SetValue(mainKeys, it, "");
 	}
 
 	mainKeys = XorStr("AntiUserMsg");
 	for (const auto& it : m_BlockUserMessage)
 	{
-		g_pConfig->SetValue(mainKeys, std::to_string(it), "");
+		cfg.SetValue(mainKeys, std::to_string(it), "");
 	}
 
 	mainKeys = XorStr("AntiAntiCheat");
-	g_pConfig->SetValue(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
-	g_pConfig->SetValue(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
-	g_pConfig->SetValue(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
-	g_pConfig->SetValue(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
-	g_pConfig->SetValue(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
+	cfg.SetValue(mainKeys, XorStr("anticheat_crc_bypass"), m_bBlockCRCCheck);
+	cfg.SetValue(mainKeys, XorStr("anticheat_nullsnd_bypass"), m_bBlockNullSound);
+	cfg.SetValue(mainKeys, XorStr("anticheat_no_heartbeat"), m_bNoHeartbeat);
+	cfg.SetValue(mainKeys, XorStr("anticheat_patch_3rdperson"), m_bPatchThirdPerson);
+	cfg.SetValue(mainKeys, XorStr("anticheat_log_cvar"), m_bLogConVarInfo);
 }
 
 void CAntiAntiCheat::OnConnect()

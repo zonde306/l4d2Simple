@@ -81,8 +81,8 @@ namespace Utils
 
 	// 字符串处理
 	std::vector<std::string> StringSplit(std::string_view s, std::string_view delim = TRIM_INVALID_CHAR);
-	std::string StringTrim(const std::string& s, const std::string& delim = TRIM_INVALID_CHAR);
-	size_t StringFind(const std::string& s, const std::string& p, bool caseSensitive = true);
+	std::string StringTrim(std::string_view s, std::string_view delim = TRIM_INVALID_CHAR);
+	size_t StringFind(std::string_view s, std::string_view p, bool caseSensitive = true);
 	bool StringEqual(const std::string& s, std::string p, bool caseSensitive = true);
 	std::string& StringReplace(std::string& s, const std::string& p, const std::string& newText);
 

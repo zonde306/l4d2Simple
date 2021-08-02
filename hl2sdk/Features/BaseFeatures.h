@@ -4,6 +4,7 @@
 #include "../Structs/baseplayer.h"
 #include "../Structs/baseweapon.h"
 #include "../../l4d2Simple2/drawing.h"
+#include "../../l4d2Simple2/config.h"
 #include <imgui.h>
 
 // 接口类
@@ -53,12 +54,16 @@ public:
 	virtual bool OnSendNetMsg(INetMessage&, bool&, bool&);
 
 	// 配置文件
-	using config_type = std::map<std::string, std::string>;
-	virtual void OnConfigLoading(const config_type&);
-	virtual void OnConfigSave(config_type&);
+	virtual void OnConfigLoading(CProfile&);
+	virtual void OnConfigSave(CProfile&);
+	virtual void OnMenuOpened();
+	virtual void OnMenuClosed();
 
 private:
 	size_t m_iHookIndex;
+
+protected:
+	bool m_bMenuOpen = false;
 };
 
 #define IMGUI_TIPS(_text)	if (ImGui::IsItemHovered()) ImGui::SetTooltip(XorStr(u8##_text))

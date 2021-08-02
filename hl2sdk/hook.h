@@ -95,6 +95,8 @@ public:
 	void InitFeature();
 	void LoadConfig();
 	void SaveConfig();
+	void OnMenuOpened();
+	void OnMenuClosed();
 
 	ConVar* GetDummyConVar(const std::string& cvar, const std::optional<std::string>& value = {});
 	bool RestoreDummyConVar(const std::string& cvar);

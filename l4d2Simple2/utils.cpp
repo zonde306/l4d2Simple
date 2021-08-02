@@ -558,12 +558,12 @@ std::vector<std::string> Utils::StringSplit(std::string_view s, std::string_view
 	return result;
 }
 
-std::string Utils::StringTrim(const std::string & s, const std::string & delim)
+std::string Utils::StringTrim(std::string_view s, std::string_view delim)
 {
 	if (s.empty())
-		return s;
+		return "";
 
-	std::string result = s;
+	std::string result(s.data(), s.size());
 	for (char c : delim)
 	{
 		result.erase(0, result.find_first_not_of(c));
@@ -577,7 +577,7 @@ std::string Utils::StringTrim(const std::string & s, const std::string & delim)
 // s = 被搜索的字符串 (source)
 // p = 用来搜索的字符串 (pattern)
 // caseSensitive = 是否检查大小写
-size_t Utils::StringFind(const std::string & s, const std::string & p, bool caseSensitive)
+size_t Utils::StringFind(std::string_view s, std::string_view p, bool caseSensitive)
 {
 	// 比较字符
 	auto equal = [&caseSensitive](char s, char p) -> bool

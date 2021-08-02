@@ -15,8 +15,8 @@ public:
 	virtual void OnOverrideView(CViewSetup* setup) override;
 	virtual bool OnGetViewModelFOV(float& fov) override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 
 	bool HasTargetVisible(CBasePlayer* entity);
 
@@ -78,6 +78,7 @@ private:
 	bool m_bFullBright = false;
 	bool m_bFullFlashlight = false;
 	bool m_bNoFlash = false;
+	bool m_bNightVision = false;
 
 	bool m_bFovChanger = false;
 	float m_fFov = 90.0f;

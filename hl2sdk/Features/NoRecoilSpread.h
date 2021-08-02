@@ -14,8 +14,8 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode);
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 	virtual void OnConnect() override;
 	virtual void OnDisconnect() override;
 	virtual void OnGameEventClient(IGameEvent* event) override;
@@ -46,6 +46,8 @@ private:
 	bool m_bRealAngles = false;
 	bool m_bFakeAngleBug = false;
 	bool m_bFakeLag = false;
+	float m_fSpreadFactor = 1.0f;
+	float m_fRecoilFactor = 1.0f;
 
 private:
 	bool m_bSilentFire = false;

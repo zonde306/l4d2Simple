@@ -38,7 +38,7 @@ CTriggerBot::~CTriggerBot()
 void CTriggerBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
 	// 防止救人时被打断
-	if (!m_bActive || (cmd->buttons & IN_USE))
+	if (!m_bActive || (cmd->buttons & IN_USE) || m_bMenuOpen)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -254,58 +254,58 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CTriggerBot::OnConfigLoading(const config_type & data)
+void CTriggerBot::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Triggerbots");
 	
-	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_enable"), m_bActive);
-	m_bCrosshairs = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
-	m_bBlockFriendlyFire = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
-	m_bNonWitch = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
-	m_bTraceHead = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
-	m_bTraceSilent = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
-	m_fTraceFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
-	m_bFollowEnemy = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
-	m_fFollowFov = g_pConfig->GetFloat(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
-	m_bTraceVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
-	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_velext"), m_bVelExt);
-	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
-	m_bTraceForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
-	m_bAimPosition = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
-	m_bTraceVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
-	m_bFollowVisible = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
-	m_bTraceWithoutMagnum = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
-	m_bTraceShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
-	m_bPreventTooFast = g_pConfig->GetFloat(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
-	m_fDiffOfChange = g_pConfig->GetFloat(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
-	m_iPreventTicks = g_pConfig->GetInteger(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
+	m_bActive = cfg.GetBoolean(mainKeys, XorStr("trigger_enable"), m_bActive);
+	m_bCrosshairs = cfg.GetBoolean(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
+	m_bBlockFriendlyFire = cfg.GetBoolean(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
+	m_bNonWitch = cfg.GetBoolean(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
+	m_bTraceHead = cfg.GetBoolean(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
+	m_bTraceSilent = cfg.GetBoolean(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
+	m_fTraceFov = cfg.GetFloat(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
+	m_bFollowEnemy = cfg.GetBoolean(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
+	m_fFollowFov = cfg.GetFloat(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
+	m_bTraceVelExt = cfg.GetBoolean(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
+	m_bVelExt = cfg.GetBoolean(mainKeys, XorStr("trigger_velext"), m_bVelExt);
+	m_bForwardtrack = cfg.GetBoolean(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
+	m_bTraceForwardtrack = cfg.GetBoolean(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
+	m_bAimPosition = cfg.GetBoolean(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
+	m_bTraceVisible = cfg.GetBoolean(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
+	m_bFollowVisible = cfg.GetBoolean(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
+	m_bTraceWithoutMagnum = cfg.GetBoolean(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
+	m_bTraceShotgunChest = cfg.GetBoolean(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	m_bPreventTooFast = cfg.GetFloat(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	m_fDiffOfChange = cfg.GetFloat(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	m_iPreventTicks = cfg.GetInteger(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
-void CTriggerBot::OnConfigSave(config_type & data)
+void CTriggerBot::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Triggerbots");
 
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_enable"), m_bActive);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_velext"), m_bVelExt);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
-	g_pConfig->SetValue(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
+	cfg.SetValue(mainKeys, XorStr("trigger_enable"), m_bActive);
+	cfg.SetValue(mainKeys, XorStr("trigger_crosshair"), m_bCrosshairs);
+	cfg.SetValue(mainKeys, XorStr("trigger_non_friendly"), m_bBlockFriendlyFire);
+	cfg.SetValue(mainKeys, XorStr("trigger_non_witch"), m_bNonWitch);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_head"), m_bTraceHead);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_silent"), m_bTraceSilent);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_fov"), m_fTraceFov);
+	cfg.SetValue(mainKeys, XorStr("trigger_follow"), m_bFollowEnemy);
+	cfg.SetValue(mainKeys, XorStr("trigger_follow_fov"), m_fFollowFov);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_velext"), m_bTraceVelExt);
+	cfg.SetValue(mainKeys, XorStr("trigger_velext"), m_bVelExt);
+	cfg.SetValue(mainKeys, XorStr("trigger_forwardtrack"), m_bForwardtrack);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_forwardtrack"), m_bTraceForwardtrack);
+	cfg.SetValue(mainKeys, XorStr("trigger_aimpos"), m_bAimPosition);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_visible"), m_bTraceVisible);
+	cfg.SetValue(mainKeys, XorStr("trigger_follow_visible"), m_bFollowVisible);
+	cfg.SetValue(mainKeys, XorStr("trigger_track_magnum"), m_bTraceWithoutMagnum);
+	cfg.SetValue(mainKeys, XorStr("trigger_shotgun_chest"), m_bTraceShotgunChest);
+	cfg.SetValue(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
+	cfg.SetValue(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
+	cfg.SetValue(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)

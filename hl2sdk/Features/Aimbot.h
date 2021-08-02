@@ -34,8 +34,8 @@ public:
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile&) override;
+	virtual void OnConfigSave(CProfile&) override;
 
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles, Vector* aimPos = nullptr);
 	CBasePlayer* GetAimTarget(CBasePlayer* player, const QAngle& viewAngles);

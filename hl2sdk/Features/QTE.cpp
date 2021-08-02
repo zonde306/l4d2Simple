@@ -31,7 +31,7 @@ CQuickTriggerEvent::~CQuickTriggerEvent()
 
 void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 {
-	if (!m_bActive)
+	if (!m_bActive || m_bMenuOpen)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -400,110 +400,110 @@ void CQuickTriggerEvent::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CQuickTriggerEvent::OnConfigLoading(const config_type & data)
+void CQuickTriggerEvent::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("QuickTriggerEvent");
 
-	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("qte_enable"), m_bActive);
-	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_velext"), m_bVelExt);
-	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_lagext"), m_bLagExt);
-	m_bLagExt = g_pConfig->GetBoolean(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
-	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_silent"), m_bSilent);
-	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
-	m_bOnlyVisible = g_pConfig->GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
-	m_bCheckFov = g_pConfig->GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
-	m_bMeleeAsShove = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
-	m_iShoveTicks = g_pConfig->GetInteger(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
-	m_bMeleeUnslienced = g_pConfig->GetBoolean(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
-	m_fMeleeUnsliencedFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
+	m_bActive = cfg.GetBoolean(mainKeys, XorStr("qte_enable"), m_bActive);
+	m_bVelExt = cfg.GetBoolean(mainKeys, XorStr("qte_velext"), m_bVelExt);
+	m_bLagExt = cfg.GetBoolean(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	m_bLagExt = cfg.GetBoolean(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
+	m_bSilent = cfg.GetBoolean(mainKeys, XorStr("qte_silent"), m_bSilent);
+	m_bPerfectSilent = cfg.GetBoolean(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
+	m_bOnlyVisible = cfg.GetBoolean(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
+	m_bCheckFov = cfg.GetBoolean(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	m_bMeleeAsShove = cfg.GetBoolean(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
+	m_iShoveTicks = cfg.GetInteger(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	m_bMeleeUnslienced = cfg.GetBoolean(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	m_fMeleeUnsliencedFov = cfg.GetFloat(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
 
-	m_bSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
-	m_bHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
-	m_bJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey"), m_bJockey);
-	m_bCharger = g_pConfig->GetBoolean(mainKeys, XorStr("qte_charger"), m_bCharger);
-	m_bWitch = g_pConfig->GetBoolean(mainKeys, XorStr("qte_witch"), m_bWitch);
-	m_bBoomer = g_pConfig->GetBoolean(mainKeys, XorStr("qte_boomer"), m_bBoomer);
-	m_bRock = g_pConfig->GetBoolean(mainKeys, XorStr("qte_rock"), m_bRock);
+	m_bSmoker = cfg.GetBoolean(mainKeys, XorStr("qte_smoker"), m_bSmoker);
+	m_bHunter = cfg.GetBoolean(mainKeys, XorStr("qte_hunter"), m_bHunter);
+	m_bJockey = cfg.GetBoolean(mainKeys, XorStr("qte_jockey"), m_bJockey);
+	m_bCharger = cfg.GetBoolean(mainKeys, XorStr("qte_charger"), m_bCharger);
+	m_bWitch = cfg.GetBoolean(mainKeys, XorStr("qte_witch"), m_bWitch);
+	m_bBoomer = cfg.GetBoolean(mainKeys, XorStr("qte_boomer"), m_bBoomer);
+	m_bRock = cfg.GetBoolean(mainKeys, XorStr("qte_rock"), m_bRock);
 
-	m_fHunterDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
-	m_fJockeyDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
-	m_fChargerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
-	m_fWitchDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
-	m_fRockDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
-	m_fSmokerDistance = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
+	m_fHunterDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
+	m_fJockeyDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
+	m_fChargerDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
+	m_fWitchDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
+	m_fRockDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+	m_fSmokerDistance = cfg.GetFloat(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
 
-	m_fShoveDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
-	m_fMeleeDstExtra = g_pConfig->GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
+	m_fShoveDstExtra = cfg.GetFloat(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
+	m_fMeleeDstExtra = cfg.GetFloat(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
 
-	m_fHunterFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
-	m_fJockeyFov = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
-	m_fJockeyScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
-	m_fMeleeScale = g_pConfig->GetFloat(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
+	m_fHunterFov = cfg.GetFloat(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	m_fJockeyFov = cfg.GetFloat(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	m_fJockeyScale = cfg.GetFloat(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	m_fMeleeScale = cfg.GetFloat(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
 
-	m_bCanShotSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
-	m_bCanShotHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
-	m_bCanShotJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
-	m_bCanShotCharger = g_pConfig->GetBoolean(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
-	m_bCanShotRock = g_pConfig->GetBoolean(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
-	m_bCanMeleeSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
-	m_bCanMeleeHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
-	m_bCanMeleeJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
-	m_bCanMeleeCharger = g_pConfig->GetBoolean(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
-	m_bCanMeleeRock = g_pConfig->GetBoolean(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
-	m_bCanShoveHunter = g_pConfig->GetBoolean(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
-	m_bCanShoveJockey = g_pConfig->GetBoolean(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
-	m_bCanShoveSmoker = g_pConfig->GetBoolean(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
+	m_bCanShotSmoker = cfg.GetBoolean(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
+	m_bCanShotHunter = cfg.GetBoolean(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
+	m_bCanShotJockey = cfg.GetBoolean(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
+	m_bCanShotCharger = cfg.GetBoolean(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
+	m_bCanShotRock = cfg.GetBoolean(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
+	m_bCanMeleeSmoker = cfg.GetBoolean(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
+	m_bCanMeleeHunter = cfg.GetBoolean(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
+	m_bCanMeleeJockey = cfg.GetBoolean(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
+	m_bCanMeleeCharger = cfg.GetBoolean(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
+	m_bCanMeleeRock = cfg.GetBoolean(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
+	m_bCanShoveHunter = cfg.GetBoolean(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
+	m_bCanShoveJockey = cfg.GetBoolean(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
+	m_bCanShoveSmoker = cfg.GetBoolean(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
 }
 
-void CQuickTriggerEvent::OnConfigSave(config_type & data)
+void CQuickTriggerEvent::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("QuickTriggerEvent");
 
-	g_pConfig->SetValue(mainKeys, XorStr("qte_enable"), m_bActive);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_velext"), m_bVelExt);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_lagext"), m_bLagExt);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_silent"), m_bSilent);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker"), m_bSmoker);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter"), m_bHunter);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey"), m_bJockey);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_charger"), m_bCharger);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_witch"), m_bWitch);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_boomer"), m_bBoomer);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_rock"), m_bRock);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
+	cfg.SetValue(mainKeys, XorStr("qte_enable"), m_bActive);
+	cfg.SetValue(mainKeys, XorStr("qte_velext"), m_bVelExt);
+	cfg.SetValue(mainKeys, XorStr("qte_lagext"), m_bLagExt);
+	cfg.SetValue(mainKeys, XorStr("qte_swingext"), m_bSwingExt);
+	cfg.SetValue(mainKeys, XorStr("qte_silent"), m_bSilent);
+	cfg.SetValue(mainKeys, XorStr("qte_psilent"), m_bPerfectSilent);
+	cfg.SetValue(mainKeys, XorStr("qte_smoker"), m_bSmoker);
+	cfg.SetValue(mainKeys, XorStr("qte_hunter"), m_bHunter);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey"), m_bJockey);
+	cfg.SetValue(mainKeys, XorStr("qte_charger"), m_bCharger);
+	cfg.SetValue(mainKeys, XorStr("qte_witch"), m_bWitch);
+	cfg.SetValue(mainKeys, XorStr("qte_boomer"), m_bBoomer);
+	cfg.SetValue(mainKeys, XorStr("qte_rock"), m_bRock);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_hunter"), m_fHunterDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_jockey"), m_fJockeyDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_charger"), m_fChargerDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_smoker"), m_fSmokerDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_witch"), m_fWitchDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_rock"), m_fRockDistance);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_shove"), m_fShoveDstExtra);
+	cfg.SetValue(mainKeys, XorStr("qte_dst_melee"), m_fMeleeDstExtra);
+	cfg.SetValue(mainKeys, XorStr("qte_visible"), m_bOnlyVisible);
+	cfg.SetValue(mainKeys, XorStr("qte_check_fov"), m_bCheckFov);
+	cfg.SetValue(mainKeys, XorStr("qte_melee_tick"), m_bMeleeAsShove);
+	cfg.SetValue(mainKeys, XorStr("qte_shove_ticks"), m_iShoveTicks);
+	cfg.SetValue(mainKeys, XorStr("qte_hunter_fov"), m_fHunterFov);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey_fov"), m_fJockeyFov);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey_scale"), m_fJockeyScale);
+	cfg.SetValue(mainKeys, XorStr("qte_melee_scale"), m_fMeleeScale);
+	cfg.SetValue(mainKeys, XorStr("qte_melee_unslienced"), m_bMeleeUnslienced);
+	cfg.SetValue(mainKeys, XorStr("qte_melee_unslienced_fov"), m_fMeleeUnsliencedFov);
 
-	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
-	g_pConfig->SetValue(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
+	cfg.SetValue(mainKeys, XorStr("qte_smoker_selfclear"), m_bCanShotSmoker);
+	cfg.SetValue(mainKeys, XorStr("qte_hunter_skeet"), m_bCanShotHunter);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey_skeet"), m_bCanShotJockey);
+	cfg.SetValue(mainKeys, XorStr("qte_charger_shot"), m_bCanShotCharger);
+	cfg.SetValue(mainKeys, XorStr("qte_rock_skeet"), m_bCanShotRock);
+	cfg.SetValue(mainKeys, XorStr("qte_smoker_tongue_cut"), m_bCanMeleeSmoker);
+	cfg.SetValue(mainKeys, XorStr("qte_hunter_skeet_cut"), m_bCanMeleeHunter);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey_skeet_cut"), m_bCanMeleeJockey);
+	cfg.SetValue(mainKeys, XorStr("qte_charger_level"), m_bCanMeleeCharger);
+	cfg.SetValue(mainKeys, XorStr("qte_rock_skeet_cut"), m_bCanMeleeRock);
+	cfg.SetValue(mainKeys, XorStr("qte_hunter_deadstop"), m_bCanShoveHunter);
+	cfg.SetValue(mainKeys, XorStr("qte_jockey_deadstop"), m_bCanShoveJockey);
+	cfg.SetValue(mainKeys, XorStr("qte_smoker_selfclear_shove"), m_bCanShoveSmoker);
 }
 
 bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& channel, float& volume, SoundLevel_t& level,

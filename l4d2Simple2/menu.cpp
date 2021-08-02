@@ -27,6 +27,11 @@ void _OnMenuStateChanged(bool visible)
 	{
 		g_pClientHook->SaveConfig();
 	}
+
+	if (visible)
+		g_pClientHook->OnMenuOpened();
+	else
+		g_pClientHook->OnMenuClosed();
 }
 
 void CBaseMenu::Init()

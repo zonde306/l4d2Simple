@@ -3,22 +3,29 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <iostream>
 
 class CProfile
 {
 public:
 	CProfile();
 	CProfile(const std::string& path);
+	CProfile(const CProfile& other);
 	~CProfile();
+
+	CProfile& operator=(const CProfile& other);
 
 	// 配置文件
 	bool OpenFile(const std::string& path, bool write = false);
 	bool CloseFile();
 	bool SaveToFile();
 	bool LoadFromFile();
+	bool Save(std::ostream& stream) const;
+	bool Load(std::istream& stream);
+	void Clear();
 
 	// 寻找主键
-	bool HasMainKey(const std::string& mainKeys);
+	bool HasMainKey(const std::string& mainKeys) const;
 	
 	// 寻找键
 	bool HasKey(const std::string& mainKeys, const std::string& keys);

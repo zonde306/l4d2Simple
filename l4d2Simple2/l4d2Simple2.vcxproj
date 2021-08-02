@@ -150,6 +150,7 @@
     <ClCompile Include="..\hl2sdk\Features\SpeedHacker.cpp" />
     <ClCompile Include="..\hl2sdk\Features\TriggerBot.cpp" />
     <ClCompile Include="..\hl2sdk\Features\Visual.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\WeaponConfig.cpp" />
     <ClCompile Include="..\hl2sdk\hook.cpp" />
     <ClCompile Include="..\hl2sdk\interfaces.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h" />
@@ -252,6 +253,7 @@
     <ClInclude Include="..\hl2sdk\Features\SpeedHacker.h" />
     <ClInclude Include="..\hl2sdk\Features\TriggerBot.h" />
     <ClInclude Include="..\hl2sdk\Features\Visual.h" />
+    <ClInclude Include="..\hl2sdk\Features\WeaponConfig.h" />
     <ClInclude Include="..\hl2sdk\hook.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
     <ClInclude Include="..\hl2sdk\interfaces.h" />

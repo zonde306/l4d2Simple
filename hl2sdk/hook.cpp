@@ -16,6 +16,7 @@
 #include "./Features/HackvsHack.h"
 #include "./Features/EventLogger.h"
 #include "./Features/QTE.h"
+#include "./Features/WeaponConfig.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -295,94 +296,37 @@ void CClientHook::InitFeature()
 		g_pViewManager = new CViewManager();
 	if (!g_pSpeedHacker)
 		g_pSpeedHacker = new CSpeedHacker();
+	if (!g_pWeaponConfig)
+		g_pWeaponConfig = new CWeaponConfig();
 }
 
 void CClientHook::LoadConfig()
 {
-	/*
-	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::in|std::ios::beg);
-	if (file.bad() || !file.is_open())
-		return;
-
-	std::string line;
-	char buffer[255];
-	bool isInConfig = false;
-	std::string key, value;
-	CBaseFeatures::config_type config;
-
-	while (file.good() && !file.eof())
-	{
-		file.getline(buffer, 255);
-		if (buffer[0] == '\0' || buffer[0] == ';')
-			continue;
-
-		if (buffer[0] == '/' && buffer[1] == '/')
-			continue;
-
-		line = Utils::StringTrim(buffer, XorStr(" \r\n\t"));
-
-		if (line[0] == '[')
-		{
-			if (!isInConfig && line == XorStr("[Config]"))
-				isInConfig = true;
-
-			continue;
-		}
-
-		size_t equal = line.find('=');
-		if (equal == std::string::npos)
-			continue;
-
-		key = Utils::StringTrim(line.substr(0, equal), XorStr(" \r\n\t\""));
-		value = Utils::StringTrim(line.substr(equal + 1), XorStr(" \r\n\t\""));
-		if (key.empty() || value.empty())
-			continue;
-
-		config.emplace(key, value);
-	}
-
-	file.close();
-	if (config.empty())
-		return;
-	*/
-
-	CBaseFeatures::config_type config;
-	const std::string mainKeys = XorStr("Config");
-	for (auto it = g_pConfig->begin(mainKeys); it != g_pConfig->end(mainKeys); ++it)
-		config.emplace(it->first, it->second.m_sValue);
-
 	for (auto inst : g_pClientHook->_GameHook)
 		if(inst)
-			inst->OnConfigLoading(config);
+			inst->OnConfigLoading(*g_pConfig.get());
 }
 
 void CClientHook::SaveConfig()
 {
-	CBaseFeatures::config_type config;
 	for (auto inst : g_pClientHook->_GameHook)
 		if (inst)
-			inst->OnConfigSave(config);
-
-	const std::string mainKeys = XorStr("Config");
-	for (const auto& it : config)
-		g_pConfig->SetValue(mainKeys, it.first, it.second);
-
+			inst->OnConfigSave(*g_pConfig.get());
 	g_pConfig->SaveToFile();
-	/*
-	if (config.empty())
-		return;
+}
 
-	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::out|std::ios::beg|std::ios::trunc|std::ios::in);
-	if (file.bad() || !file.is_open())
-		return;
+void CClientHook::OnMenuOpened()
+{
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnMenuOpened();
+}
 
-	file << XorStr("[Config]") << std::endl;
-	
-	for (const auto& option : config)
-		file << option.first << " = " << option.second << std::endl;
-
-	file.close();
-	*/
+void CClientHook::OnMenuClosed()
+{
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnMenuClosed();
 }
 
 ConVar * CClientHook::GetDummyConVar(const std::string & cvar, const std::optional<std::string>& value)

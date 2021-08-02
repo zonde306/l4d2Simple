@@ -30,7 +30,7 @@ CBunnyHop::~CBunnyHop()
 
 void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 {
-	if (!m_bAcitve)
+	if (!m_bAcitve || m_bMenuOpen)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -204,28 +204,28 @@ void CBunnyHop::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CBunnyHop::OnConfigLoading(const config_type & data)
+void CBunnyHop::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("BunnyHop");
 
-	m_bAcitve = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
-	m_iBhopMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
-	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
-	m_bEdgeJump = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
-	m_fEdgeJumpSpeed = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
-	m_bNoDuckCooldown = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	m_bAcitve = cfg.GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	m_iBhopMode = static_cast<int>(cfg.GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
+	m_iStrafeMode = static_cast<int>(cfg.GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
+	m_bEdgeJump = cfg.GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	m_fEdgeJumpSpeed = cfg.GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	m_bNoDuckCooldown = cfg.GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
 }
 
-void CBunnyHop::OnConfigSave(config_type & data)
+void CBunnyHop::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("BunnyHop");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)

@@ -15,12 +15,25 @@ CProfile::CProfile(const std::string & path)
 	LoadFromFile();
 }
 
+CProfile::CProfile(const CProfile& other)
+{
+	m_sFileName = other.m_sFileName;
+	m_KeyValue = other.m_KeyValue;
+}
+
 CProfile::~CProfile()
 {
 	if (m_File.is_open())
 		CloseFile();
 	
 	m_KeyValue.clear();
+}
+
+CProfile& CProfile::operator=(const CProfile& other)
+{
+	// m_sFileName = other.m_sFileName;
+	m_KeyValue = other.m_KeyValue;
+	return *this;
 }
 
 bool CProfile::OpenFile(const std::string & path, bool write)
@@ -68,31 +81,10 @@ bool CProfile::SaveToFile()
 	}
 
 	m_File.seekp(std::ios::beg);
-	for (const auto& mk : m_KeyValue)
-	{
-		if (mk.first.empty() || mk.second.empty())
-			continue;
-		
-		m_File << '[' << mk.first << ']' << std::endl;
-
-		for (const auto& kv : mk.second)
-		{
-			if (kv.first.empty())
-				continue;
-			
-			if(kv.second.m_sValue.empty())
-				m_File << kv.first << std::endl;
-			else if(kv.first.find('=') != std::string::npos || kv.second.m_sValue.find('=') != std::string::npos)
-				m_File << '\"' << kv.first << "\" = \"" << kv.second.m_sValue << '\"' << std::endl;
-			else
-				m_File << kv.first << " = " << kv.second.m_sValue << std::endl;
-		}
-
-		m_File << std::endl;
-	}
-
+	
+	bool success = Save(m_File);
 	m_File.flush();
-	return true;
+	return success;
 }
 
 bool CProfile::LoadFromFile()
@@ -106,15 +98,48 @@ bool CProfile::LoadFromFile()
 	m_KeyValue.clear();
 	m_File.seekg(std::ios::beg);
 
+	return Load(m_File);
+}
+
+bool CProfile::Save(std::ostream& stream) const
+{
+	for (const auto& mk : m_KeyValue)
+	{
+		if (mk.first.empty() || mk.second.empty())
+			continue;
+
+		stream << '[' << mk.first << ']' << std::endl;
+
+		for (const auto& kv : mk.second)
+		{
+			if (kv.first.empty())
+				continue;
+
+			if (kv.second.m_sValue.empty())
+				stream << kv.first << std::endl;
+			else if (kv.first.find('=') != std::string::npos || kv.second.m_sValue.find('=') != std::string::npos)
+				stream << '\"' << kv.first << "\" = \"" << kv.second.m_sValue << '\"' << std::endl;
+			else
+				stream << kv.first << " = " << kv.second.m_sValue << std::endl;
+		}
+
+		stream << std::endl;
+	}
+
+	return true;
+}
+
+bool CProfile::Load(std::istream& stream)
+{
 	char buffer[255];
 	std::string line, key, value, mainKey;
 
 	// 块注释
 	std::regex re_ignore = std::regex(XorStr("/\\*.*\\*/"));
 
-	while (m_File.good() && !m_File.eof())
+	while (stream.good() && !stream.eof())
 	{
-		m_File.getline(buffer, 255);
+		stream.getline(buffer, 255);
 		if (buffer[0] == '\0')
 			continue;
 
@@ -175,11 +200,16 @@ bool CProfile::LoadFromFile()
 
 		m_KeyValue[mainKey][key] = value;
 	}
-	
+
 	return !m_KeyValue.empty();
 }
 
-bool CProfile::HasMainKey(const std::string & mainKeys)
+void CProfile::Clear()
+{
+	m_KeyValue.clear();
+}
+
+bool CProfile::HasMainKey(const std::string & mainKeys) const
 {
 	return (m_KeyValue.find(mainKeys) != m_KeyValue.end());
 }
