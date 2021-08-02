@@ -145,7 +145,7 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("No Recoil"), &m_bNoRecoil);
 	IMGUI_TIPS("无后坐力。");
 
-	ImGui::SliderFloat(XorStr("No Recoil Factor"), &m_fRecoilFactor, 0.0f, 1.0f, XorStr("%.1f"), 0.1f);
+	ImGui::SliderFloat(XorStr("No Recoil Factor"), &m_fRecoilFactor, 0.0f, 1.0f, ("%.2f"));
 	IMGUI_TIPS("无后坐力效率。");
 
 	ImGui::Checkbox(XorStr("No Visual Recoil"), &m_bNoVisRecoil);
@@ -154,7 +154,7 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
 	IMGUI_TIPS("子弹无扩散（提升射击精度）。");
 
-	ImGui::SliderFloat(XorStr("No Spread Factor"), &m_fSpreadFactor, 0.0f, 1.0f, XorStr("%.1f"), 0.1f);
+	ImGui::SliderFloat(XorStr("No Spread Factor"), &m_fSpreadFactor, 0.0f, 1.0f, ("%.2f"));
 	IMGUI_TIPS("子弹无扩散效率。");
 
 	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);

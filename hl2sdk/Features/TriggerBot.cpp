@@ -229,6 +229,9 @@ void CTriggerBot::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("Track Shotgun Chest"), &m_bTraceShotgunChest);
 	IMGUI_TIPS("持有霰弹枪时瞄准位置改为身体。");
 
+	ImGui::SliderFloat(XorStr("Max Distance"), &m_fMaxDistance, 100.0f, 5000.0f, ("%.0f"));
+	IMGUI_TIPS("最大距离。");
+
 	ImGui::Separator();
 	ImGui::Checkbox(XorStr("Follow the target"), &m_bFollowEnemy);
 	IMGUI_TIPS("自动开枪尝试跟随敌人。");
@@ -279,6 +282,7 @@ void CTriggerBot::OnConfigLoading(CProfile& cfg)
 	m_bPreventTooFast = cfg.GetFloat(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
 	m_fDiffOfChange = cfg.GetFloat(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
 	m_iPreventTicks = cfg.GetInteger(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
+	m_fMaxDistance = cfg.GetFloat(mainKeys, XorStr("trigger_distance"), m_fMaxDistance);
 }
 
 void CTriggerBot::OnConfigSave(CProfile& cfg)
@@ -306,6 +310,7 @@ void CTriggerBot::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("trigger_prevent_fast"), m_bPreventTooFast);
 	cfg.SetValue(mainKeys, XorStr("trigger_fast_of_diff"), m_fDiffOfChange);
 	cfg.SetValue(mainKeys, XorStr("trigger_prevent_ticks"), m_iPreventTicks);
+	cfg.SetValue(mainKeys, XorStr("trigger_distance"), m_fMaxDistance);
 }
 
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
@@ -427,7 +432,7 @@ CBasePlayer * CTriggerBot::GetAimTarget(const QAngle& eyeAngles)
 	if (m_bVelExt)
 		startPosition = math::VelocityExtrapolate(startPosition, player->GetVelocity(), m_bForwardtrack);
 
-	Vector endPosition = startPosition + eyeAngles.Forward().Scale(3500.0f);
+	Vector endPosition = startPosition + eyeAngles.Forward().Scale(m_fMaxDistance);
 	ray.Init(startPosition, endPosition);
 
 	trace_t trace;

@@ -48,6 +48,7 @@ private:	// 菜单项
 	float m_fDiffOfChange = 10.0f;
 	int m_iPreventTicks = 3;
 	bool m_bDebug = false;
+	float m_fMaxDistance = 3000.0f;
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;
