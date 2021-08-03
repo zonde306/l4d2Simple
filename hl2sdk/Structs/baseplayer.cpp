@@ -648,13 +648,13 @@ bool CBasePlayer::IsHangingFromLedge()
 bool CBasePlayer::IsStaggering()
 {
 	using FnIsStaggering = bool(__thiscall*)(CBasePlayer*);
-	FnIsStaggering fn = reinterpret_cast<FnIsStaggering>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_STAGGERING)));
+	static FnIsStaggering fn = reinterpret_cast<FnIsStaggering>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_STAGGERING)));
 	return fn(this);
 }
 
 bool CBasePlayer::IsGettingUp()
 {
 	using FnIsGettingUp = bool(__thiscall*)(CBasePlayer*);
-	FnIsGettingUp fn = reinterpret_cast<FnIsGettingUp>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_GETTINGUP)));
+	static FnIsGettingUp fn = reinterpret_cast<FnIsGettingUp>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_GETTINGUP)));
 	return fn(this);
 }
