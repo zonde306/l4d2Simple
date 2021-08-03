@@ -26,6 +26,8 @@
 
 #define SIG_IS_LUNGING				XorStr("56 E8 ? ? ? ? 8B F0 85 F6 75 04")
 #define SIG_GET_TONGUE_TARGET		XorStr("E8 ? ? ? ? 8B D0 8B 83")
+#define SIG_IS_STAGGERING			XorStr("E8 ? ? ? ? 84 C0 75 5C")
+#define SIG_IS_GETTINGUP			XorStr("E8 ? ? ? ? 84 C0 75 88")
 
 Vector CBasePlayer::GetEyePosition()
 {
@@ -641,4 +643,18 @@ bool CBasePlayer::IsHangingFromLedge()
 	static int offset = GetNetPropOffset(XorStr("DT_TerrorPlayer"), XorStr("m_isHangingFromLedge"));
 	Assert_NetProp(offset);
 	return (DECL_NETPROP_GET(byte) != 0);
+}
+
+bool CBasePlayer::IsStaggering()
+{
+	using FnIsStaggering = bool(__thiscall*)(CBasePlayer*);
+	FnIsStaggering fn = reinterpret_cast<FnIsStaggering>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_STAGGERING)));
+	return fn(this);
+}
+
+bool CBasePlayer::IsGettingUp()
+{
+	using FnIsGettingUp = bool(__thiscall*)(CBasePlayer*);
+	FnIsGettingUp fn = reinterpret_cast<FnIsGettingUp>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_IS_GETTINGUP)));
+	return fn(this);
 }

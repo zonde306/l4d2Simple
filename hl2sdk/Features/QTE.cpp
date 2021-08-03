@@ -242,7 +242,7 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 		case ZC_BOOMER:
 		case ZC_SPITTER:
 		{
-			if (canShove)
+			if (canShove && !player->IsStaggering())
 			{
 				HandleShoveSelfClear(local, player, cmd, distance);
 				if (m_bLogInfo)

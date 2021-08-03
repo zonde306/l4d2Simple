@@ -359,7 +359,8 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		if (!m_bCanShoveAttack &&
 			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
-			(classId != ET_CHARGER || canShoveCharger))
+			(classId != ET_CHARGER || canShoveCharger) &&
+			(!entity->IsPlayer() || !entity->IsStaggering()))
 		{
 			// 推 (右键)
 			m_bCanShoveAttack = true;
