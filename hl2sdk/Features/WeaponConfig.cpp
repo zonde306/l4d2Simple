@@ -10,7 +10,7 @@ void CWeaponConfig::OnMenuDrawing()
 	if (!ImGui::TreeNode(XorStr("Presets")))
 		return;
 
-	static const char* NONE = XorStr("default");
+	static const char* NONE = ("default");
 	const char* current = NONE;
 	size_t size = m_Rules.size();
 
@@ -137,8 +137,11 @@ void CWeaponConfig::OnConfigSave(CProfile& cfg)
 			builder << u8", ";
 	}
 
-	if(m_iRuleSelection != -1)
+	if (m_iRuleSelection != -1)
+	{
+		m_Rules[m_iRuleSelection].m_config = cfg;
 		cfg = m_DefaultRule;
+	}
 	
 	cfg.SetValue(mainKeys, XorStr("presets"), builder.str());
 
