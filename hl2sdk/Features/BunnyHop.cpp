@@ -1,5 +1,6 @@
 ﻿#include "BunnyHop.h"
 #include "../hook.h"
+#include "../Utils/math.h"
 #include "../../l4d2Simple2/config.h"
 #include <iostream>
 
@@ -101,6 +102,9 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	// Charger 用的
 	if (m_bNoDuckCooldown)
 		pCmd->buttons |= IN_BULLRUSH;
+
+	if (m_bNoFallDamage)
+		DoNoFallDamage(pCmd, flags);
 }
 
 void CBunnyHop::OnMenuDrawing()
@@ -199,6 +203,9 @@ void CBunnyHop::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No Duck Cooldown"), &m_bNoDuckCooldown);
 	IMGUI_TIPS("作用不明。");
+	
+	ImGui::Checkbox(XorStr("No Fall Damage"), &m_bNoFallDamage);
+	IMGUI_TIPS("无落地伤害。");
 
 	// ImGui::End();
 	ImGui::TreePop();
@@ -214,6 +221,7 @@ void CBunnyHop::OnConfigLoading(CProfile& cfg)
 	m_bEdgeJump = cfg.GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 	m_fEdgeJumpSpeed = cfg.GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
 	m_bNoDuckCooldown = cfg.GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	m_bNoFallDamage = cfg.GetFloat(mainKeys, XorStr("bunnyhop_no_falldamage"), m_bNoFallDamage);
 }
 
 void CBunnyHop::OnConfigSave(CProfile& cfg)
@@ -226,6 +234,7 @@ void CBunnyHop::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
 	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
 	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_falldamage"), m_bNoFallDamage);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
@@ -310,6 +319,48 @@ void CBunnyHop::DoRightAutoStrafe(CUserCmd * pCmd, int flags)
 {
 	if (CanRunAutoStrafe(pCmd, flags))
 		pCmd->forwardmove = pCmd->mousedx < 0.f ? 450.f : -450.f;
+}
+
+void CBunnyHop::DoNoFallDamage(CUserCmd* pCmd, int flags)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	MoveType_t mt = local->GetMoveType();
+	if (mt == MOVETYPE_NOCLIP || mt == MOVETYPE_LADDER || (flags & FL_ONGROUND) || (flags & FL_PARTIALGROUND))
+		return;
+
+	float fallVelocity = local->GetNetProp<float>(XorStr("DT_BasePlayer"), XorStr("m_flFallVelocity"));
+	float fallDamage = (fallVelocity - 580.0f) * 0.23809524f;
+	if (fallDamage <= 0.0f)
+		return;
+
+	Vector start = local->GetAbsOrigin();
+	Vector end = math::VelocityExtrapolate(start, local->GetVelocity());
+	if (start == end)
+		return;
+
+	Ray_t ray;
+	ray.Init(start, end);
+
+	CTraceFilter filter;
+	filter.pSkip1 = local;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CBunnyHop.DoNoFallDamage.TraceRay Error."));
+		return;
+	}
+
+	if (trace.fraction < 1.0f)
+		pCmd->forwardmove = NAN;
 }
 
 float CBunnyHop::GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate)

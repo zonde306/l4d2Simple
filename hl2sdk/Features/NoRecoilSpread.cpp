@@ -95,7 +95,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		{
 			*bSendPacket = false;
 			lastChocked += 1;
-			cmd->viewangles.x = cmd->viewangles.y = -logf(-1.0f);
+			cmd->viewangles.x = cmd->viewangles.y = NAN;
 		}
 	}
 }

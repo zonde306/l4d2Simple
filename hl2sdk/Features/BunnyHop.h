@@ -22,6 +22,7 @@ protected:
 	void DoBackAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoLeftAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoRightAutoStrafe(CUserCmd* pCmd, int flags);
+	void DoNoFallDamage(CUserCmd* pCmd, int flags);
 
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	void DoExtraAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
@@ -37,6 +38,7 @@ private:
 	bool m_bEdgeJump = false;
 	bool m_bNoDuckCooldown = false;
 	float m_fEdgeJumpSpeed = 150.0f;
+	bool m_bNoFallDamage = false;
 
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;
