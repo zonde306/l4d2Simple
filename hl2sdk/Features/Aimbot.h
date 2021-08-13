@@ -33,6 +33,7 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 	virtual void OnFrameStageNotify(ClientFrameStage_t stage) override;
+	virtual void OnEntityDeleted(CBaseEntity*) override;
 
 	virtual void OnConfigLoading(CProfile&) override;
 	virtual void OnConfigSave(CProfile&) override;

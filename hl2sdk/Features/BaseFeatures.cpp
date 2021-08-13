@@ -110,6 +110,14 @@ void CBaseFeatures::OnMenuClosed()
 	m_bMenuOpen = false;
 }
 
+void CBaseFeatures::OnEntityCreated(CBaseEntity*)
+{
+}
+
+void CBaseFeatures::OnEntityDeleted(CBaseEntity*)
+{
+}
+
 void CBaseFeatures::OnKeyInput(bool, ButtonCode_t, const char *)
 {
 }

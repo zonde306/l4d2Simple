@@ -12,6 +12,7 @@ public:
 	~CQuickTriggerEvent();
 
 	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
+	virtual void OnEntityDeleted(CBaseEntity*) override;
 
 	virtual void OnMenuDrawing() override;
 	virtual void OnConfigLoading(CProfile& cfg) override;

@@ -59,6 +59,10 @@ public:
 	virtual void OnMenuOpened();
 	virtual void OnMenuClosed();
 
+	// 实体创建和销毁
+	virtual void OnEntityCreated(CBaseEntity*);
+	virtual void OnEntityDeleted(CBaseEntity*);
+
 private:
 	size_t m_iHookIndex;
 

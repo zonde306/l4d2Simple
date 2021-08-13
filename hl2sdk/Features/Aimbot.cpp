@@ -346,6 +346,12 @@ void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
 			CDrawing::PURPLE, true, "X");
 }
 
+void CAimBot::OnEntityDeleted(CBaseEntity* entity)
+{
+	if (m_pAimTarget == entity)
+		m_pAimTarget = nullptr;
+}
+
 CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles, Vector* aimPos)
 {
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();

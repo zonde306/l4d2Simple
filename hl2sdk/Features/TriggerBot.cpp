@@ -313,6 +313,12 @@ void CTriggerBot::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("trigger_distance"), m_fMaxDistance);
 }
 
+void CTriggerBot::OnEntityDeleted(CBaseEntity* entity)
+{
+	if (m_pAimTarget == entity)
+		m_pAimTarget = nullptr;
+}
+
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 {
 	if (!m_bActive)

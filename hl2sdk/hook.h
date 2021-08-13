@@ -37,6 +37,8 @@ using FnEmitSound = void(__thiscall*)(IEngineSound*, IRecipientFilter&, int, int
 using FnSendNetMsg = bool(__thiscall*)(INetChannel*, INetMessage&, bool, bool);
 using FnOverrideView = void(__thiscall*)(IClientMode*, CViewSetup*);
 using FnGetViewModelFOV = float(__thiscall*)(IClientMode*);
+using FnOnEntityCreated = void(__thiscall*)(LPVOID, CBaseEntity*);
+using FnOnEntityDeleted = void(__thiscall*)(LPVOID, CBaseEntity*);
 
 // 非虚函数
 using FnCL_SendMove = void(__cdecl*)();
@@ -86,6 +88,8 @@ protected:
 	static float __fastcall Hooked_GetViewModelFOV(IClientMode*, LPVOID);
 	static void __fastcall Hooked_WriteListenEventList(IGameEventManager2*, LPVOID, CLC_ListenEvents*);
 	static void __fastcall Hooked_EmitSoundInternal(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
+	static void __fastcall Hooked_OnEntityCreated(LPVOID, LPVOID, CBaseEntity*);
+	static void __fastcall Hooked_OnEntityDeleted(LPVOID, LPVOID, CBaseEntity*);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -130,6 +134,8 @@ private:
 	FnEmitSoundInternal oEmitSoundInternal = nullptr;
 	FnValidateUserCmd oValidateUserCmd = nullptr;
 	FnMD5PseudoRandom oMD5PseudoRandom = nullptr;
+	FnOnEntityCreated oOnEntityCreated = nullptr;
+	FnOnEntityDeleted oOnEntityDeleted = nullptr;
 
 public:
 	bool* bSendPacket;

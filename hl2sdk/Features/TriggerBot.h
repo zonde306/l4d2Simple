@@ -13,6 +13,7 @@ public:
 
 	virtual void OnConfigLoading(CProfile& cfg) override;
 	virtual void OnConfigSave(CProfile& cfg) override;
+	virtual void OnEntityDeleted(CBaseEntity*) override;
 
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 	static bool IsValidTarget(CBasePlayer* entity);

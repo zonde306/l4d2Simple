@@ -253,6 +253,12 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	}
 }
 
+void CQuickTriggerEvent::OnEntityDeleted(CBaseEntity* entity)
+{
+	if (m_pLastTarget == entity)
+		m_pLastTarget = nullptr;
+}
+
 void CQuickTriggerEvent::OnMenuDrawing()
 {
 	if (!ImGui::TreeNode(XorStr("QuickTriggerEvent")))
