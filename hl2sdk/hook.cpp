@@ -1520,6 +1520,15 @@ void __fastcall CClientHook::Hooked_OnEntityCreated(LPVOID _ecx, LPVOID, CBaseEn
 {
 	g_pClientHook->oOnEntityCreated(_ecx, entity);
 
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook OnEntityCreated Success."));
+	}
+#endif
+
 	for (auto inst : g_pClientHook->_GameHook)
 		if (inst)
 			inst->OnEntityCreated(entity);
@@ -1527,6 +1536,15 @@ void __fastcall CClientHook::Hooked_OnEntityCreated(LPVOID _ecx, LPVOID, CBaseEn
 
 void __fastcall CClientHook::Hooked_OnEntityDeleted(LPVOID _ecx, LPVOID, CBaseEntity* entity)
 {
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook OnEntityDeleted Success."));
+	}
+#endif
+
 	for (auto inst : g_pClientHook->_GameHook)
 		if (inst)
 			inst->OnEntityDeleted(entity);
