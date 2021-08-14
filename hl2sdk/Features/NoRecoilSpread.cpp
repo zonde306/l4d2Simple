@@ -48,12 +48,23 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
+	bool isGun = weapon->IsFireGun();
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
-	// 推没有后坐力的
-	if (weapon->IsFireGun() && canFire && m_bHasFiring && (cmd->buttons & IN_ATTACK))
+	if (isGun && canFire && m_bHasFiring)
+	{
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
+		m_bLastFired = !!(cmd->buttons & IN_ATTACK);
+		m_vecLastFiredAngles = cmd->viewangles;
+		m_iKeepTicks = 0;
+	}
+	else if (isGun && !canFire && m_bLastFired && (m_bNoRecoil || m_bNoSpread))
+	{
+		SmoothAngles(cmd, bSendPacket);
+		cmd->buttons |= IN_ATTACK;
+		m_bLastFired = false;
+	}
 
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
@@ -175,6 +186,9 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("shotgun sound"), &(m_pEventListener->m_bShotgunSound));
 	IMGUI_TIPS("第三人称使用霰弹枪播放开枪声音。");
 
+	ImGui::SliderInt(XorStr("Smooth Ticks"), &m_iSmoothTicks, 0, 10);
+	IMGUI_TIPS("平滑，用于避免被 liac 检测");
+
 	ImGui::TreePop();
 }
 
@@ -192,6 +206,7 @@ void CViewManager::OnConfigLoading(CProfile& cfg)
 	m_pEventListener->m_bShotgunSound = cfg.GetBoolean(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
 	m_fSpreadFactor = cfg.GetFloat(mainKeys, XorStr("aimhelper_spread_factor"), m_fSpreadFactor);
 	m_fRecoilFactor = cfg.GetFloat(mainKeys, XorStr("aimhelper_recoil_factor"), m_fRecoilFactor);
+	m_iSmoothTicks = cfg.GetInteger(mainKeys, XorStr("aimhelper_smooth_ticks"), m_iSmoothTicks);
 }
 
 void CViewManager::OnConfigSave(CProfile& cfg)
@@ -208,6 +223,7 @@ void CViewManager::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
 	cfg.SetValue(mainKeys, XorStr("aimhelper_spread_factor"), m_fSpreadFactor);
 	cfg.SetValue(mainKeys, XorStr("aimhelper_recoil_factor"), m_fRecoilFactor);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_smooth_ticks"), m_iSmoothTicks);
 }
 
 void CViewManager::OnConnect()
@@ -290,10 +306,12 @@ void CViewManager::RunNoRecoilSpread(CUserCmd * cmd, CBaseWeapon* weapon, bool* 
 	m_vecSpread.y = spread.second;
 	// m_vecSpread.z = 0.0f;
 
+	// 被普感锤也算是后坐力
 	if (m_bNoRecoil)
 		RemoveRecoil(cmd);
 
-	if (m_bNoSpread)
+	// 射击才有扩散
+	if (m_bNoSpread && (cmd->buttons & IN_ATTACK))
 		RemoveSpread(cmd);
 
 	if (m_bSilentNoSpread)
@@ -359,10 +377,33 @@ void CViewManager::RemoveRecoil(CUserCmd * cmd)
 	cmd->viewangles.y -= punch.y;
 	*/
 
-	Vector& m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
 	// Vector& m_vecPunchAngleVel = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
 	cmd->viewangles.x -= m_vecPunchAngle.x * m_fRecoilFactor;
 	cmd->viewangles.y -= m_vecPunchAngle.y * m_fRecoilFactor;
+}
+
+void CViewManager::SmoothAngles(CUserCmd* cmd, bool* bSendPacket)
+{
+	if (m_iKeepTicks >= m_iSmoothTicks)
+		return;
+
+	++m_iKeepTicks;
+
+	if (m_iKeepTicks <= 1)
+	{
+		cmd->viewangles = m_vecLastFiredAngles;
+	}
+	else if (m_iKeepTicks > 1)
+	{
+		QAngle view;
+		g_pInterface->Engine->GetViewAngles(view);
+
+		cmd->viewangles = math::Lerp(m_vecLastFiredAngles, view, static_cast<float>(m_iKeepTicks - 1) / static_cast<float>(m_iSmoothTicks - 1));
+	}
+
+	if (m_bSilentNoSpread)
+		*bSendPacket = false;
 }
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)

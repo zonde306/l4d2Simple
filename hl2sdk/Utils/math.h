@@ -56,4 +56,7 @@ namespace math
 
 	// Ray 到 OBB 相交检测
 	bool InsersectRayWithOBB(CBasePlayer* local, CBasePlayer* target, mstudiobbox_t* hitbox, const QAngle& viewangles);
+
+	QAngle Lerp(const QAngle& a, const QAngle& b, vec_t t);
+	Vector Lerp(const Vector& a, const Vector& b, vec_t t);
 };

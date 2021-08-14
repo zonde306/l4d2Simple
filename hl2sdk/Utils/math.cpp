@@ -900,3 +900,24 @@ bool math::InsersectRayWithOBB(CBasePlayer * local, CBasePlayer * target, mstudi
 
 	return IntersectRayWithAABB(ray_trans, dir_trans, hitbox->bbmin, hitbox->bbmax);
 }
+
+QAngle math::Lerp(const QAngle& a, const QAngle& b, vec_t t)
+{
+	QAngle result(
+		a.x + ((b.x - a.x) * t),
+		a.y + ((b.y - a.y) * t),
+		a.z + ((b.z - a.z) * t)
+	);
+
+	AngleNormalize(result);
+	return result;
+}
+
+Vector math::Lerp(const Vector& a, const Vector& b, vec_t t)
+{
+	return Vector(
+		a.x + ((b.x - a.x) * t),
+		a.y + ((b.y - a.y) * t),
+		a.z + ((b.z - a.z) * t)
+	);
+}
