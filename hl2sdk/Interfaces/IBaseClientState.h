@@ -330,6 +330,7 @@ public:
 	virtual void SetNetChannel(INetChannel *netchan) { m_NetChannel = netchan; }
 	virtual void SetReliable(bool state) { m_bReliable = state; };
 	virtual bool Process() { return false; }; // no handler set
+	virtual void BIncomingMessageForProcessing(double, int, INetMessage*) {};	// 不知道这是什么
 	virtual bool ReadFromBuffer(bf_read &buffer) { return false; };
 	virtual bool WriteToBuffer(bf_write &buffer) { return false; };
 	virtual bool IsReliable() const { return m_bReliable; };
@@ -337,6 +338,8 @@ public:
 	virtual int GetGroup() const { return INetChannelInfo::GENERIC; }
 	virtual const char *GetName(void) const { return ""; };
 	INetChannel *GetNetChannel() const { return m_NetChannel; }
+	virtual int GetSize(void) const { return sizeof(CNetMessage); };
+	virtual void SetRateLimitPolicy(LPVOID) { };
 
 protected:
 	bool m_bReliable;		   // true if message should be send reliable
@@ -399,7 +402,8 @@ class CLC_RespondCvarValue : public CNetMessage
 public:
 	DECLARE_CLC_MESSAGE(RespondCvarValue);
 
-	int GetType(void) const { return 0x0D; };
+	int GetType(void) const{ return 0x0D; };
+	int GetSize(void) const { return sizeof(CLC_RespondCvarValue); };
 
 	int						m_iCookie;
 

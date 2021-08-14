@@ -873,6 +873,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	}
 #endif
 
+#ifdef _DEBUG
 	std::string newResult, tmpValue;
 	bool blockQuery = false;
 	for (auto inst : g_pClientHook->_GameHook)
@@ -1049,9 +1050,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 	}
 	*/
+#endif
 
-	g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
-	return true;
+	return g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 }
 
 bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)

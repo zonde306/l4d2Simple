@@ -400,6 +400,7 @@ bool CAntiAntiCheat::OnSendNetMsg(INetMessage & msg, bool & bForceReliable, bool
 	if (msg_id == 13)
 	{
 		CLC_RespondCvarValue& cvars = reinterpret_cast<CLC_RespondCvarValue&>(msg);
+
 		if (auto it = g_ServerConVar.find(cvars.m_szCvarName);
 			it != g_ServerConVar.end())
 		{
