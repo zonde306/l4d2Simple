@@ -68,10 +68,24 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			DoExtraAutoStrafe(player, pCmd, flags);
 		*/
 
-		if(m_iBhopMode == 1)
-			DoNormalAutoBhop(player, pCmd, flags);
-		else if(m_iBhopMode == 2)
-			DoSafeAutoBhop(pCmd, flags);
+		switch (m_iBhopMode)
+		{
+			case 1:
+			{
+				DoNormalAutoBhop(player, pCmd, flags);
+				break;
+			}
+			case 2:
+			{
+				DoSafeAutoBhop(pCmd, flags);
+				break;
+			}
+			case 3:
+			{
+				DoNormalAutoBhopEx(player, pCmd, flags);
+				break;
+			}
+		}
 
 		switch (m_iStrafeMode)
 		{
@@ -282,6 +296,15 @@ void CBunnyHop::DoSafeAutoBhop(CUserCmd * pCmd, int flags)
 	}
 }
 
+void CBunnyHop::DoNormalAutoBhopEx(CBasePlayer* player, CUserCmd* pCmd, int flags)
+{
+	if (player == nullptr || !player->IsAlive())
+		return;
+
+	if ((pCmd->buttons & IN_JUMP) && !(flags & FL_ONGROUND) && !IsNearGround(player, 1, flags))
+		pCmd->buttons &= ~IN_JUMP;
+}
+
 bool CBunnyHop::CanRunAutoStrafe(CUserCmd * pCmd, int flags)
 {
 	if (flags & FL_ONGROUND)
@@ -327,39 +350,7 @@ void CBunnyHop::DoNoFallDamage(CUserCmd* pCmd, int flags)
 	if (local == nullptr || !local->IsAlive())
 		return;
 
-	MoveType_t mt = local->GetMoveType();
-	if (mt == MOVETYPE_NOCLIP || mt == MOVETYPE_LADDER || (flags & FL_ONGROUND) || (flags & FL_PARTIALGROUND))
-		return;
-
-	float fallVelocity = local->GetNetProp<float>(XorStr("DT_BasePlayer"), XorStr("m_flFallVelocity"));
-	float fallDamage = (fallVelocity - 580.0f) * 0.23809524f;
-	if (fallDamage <= 0.0f)
-		return;
-
-	Vector start = local->GetAbsOrigin();
-	Vector end = math::VelocityExtrapolate(start, local->GetVelocity());
-	if (start == end)
-		return;
-
-	Ray_t ray;
-	ray.Init(start, end);
-
-	CTraceFilter filter;
-	filter.pSkip1 = local;
-
-	trace_t trace;
-
-	try
-	{
-		g_pInterface->Trace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &trace);
-	}
-	catch (...)
-	{
-		Utils::log(XorStr("CBunnyHop.DoNoFallDamage.TraceRay Error."));
-		return;
-	}
-
-	if (trace.fraction < 1.0f)
+	if(IsNearGround(local, 1, flags))
 		pCmd->forwardmove = NAN;
 }
 
@@ -517,6 +508,41 @@ bool CBunnyHop::IsOnLadder(CBasePlayer* player)
 	}
 
 	if (trace.DidHit())
+		return true;
+
+	return false;
+}
+
+bool CBunnyHop::IsNearGround(CBasePlayer* player, int tick, int flags)
+{
+	MoveType_t mt = player->GetMoveType();
+	if (mt == MOVETYPE_NOCLIP || mt == MOVETYPE_LADDER || (flags & FL_ONGROUND) || (flags & FL_PARTIALGROUND))
+		return false;
+
+	Vector start = player->GetAbsOrigin();
+	Vector end = math::VelocityExtrapolate(start, player->GetVelocity(), tick);
+	if (start == end)
+		return false;
+
+	Ray_t ray;
+	ray.Init(start, end);
+
+	CTraceFilter filter;
+	filter.pSkip1 = player;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CBunnyHop.IsNearGround.TraceRay Error."));
+		return false;
+	}
+
+	if (trace.fraction < 1.0f)
 		return true;
 
 	return false;

@@ -16,6 +16,7 @@ public:
 protected:
 	void DoNormalAutoBhop(CBasePlayer*, CUserCmd* pCmd, int flags);
 	void DoSafeAutoBhop(CUserCmd* pCmd, int flags);
+	void DoNormalAutoBhopEx(CBasePlayer*, CUserCmd* pCmd, int flags);
 
 	bool CanRunAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoForwardAutoStrafe(CUserCmd* pCmd, int flags);
@@ -30,6 +31,7 @@ protected:
 
 	void DoEdgeJump(CUserCmd* pCmd, int flags);
 	bool IsOnLadder(CBasePlayer* player);
+	bool IsNearGround(CBasePlayer* player, int tick, int flags);
 
 private:
 	bool m_bShowMenu = false;
@@ -48,11 +50,12 @@ private:
 	bool m_bLastJump = false;
 	bool m_bShouldFake = false;
 
-	std::array<std::string, 3> m_arrAutoBhopModeList
+	std::array<std::string, 4> m_arrAutoBhopModeList
 	{
 		XorStr("Disabled"),
 		XorStr("Normal"),
-		XorStr("SMAC-Safe")
+		XorStr("SMAC-Safe"),
+		XorStr("LiAC-Safe")
 	};
 
 	std::array<std::string, 7> m_arrAutoStrafeModeList
