@@ -23,8 +23,8 @@ public:
 	virtual void OnGameEventClient(IGameEvent* event) override;
 	virtual void OnGameEvent(IGameEvent* event, bool dontBroadcast) override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile&) override;
+	virtual void OnConfigSave(CProfile&) override;
 	virtual void OnConnect() override;
 
 	// 搜索字符串用到的函数

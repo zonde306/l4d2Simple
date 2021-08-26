@@ -131,36 +131,36 @@ void CVisualDrop::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CVisualDrop::OnConfigLoading(const config_type & data)
+void CVisualDrop::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("ItemVisual");
 
-	m_bTier1 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t1"), m_bTier1);
-	m_bTier2 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t2"), m_bTier2);
-	m_bTier3 = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_t3"), m_bTier3);
-	m_bMelee = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_melee"), m_bMelee);
-	m_bAidKit = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
-	m_bGrenade = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
-	m_bAmmoUpgrade = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
-	m_bCarry = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_carry"), m_bCarry);
-	m_bProjectile = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
-	m_bDeadbody = g_pConfig->GetBoolean(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
+	m_bTier1 = cfg.GetBoolean(mainKeys, XorStr("itemesp_t1"), m_bTier1);
+	m_bTier2 = cfg.GetBoolean(mainKeys, XorStr("itemesp_t2"), m_bTier2);
+	m_bTier3 = cfg.GetBoolean(mainKeys, XorStr("itemesp_t3"), m_bTier3);
+	m_bMelee = cfg.GetBoolean(mainKeys, XorStr("itemesp_melee"), m_bMelee);
+	m_bAidKit = cfg.GetBoolean(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
+	m_bGrenade = cfg.GetBoolean(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
+	m_bAmmoUpgrade = cfg.GetBoolean(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
+	m_bCarry = cfg.GetBoolean(mainKeys, XorStr("itemesp_carry"), m_bCarry);
+	m_bProjectile = cfg.GetBoolean(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
+	m_bDeadbody = cfg.GetBoolean(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
 }
 
-void CVisualDrop::OnConfigSave(config_type & data)
+void CVisualDrop::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("ItemVisual");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t1"), m_bTier1);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t2"), m_bTier2);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_t3"), m_bTier3);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_melee"), m_bMelee);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_carry"), m_bCarry);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
-	g_pConfig->SetValue(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
+	cfg.SetValue(mainKeys, XorStr("itemesp_t1"), m_bTier1);
+	cfg.SetValue(mainKeys, XorStr("itemesp_t2"), m_bTier2);
+	cfg.SetValue(mainKeys, XorStr("itemesp_t3"), m_bTier3);
+	cfg.SetValue(mainKeys, XorStr("itemesp_melee"), m_bMelee);
+	cfg.SetValue(mainKeys, XorStr("itemesp_aid_kit"), m_bAidKit);
+	cfg.SetValue(mainKeys, XorStr("itemesp_grenade"), m_bGrenade);
+	cfg.SetValue(mainKeys, XorStr("itemesp_upgrade_ammo"), m_bAmmoUpgrade);
+	cfg.SetValue(mainKeys, XorStr("itemesp_carry"), m_bCarry);
+	cfg.SetValue(mainKeys, XorStr("itemesp_projectile"), m_bProjectile);
+	cfg.SetValue(mainKeys, XorStr("itemesp_deadbody"), m_bDeadbody);
 }
 
 void CVisualDrop::DrawWeaponSpawn(CBaseWeapon * weapon, const Vector & screen)

@@ -60,13 +60,13 @@ void CSpeedHacker::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	RecordBacktracking(cmd);
 	m_iTickCount = INT_MAX;
 
-	if (m_bPositionAdjustment)
+	if (m_bPositionAdjustment && !m_bMenuOpen)
 		RunPositionAdjustment(cmd, *bSendPacket);
 	
-	if (m_bBacktrack)
+	if (m_bBacktrack && !m_bMenuOpen)
 		RunBacktracking(cmd, *bSendPacket);
 
-	if (m_bForwardtrack)
+	if (m_bForwardtrack && !m_bMenuOpen)
 		RunForwardtrack(cmd, *bSendPacket);
 
 	if (!m_bActive)
@@ -100,34 +100,34 @@ void CSpeedHacker::OnEnginePaint(PaintMode_t)
 	}
 }
 
-void CSpeedHacker::OnConfigLoading(const config_type & data)
+void CSpeedHacker::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("SpeedHacks");
 	
-	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_enable"), m_bActive);
-	m_bPositionAdjustment = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
-	m_bBacktrack = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_backtrack"), m_bBacktrack);
-	m_fOriginSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
-	m_fUseSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
-	m_fWalkSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
-	m_fFireSpeed = g_pConfig->GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
-	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
-	m_bLACSafe = g_pConfig->GetBoolean(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
+	m_bActive = cfg.GetBoolean(mainKeys, XorStr("speedhack_enable"), m_bActive);
+	m_bPositionAdjustment = cfg.GetBoolean(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
+	m_bBacktrack = cfg.GetBoolean(mainKeys, XorStr("speedhack_backtrack"), m_bBacktrack);
+	m_fOriginSpeed = cfg.GetFloat(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
+	m_fUseSpeed = cfg.GetFloat(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
+	m_fWalkSpeed = cfg.GetFloat(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
+	m_fFireSpeed = cfg.GetFloat(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
+	m_bForwardtrack = cfg.GetBoolean(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	m_bLACSafe = cfg.GetBoolean(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
-void CSpeedHacker::OnConfigSave(config_type & data)
+void CSpeedHacker::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("SpeedHacks");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_enable"), m_bActive);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_backtrack"), m_bBacktrack);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
-	g_pConfig->SetValue(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
+	cfg.SetValue(mainKeys, XorStr("speedhack_enable"), m_bActive);
+	cfg.SetValue(mainKeys, XorStr("speedhack_posadj"), m_bPositionAdjustment);
+	cfg.SetValue(mainKeys, XorStr("speedhack_backtrack"), m_bBacktrack);
+	cfg.SetValue(mainKeys, XorStr("speedhack_default"), m_fOriginSpeed);
+	cfg.SetValue(mainKeys, XorStr("speedhack_use"), m_fUseSpeed);
+	cfg.SetValue(mainKeys, XorStr("speedhack_walk"), m_fWalkSpeed);
+	cfg.SetValue(mainKeys, XorStr("speedhack_fire"), m_fFireSpeed);
+	cfg.SetValue(mainKeys, XorStr("speedhack_forwardtrack"), m_bForwardtrack);
+	cfg.SetValue(mainKeys, XorStr("speedhack_nolerp_safe"), m_bLACSafe);
 }
 
 void CSpeedHacker::RunPositionAdjustment(CUserCmd * cmd, bool bSendPacket)

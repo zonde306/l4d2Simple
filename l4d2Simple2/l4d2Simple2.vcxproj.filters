@@ -270,6 +270,9 @@
     <ClCompile Include="..\hl2sdk\Interfaces\IBaseClientState.cpp">
       <Filter>hl2sdk\Interfaces</Filter>
     </ClCompile>
+    <ClCompile Include="..\hl2sdk\Features\WeaponConfig.cpp">
+      <Filter>hl2sdk\Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -676,6 +679,9 @@
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Utils\utlbitvec.h">
       <Filter>hl2sdk\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hl2sdk\Features\WeaponConfig.h">
+      <Filter>hl2sdk\Features</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

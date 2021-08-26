@@ -16,6 +16,7 @@
 #include "./Features/HackvsHack.h"
 #include "./Features/EventLogger.h"
 #include "./Features/QTE.h"
+#include "./Features/WeaponConfig.h"
 #include "../l4d2Simple2/vmt.h"
 #include "../l4d2Simple2/xorstr.h"
 #include "../detours/detourxs.h"
@@ -53,13 +54,16 @@ extern time_t g_tpGameTimer;
 #define SIG_EMIT_SOUND				XorStr("55 8B EC 81 EC ? ? ? ? 6A 00")
 #define SIG_VALIDATE_USERCMD		XorStr("55 8B EC 53 56 57 8B F9 8B 4D 08 E8 ? ? ? ? 8B 0D ? ? ? ? 8B D8 8B 01 8B 90 ? ? ? ? FF D2")
 #define SIG_MD5_PSEUDORANDOM		XorStr("55 8B EC 83 EC 6C A1 ? ? ? ? 33 C5 89 45 FC 6A 58 8D 45 A4 6A 00 50 E8 ? ? ? ? 6A 04 8D 4D 08 51")
+#define SIG_ONENTITYCREATED			XorStr("55 8B EC 56 8B F1 E8 ? ? ? ? 84 C0 74 53")
+#define SIG_ONENTITYDELETED			XorStr("55 8B EC 8B 45 08 53 57 8B D9")
 
 #define PRINT_OFFSET(_name,_ptr)	{ss.str("");\
 	ss << _name << XorStr(" - Found: 0x") << std::hex << std::uppercase << _ptr << std::oct << std::nouppercase;\
 	Utils::log(ss.str().c_str());}
 
 static std::unique_ptr<DetourXS> g_pDetourCL_SendMove, g_pDetourProcessSetConVar, g_pDetourCreateMove,
-	g_pDetourSendNetMsg, g_pDetourWriteListenEventList, g_pDetourEmitSoundInternal;
+	g_pDetourSendNetMsg, g_pDetourWriteListenEventList, g_pDetourEmitSoundInternal,
+	g_pDetourOnEntityCreated, g_pDetourOnEntityDeleted;
 
 static std::unique_ptr<CVmtHook> g_pHookClient, g_pHookClientState, g_pHookVGui, g_pHookClientMode,
 	g_pHookPanel, g_pHookPrediction, g_pHookRenderView, g_pHookMaterialSystem, g_pHookGameEvent,
@@ -258,6 +262,30 @@ bool CClientHook::Init()
 		PRINT_OFFSET(XorStr("MD5_PseudoRandom"), oMD5PseudoRandom);
 	}
 
+	if (oOnEntityCreated == nullptr || !g_pDetourOnEntityCreated)
+	{
+		oOnEntityCreated = reinterpret_cast<FnOnEntityCreated>(Utils::FindPattern(XorStr("client.dll"), SIG_ONENTITYCREATED));
+		PRINT_OFFSET(XorStr("CClientTools::OnEntityCreated"), oOnEntityCreated);
+
+		if (oOnEntityCreated != nullptr)
+		{
+			g_pDetourOnEntityCreated = std::make_unique<DetourXS>(oOnEntityCreated, Hooked_OnEntityCreated);
+			oOnEntityCreated = reinterpret_cast<FnOnEntityCreated>(g_pDetourOnEntityCreated->GetTrampoline());
+		}
+	}
+
+	if (oOnEntityDeleted == nullptr || !g_pDetourOnEntityDeleted)
+	{
+		oOnEntityDeleted = reinterpret_cast<FnOnEntityDeleted>(Utils::FindPattern(XorStr("client.dll"), SIG_ONENTITYDELETED));
+		PRINT_OFFSET(XorStr("CClientTools::OnEntityDeleted"), oOnEntityDeleted);
+
+		if (oOnEntityDeleted != nullptr)
+		{
+			g_pDetourOnEntityDeleted = std::make_unique<DetourXS>(oOnEntityDeleted, Hooked_OnEntityDeleted);
+			oOnEntityDeleted = reinterpret_cast<FnOnEntityDeleted>(g_pDetourOnEntityDeleted->GetTrampoline());
+		}
+	}
+
 	// oWriteListenEventList(g_pInterface->GameEvent, &g_ListenEvents);
 
 	InitFeature();
@@ -295,94 +323,37 @@ void CClientHook::InitFeature()
 		g_pViewManager = new CViewManager();
 	if (!g_pSpeedHacker)
 		g_pSpeedHacker = new CSpeedHacker();
+	if (!g_pWeaponConfig)
+		g_pWeaponConfig = new CWeaponConfig();
 }
 
 void CClientHook::LoadConfig()
 {
-	/*
-	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::in|std::ios::beg);
-	if (file.bad() || !file.is_open())
-		return;
-
-	std::string line;
-	char buffer[255];
-	bool isInConfig = false;
-	std::string key, value;
-	CBaseFeatures::config_type config;
-
-	while (file.good() && !file.eof())
-	{
-		file.getline(buffer, 255);
-		if (buffer[0] == '\0' || buffer[0] == ';')
-			continue;
-
-		if (buffer[0] == '/' && buffer[1] == '/')
-			continue;
-
-		line = Utils::StringTrim(buffer, XorStr(" \r\n\t"));
-
-		if (line[0] == '[')
-		{
-			if (!isInConfig && line == XorStr("[Config]"))
-				isInConfig = true;
-
-			continue;
-		}
-
-		size_t equal = line.find('=');
-		if (equal == std::string::npos)
-			continue;
-
-		key = Utils::StringTrim(line.substr(0, equal), XorStr(" \r\n\t\""));
-		value = Utils::StringTrim(line.substr(equal + 1), XorStr(" \r\n\t\""));
-		if (key.empty() || value.empty())
-			continue;
-
-		config.emplace(key, value);
-	}
-
-	file.close();
-	if (config.empty())
-		return;
-	*/
-
-	CBaseFeatures::config_type config;
-	const std::string mainKeys = XorStr("Config");
-	for (auto it = g_pConfig->begin(mainKeys); it != g_pConfig->end(mainKeys); ++it)
-		config.emplace(it->first, it->second.m_sValue);
-
 	for (auto inst : g_pClientHook->_GameHook)
 		if(inst)
-			inst->OnConfigLoading(config);
+			inst->OnConfigLoading(*g_pConfig.get());
 }
 
 void CClientHook::SaveConfig()
 {
-	CBaseFeatures::config_type config;
 	for (auto inst : g_pClientHook->_GameHook)
 		if (inst)
-			inst->OnConfigSave(config);
-
-	const std::string mainKeys = XorStr("Config");
-	for (const auto& it : config)
-		g_pConfig->SetValue(mainKeys, it.first, it.second);
-
+			inst->OnConfigSave(*g_pConfig.get());
 	g_pConfig->SaveToFile();
-	/*
-	if (config.empty())
-		return;
+}
 
-	std::fstream file(Utils::BuildPath(XorStr("\\config.ini")), std::ios::out|std::ios::beg|std::ios::trunc|std::ios::in);
-	if (file.bad() || !file.is_open())
-		return;
+void CClientHook::OnMenuOpened()
+{
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnMenuOpened();
+}
 
-	file << XorStr("[Config]") << std::endl;
-	
-	for (const auto& option : config)
-		file << option.first << " = " << option.second << std::endl;
-
-	file.close();
-	*/
+void CClientHook::OnMenuClosed()
+{
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnMenuClosed();
 }
 
 ConVar * CClientHook::GetDummyConVar(const std::string & cvar, const std::optional<std::string>& value)
@@ -902,6 +873,7 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 	}
 #endif
 
+#ifdef _DEBUG
 	std::string newResult, tmpValue;
 	bool blockQuery = false;
 	for (auto inst : g_pClientHook->_GameHook)
@@ -1078,9 +1050,9 @@ bool __fastcall CClientHook::Hooked_ProcessGetCvarValue(CBaseClientState* _ecx, 
 		g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 	}
 	*/
+#endif
 
-	g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
-	return true;
+	return g_pClientHook->oProcessGetCvarValue(_ecx, gcv);
 }
 
 bool __fastcall CClientHook::Hooked_ProcessSetConVar(CBaseClientState* _ecx, LPVOID _edx, NET_SetConVar* scv)
@@ -1543,6 +1515,42 @@ void __fastcall CClientHook::Hooked_EmitSoundInternal(IEngineSound* _ecx, LPVOID
 		copyOrigin.IsValid() ? &copyOrigin : nullptr,
 		copyDirection.IsValid() ? &copyDirection : nullptr,
 		pUtlVecOrigins, bUpdatePositions, soundtime, speakerentity);
+}
+
+void __fastcall CClientHook::Hooked_OnEntityCreated(LPVOID _ecx, LPVOID, CBaseEntity* entity)
+{
+	g_pClientHook->oOnEntityCreated(_ecx, entity);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook OnEntityCreated Success."));
+	}
+#endif
+
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnEntityCreated(entity);
+}
+
+void __fastcall CClientHook::Hooked_OnEntityDeleted(LPVOID _ecx, LPVOID, CBaseEntity* entity)
+{
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if (hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook OnEntityDeleted Success."));
+	}
+#endif
+
+	for (auto inst : g_pClientHook->_GameHook)
+		if (inst)
+			inst->OnEntityDeleted(entity);
+
+	g_pClientHook->oOnEntityDeleted(_ecx, entity);
 }
 
 void CClientPrediction::Init()

@@ -10,18 +10,20 @@ public:
 	virtual void OnCreateMove(CUserCmd*, bool*) override;
 	virtual void OnMenuDrawing() override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 
 protected:
 	void DoNormalAutoBhop(CBasePlayer*, CUserCmd* pCmd, int flags);
 	void DoSafeAutoBhop(CUserCmd* pCmd, int flags);
+	void DoNormalAutoBhopEx(CBasePlayer*, CUserCmd* pCmd, int flags);
 
 	bool CanRunAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoForwardAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoBackAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoLeftAutoStrafe(CUserCmd* pCmd, int flags);
 	void DoRightAutoStrafe(CUserCmd* pCmd, int flags);
+	void DoNoFallDamage(CUserCmd* pCmd, int flags);
 
 	float GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate);
 	void DoExtraAutoStrafe(CBasePlayer* player, CUserCmd* pCmd, int flags);
@@ -29,6 +31,7 @@ protected:
 
 	void DoEdgeJump(CUserCmd* pCmd, int flags);
 	bool IsOnLadder(CBasePlayer* player);
+	bool IsNearGround(CBasePlayer* player, int tick, int flags);
 
 private:
 	bool m_bShowMenu = false;
@@ -37,6 +40,7 @@ private:
 	bool m_bEdgeJump = false;
 	bool m_bNoDuckCooldown = false;
 	float m_fEdgeJumpSpeed = 150.0f;
+	bool m_bNoFallDamage = false;
 
 	const char* m_pszAutoBhopMode = nullptr;
 	const char* m_pszAutoStrafeMode = nullptr;
@@ -46,11 +50,12 @@ private:
 	bool m_bLastJump = false;
 	bool m_bShouldFake = false;
 
-	std::array<std::string, 3> m_arrAutoBhopModeList
+	std::array<std::string, 4> m_arrAutoBhopModeList
 	{
 		XorStr("Disabled"),
 		XorStr("Normal"),
-		XorStr("SMAC-Safe")
+		XorStr("SMAC-Safe"),
+		XorStr("LiAC-Safe")
 	};
 
 	std::array<std::string, 7> m_arrAutoStrafeModeList

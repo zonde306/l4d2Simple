@@ -118,7 +118,7 @@ public:
 	virtual void SetReliable(bool state) = 0;			  // set to true if it's a reliable message
 
 	virtual bool Process(void) = 0; // calles the recently set handler to process this message
-
+	virtual void BIncomingMessageForProcessing(double, int, INetMessage*) = 0;	// 不知道这是什么
 	virtual bool ReadFromBuffer(bf_read &buffer) = 0; // returns true if parsing was OK
 	virtual bool WriteToBuffer(bf_write &buffer) = 0; // returns true if writing was OK
 
@@ -129,6 +129,8 @@ public:
 	virtual const char *GetName(void) const = 0; // returns network message name, eg "svc_serverinfo"
 	virtual INetChannel *GetNetChannel(void) const = 0;
 	virtual const char *ToString(void) const = 0; // returns a human readable string about message content
+	virtual int GetSize(void) const = 0;
+	virtual void SetRateLimitPolicy(LPVOID) = 0;
 };
 
 class IDemoRecorder

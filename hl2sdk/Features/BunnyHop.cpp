@@ -1,5 +1,6 @@
 ﻿#include "BunnyHop.h"
 #include "../hook.h"
+#include "../Utils/math.h"
 #include "../../l4d2Simple2/config.h"
 #include <iostream>
 
@@ -30,7 +31,7 @@ CBunnyHop::~CBunnyHop()
 
 void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 {
-	if (!m_bAcitve)
+	if (!m_bAcitve || m_bMenuOpen)
 		return;
 
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -67,10 +68,24 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 			DoExtraAutoStrafe(player, pCmd, flags);
 		*/
 
-		if(m_iBhopMode == 1)
-			DoNormalAutoBhop(player, pCmd, flags);
-		else if(m_iBhopMode == 2)
-			DoSafeAutoBhop(pCmd, flags);
+		switch (m_iBhopMode)
+		{
+			case 1:
+			{
+				DoNormalAutoBhop(player, pCmd, flags);
+				break;
+			}
+			case 2:
+			{
+				DoSafeAutoBhop(pCmd, flags);
+				break;
+			}
+			case 3:
+			{
+				DoNormalAutoBhopEx(player, pCmd, flags);
+				break;
+			}
+		}
 
 		switch (m_iStrafeMode)
 		{
@@ -101,6 +116,9 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	// Charger 用的
 	if (m_bNoDuckCooldown)
 		pCmd->buttons |= IN_BULLRUSH;
+
+	if (m_bNoFallDamage)
+		DoNoFallDamage(pCmd, flags);
 }
 
 void CBunnyHop::OnMenuDrawing()
@@ -199,33 +217,38 @@ void CBunnyHop::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No Duck Cooldown"), &m_bNoDuckCooldown);
 	IMGUI_TIPS("作用不明。");
+	
+	ImGui::Checkbox(XorStr("No Fall Damage"), &m_bNoFallDamage);
+	IMGUI_TIPS("无落地伤害。");
 
 	// ImGui::End();
 	ImGui::TreePop();
 }
 
-void CBunnyHop::OnConfigLoading(const config_type & data)
+void CBunnyHop::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("BunnyHop");
 
-	m_bAcitve = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
-	m_iBhopMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
-	m_iStrafeMode = static_cast<int>(g_pConfig->GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
-	m_bEdgeJump = g_pConfig->GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
-	m_fEdgeJumpSpeed = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
-	m_bNoDuckCooldown = g_pConfig->GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	m_bAcitve = cfg.GetBoolean(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	m_iBhopMode = static_cast<int>(cfg.GetInteger(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode)));
+	m_iStrafeMode = static_cast<int>(cfg.GetInteger(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode)));
+	m_bEdgeJump = cfg.GetBoolean(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	m_fEdgeJumpSpeed = cfg.GetFloat(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	m_bNoDuckCooldown = cfg.GetFloat(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	m_bNoFallDamage = cfg.GetFloat(mainKeys, XorStr("bunnyhop_no_falldamage"), m_bNoFallDamage);
 }
 
-void CBunnyHop::OnConfigSave(config_type & data)
+void CBunnyHop::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("BunnyHop");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
-	g_pConfig->SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_enable"), m_bAcitve);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_mode"), static_cast<int>(m_iBhopMode));
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_strafe"), static_cast<int>(m_iStrafeMode));
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp"), m_bEdgeJump);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_edgejmp_speed"), m_fEdgeJumpSpeed);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_duck_cooldown"), m_bNoDuckCooldown);
+	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_falldamage"), m_bNoFallDamage);
 }
 
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
@@ -273,6 +296,15 @@ void CBunnyHop::DoSafeAutoBhop(CUserCmd * pCmd, int flags)
 	}
 }
 
+void CBunnyHop::DoNormalAutoBhopEx(CBasePlayer* player, CUserCmd* pCmd, int flags)
+{
+	if (player == nullptr || !player->IsAlive())
+		return;
+
+	if ((pCmd->buttons & IN_JUMP) && !(flags & FL_ONGROUND) && !IsNearGround(player, 1, flags))
+		pCmd->buttons &= ~IN_JUMP;
+}
+
 bool CBunnyHop::CanRunAutoStrafe(CUserCmd * pCmd, int flags)
 {
 	if (flags & FL_ONGROUND)
@@ -310,6 +342,16 @@ void CBunnyHop::DoRightAutoStrafe(CUserCmd * pCmd, int flags)
 {
 	if (CanRunAutoStrafe(pCmd, flags))
 		pCmd->forwardmove = pCmd->mousedx < 0.f ? 450.f : -450.f;
+}
+
+void CBunnyHop::DoNoFallDamage(CUserCmd* pCmd, int flags)
+{
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+	if (local == nullptr || !local->IsAlive())
+		return;
+
+	if(IsNearGround(local, 1, flags))
+		pCmd->forwardmove = NAN;
 }
 
 float CBunnyHop::GetDelta(float hiSpeed, float maxSpeed, float airAcceleRate)
@@ -466,6 +508,41 @@ bool CBunnyHop::IsOnLadder(CBasePlayer* player)
 	}
 
 	if (trace.DidHit())
+		return true;
+
+	return false;
+}
+
+bool CBunnyHop::IsNearGround(CBasePlayer* player, int tick, int flags)
+{
+	MoveType_t mt = player->GetMoveType();
+	if (mt == MOVETYPE_NOCLIP || mt == MOVETYPE_LADDER || (flags & FL_ONGROUND) || (flags & FL_PARTIALGROUND))
+		return false;
+
+	Vector start = player->GetAbsOrigin();
+	Vector end = math::VelocityExtrapolate(start, player->GetVelocity(), tick);
+	if (start == end)
+		return false;
+
+	Ray_t ray;
+	ray.Init(start, end);
+
+	CTraceFilter filter;
+	filter.pSkip1 = player;
+
+	trace_t trace;
+
+	try
+	{
+		g_pInterface->Trace->TraceRay(ray, MASK_PLAYERSOLID_BRUSHONLY, &filter, &trace);
+	}
+	catch (...)
+	{
+		Utils::log(XorStr("CBunnyHop.IsNearGround.TraceRay Error."));
+		return false;
+	}
+
+	if (trace.fraction < 1.0f)
 		return true;
 
 	return false;

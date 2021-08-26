@@ -11,8 +11,9 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode) override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
+	virtual void OnEntityDeleted(CBaseEntity*) override;
 
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 	static bool IsValidTarget(CBasePlayer* entity);
@@ -48,6 +49,7 @@ private:	// 菜单项
 	float m_fDiffOfChange = 10.0f;
 	int m_iPreventTicks = 3;
 	bool m_bDebug = false;
+	float m_fMaxDistance = 3000.0f;
 
 private:
 	CBasePlayer* m_pAimTarget = nullptr;

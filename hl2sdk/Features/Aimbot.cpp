@@ -57,7 +57,7 @@ CAimBot::~CAimBot()
 
 void CAimBot::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
-	if (!m_bActive || (cmd->buttons & IN_SCORE))
+	if (!m_bActive || m_bMenuOpen || (cmd->buttons & IN_SCORE))
 	{
 		m_bRunAutoAim = false;
 		return;
@@ -199,60 +199,60 @@ void CAimBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CAimBot::OnConfigLoading(const config_type & data)
+void CAimBot::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Aimbot");
 	
-	m_bActive = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_enable"), m_bActive);
-	m_bOnFire = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
-	m_bSilent = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_silent"), m_bSilent);
-	m_bPerfectSilent = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
-	m_bVisible = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_visible"), m_bVisible);
-	m_bNonFriendly = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
-	m_bNonWitch = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
-	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
-	m_fAimFov = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
-	m_fAimDist = g_pConfig->GetFloat(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
-	m_bShowRange = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
-	m_bShowAngles = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
-	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
-	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
-	m_bShotgunChest = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
-	m_bFatalFirst = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
-	m_bShowTarget = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
-	m_bIgnoreTank = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
-	m_bIgnoreCI = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
-	m_bIgnoreCI = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_non_near"), m_bIgnoreNearSurvivor);
-	m_bIgnoreCI = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_with_melee"), m_bAimOfMelee);
-	m_bIgnoreCI = g_pConfig->GetBoolean(mainKeys, XorStr("autoaim_remember"), m_bRemeberChoose);
+	m_bActive = cfg.GetBoolean(mainKeys, XorStr("autoaim_enable"), m_bActive);
+	m_bOnFire = cfg.GetBoolean(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
+	m_bSilent = cfg.GetBoolean(mainKeys, XorStr("autoaim_silent"), m_bSilent);
+	m_bPerfectSilent = cfg.GetBoolean(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
+	m_bVisible = cfg.GetBoolean(mainKeys, XorStr("autoaim_visible"), m_bVisible);
+	m_bNonFriendly = cfg.GetBoolean(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
+	m_bNonWitch = cfg.GetBoolean(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
+	m_bDistance = cfg.GetBoolean(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
+	m_fAimFov = cfg.GetFloat(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
+	m_fAimDist = cfg.GetFloat(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
+	m_bShowRange = cfg.GetBoolean(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
+	m_bShowAngles = cfg.GetBoolean(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
+	m_bVelExt = cfg.GetBoolean(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
+	m_bForwardtrack = cfg.GetBoolean(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
+	m_bShotgunChest = cfg.GetBoolean(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
+	m_bFatalFirst = cfg.GetBoolean(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
+	m_bShowTarget = cfg.GetBoolean(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
+	m_bIgnoreTank = cfg.GetBoolean(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
+	m_bIgnoreCI = cfg.GetBoolean(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
+	m_bIgnoreCI = cfg.GetBoolean(mainKeys, XorStr("autoaim_non_near"), m_bIgnoreNearSurvivor);
+	m_bIgnoreCI = cfg.GetBoolean(mainKeys, XorStr("autoaim_with_melee"), m_bAimOfMelee);
+	m_bIgnoreCI = cfg.GetBoolean(mainKeys, XorStr("autoaim_remember"), m_bRemeberChoose);
 }
 
-void CAimBot::OnConfigSave(config_type & data)
+void CAimBot::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Aimbot");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_enable"), m_bActive);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_silent"), m_bSilent);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_visible"), m_bVisible);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_non_near"), m_bIgnoreNearSurvivor);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_with_melee"), m_bAimOfMelee);
-	g_pConfig->SetValue(mainKeys, XorStr("autoaim_remember"), m_bRemeberChoose);
+	cfg.SetValue(mainKeys, XorStr("autoaim_enable"), m_bActive);
+	cfg.SetValue(mainKeys, XorStr("autoaim_only_shot"), m_bOnFire);
+	cfg.SetValue(mainKeys, XorStr("autoaim_silent"), m_bSilent);
+	cfg.SetValue(mainKeys, XorStr("autoaim_perfect_silent"), m_bPerfectSilent);
+	cfg.SetValue(mainKeys, XorStr("autoaim_visible"), m_bVisible);
+	cfg.SetValue(mainKeys, XorStr("autoaim_non_friendly"), m_bNonFriendly);
+	cfg.SetValue(mainKeys, XorStr("autoaim_non_witch"), m_bNonWitch);
+	cfg.SetValue(mainKeys, XorStr("autoaim_distance_priority"), m_bDistance);
+	cfg.SetValue(mainKeys, XorStr("autoaim_fov"), m_fAimFov);
+	cfg.SetValue(mainKeys, XorStr("autoaim_distance"), m_fAimDist);
+	cfg.SetValue(mainKeys, XorStr("autoaim_show_range"), m_bShowRange);
+	cfg.SetValue(mainKeys, XorStr("autoaim_show_angles"), m_bShowAngles);
+	cfg.SetValue(mainKeys, XorStr("autoaim_velext"), m_bVelExt);
+	cfg.SetValue(mainKeys, XorStr("autoaim_forwardtrack"), m_bForwardtrack);
+	cfg.SetValue(mainKeys, XorStr("autoaim_shotgun_chest"), m_bShotgunChest);
+	cfg.SetValue(mainKeys, XorStr("autoaim_fatal_first"), m_bFatalFirst);
+	cfg.SetValue(mainKeys, XorStr("autoaim_target"), m_bShowTarget);
+	cfg.SetValue(mainKeys, XorStr("autoaim_non_tank"), m_bIgnoreTank);
+	cfg.SetValue(mainKeys, XorStr("autoaim_non_ci"), m_bIgnoreCI);
+	cfg.SetValue(mainKeys, XorStr("autoaim_non_near"), m_bIgnoreNearSurvivor);
+	cfg.SetValue(mainKeys, XorStr("autoaim_with_melee"), m_bAimOfMelee);
+	cfg.SetValue(mainKeys, XorStr("autoaim_remember"), m_bRemeberChoose);
 }
 
 void CAimBot::OnEnginePaint(PaintMode_t mode)
@@ -344,6 +344,12 @@ void CAimBot::OnFrameStageNotify(ClientFrameStage_t stage)
 	if (hitEntity != nullptr && math::WorldToScreenEx(aimPosition, screenPosition))
 		g_pDrawing->DrawText(static_cast<int>(screenPosition.x), static_cast<int>(screenPosition.y),
 			CDrawing::PURPLE, true, "X");
+}
+
+void CAimBot::OnEntityDeleted(CBaseEntity* entity)
+{
+	if (m_pAimTarget == entity)
+		m_pAimTarget = nullptr;
 }
 
 CBasePlayer * CAimBot::FindTarget(const QAngle& myEyeAngles, Vector* aimPos)

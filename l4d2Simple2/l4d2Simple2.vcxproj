@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{6ABCF38F-39CA-4D8E-977B-2A2C58A957EE}</ProjectGuid>
     <RootNamespace>l4d2Simple2</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
     <ProjectName>l4d2Simple2</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -150,6 +150,7 @@
     <ClCompile Include="..\hl2sdk\Features\SpeedHacker.cpp" />
     <ClCompile Include="..\hl2sdk\Features\TriggerBot.cpp" />
     <ClCompile Include="..\hl2sdk\Features\Visual.cpp" />
+    <ClCompile Include="..\hl2sdk\Features\WeaponConfig.cpp" />
     <ClCompile Include="..\hl2sdk\hook.cpp" />
     <ClCompile Include="..\hl2sdk\interfaces.cpp" />
     <ClCompile Include="..\hl2sdk\Interfaces\IAppSystem.h" />
@@ -252,6 +253,7 @@
     <ClInclude Include="..\hl2sdk\Features\SpeedHacker.h" />
     <ClInclude Include="..\hl2sdk\Features\TriggerBot.h" />
     <ClInclude Include="..\hl2sdk\Features\Visual.h" />
+    <ClInclude Include="..\hl2sdk\Features\WeaponConfig.h" />
     <ClInclude Include="..\hl2sdk\hook.h" />
     <ClInclude Include="..\hl2sdk\indexes.h" />
     <ClInclude Include="..\hl2sdk\interfaces.h" />

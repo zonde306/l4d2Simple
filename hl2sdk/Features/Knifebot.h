@@ -10,8 +10,8 @@ public:
 	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
 	virtual void OnMenuDrawing() override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 	virtual void OnEnginePaint(PaintMode_t) override;
 
 	bool CheckMeleeAttack(const QAngle& myEyeAngles);

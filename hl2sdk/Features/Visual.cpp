@@ -52,6 +52,16 @@ void CVisualPlayer::OnEnginePaint(PaintMode_t mode)
 	}
 	*/
 
+	static bool nightVision = false;
+	if (m_bNightVision != nightVision)
+	{
+		if (m_bNightVision)
+			local->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_bNightVisionOn")) = 1;
+		else
+			local->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_bNightVisionOn")) = 0;
+		nightVision = m_bNightVision;
+	}
+
 	for (int i = 1; i <= maxEntity; ++i)
 	{
 		CBasePlayer* entity = reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(i));
@@ -319,62 +329,92 @@ void CVisualPlayer::OnMenuDrawing()
 
 	ImGui::Checkbox(XorStr("No Fog"), &m_bNoFog);
 	IMGUI_TIPS("去除灵魂特感蓝色屏幕。");
+	
+	ImGui::Checkbox(XorStr("No Mud"), &m_bNoMud);
+	IMGUI_TIPS("去除泥浆屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("No Blood"), &m_bNoBlood);
+	IMGUI_TIPS("去除血腥屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("No Explosion Flash"), &m_bNoFlash);
+	IMGUI_TIPS("去除爆炸闪光屏幕效果。");
+	
+	ImGui::Checkbox(XorStr("Full Bright"), &m_bFullBright);
+	IMGUI_TIPS("地图高亮。");
+	
+	ImGui::Checkbox(XorStr("Full Flashlight"), &m_bFullFlashlight);
+	IMGUI_TIPS("手电全屏。");
+	
+	ImGui::Checkbox(XorStr("Night Vision"), &m_bNightVision);
+	IMGUI_TIPS("夜视仪。");
 
 	ImGui::TreePop();
+
+	UpdateConVar();
 }
 
-void CVisualPlayer::OnConfigLoading(const config_type & data)
+void CVisualPlayer::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("PlayerVisual");
 	
-	m_bDrawToLeft = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
-	m_bBox = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_box"), m_bBox);
-	m_bHeadBox = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
-	m_bBone = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_bone"), m_bBone);
-	m_bName = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_name"), m_bName);
-	m_bHealth = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_health"), m_bHealth);
-	m_bDistance = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_distance"), m_bDistance);
-	m_bWeapon = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
-	m_bCharacter = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_character"), m_bCharacter);
-	m_bChams = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_chams"), m_bChams);
-	m_bSpectator = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
-	m_bBarrel = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
-	m_fBarrelDistance = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
-	m_bNoVomit = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
-	m_bCleanVision = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
-	m_bCleanGhost = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
-	m_bNoFog = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
-	m_fFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_fov"), m_fFov);
-	m_fViewFov = g_pConfig->GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
-	m_bFovChanger = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
-	m_bFieldOfView = g_pConfig->GetBoolean(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	m_bDrawToLeft = cfg.GetBoolean(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
+	m_bBox = cfg.GetBoolean(mainKeys, XorStr("playeresp_box"), m_bBox);
+	m_bHeadBox = cfg.GetBoolean(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
+	m_bBone = cfg.GetBoolean(mainKeys, XorStr("playeresp_bone"), m_bBone);
+	m_bName = cfg.GetBoolean(mainKeys, XorStr("playeresp_name"), m_bName);
+	m_bHealth = cfg.GetBoolean(mainKeys, XorStr("playeresp_health"), m_bHealth);
+	m_bDistance = cfg.GetBoolean(mainKeys, XorStr("playeresp_distance"), m_bDistance);
+	m_bWeapon = cfg.GetBoolean(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
+	m_bCharacter = cfg.GetBoolean(mainKeys, XorStr("playeresp_character"), m_bCharacter);
+	m_bChams = cfg.GetBoolean(mainKeys, XorStr("playeresp_chams"), m_bChams);
+	m_bSpectator = cfg.GetBoolean(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
+	m_bBarrel = cfg.GetBoolean(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
+	m_fBarrelDistance = cfg.GetFloat(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
+	m_bNoVomit = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
+	m_bCleanVision = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
+	m_bCleanGhost = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
+	m_bNoFog = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	m_fFov = cfg.GetFloat(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	m_fViewFov = cfg.GetFloat(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	m_bFovChanger = cfg.GetBoolean(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	m_bFieldOfView = cfg.GetBoolean(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	m_bNoMud = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_mud"), m_bNoMud);
+	m_bNoBlood = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_blood"), m_bNoBlood);
+	m_bFullBright = cfg.GetBoolean(mainKeys, XorStr("playeresp_fullbright"), m_bFullBright);
+	m_bFullFlashlight = cfg.GetBoolean(mainKeys, XorStr("playeresp_fullflashlight"), m_bFullFlashlight);
+	m_bNoFlash = cfg.GetBoolean(mainKeys, XorStr("playeresp_no_flash"), m_bNoFlash);
 }
 
-void CVisualPlayer::OnConfigSave(config_type & data)
+void CVisualPlayer::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("PlayerVisual");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_box"), m_bBox);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_bone"), m_bBone);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_name"), m_bName);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_health"), m_bHealth);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_distance"), m_bDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_character"), m_bCharacter);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_chams"), m_bChams);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov"), m_fFov);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
-	g_pConfig->SetValue(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	cfg.SetValue(mainKeys, XorStr("playeresp_left_alignment"), m_bDrawToLeft);
+	cfg.SetValue(mainKeys, XorStr("playeresp_box"), m_bBox);
+	cfg.SetValue(mainKeys, XorStr("playeresp_head"), m_bHeadBox);
+	cfg.SetValue(mainKeys, XorStr("playeresp_bone"), m_bBone);
+	cfg.SetValue(mainKeys, XorStr("playeresp_name"), m_bName);
+	cfg.SetValue(mainKeys, XorStr("playeresp_health"), m_bHealth);
+	cfg.SetValue(mainKeys, XorStr("playeresp_distance"), m_bDistance);
+	cfg.SetValue(mainKeys, XorStr("playeresp_weapon"), m_bWeapon);
+	cfg.SetValue(mainKeys, XorStr("playeresp_character"), m_bCharacter);
+	cfg.SetValue(mainKeys, XorStr("playeresp_chams"), m_bChams);
+	cfg.SetValue(mainKeys, XorStr("playeresp_spectator"), m_bSpectator);
+	cfg.SetValue(mainKeys, XorStr("playeresp_barrel"), m_bBarrel);
+	cfg.SetValue(mainKeys, XorStr("playeresp_barrel_distance"), m_fBarrelDistance);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_vomit"), m_bNoVomit);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_vision"), m_bCleanVision);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_ghost"), m_bCleanGhost);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_fog"), m_bNoFog);
+	cfg.SetValue(mainKeys, XorStr("playeresp_fov"), m_fFov);
+	cfg.SetValue(mainKeys, XorStr("playeresp_vm_fov"), m_fViewFov);
+	cfg.SetValue(mainKeys, XorStr("playeresp_fov_changer"), m_bFovChanger);
+	cfg.SetValue(mainKeys, XorStr("playeresp_aim_fov"), m_bFieldOfView);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_mud"), m_bNoMud);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_blood"), m_bNoBlood);
+	cfg.SetValue(mainKeys, XorStr("playeresp_fullbright"), m_bFullBright);
+	cfg.SetValue(mainKeys, XorStr("playeresp_fullflashlight"), m_bFullFlashlight);
+	cfg.SetValue(mainKeys, XorStr("playeresp_no_flash"), m_bNoFlash);
 }
 
 void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
@@ -409,9 +449,13 @@ void CVisualPlayer::OnFrameStageNotify(ClientFrameStage_t stage)
 
 bool CVisualPlayer::OnFindMaterial(std::string & materialName, std::string & textureGroupName)
 {
-	if ((m_bNoVomit && materialName.find("vomitscreensplash") != std::string::npos) ||
-		(m_bCleanVision && materialName.find("flashlight001_infected") != std::string::npos) ||
-		(m_bCleanGhost && materialName.find("flashlight001_ghost") != std::string::npos))
+	if ((m_bNoVomit && materialName.find(XorStr("vomitscreensplash")) != std::string::npos) ||
+		(m_bCleanVision && materialName.find(XorStr("flashlight001_infected")) != std::string::npos) ||
+		(m_bCleanGhost && materialName.find(XorStr("flashlight001_ghost")) != std::string::npos) ||
+		(m_bNoMud && materialName.find(XorStr("droplets")) != std::string::npos) ||
+		(m_bNoBlood && materialName.find(XorStr("bloodsplatter")) != std::string::npos) ||
+		(m_bNoFlash && materialName.find(XorStr("particle_flare_001")) != std::string::npos) ||
+		(m_bNoFlash && materialName.find(XorStr("particle_flare_004b_mod")) != std::string::npos))
 	{
 		// 替换成透明的材质
 		materialName = XorStr("dev/clearalpha");
@@ -699,6 +743,38 @@ Vector CVisualPlayer::GetSeePosition(CBasePlayer * player, const Vector & eyePos
 	}
 
 	return trace.end;
+}
+
+void CVisualPlayer::UpdateConVar()
+{
+	static bool bright = false, flashlight = false;
+
+	if (m_bFullBright != bright)
+	{
+		bright = m_bFullBright;
+		static ConVar* mat_fullbright = g_pInterface->Cvar->FindVar(XorStr("mat_fullbright"));
+		mat_fullbright->SetValue(bright);
+	}
+	if (m_bFullFlashlight != flashlight)
+	{
+		flashlight = m_bFullFlashlight;
+		static ConVar* r_flashlightfov = g_pInterface->Cvar->FindVar(XorStr("r_flashlightfov"));
+		static ConVar* r_flashlightconstant = g_pInterface->Cvar->FindVar(XorStr("r_flashlightconstant"));
+		static ConVar* cl_max_shadow_renderable_dist = g_pInterface->Cvar->FindVar(XorStr("cl_max_shadow_renderable_dist"));
+
+		if (flashlight)
+		{
+			r_flashlightfov->SetValue(120);
+			r_flashlightconstant->SetValue(1);
+			cl_max_shadow_renderable_dist->SetValue(0);
+		}
+		else
+		{
+			r_flashlightfov->SetValue(53);
+			r_flashlightconstant->SetValue(0);
+			cl_max_shadow_renderable_dist->SetValue(3000);
+		}
+	}
 }
 
 std::string CVisualPlayer::DrawName(int index, bool separator)

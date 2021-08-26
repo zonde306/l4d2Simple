@@ -14,8 +14,8 @@ public:
 	virtual void OnMenuDrawing() override;
 	virtual void OnEnginePaint(PaintMode_t mode);
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 	virtual void OnConnect() override;
 	virtual void OnDisconnect() override;
 	virtual void OnGameEventClient(IGameEvent* event) override;
@@ -31,6 +31,7 @@ public:
 
 	void RemoveSpread(CUserCmd* cmd);
 	void RemoveRecoil(CUserCmd* cmd);
+	void SmoothAngles(CUserCmd* cmd, bool* bSendPacket);
 
 	void RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon);
 	void RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFire);
@@ -46,6 +47,9 @@ private:
 	bool m_bRealAngles = false;
 	bool m_bFakeAngleBug = false;
 	bool m_bFakeLag = false;
+	float m_fSpreadFactor = 1.0f;
+	float m_fRecoilFactor = 1.0f;
+	int m_iSmoothTicks = 0;
 
 private:
 	bool m_bSilentFire = false;
@@ -54,6 +58,7 @@ private:
 
 private:
 	QAngle m_vecAngles = INVALID_VECTOR;
+	QAngle m_vecPunchAngle = INVALID_VECTOR;
 	float m_fSideMove = 0.0f;
 	float m_fForwardMove = 0.0f;
 	float m_fUpMove = 0.0f;
@@ -65,6 +70,9 @@ private:
 	bool m_bHasFiring = false;
 	bool m_bHasSilent = false;
 	int m_iPacketBlocked = 0;
+	int m_iKeepTicks = 0;
+	bool m_bLastFired = false;
+	QAngle m_vecLastFiredAngles = INVALID_VECTOR;
 
 private:
 	bool m_bRapidIgnore = true;

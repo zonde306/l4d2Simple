@@ -14,7 +14,7 @@ CHackVSHack::~CHackVSHack()
 
 void CHackVSHack::OnCreateMove(CUserCmd* cmd, bool* bSendPacket)
 {
-	if (!(*bSendPacket))
+	if (!(*bSendPacket) || m_bMenuOpen)
 		return;
 	
 	if (m_bAirStuck)

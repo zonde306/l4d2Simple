@@ -13,8 +13,8 @@ public:
 	virtual void OnCreateMove(CUserCmd* cmd, bool* bSendPacket) override;
 	virtual void OnEnginePaint(PaintMode_t) override;
 
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 
 	void RunPositionAdjustment(CUserCmd* cmd, bool bSendPacket);
 	void RunBacktracking(CUserCmd* cmd, bool bSendPacket);

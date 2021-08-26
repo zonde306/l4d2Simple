@@ -30,7 +30,7 @@ CKnifeBot::~CKnifeBot()
 void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 {
 	// 防止打断救人
-	if (cmd->buttons & IN_USE)
+	if ((cmd->buttons & IN_USE) || m_bMenuOpen)
 		return;
 	
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
@@ -57,9 +57,7 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 	if (m_bFastMelee && team == 2 && (cmd->buttons & IN_RELOAD))
 	{
 		RunFastMelee(cmd, weaponId, nextAttack, serverTime);
-
-		if(!weapon->IsReloading())
-			return;
+		return;
 	}
 
 	if (cmd->buttons & IN_ATTACK)
@@ -134,36 +132,36 @@ void CKnifeBot::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
-void CKnifeBot::OnConfigLoading(const config_type & data)
+void CKnifeBot::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Knifebot");
 	
-	m_bAutoFire = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
-	m_bAutoShove = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
-	m_bFastMelee = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
-	m_fExtraMeleeRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
-	m_fExtraShoveRange = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
-	m_bVelExt = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
-	m_bForwardtrack = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
-	m_fMeleeFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
-	m_fShoveFOV = g_pConfig->GetFloat(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
-	m_bVisualOnly = g_pConfig->GetBoolean(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
+	m_bAutoFire = cfg.GetBoolean(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
+	m_bAutoShove = cfg.GetBoolean(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
+	m_bFastMelee = cfg.GetBoolean(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
+	m_fExtraMeleeRange = cfg.GetFloat(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
+	m_fExtraShoveRange = cfg.GetFloat(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
+	m_bVelExt = cfg.GetBoolean(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
+	m_bForwardtrack = cfg.GetBoolean(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
+	m_fMeleeFOV = cfg.GetFloat(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
+	m_fShoveFOV = cfg.GetFloat(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
+	m_bVisualOnly = cfg.GetBoolean(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
 }
 
-void CKnifeBot::OnConfigSave(config_type & data)
+void CKnifeBot::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("Knifebot");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
-	g_pConfig->SetValue(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
+	cfg.SetValue(mainKeys, XorStr("knifebot_melee"), m_bAutoFire);
+	cfg.SetValue(mainKeys, XorStr("knifebot_shove"), m_bAutoShove);
+	cfg.SetValue(mainKeys, XorStr("knifebot_fastmelee"), m_bFastMelee);
+	cfg.SetValue(mainKeys, XorStr("knifebot_melee_range"), m_fExtraMeleeRange);
+	cfg.SetValue(mainKeys, XorStr("knifebot_shove_range"), m_fExtraShoveRange);
+	cfg.SetValue(mainKeys, XorStr("knifebot_velext"), m_bVelExt);
+	cfg.SetValue(mainKeys, XorStr("knifebot_forwardtrack"), m_bForwardtrack);
+	cfg.SetValue(mainKeys, XorStr("knifebot_melee_fov"), m_fMeleeFOV);
+	cfg.SetValue(mainKeys, XorStr("knifebot_shove_fov"), m_fShoveFOV);
+	cfg.SetValue(mainKeys, XorStr("knifebot_visual"), m_bVisualOnly);
 }
 
 void CKnifeBot::OnEnginePaint(PaintMode_t)
@@ -361,7 +359,8 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 		if (!m_bCanShoveAttack &&
 			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
-			(classId != ET_CHARGER || canShoveCharger))
+			(classId != ET_CHARGER || canShoveCharger) &&
+			(!entity->IsPlayer() || !entity->IsStaggering()))
 		{
 			// 推 (右键)
 			m_bCanShoveAttack = true;

@@ -31,6 +31,8 @@ CViewManager::~CViewManager()
 void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 {
 	m_pEventListener->m_bIsGameTick = false;
+	if (m_bMenuOpen)
+		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive() || local->IsHangingFromLedge() ||
@@ -46,12 +48,23 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		RunRapidFire(cmd, local, weapon);
 
 	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
+	bool isGun = weapon->IsFireGun();
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
-	// 推没有后坐力的
-	if (weapon->IsFireGun() && canFire && m_bHasFiring && (cmd->buttons & IN_ATTACK))
+	if (isGun && canFire && m_bHasFiring)
+	{
 		RunNoRecoilSpread(cmd, weapon, bSendPacket);
+		m_bLastFired = !!(cmd->buttons & IN_ATTACK);
+		m_vecLastFiredAngles = cmd->viewangles;
+		m_iKeepTicks = 0;
+	}
+	else if (isGun && !canFire && m_bLastFired && (m_bNoRecoil || m_bNoSpread))
+	{
+		SmoothAngles(cmd, bSendPacket);
+		cmd->buttons |= IN_ATTACK;
+		m_bLastFired = false;
+	}
 
 	m_bHasSilent = !(*bSendPacket);
 	m_vecViewAngles = cmd->viewangles;
@@ -93,13 +106,16 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		{
 			*bSendPacket = false;
 			lastChocked += 1;
-			cmd->viewangles.x = cmd->viewangles.y = -logf(-1.0f);
+			cmd->viewangles.x = cmd->viewangles.y = NAN;
 		}
 	}
 }
 
 void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 {
+	if (m_bMenuOpen)
+		return;
+
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
 	if (local == nullptr || !local->IsAlive())
 		return;
@@ -140,11 +156,17 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("No Recoil"), &m_bNoRecoil);
 	IMGUI_TIPS("无后坐力。");
 
+	ImGui::SliderFloat(XorStr("No Recoil Factor"), &m_fRecoilFactor, 0.0f, 1.0f, ("%.2f"));
+	IMGUI_TIPS("无后坐力效率。");
+
 	ImGui::Checkbox(XorStr("No Visual Recoil"), &m_bNoVisRecoil);
 	IMGUI_TIPS("无后屏幕坐力。");
 
 	ImGui::Checkbox(XorStr("No Spread"), &m_bNoSpread);
 	IMGUI_TIPS("子弹无扩散（提升射击精度）。");
+
+	ImGui::SliderFloat(XorStr("No Spread Factor"), &m_fSpreadFactor, 0.0f, 1.0f, ("%.2f"));
+	IMGUI_TIPS("子弹无扩散效率。");
 
 	ImGui::Checkbox(XorStr("Rapid Fire"), &m_bRapidFire);
 	IMGUI_TIPS("手枪/狙击枪连射（按住开枪键）。");
@@ -164,35 +186,44 @@ void CViewManager::OnMenuDrawing()
 	ImGui::Checkbox(XorStr("shotgun sound"), &(m_pEventListener->m_bShotgunSound));
 	IMGUI_TIPS("第三人称使用霰弹枪播放开枪声音。");
 
+	ImGui::SliderInt(XorStr("Smooth Ticks"), &m_iSmoothTicks, 0, 10);
+	IMGUI_TIPS("平滑，用于避免被 liac 检测");
+
 	ImGui::TreePop();
 }
 
-void CViewManager::OnConfigLoading(const config_type & data)
+void CViewManager::OnConfigLoading(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("AimHelper");
 	
-	m_bNoRecoil = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
-	m_bNoVisRecoil = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
-	m_bNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
-	m_bRapidFire = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
-	m_bSilentNoSpread = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
-	m_bRealAngles = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
-	m_bFakeLag = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
-	m_pEventListener->m_bShotgunSound = g_pConfig->GetBoolean(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
+	m_bNoRecoil = cfg.GetBoolean(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
+	m_bNoVisRecoil = cfg.GetBoolean(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
+	m_bNoSpread = cfg.GetBoolean(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
+	m_bRapidFire = cfg.GetBoolean(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
+	m_bSilentNoSpread = cfg.GetBoolean(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
+	m_bRealAngles = cfg.GetBoolean(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
+	m_bFakeLag = cfg.GetBoolean(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
+	m_pEventListener->m_bShotgunSound = cfg.GetBoolean(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
+	m_fSpreadFactor = cfg.GetFloat(mainKeys, XorStr("aimhelper_spread_factor"), m_fSpreadFactor);
+	m_fRecoilFactor = cfg.GetFloat(mainKeys, XorStr("aimhelper_recoil_factor"), m_fRecoilFactor);
+	m_iSmoothTicks = cfg.GetInteger(mainKeys, XorStr("aimhelper_smooth_ticks"), m_iSmoothTicks);
 }
 
-void CViewManager::OnConfigSave(config_type & data)
+void CViewManager::OnConfigSave(CProfile& cfg)
 {
 	const std::string mainKeys = XorStr("AimHelper");
 	
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
-	g_pConfig->SetValue(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_recoil"), m_bNoRecoil);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_visual_recoil"), m_bNoVisRecoil);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_spread"), m_bNoSpread);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_rapid_fire"), m_bRapidFire);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_silent"), m_bSilentNoSpread);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_real_angles"), m_bRealAngles);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_fake_lag"), m_bFakeLag);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_shotgun"), m_pEventListener->m_bShotgunSound);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_spread_factor"), m_fSpreadFactor);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_recoil_factor"), m_fRecoilFactor);
+	cfg.SetValue(mainKeys, XorStr("aimhelper_smooth_ticks"), m_iSmoothTicks);
 }
 
 void CViewManager::OnConnect()
@@ -221,7 +252,7 @@ void CViewManager::OnGameEvent(IGameEvent* event, bool dontBroadcast)
 
 void CViewManager::OnEnginePaint(PaintMode_t mode)
 {
-	if (!m_bRealAngles || !m_bHasFiring)
+	if (!m_bRealAngles || !m_bHasFiring || m_bMenuOpen)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
@@ -275,10 +306,12 @@ void CViewManager::RunNoRecoilSpread(CUserCmd * cmd, CBaseWeapon* weapon, bool* 
 	m_vecSpread.y = spread.second;
 	// m_vecSpread.z = 0.0f;
 
+	// 被普感锤也算是后坐力
 	if (m_bNoRecoil)
 		RemoveRecoil(cmd);
 
-	if (m_bNoSpread)
+	// 射击才有扩散
+	if (m_bNoSpread && (cmd->buttons & IN_ATTACK))
 		RemoveSpread(cmd);
 
 	if (m_bSilentNoSpread)
@@ -325,8 +358,8 @@ void CViewManager::RemoveSpread(CUserCmd * cmd)
 	if (weapon == nullptr/* || !weapon->CanFire()*/)
 		return;
 
-	cmd->viewangles.x -= m_vecSpread.x;
-	cmd->viewangles.y -= m_vecSpread.y;
+	cmd->viewangles.x -= m_vecSpread.x * m_fSpreadFactor;
+	cmd->viewangles.y -= m_vecSpread.y * m_fSpreadFactor;
 }
 
 void CViewManager::RemoveRecoil(CUserCmd * cmd)
@@ -344,10 +377,33 @@ void CViewManager::RemoveRecoil(CUserCmd * cmd)
 	cmd->viewangles.y -= punch.y;
 	*/
 
-	Vector& m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
+	m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
 	// Vector& m_vecPunchAngleVel = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
-	cmd->viewangles.x -= m_vecPunchAngle.x;
-	cmd->viewangles.y -= m_vecPunchAngle.y;
+	cmd->viewangles.x -= m_vecPunchAngle.x * m_fRecoilFactor;
+	cmd->viewangles.y -= m_vecPunchAngle.y * m_fRecoilFactor;
+}
+
+void CViewManager::SmoothAngles(CUserCmd* cmd, bool* bSendPacket)
+{
+	if (m_iKeepTicks >= m_iSmoothTicks)
+		return;
+
+	++m_iKeepTicks;
+
+	if (m_iKeepTicks <= 1)
+	{
+		cmd->viewangles = m_vecLastFiredAngles;
+	}
+	else if (m_iKeepTicks > 1)
+	{
+		QAngle view;
+		g_pInterface->Engine->GetViewAngles(view);
+
+		cmd->viewangles = math::Lerp(m_vecLastFiredAngles, view, static_cast<float>(m_iKeepTicks - 1) / static_cast<float>(m_iSmoothTicks - 1));
+	}
+
+	if (m_bSilentNoSpread)
+		*bSendPacket = false;
 }
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)

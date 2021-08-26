@@ -92,4 +92,7 @@ public:
 
 	// Smoker
 	CBasePlayer* GetCurrentTongueTarget();
+	
+	bool IsStaggering();
+	bool IsGettingUp();
 };

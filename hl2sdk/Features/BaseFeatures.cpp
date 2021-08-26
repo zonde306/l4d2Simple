@@ -92,11 +92,29 @@ bool CBaseFeatures::OnSendNetMsg(INetMessage &, bool &, bool &)
 	return true;
 }
 
-void CBaseFeatures::OnConfigLoading(const config_type &)
+void CBaseFeatures::OnConfigLoading(CProfile&)
 {
 }
 
-void CBaseFeatures::OnConfigSave(config_type &)
+void CBaseFeatures::OnConfigSave(CProfile&)
+{
+}
+
+void CBaseFeatures::OnMenuOpened()
+{
+	m_bMenuOpen = true;
+}
+
+void CBaseFeatures::OnMenuClosed()
+{
+	m_bMenuOpen = false;
+}
+
+void CBaseFeatures::OnEntityCreated(CBaseEntity*)
+{
+}
+
+void CBaseFeatures::OnEntityDeleted(CBaseEntity*)
 {
 }
 

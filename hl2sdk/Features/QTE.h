@@ -12,10 +12,11 @@ public:
 	~CQuickTriggerEvent();
 
 	virtual void OnCreateMove(CUserCmd* cmd, bool*) override;
+	virtual void OnEntityDeleted(CBaseEntity*) override;
 
 	virtual void OnMenuDrawing() override;
-	virtual void OnConfigLoading(const config_type& data) override;
-	virtual void OnConfigSave(config_type& data) override;
+	virtual void OnConfigLoading(CProfile& cfg) override;
+	virtual void OnConfigSave(CProfile& cfg) override;
 
 	virtual bool OnEmitSound(std::string& sample, int& entity, int& channel, float& volume,
 		SoundLevel_t& level, int& flags, int& pitch, Vector& origin, Vector& direction,

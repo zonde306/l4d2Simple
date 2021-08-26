@@ -240,6 +240,10 @@ MoveType_t CBaseEntity::GetMoveType()
 	// 在 C_BaseEntity::SetMoveType 里
 	// this 后的第一个参数
 	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + indexes::MoveType));
+
+	// static int offset = GetNetPropOffset(XorStr("DT_BaseEntity"), XorStr("movetype"));
+	// Assert_NetProp(offset);
+	// return static_cast<MoveType_t>(DECL_NETPROP_GET(byte));
 }
 
 const char * CBaseEntity::GetClassname()
