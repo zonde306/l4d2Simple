@@ -263,4 +263,4 @@ __pycache__/
 /hl2sdk/Structs/lagrecord.h
 /hl2sdk/Structs/lagrecord.cpp
 
-boost/
+/boost
