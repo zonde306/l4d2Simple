@@ -137,7 +137,7 @@ void CBaseMenu::OnPresent()
 
 		localtime_s(&timeInfo, &t);
 
-		ImGui::Text(XorStr("%4d / %2d / %2d %2d:%2d:%2d %s"),
+		ImGui::Text(XorStr("%4d /%2d / %2d %2d:%2d:%2d %s"),
 			timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,
 			timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec, GetWeakName(timeInfo.tm_wday).c_str());
 
