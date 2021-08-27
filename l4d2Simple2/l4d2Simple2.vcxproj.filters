@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="源文件">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="头文件">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="ImGui">
       <UniqueIdentifier>{7152ac17-9ede-48e1-8ec9-de10645fa807}</UniqueIdentifier>
     </Filter>
@@ -55,10 +43,18 @@
     <Filter Include="dxsdk\lib">
       <UniqueIdentifier>{04bad5c0-54c7-42b1-9c23-48e2708b2b7c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\imgui\imgui.cpp">
       <Filter>ImGui</Filter>
@@ -73,16 +69,16 @@
       <Filter>ImGui\directx9</Filter>
     </ClCompile>
     <ClCompile Include="dx9hook.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="peb.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="utils.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="vmt.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\detours\detourxs.cpp">
       <Filter>detours</Filter>
@@ -91,16 +87,16 @@
       <Filter>detours</Filter>
     </ClCompile>
     <ClCompile Include="drawing.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="vector.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\d3dfont\D3DFont.cpp">
       <Filter>cd3dfont</Filter>
     </ClCompile>
     <ClCompile Include="menu.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\hl2sdk\Interfaces\IInputSystem.cpp">
       <Filter>hl2sdk\Interfaces</Filter>
@@ -208,7 +204,7 @@
       <Filter>hl2sdk\Interfaces</Filter>
     </ClCompile>
     <ClCompile Include="speedhack.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\hl2sdk\Structs\baseplayer.cpp">
       <Filter>hl2sdk\Structs</Filter>
@@ -241,13 +237,13 @@
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
     <ClCompile Include="config.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\hl2sdk\Features\AntiAntiCheat.cpp">
       <Filter>hl2sdk\Features</Filter>
     </ClCompile>
     <ClCompile Include="console.cpp">
-      <Filter>源文件</Filter>
+      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="..\hl2sdk\Structs\baseplayerresource.cpp">
       <Filter>hl2sdk\Structs</Filter>
@@ -297,19 +293,19 @@
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="dx9hook.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="peb.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="xorstr.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="vmt.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\detours\splice.h">
       <Filter>detours</Filter>
@@ -321,16 +317,16 @@
       <Filter>detours</Filter>
     </ClInclude>
     <ClInclude Include="drawing.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="vector.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\d3dfont\D3DFont.h">
       <Filter>cd3dfont</Filter>
     </ClInclude>
     <ClInclude Include="menu.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Interfaces\IGameMovement.h">
       <Filter>hl2sdk\Interfaces</Filter>
@@ -528,7 +524,7 @@
       <Filter>ImGui\opengl</Filter>
     </ClInclude>
     <ClInclude Include="speedhack.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Structs\baseplayer.h">
       <Filter>hl2sdk\Structs</Filter>
@@ -588,13 +584,13 @@
       <Filter>ADVobfuscator</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Features\AntiAntiCheat.h">
       <Filter>hl2sdk\Features</Filter>
     </ClInclude>
     <ClInclude Include="console.h">
-      <Filter>头文件</Filter>
+      <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="..\hl2sdk\Structs\baseplayerresource.h">
       <Filter>hl2sdk\Structs</Filter>

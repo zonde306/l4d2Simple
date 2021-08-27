@@ -1,9 +1,11 @@
 ﻿#pragma once
+
 #include <vector>
 #include <memory>
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <detourxs.h>
+
 #include "vmt.h"
 
 #pragma comment(lib, "d3d9")
@@ -19,12 +21,15 @@ class CDirectX9Hook
 {
 public:
 	CDirectX9Hook();
-	// CDirectX9Hook(IDirect3DDevice9* device);
 	~CDirectX9Hook();
-	
+
 	void Init();
 	void Shutdown();
-	inline IDirect3DDevice9* GetDevice() { return m_pOriginDevice; };
+
+	inline IDirect3DDevice9* GetDevice()
+	{
+		return m_pOriginDevice;
+	};
 
 public:
 	static HRESULT WINAPI Hooked_DrawIndexedPrimitive(IDirect3DDevice9*, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
@@ -61,11 +66,10 @@ private:
 	IDirect3D9* m_pD3D;
 	IDirect3DDevice9* m_pDevice;
 	IDirect3DDevice9* m_pOriginDevice;
+
 	bool m_bSuccessCreated;
 	bool m_bIsFirstHooked;
 	bool m_bIsSecondHooked;
 };
 
 extern std::unique_ptr<CDirectX9Hook> g_pDirextXHook;
-
-

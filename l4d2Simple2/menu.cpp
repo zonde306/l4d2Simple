@@ -1,4 +1,5 @@
 ﻿#include <sstream>
+
 #include "menu.h"
 #include "xorstr.h"
 #include "utils.h"
@@ -8,6 +9,7 @@
 #include "../l4d2Simple2/config.h"
 
 std::unique_ptr<CBaseMenu> g_pBaseMenu;
+
 time_t g_tpPlayingTimer = 0;
 time_t g_tpGameTimer = 0;
 
@@ -36,9 +38,6 @@ void _OnMenuStateChanged(bool visible)
 
 void CBaseMenu::Init()
 {
-	// g_pDirextXHook->m_vfnDrawIndexedPrimitive.emplace_back(Hooked_DrawIndexedPrimitive);
-	// g_pDirextXHook->AddHook_DrawIndexedPrimitive(Hooked_DrawIndexedPrimitive);
-	// ImGui::StyleColorsDark();
 	g_tpGameTimer = time(nullptr);
 	g_tpPlayingTimer = 0;
 }
@@ -48,7 +47,7 @@ void CBaseMenu::OnPresent()
 	if (!g_bHasShowMenu)
 		return;
 
-	if (!ImGui::Begin(XorStr(u8"l4d2Simple2 (oﾟvﾟ)ノ"), &g_bHasShowMenu))
+	if (!ImGui::Begin(XorStr(u8"Left 4 Dead 2"), &g_bHasShowMenu))
 	{
 		ImGui::End();
 		_OnMenuStateChanged(false);
@@ -61,7 +60,7 @@ void CBaseMenu::OnPresent()
 	if (isFirstEnter)
 	{
 		isFirstEnter = false;
-		
+
 		ImGui::SetWindowPos(ImVec2(g_pConfig->GetFloat(mainKeys, XorStr("mainwindow_x"), 400.0f),
 			g_pConfig->GetFloat(mainKeys, XorStr("mainwindow_y"), 300.0f)));
 
@@ -71,8 +70,6 @@ void CBaseMenu::OnPresent()
 
 	ImGui::PushFont(g_pDrawing->m_imFonts.Fonts.back());
 	ImGui::Text(XorStr("Version: 1.0 | Created by zonde306"));
-	ImGui::Text(XorStr(u8"此辅助免费且开源，如果你是通过购买获得，说明你被骗了。"));
-	// ImGui::GetIO().MouseDrawCursor = true;
 
 	const static auto GetWeakName = [](int weak) -> std::string
 	{
@@ -80,19 +77,19 @@ void CBaseMenu::OnPresent()
 		{
 		case 0:
 		case 7:
-			return XorStr(u8"星期日");
+			return XorStr(u8"Sunday");
 		case 1:
-			return XorStr(u8"星期一");
+			return XorStr(u8"Monday");
 		case 2:
-			return XorStr(u8"星期二");
+			return XorStr(u8"Tuesday");
 		case 3:
-			return XorStr(u8"星期三");
+			return XorStr(u8"Wednesday");
 		case 4:
-			return XorStr(u8"星期四");
+			return XorStr(u8"Thursday");
 		case 5:
-			return XorStr(u8"星期五");
+			return XorStr(u8"Friday");
 		case 6:
-			return XorStr(u8"星期六");
+			return XorStr(u8"Saturday");
 		}
 
 		return "";
@@ -132,61 +129,52 @@ void CBaseMenu::OnPresent()
 		return buffer;
 	};
 
-	// 显示系统时间
 	{
 		ImGui::Separator();
 
 		tm timeInfo;
 		time_t t = time(nullptr);
-		localtime_s(&timeInfo, &t);
 
-		/*
-		int week = (timeInfo.tm_mday + 2 * (timeInfo.tm_mon + 1) + 3 *
-		((timeInfo.tm_mon + 1) + 1) / 5 + (timeInfo.tm_year + 1900) +
-		(timeInfo.tm_year + 1900) / 4 - (timeInfo.tm_year + 1900) / 100 +
-		(timeInfo.tm_year + 1900) / 400) % 7;
-		*/
+		localtime_s(&timeInfo, &t);
 
 		ImGui::Text(XorStr("%4d/%2d/%2d %2d:%2d:%2d %s"),
 			timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,
 			timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec, GetWeakName(timeInfo.tm_wday).c_str());
 
 		if (g_tpPlayingTimer > 0)
-			ImGui::Text(XorStr(u8"游戏时间：%s丨在线时间：%s"), GetTimeDuration(t - g_tpGameTimer).c_str(), GetTimeDuration(t - g_tpPlayingTimer).c_str());
+			ImGui::Text(XorStr(u8"Game time：%s丨Online time：%s"), GetTimeDuration(t - g_tpGameTimer).c_str(), GetTimeDuration(t - g_tpPlayingTimer).c_str());
 		else
-			ImGui::Text(XorStr(u8"游戏时间：%s"), GetTimeDuration(t - g_tpGameTimer).c_str());
+			ImGui::Text(XorStr(u8"Game time：%s"), GetTimeDuration(t - g_tpGameTimer).c_str());
 
 		ImGui::Separator();
 	}
 
 
-	// ImGui::Checkbox(XorStr("DrawIndexedPrimitive"), &m_bShowStride);
 	DrawStrideMenu();
 
 	for (const auto& inst : g_pClientHook->_GameHook)
 		inst->OnMenuDrawing();
 
 	ImVec2 window = ImGui::GetWindowPos();
+
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_x"), window.x);
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_y"), window.y);
+
 	window = ImGui::GetWindowSize();
+
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_w"), window.x);
 	g_pConfig->SetValue(mainKeys, XorStr("mainwindow_h"), window.y);
 
 	ImGui::PopFont();
 	ImGui::End();
-
-	/*
-	if (m_bShowStride)
-		DrawStrideMenu();
-	*/
 }
 
-void CBaseMenu::OnDrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETYPE type,
+void CBaseMenu::OnDrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
 	INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount)
 {
 	UINT offsetByte, stride;
 	static IDirect3DVertexBuffer9* stream = nullptr;
+
 	device->GetStreamSource(0, &stream, &offsetByte, &stride);
 
 	for (auto item : g_pBaseMenu->m_vStride)
@@ -199,19 +187,14 @@ void CBaseMenu::OnDrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETY
 
 		if (item.primitive > 0 && item.vertices != primitiveCount)
 			continue;
-		
+
 		static DWORD oldZEnable;
+
 		device->GetRenderState(D3DRS_ZENABLE, &oldZEnable);
 		device->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_NEVER);
 
-		/*
-		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex,
-			minIndex, numVertices, startIndex, primitiveCount);
-		*/
-
-		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex, minIndex,
-			numVertices, startIndex, primitiveCount);
+		g_pDirextXHook->oDrawIndexedPrimitive(device, type, baseIndex, minIndex, numVertices, startIndex, primitiveCount);
 
 		device->SetRenderState(D3DRS_ZENABLE, oldZEnable);
 		device->SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
@@ -222,22 +205,11 @@ void CBaseMenu::OnDrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETY
 
 void CBaseMenu::DrawStrideMenu()
 {
-	/*
-	if (!m_bShowStride)
-		return;
-	
-	if (!ImGui::Begin(XorStr("DrawIndexedPrimitive Setting"), &m_bShowStride, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		ImGui::End();
-		return;
-	}
-	*/
-
 	if (!ImGui::TreeNode(XorStr("DrawIndexedPrimitive")))
 		return;
 
 	static char buffer[255]{ '\0' }, rename[255]{ '\0' };
-	
+
 	if (ImGui::Button(XorStr("Add")))
 	{
 		if (buffer[0] != '\0')
@@ -247,7 +219,7 @@ void CBaseMenu::DrawStrideMenu()
 				if (i.title == buffer)
 					goto dnot_push_new;
 			}
-			
+
 			m_vStride.emplace_back(buffer);
 		}
 
@@ -256,14 +228,17 @@ void CBaseMenu::DrawStrideMenu()
 	}
 
 	ImGui::SameLine();
+
 	if (ImGui::Button(XorStr("AddEx")))
 	{
-		ImGui::OpenPopup(XorStr("Add Items"));
-		if (ImGui::BeginPopupModal(XorStr("Add Items")))
+		ImGui::OpenPopup(XorStr("Add items"));
+
+		if (ImGui::BeginPopupModal(XorStr("Add items")))
 		{
 			ImGui::InputText(XorStr("Name"), buffer, 255);
 
 			static int stride = 32, vertices = 1, primitive = 1;
+
 			ImGui::DragInt(XorStr("Stride"), &stride, 1.0f, 0, 255);
 			ImGui::DragInt(XorStr("Vertices"), &vertices, 1.0f, 0);
 			ImGui::DragInt(XorStr("Primitive"), &primitive, 1.0f, 0);
@@ -291,6 +266,7 @@ void CBaseMenu::DrawStrideMenu()
 	}
 
 	ImGui::SameLine();
+
 	if (ImGui::Button(XorStr("Remove")))
 	{
 		for (auto i = m_vStride.begin(); i != m_vStride.end(); )
@@ -303,6 +279,7 @@ void CBaseMenu::DrawStrideMenu()
 	}
 
 	ImGui::SameLine();
+
 	if (ImGui::Button(XorStr("Disable/Enable")))
 	{
 		for (auto& i : m_vStride)
@@ -333,18 +310,17 @@ void CBaseMenu::DrawStrideMenu()
 	int state = 0;
 	static StrideObject clipboard("");
 
-	for(auto i = m_vStride.begin(); i != m_vStride.end(); )
+	for (auto i = m_vStride.begin(); i != m_vStride.end(); )
 	{
 		bool opening = ImGui::TreeNodeEx((i->disabled ? i->title + XorStr(" - disabled") : i->title).c_str(),
-			ImGuiTreeNodeFlags_OpenOnArrow|ImGuiTreeNodeFlags_OpenOnDoubleClick|(i->selected ? ImGuiTreeNodeFlags_Selected : 0));
-		
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | (i->selected ? ImGuiTreeNodeFlags_Selected : 0));
+
 		state = 0;
 		if (ImGui::IsItemClicked())
 			i->selected = !i->selected;
 
 		if (opening)
 		{
-			// 右键菜单
 			if (ImGui::BeginPopupContextItem())
 			{
 				if (ImGui::Selectable(XorStr("delete")))
@@ -361,6 +337,7 @@ void CBaseMenu::DrawStrideMenu()
 					state = 6;
 
 				strcpy_s(rename, i->title.c_str());
+
 				if (ImGui::InputText(XorStr("Name"), rename, 255, ImGuiInputTextFlags_EnterReturnsTrue))
 				{
 					for (StrideObject& it : m_vStride)
@@ -377,7 +354,7 @@ void CBaseMenu::DrawStrideMenu()
 				ImGui::EndPopup();
 				rename[0] = '\0';
 			}
-			
+
 			ImGui::DragInt(XorStr("Stride"), &(i->stride), 1.0f, 0, 255);
 			ImGui::DragInt(XorStr("Vertices"), &(i->vertices), 1.0f, 0);
 			ImGui::DragInt(XorStr("Primitive"), &(i->primitive), 1.0f, 0);
@@ -431,7 +408,7 @@ void CBaseMenu::DrawStrideMenu()
 
 		case 6:
 			diff = std::distance(i, m_vStride.end());
-			
+
 			clipboard.stride = i->stride;
 			clipboard.vertices = i->vertices;
 			clipboard.primitive = i->primitive;
@@ -443,6 +420,7 @@ void CBaseMenu::DrawStrideMenu()
 
 		get_new_name:
 			clipboard.title += '_';
+
 			for (StrideObject& it : m_vStride)
 			{
 				if (it.title == clipboard.title)
@@ -450,8 +428,8 @@ void CBaseMenu::DrawStrideMenu()
 			}
 
 			m_vStride.push_back(StrideObject(clipboard));
-
 			i = m_vStride.begin() + diff;
+
 			break;
 
 		default:
@@ -459,18 +437,13 @@ void CBaseMenu::DrawStrideMenu()
 		}
 	}
 
-	// ImGui::End();
 	ImGui::TreePop();
 }
 
 CBaseMenu::StrideObject::StrideObject(const std::string & title, int stride, int vertices, int primitive) :
 	title(title), stride(stride), vertices(vertices), primitive(primitive), disabled(false),
-	color{1.0f, 1.0f, 1.0f, 1.0f}, selected(false)
-{
-}
+	color{ 1.0f, 1.0f, 1.0f, 1.0f }, selected(false) { }
 
 CBaseMenu::StrideObject::StrideObject(const std::string & title, int stride, int vertices, int primitive,
 	float color[4]) : title(title), stride(stride), vertices(vertices), primitive(primitive),
-	disabled(false), color{ color[0], color[1], color[2], color[3] }, selected(false)
-{
-}
+	disabled(false), color{ color[0], color[1], color[2], color[3] }, selected(false) { }

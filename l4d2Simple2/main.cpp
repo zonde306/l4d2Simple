@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+
 #include "peb.h"
 #include "dx9hook.h"
 #include "utils.h"
@@ -12,19 +13,15 @@
 #include "console.h"
 #include "../hl2sdk/interfaces.h"
 #include "../hl2sdk/hook.h"
-// #include "../imgui/examples/directx9_example/imgui_impl_dx9.h"
 
 #ifdef _DEBUG
 #include <DbgHelp.h>
 #pragma comment(lib, "dbghelp")
 #endif
 
-// 需要在 StartCheats 里把它设置成游戏窗口
-// 例如：g_hGameWindow = FindWindowA("Valve001", "Left 4 Dead 2");
 HWND g_hGameWindow = nullptr;
 
 #ifdef _DEBUG
-// 异常处理
 LPTOP_LEVEL_EXCEPTION_FILTER g_pfnOldExceptFilter = nullptr;
 LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS);
 #endif
@@ -38,20 +35,7 @@ BOOL WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID reserved)
 	if (reason == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(module);
-
-		/*
-#ifndef _DEBUG
-		HideDll(module);
-#endif
-		*/
-
 		CreateThread(NULL, NULL, StartCheats, module, NULL, NULL);
-
-		/*
-#ifndef _DEBUG
-		HideThread(g_hStartThread);
-#endif
-		*/
 	}
 	else if (reason == DLL_PROCESS_DETACH)
 	{
@@ -73,18 +57,19 @@ DWORD WINAPI StartCheats(LPVOID module)
 #ifdef _DEBUG
 	CreateDebugConsole();
 #endif
-	
-	// Utils::FindWindowByProccess();
+
 	while ((g_hGameWindow = FindWindowA(XorStr("Valve001"), nullptr)) == NULL)
 	{
-		Utils::log(XorStr("Please switch to the target window."));
+		Utils::log(XorStr("Switch to the target window"));
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
 		if ((g_hGameWindow = CheckTopWindow()) != NULL)
 			break;
 	}
 
 	Utils::g_hCurrentWindow = g_hGameWindow;
 	Utils::init(reinterpret_cast<HINSTANCE>(module));
+
 	ImGui::CreateContext();
 
 	g_pConsole = std::make_unique<CConsole>();
@@ -93,9 +78,9 @@ DWORD WINAPI StartCheats(LPVOID module)
 #ifdef _DEBUG
 	g_pfnOldExceptFilter = SetUnhandledExceptionFilter(Hooked_UnhandledExceptionFilter);
 #endif
-	
+
 	g_pConfig = std::make_unique<CProfile>();
-	g_pConfig->OpenFile(Utils::BuildPath(XorStr("setting.ini")));
+	g_pConfig->OpenFile(Utils::BuildPath(XorStr("config.ini")));
 	g_pConfig->LoadFromFile();
 
 	g_pSpeedModifier = std::make_unique<CSpeedModifier>();
@@ -122,6 +107,7 @@ void CreateDebugConsole()
 
 	HWND hwnd = GetConsoleWindow();
 	HMENU hMenu = GetSystemMenu(hwnd, FALSE);
+
 	if (hMenu) DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
 
 	freopen(XorStr("CONIN$"), "r", stdin);
@@ -132,16 +118,19 @@ HWND CheckTopWindow()
 {
 	static DWORD curPid = GetCurrentProcessId();
 	HWND topWindow = GetForegroundWindow();
+
 	if (topWindow == NULL)
 		return NULL;
 
 	DWORD pid = 0;
 	GetWindowThreadProcessId(topWindow, &pid);
+
 	if (pid != curPid)
 		return NULL;
 
 	char classname[64];
 	RealGetWindowClassA(topWindow, classname, 64);
+
 	if (!_stricmp(classname, XorStr("ConsoleWindowClass")))
 		return NULL;
 
@@ -163,6 +152,7 @@ LONG WINAPI Hooked_UnhandledExceptionFilter(PEXCEPTION_POINTERS pExceptionInfo)
 		if (file != NULL && file != INVALID_HANDLE_VALUE)
 		{
 			MINIDUMP_EXCEPTION_INFORMATION mdei;
+
 			mdei.ThreadId = GetCurrentThreadId();
 			mdei.ExceptionPointers = pExceptionInfo;
 			mdei.ClientPointers = NULL;

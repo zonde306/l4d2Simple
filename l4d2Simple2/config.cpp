@@ -1,15 +1,14 @@
 ﻿#include "config.h"
 #include "utils.h"
 #include "xorstr.h"
+
 #include <regex>
 
 std::unique_ptr<CProfile> g_pConfig;
 
-CProfile::CProfile()
-{
-}
+CProfile::CProfile() { }
 
-CProfile::CProfile(const std::string & path)
+CProfile::CProfile(const std::string& path)
 {
 	OpenFile(path);
 	LoadFromFile();
@@ -25,39 +24,38 @@ CProfile::~CProfile()
 {
 	if (m_File.is_open())
 		CloseFile();
-	
+
 	m_KeyValue.clear();
 }
 
 CProfile& CProfile::operator=(const CProfile& other)
 {
-	// m_sFileName = other.m_sFileName;
 	m_KeyValue = other.m_KeyValue;
 	return *this;
 }
 
-bool CProfile::OpenFile(const std::string & path, bool write)
+bool CProfile::OpenFile(const std::string& path, bool write)
 {
 	if (path.empty())
 		return false;
-	
+
 	m_sFileName = path;
+
 	if (m_File.is_open())
 		CloseFile();
-	
-	if(write)	// 必须使用 std::ios::trunc 才能改写文件，否则只能附加
-		m_File.open(path, std::ios::out|std::ios::beg|std::ios::trunc);
+
+	if (write)
+		m_File.open(path, std::ios::out | std::ios::beg | std::ios::trunc);
 	else
-		m_File.open(path, std::ios::in|std::ios::beg);
+		m_File.open(path, std::ios::in | std::ios::beg);
 
 	if (m_File.bad() || !m_File.is_open())
 	{
-		// 文件不存在时创建新文件
-		m_File.open(path, std::ios::out|std::ios::in|std::ios::beg|std::ios::trunc);
+		m_File.open(path, std::ios::out | std::ios::in | std::ios::beg | std::ios::trunc);
 		m_bFileMode = true;
 		return false;
 	}
-	
+
 	m_bFileMode = write;
 	return true;
 }
@@ -66,7 +64,7 @@ bool CProfile::CloseFile()
 {
 	if (!m_File.is_open())
 		return false;
-	
+
 	m_File.close();
 	return true;
 }
@@ -75,15 +73,14 @@ bool CProfile::SaveToFile()
 {
 	if (!m_File.is_open() || !m_bFileMode)
 	{
-		// fstream 无法覆盖已有的内容，必须清空文件再写
 		CloseFile();
 		OpenFile(m_sFileName, true);
 	}
 
 	m_File.seekp(std::ios::beg);
-	
 	bool success = Save(m_File);
 	m_File.flush();
+
 	return success;
 }
 
@@ -94,7 +91,7 @@ bool CProfile::LoadFromFile()
 		CloseFile();
 		OpenFile(m_sFileName, false);
 	}
-	
+
 	m_KeyValue.clear();
 	m_File.seekg(std::ios::beg);
 
@@ -132,41 +129,35 @@ bool CProfile::Save(std::ostream& stream) const
 bool CProfile::Load(std::istream& stream)
 {
 	char buffer[255];
-	std::string line, key, value, mainKey;
 
-	// 块注释
+	std::string line, key, value, mainKey;
 	std::regex re_ignore = std::regex(XorStr("/\\*.*\\*/"));
 
 	while (stream.good() && !stream.eof())
 	{
 		stream.getline(buffer, 255);
+
 		if (buffer[0] == '\0')
 			continue;
 
 		line = buffer;
-
-		// 清除块注释
 		line = std::regex_replace(line, re_ignore, "");
 
 		size_t here = line.rfind(';');
+
 		if (here != std::string::npos)
 		{
-			// 清除单行注释
 			line = line.substr(0, here);
 		}
 
-		// 去除无效字符
 		line = Utils::StringTrim(line, XorStr(" \t\r\n"));
 
-		// 冒号注释
 		if (line.empty() || line[0] == ';')
 			continue;
 
-		// 双斜杠注释
 		if (line[0] == '/' && line[1] == '/')
 			continue;
 
-		// 主键
 		if (line[0] == '[' && line[line.length() - 1] == ']')
 		{
 			mainKey = line.substr(1, line.length() - 2);
@@ -176,8 +167,8 @@ bool CProfile::Load(std::istream& stream)
 		if (mainKey.empty())
 			continue;
 
-		// 子键
 		here = ParseKeyValue(line);
+
 		if (here != std::string::npos)
 		{
 			key = line.substr(0, here);
@@ -192,7 +183,6 @@ bool CProfile::Load(std::istream& stream)
 		key = Utils::StringTrim(key, XorStr(" \t\r\n"));
 		value = Utils::StringTrim(value, XorStr(" \t\r\n"));
 
-		// 去除两侧多余的双引号
 		if (key[0] == '"' && key[key.length() - 1] == '"')
 			key = key.substr(1, key.length() - 2);
 		if (value[0] == '"' && value[value.length() - 1] == '"')
@@ -209,12 +199,12 @@ void CProfile::Clear()
 	m_KeyValue.clear();
 }
 
-bool CProfile::HasMainKey(const std::string & mainKeys) const
+bool CProfile::HasMainKey(const std::string& mainKeys) const
 {
 	return (m_KeyValue.find(mainKeys) != m_KeyValue.end());
 }
 
-bool CProfile::HasKey(const std::string & mainKeys, const std::string & keys)
+bool CProfile::HasKey(const std::string& mainKeys, const std::string& keys)
 {
 	if (!HasMainKey(mainKeys))
 		return false;
@@ -222,19 +212,20 @@ bool CProfile::HasKey(const std::string & mainKeys, const std::string & keys)
 	return (m_KeyValue[mainKeys].find(keys) != m_KeyValue[mainKeys].end());
 }
 
-bool CProfile::EraseKey(const std::string & mainKeys, const std::string & keys)
+bool CProfile::EraseKey(const std::string& mainKeys, const std::string& keys)
 {
-	if(!HasKey(mainKeys, keys))
+	if (!HasKey(mainKeys, keys))
 		return false;
 
 	m_KeyValue[mainKeys].erase(keys);
+
 	if (m_KeyValue[mainKeys].empty())
 		m_KeyValue.erase(mainKeys);
 
 	return true;
 }
 
-void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, const std::string & value)
+void CProfile::SetValue(const std::string& mainKeys, const std::string& keys, const std::string& value)
 {
 	if (HasKey(mainKeys, keys))
 		m_KeyValue[mainKeys][keys].SetValue(value);
@@ -242,7 +233,7 @@ void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, 
 		m_KeyValue[mainKeys][keys] = value;
 }
 
-void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, int value)
+void CProfile::SetValue(const std::string& mainKeys, const std::string& keys, int value)
 {
 	if (HasKey(mainKeys, keys))
 		m_KeyValue[mainKeys][keys].SetValue(value);
@@ -250,7 +241,7 @@ void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, 
 		m_KeyValue[mainKeys][keys] = value;
 }
 
-void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, float value)
+void CProfile::SetValue(const std::string& mainKeys, const std::string& keys, float value)
 {
 	if (HasKey(mainKeys, keys))
 		m_KeyValue[mainKeys][keys].SetValue(value);
@@ -258,7 +249,7 @@ void CProfile::SetValue(const std::string & mainKeys, const std::string & keys, 
 		m_KeyValue[mainKeys][keys] = value;
 }
 
-std::string CProfile::GetString(const std::string & mainKeys, const std::string & keys, const std::string& def)
+std::string CProfile::GetString(const std::string& mainKeys, const std::string& keys, const std::string& def)
 {
 	if (!HasKey(mainKeys, keys))
 	{
@@ -269,47 +260,48 @@ std::string CProfile::GetString(const std::string & mainKeys, const std::string 
 	return m_KeyValue[mainKeys][keys].m_sValue;
 }
 
-int CProfile::GetInteger(const std::string & mainKeys, const std::string & keys, int def)
+int CProfile::GetInteger(const std::string& mainKeys, const std::string& keys, int def)
 {
 	if (!HasKey(mainKeys, keys))
 	{
 		m_KeyValue[mainKeys][keys] = def;
 		return def;
 	}
-	
+
 	return m_KeyValue[mainKeys][keys].m_iValue;
 }
 
-float CProfile::GetFloat(const std::string & mainKeys, const std::string & keys, float def)
+float CProfile::GetFloat(const std::string& mainKeys, const std::string& keys, float def)
 {
 	if (!HasKey(mainKeys, keys))
 	{
 		m_KeyValue[mainKeys][keys] = def;
 		return def;
 	}
-	
+
 	return m_KeyValue[mainKeys][keys].m_fValue;
 }
 
-bool CProfile::GetBoolean(const std::string & mainKeys, const std::string & keys, bool def)
+bool CProfile::GetBoolean(const std::string& mainKeys, const std::string& keys, bool def)
 {
 	if (!HasKey(mainKeys, keys))
 	{
 		m_KeyValue[mainKeys][keys] = def;
 		return def;
 	}
-	
+
 	return (m_KeyValue[mainKeys][keys].m_iValue > 0);
 }
 
-typename CProfile::KeyValueType& CProfile::GetMainKey(const std::string & mainKeys)
+typename CProfile::KeyValueType& CProfile::GetMainKey(const std::string& mainKeys)
 {
 	return m_KeyValue[mainKeys];
 }
 
-size_t CProfile::ParseKeyValue(const std::string & text)
+size_t CProfile::ParseKeyValue(const std::string& text)
 {
 	bool inGroup = false;
+
 	for (size_t i = 0; i < text.length(); ++i)
 	{
 		if (text[i] == '"')
@@ -325,9 +317,10 @@ size_t CProfile::ParseKeyValue(const std::string & text)
 	return std::string::npos;
 }
 
-std::pair<std::string, std::string> CProfile::ParseKeyValueEx(const std::string & text)
+std::pair<std::string, std::string> CProfile::ParseKeyValueEx(const std::string& text)
 {
 	size_t trim = ParseKeyValue(text);
+
 	if (trim == std::string::npos)
 		return std::make_pair(text, "");
 
@@ -354,29 +347,27 @@ typename CProfile::const_iterator CProfile::end() const
 	return m_KeyValue.cend();
 }
 
-typename CProfile::iterator2 CProfile::begin(const std::string & mainKeys)
+typename CProfile::iterator2 CProfile::begin(const std::string& mainKeys)
 {
 	return m_KeyValue[mainKeys].begin();
 }
 
-typename CProfile::iterator2 CProfile::end(const std::string & mainKeys)
+typename CProfile::iterator2 CProfile::end(const std::string& mainKeys)
 {
 	return m_KeyValue[mainKeys].end();
 }
 
-typename CProfile::const_iterator2 CProfile::begin(const std::string & mainKeys) const
+typename CProfile::const_iterator2 CProfile::begin(const std::string& mainKeys) const
 {
 	return m_KeyValue.at(mainKeys).cbegin();
 }
 
-typename CProfile::const_iterator2 CProfile::end(const std::string & mainKeys) const
+typename CProfile::const_iterator2 CProfile::end(const std::string& mainKeys) const
 {
 	return m_KeyValue.at(mainKeys).cend();
 }
 
-CProfile::_KeyValues::_KeyValues() : m_iValue(0), m_fValue(0.0f), m_sValue("")
-{
-}
+CProfile::_KeyValues::_KeyValues() : m_iValue(0), m_fValue(0.0f), m_sValue("") { }
 
 CProfile::_KeyValues::_KeyValues(int value)
 {
@@ -388,7 +379,7 @@ CProfile::_KeyValues::_KeyValues(float value)
 	SetValue(value);
 }
 
-CProfile::_KeyValues::_KeyValues(const std::string & value)
+CProfile::_KeyValues::_KeyValues(const std::string& value)
 {
 	SetValue(value);
 }
@@ -407,7 +398,7 @@ void CProfile::_KeyValues::SetValue(float value)
 	m_sValue = std::to_string(value);
 }
 
-void CProfile::_KeyValues::SetValue(const std::string & value)
+void CProfile::_KeyValues::SetValue(const std::string& value)
 {
 	m_iValue = atoi(value.c_str());
 	m_fValue = static_cast<float>(atof(value.c_str()));

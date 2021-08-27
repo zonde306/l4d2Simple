@@ -1,20 +1,15 @@
 #include <windows.h>
 #include <algorithm>
 #include <vector>
+
 #include "peb.h"
 #include "xorstr.h"
 
-/********************************************************************************************\
-  TEB Structs
-\********************************************************************************************/
-
 typedef LONG NTSTATUS;
-typedef NTSTATUS
-(NTAPI *PPOST_PROCESS_INIT_ROUTINE)(
-	VOID
-	);
+typedef NTSTATUS(NTAPI *PPOST_PROCESS_INIT_ROUTINE)(VOID);
 
-typedef struct _LSA_UNICODE_STRING {
+typedef struct _LSA_UNICODE_STRING 
+{
 	USHORT Length;
 	USHORT MaximumLength;
 	PWSTR  Buffer;
@@ -61,7 +56,8 @@ typedef struct _W32THREADINFO
 	PVOID ClientThreadInfo;
 } W32THREADINFO, *PW32THREADINFO;
 
-typedef struct _CLIENT_ID {
+typedef struct _CLIENT_ID
+{
 	HANDLE  UniqueProcess;
 	HANDLE  UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
@@ -334,7 +330,8 @@ typedef struct _TEB
 #endif
 } TEB, *PTEB;
 
-typedef struct _LDR_DATA_TABLE_ENTRY {
+typedef struct _LDR_DATA_TABLE_ENTRY 
+{
 	LIST_ENTRY InLoadOrderLinks;
 	LIST_ENTRY InMemoryOrderLinks;
 	LIST_ENTRY InInitializationOrderLinks;
@@ -364,8 +361,6 @@ typedef struct _LDR_DATA_TABLE_ENTRY {
 	LIST_ENTRY StaticLinks;
 } LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
 
-
-
 BOOL RemoveEntryList(PLIST_ENTRY Entry)
 {
 	PLIST_ENTRY Blink, Flink;
@@ -373,22 +368,6 @@ BOOL RemoveEntryList(PLIST_ENTRY Entry)
 	Blink->Flink = Flink; Flink->Blink = Blink;
 	return (BOOL)(Flink == Blink);
 }
-
-/*
-#define UNLINK(Entry)\
-     Flink=Entry->Flink;Blink=Entry->Blink;\
-     Blink->Flink=Flink;Flink->Blink=Blink;
-
-PTEB getTib()
-{
-	PTEB pTib;
-	__asm {
-		mov EAX, FS:[0x18]
-		mov[pTib], EAX
-	}
-	return pTib;
-}
-*/
 
 typedef struct _UNLINKED_MODULE
 {
@@ -408,8 +387,6 @@ typedef struct _UNLINKED_MODULE
 	(x).Blink->Flink = (real);  \
 	(real)->Blink = (x).Blink;  \
 	(real)->Flink = (x).Flink;
-
-
 
 BOOL ClearPEHeader(HINSTANCE hModule)
 {
@@ -464,6 +441,7 @@ BOOL WINAPI HideDll(HINSTANCE hInstance)
 }
 
 std::vector<UNLINKED_MODULE> UnlinkedModules;
+
 struct FindModuleHandle
 {
 	HMODULE m_hModule;
@@ -576,48 +554,3 @@ bool HideThread(HANDLE hThread)
 	else
 		return true;
 }
-
-/*
-void HideModule2(HANDLE hModule)
-{
-	PIMAGE_DOS_HEADER pDOSHeader = (PIMAGE_DOS_HEADER)hModule;
-	if (pDOSHeader->e_magic == IMAGE_DOS_SIGNATURE)
-	{
-		PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS)((DWORD)pDOSHeader + (DWORD)pDOSHeader->e_lfanew);
-		if (pNTHeader->Signature == IMAGE_NT_SIGNATURE)
-		{
-			DWORD dwOld, dwSize = pNTHeader->OptionalHeader.SizeOfHeaders;
-			if (VirtualProtect((LPVOID)pDOSHeader, dwSize, PAGE_READWRITE, &dwOld))
-			{
-				memset((void*)pDOSHeader, 0, dwSize);
-				VirtualProtect((LPVOID)pDOSHeader, dwSize, dwOld, &dwOld);
-			}
-		}
-		_TEB *pTeb = nullptr;
-		_asm
-		{
-			mov eax, fs:[0x18]
-			mov pTeb, eax
-		}
-		PLIST_ENTRY pList = &pTeb->Peb->Ldr->InLoadOrderModuleList;
-		for (PLIST_ENTRY pEntry = pList->Flink; pEntry != pList; pEntry = pEntry->Flink)
-		{
-			PLDR_MODULE pModule = (PLDR_MODULE)pEntry;
-			if (pModule->BaseAddress == hModule)
-			{
-				pEntry = &pModule->InLoadOrderModuleList; pEntry->Blink->Flink = pEntry->Flink; pEntry->Flink->Blink = pEntry->Blink;
-				memset(pEntry, 0, sizeof(LIST_ENTRY));
-				pEntry = &pModule->InMemoryOrderModuleList; pEntry->Blink->Flink = pEntry->Flink; pEntry->Flink->Blink = pEntry->Blink;
-				memset(pEntry, 0, sizeof(LIST_ENTRY));
-				pEntry = &pModule->InInitializationOrderModuleList; pEntry->Blink->Flink = pEntry->Flink; pEntry->Flink->Blink = pEntry->Blink;
-				memset(pEntry, 0, sizeof(LIST_ENTRY));
-				pEntry = &pModule->HashTableEntry; pEntry->Blink->Flink = pEntry->Flink; pEntry->Flink->Blink = pEntry->Blink;
-				memset(pEntry, 0, sizeof(LIST_ENTRY));
-				memset(pModule->FullDllName.Buffer, 0, pModule->FullDllName.Length);
-				memset(pModule, 0, sizeof(LDR_MODULE));
-				break;
-			}
-		}
-	}
-}
-*/

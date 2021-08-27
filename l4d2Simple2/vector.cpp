@@ -1,16 +1,17 @@
 #include "vector.h"
+
 #include <cmath>
 #include <utility>
 
 #ifndef M_PI
-#define M_PI	3.14159265358979323846
-#define M_PI_F	((float)M_PI)
+#define M_PI 3.14159265358979323846
+#define M_PI_F ((float)M_PI)
 #endif
 
 #ifndef RAD2DEG
-#define RAD2DEG(x)  ((float)(x) * (float)(180.f / M_PI_F))
+#define RAD2DEG(x) ((float)(x) * (float)(180.f / M_PI_F))
 #define RadiansToDegrees RAD2DEG
-#define DEG2RAD(x)  ((float)(x) * (float)(M_PI_F / 180.f))
+#define DEG2RAD(x) ((float)(x) * (float)(M_PI_F / 180.f))
 #define DegreesToRadians DEG2RAD
 #endif
 
@@ -18,35 +19,31 @@
 #define Assert(_v)			
 #endif
 
-#define CHECK_VALID(_v)		Assert((_v).IsValid())
+#define CHECK_VALID(_v) Assert((_v).IsValid())
 
 #ifndef FLOAT32_NAN_BITS
-#define FLOAT32_NAN_BITS	(unsigned long)0x7FC00000
-#define FLOAT32_NAN			BitsToFloat(FLOAT32_NAN_BITS)
-#define VEC_T_NAN			FLOAT32_NAN
+#define FLOAT32_NAN_BITS (unsigned long)0x7FC00000
+#define FLOAT32_NAN BitsToFloat(FLOAT32_NAN_BITS)
+#define VEC_T_NAN FLOAT32_NAN
 #endif
 
 // Math routines done in optimized assembly math package routines
-void inline SinCos(float radians, float *sine, float *cosine)
+void inline SinCos(float radians, float* sine, float* cosine)
 {
 	*sine = sin(radians);
 	*cosine = cos(radians);
 }
 
-Vector::Vector(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z)
-{
-}
+Vector::Vector(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z) { }
 
-Vector::Vector(const QAngle & angles)
+Vector::Vector(const QAngle& angles)
 {
 	x = angles.x;
 	y = angles.y;
 	z = angles.z;
 }
 
-Vector::Vector(const vec_t * v) : x(v[0]), y(v[1]), z(v[2])
-{
-}
+Vector::Vector(const vec_t* v) : x(v[0]), y(v[1]), z(v[2]) { }
 
 void Vector::Invalidate()
 {
@@ -75,12 +72,12 @@ void Vector::SetZero()
 	x = y = z = 0.0f;
 }
 
-vec_t Vector::Dot(const Vector & v) const
+vec_t Vector::Dot(const Vector& v) const
 {
 	return (x * v.x + y * v.y + z * v.z);
 }
 
-Vector Vector::Cross(const Vector & v) const
+Vector Vector::Cross(const Vector& v) const
 {
 	return Vector(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
 }
@@ -119,9 +116,11 @@ Vector Vector::Scale(vec_t f) const
 QAngle Vector::toAngles() const
 {
 	vec_t tmp, yaw, pitch;
+
 	if (x == 0.0f && y == 0.0f)
 	{
 		yaw = 0.0f;
+
 		if (z > 0.0f)
 			pitch = 270.0f;
 		else
@@ -130,11 +129,13 @@ QAngle Vector::toAngles() const
 	else
 	{
 		yaw = static_cast<float>(atan2(y, x) * 180.0f / M_PI);
+
 		if (yaw < 0.0f)
 			yaw += 360.0f;
 
 		tmp = sqrt(x * x + y * y);
 		pitch = static_cast<float>(atan2(-z, tmp) * 180.0f / M_PI);
+
 		if (pitch < 0.0f)
 			pitch += 360.0f;
 	}
@@ -142,18 +143,18 @@ QAngle Vector::toAngles() const
 	return QAngle(pitch, yaw, 0.0f);
 }
 
-vec_t Vector::DistTo(const Vector & vOther) const
+vec_t Vector::DistTo(const Vector& vOther) const
 {
 	return (*this - vOther).Length();
 }
 
-vec_t Vector::DistToSqr(const Vector & vOther) const
+vec_t Vector::DistToSqr(const Vector& vOther) const
 {
 	return (*this - vOther).LengthSqr();
 }
 
 #ifdef ALLOW_CAST_POINTER
-Vector::operator vec_t*()
+Vector::operator vec_t* ()
 {
 	return &x;
 }
@@ -163,66 +164,70 @@ float Vector::operator[](int index) const
 {
 	if (index <= 0)
 		return x;
+
 	if (index == 1)
 		return y;
+
 	return z;
 }
 
-float & Vector::operator[](int index)
+float& Vector::operator[](int index)
 {
 	if (index <= 0)
 		return x;
+
 	if (index == 1)
 		return y;
+
 	return z;
 }
 
-bool Vector::operator==(const Vector & v) const
+bool Vector::operator==(const Vector& v) const
 {
 	return (x == v.x && y == v.y && z == v.z);
 }
 
-bool Vector::operator!=(const Vector & v) const
+bool Vector::operator!=(const Vector& v) const
 {
 	return (x != v.x || y != v.y || z != v.z);
 }
 
-Vector Vector::operator+(const Vector & v) const
+Vector Vector::operator+(const Vector& v) const
 {
 	return Vector(x + v.x, y + v.y, z + v.z);
 }
 
-Vector Vector::operator-(const Vector & v) const
+Vector Vector::operator-(const Vector& v) const
 {
 	return Vector(x - v.x, y - v.y, z - v.z);
 }
 
-Vector Vector::operator*(const Vector & v) const
+Vector Vector::operator*(const Vector& v) const
 {
 	return Vector(x * v.x, y * v.y, z * v.z);
 }
 
-Vector Vector::operator/(const Vector & v) const
+Vector Vector::operator/(const Vector& v) const
 {
 	return Vector(x / v.x, y / v.y, z / v.z);
 }
 
-Vector Vector::operator+(const vec_t & f) const
+Vector Vector::operator+(const vec_t& f) const
 {
 	return Vector(x + f, y + f, z + f);
 }
 
-Vector Vector::operator-(const vec_t & f) const
+Vector Vector::operator-(const vec_t& f) const
 {
 	return Vector(x - f, y - f, z - f);
 }
 
-Vector Vector::operator*(const vec_t & f) const
+Vector Vector::operator*(const vec_t& f) const
 {
 	return Vector(x * f, y * f, z * f);
 }
 
-Vector Vector::operator/(const vec_t & f) const
+Vector Vector::operator/(const vec_t& f) const
 {
 	return Vector(x / f, y / f, z / f);
 }
@@ -232,75 +237,81 @@ Vector Vector::operator-() const
 	return Vector(-x, -y, -z);
 }
 
-Vector & Vector::operator+=(const Vector & v)
+Vector& Vector::operator+=(const Vector& v)
 {
 	x += v.x;
 	y += v.y;
 	z += v.z;
+
 	return *this;
 }
 
-Vector & Vector::operator-=(const Vector & v)
+Vector& Vector::operator-=(const Vector& v)
 {
 	x -= v.x;
 	y -= v.y;
 	z -= v.z;
+
 	return *this;
 }
 
-Vector & Vector::operator*=(const Vector & v)
+Vector& Vector::operator*=(const Vector& v)
 {
 	x *= v.x;
 	y *= v.y;
 	z *= v.z;
+
 	return *this;
 }
 
-Vector & Vector::operator/=(const Vector & v)
+Vector& Vector::operator/=(const Vector& v)
 {
 	x /= v.x;
 	y /= v.y;
 	z /= v.z;
+
 	return *this;
 }
 
-Vector & Vector::operator+=(const vec_t & f)
+Vector& Vector::operator+=(const vec_t& f)
 {
 	x += f;
 	y += f;
 	z += f;
+
 	return *this;
 }
 
-Vector & Vector::operator-=(const vec_t & f)
+Vector& Vector::operator-=(const vec_t& f)
 {
 	x -= f;
 	y -= f;
 	z -= f;
+
 	return *this;
 }
 
-Vector & Vector::operator*=(const vec_t & f)
+Vector& Vector::operator*=(const vec_t& f)
 {
 	x *= f;
 	y *= f;
 	z *= f;
+
 	return *this;
 }
 
-Vector & Vector::operator/=(const vec_t & f)
+Vector& Vector::operator/=(const vec_t& f)
 {
 	x /= f;
 	y /= f;
 	z /= f;
+
 	return *this;
 }
 
-QAngle::QAngle(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z)
-{
-}
+QAngle::QAngle(vec_t x, vec_t y, vec_t z) : x(x), y(y), z(z) { }
 
-QAngle::QAngle(const Vector & vector)
+QAngle::QAngle(const Vector& vector)
 {
 	x = vector.x;
 	y = vector.y;
@@ -332,36 +343,39 @@ void QAngle::Init(vec_t x, vec_t y, vec_t z)
 Vector QAngle::Forward() const
 {
 	vec_t sp, sy, cp, cy;
+
 	SinCos(DEG2RAD(y), &sy, &cy);
 	SinCos(DEG2RAD(x), &sp, &cp);
+
 	return Vector(cp * cy, cp * sy, -sp);
 }
 
 Vector QAngle::Right() const
 {
 	vec_t sr, sp, sy, cr, cp, cy;
+
 	SinCos(DEG2RAD(y), &sy, &cy);
 	SinCos(DEG2RAD(x), &sp, &cp);
 	SinCos(DEG2RAD(z), &sr, &cr);
-	return Vector(-1 * sr * sp * cy + -1 * cr * -sy,
-		-1 * sr * sp * sy + -1 * cr * cy,
-		-1 * sr * cp);
+
+	return Vector(-1 * sr * sp * cy + -1 * cr * -sy, -1 * sr * sp * sy + -1 * cr * cy, -1 * sr * cp);
 }
 
 Vector QAngle::Up() const
 {
 	vec_t sr, sp, sy, cr, cp, cy;
+
 	SinCos(DEG2RAD(y), &sy, &cy);
 	SinCos(DEG2RAD(x), &sp, &cp);
 	SinCos(DEG2RAD(z), &sr, &cr);
-	return Vector(cr * sp * cy + -sr * -sy,
-		cr * sp * sy + -sr * cy,
-		cr * cp);
+
+	return Vector(cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp);
 }
 
 QAngle QAngle::Normalize() const
 {
 	QAngle angles(x, y, z);
+
 	for (int i = 0; i < 3; ++i)
 	{
 		if (angles[i] < -180.0f)
@@ -397,66 +411,70 @@ float QAngle::operator[](int index) const
 {
 	if (index <= 0)
 		return x;
+
 	if (index == 1)
 		return y;
+
 	return z;
 }
 
-float & QAngle::operator[](int index)
+float& QAngle::operator[](int index)
 {
 	if (index <= 0)
 		return x;
+
 	if (index == 1)
 		return y;
+
 	return z;
 }
 
-bool QAngle::operator==(const QAngle & v) const
+bool QAngle::operator==(const QAngle& v) const
 {
 	return (x == v.x && y == v.y && z == v.z);
 }
 
-bool QAngle::operator!=(const QAngle & v) const
+bool QAngle::operator!=(const QAngle& v) const
 {
 	return (x != v.x || y != v.y || z != v.z);
 }
 
-QAngle QAngle::operator+(const QAngle & v) const
+QAngle QAngle::operator+(const QAngle& v) const
 {
 	return QAngle(x + v.x, y + v.y, z + v.z);
 }
 
-QAngle QAngle::operator-(const QAngle & v) const
+QAngle QAngle::operator-(const QAngle& v) const
 {
 	return QAngle(x - v.x, y - v.y, z - v.z);
 }
 
-QAngle QAngle::operator*(const QAngle & v) const
+QAngle QAngle::operator*(const QAngle& v) const
 {
 	return QAngle(x * v.x, y * v.y, z * v.z);
 }
 
-QAngle QAngle::operator/(const QAngle & v) const
+QAngle QAngle::operator/(const QAngle& v) const
 {
 	return QAngle(x / v.x, y / v.y, z / v.z);
 }
 
-QAngle QAngle::operator+(const vec_t & f) const
+QAngle QAngle::operator+(const vec_t& f) const
 {
 	return QAngle(x + f, y + f, z + f);
 }
 
-QAngle QAngle::operator-(const vec_t & f) const
+QAngle QAngle::operator-(const vec_t& f) const
 {
 	return QAngle(x - f, y - f, z - f);
 }
 
-QAngle QAngle::operator*(const vec_t & f) const
+QAngle QAngle::operator*(const vec_t& f) const
 {
 	return QAngle(x * f, y * f, z * f);
 }
 
-QAngle QAngle::operator/(const vec_t & f) const
+QAngle QAngle::operator/(const vec_t& f) const
 {
 	return QAngle(x / f, y / f, z / f);
 }
@@ -466,74 +484,77 @@ QAngle QAngle::operator-() const
 	return QAngle(-x, -y, -z);
 }
 
-QAngle & QAngle::operator+=(const QAngle & v)
+QAngle& QAngle::operator+=(const QAngle& v)
 {
 	x += v.x;
 	y += v.y;
 	z += v.z;
+
 	return *this;
 }
 
-QAngle & QAngle::operator-=(const QAngle & v)
+QAngle& QAngle::operator-=(const QAngle& v)
 {
 	x -= v.x;
 	y -= v.y;
 	z -= v.z;
+
 	return *this;
 }
 
-QAngle & QAngle::operator*=(const QAngle & v)
+QAngle& QAngle::operator*=(const QAngle& v)
 {
 	x *= v.x;
 	y *= v.y;
 	z *= v.z;
+
 	return *this;
 }
 
-QAngle & QAngle::operator/=(const QAngle & v)
+QAngle& QAngle::operator/=(const QAngle& v)
 {
 	x /= v.x;
 	y /= v.y;
 	z /= v.z;
+
 	return *this;
 }
 
-QAngle & QAngle::operator+=(const vec_t & f)
+QAngle& QAngle::operator+=(const vec_t& f)
 {
 	x += f;
 	y += f;
 	z += f;
+
 	return *this;
 }
 
-QAngle & QAngle::operator-=(const vec_t & f)
+QAngle& QAngle::operator-=(const vec_t& f)
 {
 	x -= f;
 	y -= f;
 	z -= f;
+
 	return *this;
 }
 
-QAngle & QAngle::operator*=(const vec_t & f)
+QAngle& QAngle::operator*=(const vec_t& f)
 {
 	x *= f;
 	y *= f;
 	z *= f;
+
 	return *this;
 }
 
-QAngle & QAngle::operator/=(const vec_t & f)
+QAngle& QAngle::operator/=(const vec_t& f)
 {
 	x /= f;
 	y /= f;
 	z /= f;
+
 	return *this;
 }
 
-Vector2D::Vector2D(vec_t x, vec_t y) : x(x), y(y)
-{
-}
-
-Vector4D::Vector4D(vec_t x, vec_t y, vec_t z, vec_t w) : x(x), y(y), z(z), w(w)
-{
-}
+Vector2D::Vector2D(vec_t x, vec_t y) : x(x), y(y) { }
+Vector4D::Vector4D(vec_t x, vec_t y, vec_t z, vec_t w) : x(x), y(y), z(z), w(w) { }

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <Windows.h>
 #include <Winternl.h>
 #include <string>
@@ -12,11 +13,12 @@ namespace proc
 	std::string GetCurrentPath(const std::string& selfPath);
 	DWORD GetModuleBase(const std::string& moduleName, DWORD pid);
 
-#ifdef _WIN64
+    #ifdef _WIN64
 	typedef  DWORD64 DWORDX;
-#else
+    #else
 	typedef  DWORD32 DWORDX;
-#endif
+    #endif
+
 	typedef NTSTATUS(WINAPI* LdrGetProcedureAddressT)(IN PVOID DllHandle, IN PANSI_STRING ProcedureName OPTIONAL, IN ULONG ProcedureNumber OPTIONAL, OUT FARPROC* ProcedureAddress);
 	typedef VOID(WINAPI* RtlFreeUnicodeStringT)(_Inout_ PUNICODE_STRING UnicodeString);
 	typedef  VOID(WINAPI* RtlInitAnsiStringT)(_Out_    PANSI_STRING DestinationString, _In_opt_ PCSZ         SourceString);
@@ -39,6 +41,7 @@ namespace proc
 
 	DWORDX WINAPI MemLoadLibrary2(PARAMX* X);
 	DWORD InjectDLLEx(const std::string& fileName, DWORD pid);
+
 	std::pair<LPVOID, DWORD> GetMemLoadLibrary2ShellCode();
 	bool EnableDebugPrivilege();
 }

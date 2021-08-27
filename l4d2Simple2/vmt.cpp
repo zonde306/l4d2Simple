@@ -1,8 +1,6 @@
 #include "vmt.h"
 
-CVmtHook::CVmtHook() : m_pOriginTable(nullptr), m_pCopyTable(nullptr), m_iHeightIndex(0), m_bHasHooked(false)
-{
-}
+CVmtHook::CVmtHook() : m_pOriginTable(nullptr), m_pCopyTable(nullptr), m_iHeightIndex(0), m_bHasHooked(false) { }
 
 CVmtHook::~CVmtHook()
 {
@@ -24,6 +22,7 @@ void CVmtHook::Init(LPVOID pointer)
 
 	m_pCopyTable = new DWORD[m_iHeightIndex + 1];
 	m_pCopyTable[m_iHeightIndex] = 0;
+
 	memcpy_s(m_pCopyTable, sizeof(LPVOID) * m_iHeightIndex, m_pOriginTable, sizeof(LPVOID) * m_iHeightIndex);
 	m_pInstance = reinterpret_cast<PDWORD>(pointer);
 }
@@ -34,6 +33,7 @@ LPVOID CVmtHook::HookFunction(DWORD index, LPVOID function, bool update)
 		return nullptr;
 
 	m_pCopyTable[index] = reinterpret_cast<DWORD>(function);
+
 	if (update)
 		InstallHook();
 
@@ -68,12 +68,10 @@ bool CVmtHook::InstallHook()
 	{
 		*m_pInstance = reinterpret_cast<DWORD>(m_pCopyTable);
 		m_bHasHooked = true;
+
 		return true;
 	}
-	catch(...)
-	{
-		
-	}
+	catch (...) { }
 
 	return false;
 }
@@ -84,12 +82,10 @@ bool CVmtHook::UninstallHook()
 	{
 		*m_pInstance = reinterpret_cast<DWORD>(m_pOriginTable);
 		m_bHasHooked = false;
+
 		return true;
 	}
-	catch (...)
-	{
-		
-	}
+	catch (...) { }
 
 	return false;
 }
@@ -101,6 +97,7 @@ DWORD CVmtHook::GetCount()
 	
 	DWORD index = 0;
 	PDWORD* table = reinterpret_cast<PDWORD*>(m_pOriginTable);
+
 	try
 	{
 		for (PDWORD func = nullptr; (func = table[index]) != nullptr; ++index)
@@ -109,10 +106,7 @@ DWORD CVmtHook::GetCount()
 				break;
 		}
 	}
-	catch (...)
-	{
-
-	}
+	catch (...) { }
 
 	return index;
 }
@@ -121,8 +115,9 @@ bool CVmtHook::CanReadPointer(LPVOID pointer)
 {
 	if (pointer == nullptr)
 		return false;
-	
+
 	MEMORY_BASIC_INFORMATION mbi;
+
 	if (!VirtualQuery(pointer, &mbi, sizeof(mbi)))
 		return false;
 
@@ -152,7 +147,6 @@ template<typename Fn>
 Fn* CVmtHook::HookFunctionEx(DWORD index, Fn* function, bool update)
 {
 	return reinterpret_cast<Fn>(CheckHookFunction(index, reinterpret_cast<LPVOID>(function), update, std::is_function<Fn>::value));
-	// return reinterpret_cast<Fn*>(HookFunction(index, reinterpret_cast<LPVOID>(function), update));
 }
 
 template<typename R, typename ...Arg>
@@ -160,7 +154,7 @@ R CVmtHook::Invoke(DWORD index, Arg ...arg)
 {
 	if (index >= m_iHeightIndex)
 		return nullptr;
-	
+
 	typedef R(*__thiscall Fn)(Arg...);
 	return reinterpret_cast<Fn>(m_pOriginTable[index])(std::forward<Arg>(arg)...);
 }

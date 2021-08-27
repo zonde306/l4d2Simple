@@ -1,4 +1,5 @@
 #pragma once
+
 #include <Windows.h>
 #include <functional>
 #include <vector>
@@ -8,7 +9,9 @@ class CVmtHook
 public:
 	CVmtHook();
 	~CVmtHook();
+
 	CVmtHook(LPVOID pointer);
+
 	void Init(LPVOID pointer);
 
 	LPVOID HookFunction(DWORD index, LPVOID function, bool update = false);

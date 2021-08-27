@@ -1,19 +1,20 @@
 ﻿#pragma once
+
 #include <imgui.h>
 #include <memory>
 #include <vector>
 #include <functional>
 #include <map>
+
 #include "drawing.h"
 
-// 菜单
 class CBaseMenu
 {
 public:
 	void Init();
 	void OnPresent();
 
-	void OnDrawIndexedPrimitive(IDirect3DDevice9 * device, D3DPRIMITIVETYPE type,
+	void OnDrawIndexedPrimitive(IDirect3DDevice9* device, D3DPRIMITIVETYPE type,
 		INT baseIndex, UINT minIndex, UINT numVertices, UINT startIndex, UINT primitiveCount);
 
 protected:
@@ -29,7 +30,6 @@ protected:
 		StrideObject(const std::string& title, int stride, int vertices, int primitive, float color[4]);
 	};
 
-	// UINT m_iStride, m_iVertices, m_iPrimitive;
 	std::vector<StrideObject> m_vStride;
 	bool m_bShowStride;
 

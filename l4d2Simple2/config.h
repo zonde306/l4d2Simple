@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include <string>
 #include <fstream>
 #include <map>
@@ -15,7 +16,6 @@ public:
 
 	CProfile& operator=(const CProfile& other);
 
-	// 配置文件
 	bool OpenFile(const std::string& path, bool write = false);
 	bool CloseFile();
 	bool SaveToFile();
@@ -24,20 +24,16 @@ public:
 	bool Load(std::istream& stream);
 	void Clear();
 
-	// 寻找主键
 	bool HasMainKey(const std::string& mainKeys) const;
-	
-	// 寻找键
 	bool HasKey(const std::string& mainKeys, const std::string& keys);
-
-	// 删除键
 	bool EraseKey(const std::string& mainKeys, const std::string& keys);
 
-	// 获取/设置值
 	void SetValue(const std::string& mainKeys, const std::string& keys, const std::string& value);
 	void SetValue(const std::string& mainKeys, const std::string& keys, int value);
 	void SetValue(const std::string& mainKeys, const std::string& keys, float value);
+
 	std::string GetString(const std::string& mainKeys, const std::string& keys, const std::string& def = "");
+
 	int GetInteger(const std::string& mainKeys, const std::string& keys, int def = 0);
 	float GetFloat(const std::string& mainKeys, const std::string& keys, float def = 0.0f);
 	bool GetBoolean(const std::string& mainKeys, const std::string& keys, bool def = false);
@@ -57,12 +53,6 @@ public:
 		void SetValue(int value);
 		void SetValue(float value);
 		void SetValue(const std::string& value);
-
-		/*
-		inline operator int&() { return m_iValue; };
-		inline operator float&() { return m_fValue; };
-		inline operator std::string&() { return m_sValue; };
-		*/
 	};
 
 	using KeyValueType = std::map<std::string, _KeyValues>;

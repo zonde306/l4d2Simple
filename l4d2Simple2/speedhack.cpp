@@ -1,6 +1,7 @@
 ﻿#include "speedhack.h"
 #include "xorstr.h"
 #include "utils.h"
+
 #include <imgui.h>
 #include <intrin.h>
 #include <thread>
@@ -9,13 +10,13 @@
 #pragma comment(lib, "Winmm")
 #pragma intrinsic(_ReturnAddress)
 
-// #define _CHECK_SPEED
-// #define _CHECK_CALLER
+#define _CHECK_SPEED
+#define _CHECK_CALLER
 
 std::unique_ptr<CSpeedModifier> g_pSpeedModifier;
-#define GET_ORIGINAL_FUNC(_fn)		reinterpret_cast<Fn##_fn>(g_pSpeedModifier->m_p##_fn->trampoline);
 
-// http://blog.csdn.net/Anton8801/article/details/78726786
+#define GET_ORIGINAL_FUNC(_fn) reinterpret_cast<Fn##_fn>(g_pSpeedModifier->m_p##_fn->trampoline);
+
 static DWORD WINAPI Hooked_GetTickCount()
 {
 	DWORD nowTick = reinterpret_cast<FnGetTickCount>(g_pSpeedModifier->m_pGetTickCount->trampoline)();
@@ -31,6 +32,7 @@ static DWORD WINAPI Hooked_GetTickCount()
 #endif
 
 	DWORD result = 0;
+
 	static DWORD iLastFakeTick = 0;
 	static DWORD iLastRealTick = 0;
 
@@ -63,6 +65,7 @@ static ULONGLONG WINAPI Hooked_GetTickCount64()
 #endif
 
 	ULONGLONG result = 0;
+
 	static ULONGLONG iLastFakeTick = 0;
 	static ULONGLONG iLastRealTick = 0;
 
@@ -95,6 +98,7 @@ static DWORD WINAPI Hooked_TimeGetTime()
 #endif
 
 	DWORD result = 0;
+
 	static DWORD iLastFakeTick = 0;
 	static DWORD iLastRealTick = 0;
 
@@ -129,6 +133,7 @@ static BOOL WINAPI Hooked_QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCo
 
 	static LARGE_INTEGER iLastFakeTick = { 0 };
 	static LARGE_INTEGER iLastRealTick = { 0 };
+
 	LARGE_INTEGER nowTick = *lpPerformanceCount;
 
 	if (iLastRealTick.QuadPart == 0)
@@ -159,7 +164,7 @@ void CSpeedModifier::Init()
 	m_pQueryPerformanceCounter = SpliceHookFunction(QueryPerformanceCounter, Hooked_QueryPerformanceCounter);
 }
 
-#define DECL_DESTORY_SPLICE(_name)		if(_name != nullptr)\
+#define DECL_DESTORY_SPLICE(_name) if(_name != nullptr)\
 {\
 	SpliceUnHookFunction(_name);\
 	_name = nullptr;\
