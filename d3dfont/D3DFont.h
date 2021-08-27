@@ -1,4 +1,3 @@
-
 //-----------------------------------------------------------------------------
 // File: D3DFont.h
 //
@@ -6,7 +5,6 @@
 //
 // Copyright (c) 1999-2001 Microsoft Corporation. All rights reserved.
 //-----------------------------------------------------------------------------
-
 
 /*
  * This file has been heavily modified to accommodate for new features, originally by Renkokuken (Sakuri) then by Topblast
@@ -54,18 +52,22 @@
 #define MAX_NUM_VERTICES 4096
 #define MAX( A, B ) ( A > B ? A : B )
 
-struct FONT2DVERTEX { 
+struct FONT2DVERTEX 
+{ 
 	D3DXVECTOR4 vXYZRHW; 
 	DWORD dwColor; 
 	FLOAT TU, TV; 
 };
-struct FONTEFFECTVERTEX { 
+
+struct FONTEFFECTVERTEX 
+{ 
 	D3DXVECTOR4 vXYZRHW; 
 	DWORD dwColor; 
 };
 
-inline FONT2DVERTEX InitFont2DVertex( const D3DXVECTOR4& pVertex, D3DCOLOR dwColor, FLOAT TU, FLOAT TV ) {
-	FONT2DVERTEX textVertex;   
+inline FONT2DVERTEX InitFont2DVertex(const D3DXVECTOR4& pVertex, D3DCOLOR dwColor, FLOAT TU, FLOAT TV)
+{
+	FONT2DVERTEX textVertex;
 
 	textVertex.vXYZRHW = pVertex;
 	textVertex.dwColor = dwColor;
@@ -75,8 +77,9 @@ inline FONT2DVERTEX InitFont2DVertex( const D3DXVECTOR4& pVertex, D3DCOLOR dwCol
 	return textVertex;
 }
 
-inline FONTEFFECTVERTEX InitFontEffectVertex( const D3DXVECTOR4& pVertex, D3DCOLOR dwColor ) {
-	FONTEFFECTVERTEX fxVertex; 
+inline FONTEFFECTVERTEX InitFontEffectVertex(const D3DXVECTOR4& pVertex, D3DCOLOR dwColor)
+{
+	FONTEFFECTVERTEX fxVertex;
 
 	fxVertex.vXYZRHW = pVertex;
 	fxVertex.dwColor = dwColor;
@@ -90,17 +93,17 @@ inline FONTEFFECTVERTEX InitFontEffectVertex( const D3DXVECTOR4& pVertex, D3DCOL
 #ifndef ORIGINAL_CD3DFONT
 
 // Font creation flags
-#define D3DFONT_BOLD        0x0001
-#define D3DFONT_ITALIC      0x0002
-#define D3DFONT_ZENABLE     0x0004
+#define D3DFONT_BOLD 0x0001
+#define D3DFONT_ITALIC 0x0002
+#define D3DFONT_ZENABLE 0x0004
 
 // Font rendering flags
-#define D3DFONT_CENTERED    0x0001
-#define D3DFONT_FILTERED    0x0002
-#define D3DFONT_BACKGROUND  0x0004
-#define D3DFONT_COLORTABLE  0x0008
-#define D3DFONT_RIGHT       0x0010			
-#define D3DFONT_SHADOW      0x0020			
+#define D3DFONT_CENTERED 0x0001
+#define D3DFONT_FILTERED 0x0002
+#define D3DFONT_BACKGROUND 0x0004
+#define D3DFONT_COLORTABLE 0x0008
+#define D3DFONT_RIGHT 0x0010			
+#define D3DFONT_SHADOW 0x0020			
 #define D3DFONT_LIGHTEFFECT 0x0040		
 
 //-----------------------------------------------------------------------------
@@ -110,30 +113,29 @@ inline FONTEFFECTVERTEX InitFontEffectVertex( const D3DXVECTOR4& pVertex, D3DCOL
 class CD3DFont
 {
 public:
-
 	// Constructor / destructor
-	CD3DFont( const char* strFontName, DWORD dwHeight, DWORD dwFlags = 0L );
+	CD3DFont(const char* strFontName, DWORD dwHeight, DWORD dwFlags = 0L);
 	~CD3DFont();
 
 	// Begin/End batch drawing
-	HRESULT BeginDrawing( void );
-	HRESULT EndDrawing( void );
+	HRESULT BeginDrawing(void);
+	HRESULT EndDrawing(void);
 
 	// 2D text drawing functions
-	HRESULT DrawText( float fXPos, float fYPos, DWORD dwColor, const char* strText, DWORD dwFlags = 0L, DWORD dwBackgroundColor = 0L );
-	    
+	HRESULT DrawText(float fXPos, float fYPos, DWORD dwColor, const char* strText, DWORD dwFlags = 0L, DWORD dwBackgroundColor = 0L);
+
 	// Function to get extent of text
-	HRESULT GetTextExtent( const char* strText, SIZE* pSize );
+	HRESULT GetTextExtent(const char* strText, SIZE* pSize);
 
 	// Static drawing functions
-	HRESULT BeginStatic( void );
-	HRESULT AddStaticText( float fXPos, float fYPos, DWORD dwColor, const char* strText, DWORD dwFlags = 0L, DWORD dwBackgroundColor = 0L );
-	HRESULT EndStatic( void );
-	HRESULT RenderStaticPrimitives( void );
-	HRESULT ClearStaticBuffer( void );
+	HRESULT BeginStatic(void);
+	HRESULT AddStaticText(float fXPos, float fYPos, DWORD dwColor, const char* strText, DWORD dwFlags = 0L, DWORD dwBackgroundColor = 0L);
+	HRESULT EndStatic(void);
+	HRESULT RenderStaticPrimitives(void);
+	HRESULT ClearStaticBuffer(void);
 
 	// Initializing and destroying device-dependent objects
-	HRESULT InitializeDeviceObjects( LPDIRECT3DDEVICE9 pD3DDevice );
+	HRESULT InitializeDeviceObjects(LPDIRECT3DDEVICE9 pD3DDevice);
 	HRESULT RestoreDeviceObjects();
 	HRESULT InvalidateDeviceObjects();
 	HRESULT DeleteDeviceObjects();
@@ -142,13 +144,12 @@ public:
 	LPDIRECT3DSTATEBLOCK9 m_pStateBlockSaved;
 	LPDIRECT3DSTATEBLOCK9 m_pStateBlockDrawText;
 
-	inline DWORD LightColor(DWORD  color);											 
+	inline DWORD LightColor(DWORD  color);
 	inline DWORD DarkColor(DWORD   color);
 
 protected:
-
 	char m_strFontName[80]; // Font properties
-		
+
 	float m_fFontHeight;
 	DWORD m_dwFontFlags;
 
@@ -157,7 +158,7 @@ protected:
 
 	DWORD m_dwUsedFontVerts;
 	LPDIRECT3DVERTEXBUFFER9 m_pVB; // VertexBuffer for rendering text
-		
+
 	DWORD   m_dwSpacing;                  // Character pixel spacing per side
 	DWORD m_dwUsedEffectVerts;
 	LPDIRECT3DVERTEXBUFFER9 m_pEffectVB;
@@ -175,17 +176,17 @@ protected:
 #else
 
 // Font creation flags
-#define D3DFONT_BOLD        0x0001
-#define D3DFONT_ITALIC      0x0002
-#define D3DFONT_ZENABLE     0x0004
+#define D3DFONT_BOLD 0x0001
+#define D3DFONT_ITALIC 0x0002
+#define D3DFONT_ZENABLE 0x0004
 
 // Font rendering flags
-#define D3DFONT_CENTERED_X  0x0001
-#define D3DFONT_CENTERED_Y  0x0002
-#define D3DFONT_TWOSIDED    0x0004
-#define D3DFONT_FILTERED    0x0008
-#define D3DFONT_BORDER		0x0010
-#define D3DFONT_COLORTABLE	0x0020
+#define D3DFONT_CENTERED_X 0x0001
+#define D3DFONT_CENTERED_Y 0x0002
+#define D3DFONT_TWOSIDED 0x0004
+#define D3DFONT_FILTERED 0x0008
+#define D3DFONT_BORDER 0x0010
+#define D3DFONT_COLORTABLE 0x0020
 
 //-----------------------------------------------------------------------------
 // Name: class CD3DFont
@@ -228,7 +229,6 @@ public:
 	CD3DFont(const TCHAR* strFontName, DWORD dwHeight, DWORD dwFlags = 0L);
 	~CD3DFont();
 };
-
 
 #endif
 

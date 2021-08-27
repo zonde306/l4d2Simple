@@ -28,7 +28,6 @@
 #pragma warning(disable: 4127 4100)
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/front/state_machine_def.hpp>
-// functors
 #include <boost/msm/front/functor_row.hpp>
 #include <boost/msm/front/euml/common.hpp>
 #pragma warning(pop)
@@ -42,9 +41,10 @@ namespace msm = boost::msm;
 namespace mpl = boost::mpl;
 using namespace boost::msm::front;
 
-namespace andrivet {
-	namespace ADVobfuscator {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
 		// Same as void but can be instantiated
 		struct Void {};
 
@@ -167,7 +167,6 @@ namespace andrivet {
 		// Create a instance of ObfuscatedFunc and deduce types
 		template<typename F>
 		constexpr ObfuscatedAddress<F> MakeObfuscatedAddress(F f, int offset) { return ObfuscatedAddress<F>(f, offset); }
-
 	}
 }
 

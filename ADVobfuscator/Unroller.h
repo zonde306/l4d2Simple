@@ -22,9 +22,10 @@
 
 // Unroll a loop
 
-namespace andrivet {
-	namespace ADVobfuscator {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
 		template <int N>
 		struct Unroller
 		{
@@ -45,7 +46,6 @@ namespace andrivet {
 				return std::forward<F>(f)(std::forward<Args>(args)...);
 			}
 		};
-
 	}
 }
 

@@ -25,9 +25,10 @@
 #include "MetaRandom.h"
 #include "Log.h"
 
-namespace andrivet {
-	namespace ADVobfuscator {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
 		// Represents an obfuscated string, parametrized with an alrorithm number N, a list of indexes Indexes and a key Key
 
 		template<int N, char Key, typename Indexes>
@@ -60,7 +61,7 @@ namespace andrivet {
 			constexpr char decrypt(char c) const { return encrypt(c, key()); }
 
 			volatile int key_; // key. "volatile" is important to avoid uncontrolled over-optimization by the compiler
-			volatile char buffer_[sizeof...(I)+1]; // Buffer to store the encrypted string + terminating null byte
+			volatile char buffer_[sizeof...(I) + 1]; // Buffer to store the encrypted string + terminating null byte
 		};
 
 		// Partial specialization with a list of indexes I, a key K and algorithm N = 1
@@ -90,7 +91,7 @@ namespace andrivet {
 			constexpr char decrypt(char c, size_t position) const { return encrypt(c, position); }
 
 			volatile int key_; // key. "volatile" is important to avoid uncontrolled over-optimization by the compiler
-			volatile char buffer_[sizeof...(I)+1]; // Buffer to store the encrypted string + terminating null byte
+			volatile char buffer_[sizeof...(I) + 1]; // Buffer to store the encrypted string + terminating null byte
 		};
 
 		// Partial specialization with a list of indexes I, a key K and algorithm N = 2
@@ -120,7 +121,7 @@ namespace andrivet {
 			constexpr char decrypt(char c) const { return c - key(K); }
 
 			// Buffer to store the encrypted string + terminating null byte. Key is not stored
-			volatile char buffer_[sizeof...(I)+1];
+			volatile char buffer_[sizeof...(I) + 1];
 		};
 
 		// Helper to generate a key
@@ -130,14 +131,11 @@ namespace andrivet {
 			// Use 0x7F as maximum value since most of the time, char is signed (we have however 1 bit less of randomness)
 			static const char value = static_cast<char>(1 + MetaRandom<N, 0x7F - 1>::value);
 		};
-
-
 	}
 }
 
 // Prefix notation
 #define DEF_OBFUSCATED(str) andrivet::ADVobfuscator::MetaString<andrivet::ADVobfuscator::MetaRandom<__COUNTER__, 3>::value, andrivet::ADVobfuscator::MetaRandomChar<__COUNTER__>::value, andrivet::ADVobfuscator::Make_Indexes<sizeof(str) - 1>::type>(str)
-
 #define OBFUSCATED(str) (DEF_OBFUSCATED(str).decrypt())
 
 #endif

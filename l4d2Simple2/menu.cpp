@@ -137,14 +137,14 @@ void CBaseMenu::OnPresent()
 
 		localtime_s(&timeInfo, &t);
 
-		ImGui::Text(XorStr("%4d/%2d/%2d %2d:%2d:%2d %s"),
+		ImGui::Text(XorStr("%4d / %2d / %2d %2d:%2d:%2d %s"),
 			timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,
 			timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec, GetWeakName(timeInfo.tm_wday).c_str());
 
 		if (g_tpPlayingTimer > 0)
-			ImGui::Text(XorStr(u8"Game time：%s丨Online time：%s"), GetTimeDuration(t - g_tpGameTimer).c_str(), GetTimeDuration(t - g_tpPlayingTimer).c_str());
+			ImGui::Text(XorStr(u8"Game time: %s丨Online time: %s"), GetTimeDuration(t - g_tpGameTimer).c_str(), GetTimeDuration(t - g_tpPlayingTimer).c_str());
 		else
-			ImGui::Text(XorStr(u8"Game time：%s"), GetTimeDuration(t - g_tpGameTimer).c_str());
+			ImGui::Text(XorStr(u8"Game time: %s"), GetTimeDuration(t - g_tpGameTimer).c_str());
 
 		ImGui::Separator();
 	}

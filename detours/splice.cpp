@@ -1,21 +1,22 @@
 ﻿#include <Windows.h>
+
 #include "splice.h"
 #include "opcodes.h"
 
 //////////////////////////////////////////////////////////////////////////
 SPLICE_ENTRY* SpliceHookFunction(LPVOID function, LPVOID handler)
 {
-    if (!function || !handler) return NULL;
+	if (!function || !handler) return NULL;
 
 	LPVOID			trampoline;
-	SPLICE_ENTRY*	psplice;
+	SPLICE_ENTRY* psplice;
 
 	DWORD			curr_summ = 0, dwlen = 0;
 
 	trampoline = utilsVAlloc(20); // no more memory required for this
-	
 
-	while(curr_summ < JMP_SIZE){
+
+	while (curr_summ < JMP_SIZE) {
 
 		utilsGetInstructionLength((LPVOID)((DWORD)function + curr_summ), &dwlen);
 
@@ -27,18 +28,18 @@ SPLICE_ENTRY* SpliceHookFunction(LPVOID function, LPVOID handler)
 		//
 
 		if (*(BYTE*)((DWORD)trampoline + curr_summ) == 0xe8
-			||*(BYTE*)((DWORD)trampoline + curr_summ) == 0xe9){
+			|| *(BYTE*)((DWORD)trampoline + curr_summ) == 0xe9) {
 
-			*(ULONG*)((DWORD)trampoline + curr_summ + 1)-=
-				(ULONG)((DWORD)trampoline + curr_summ)-
+			*(ULONG*)((DWORD)trampoline + curr_summ + 1) -=
+				(ULONG)((DWORD)trampoline + curr_summ) -
 				(ULONG)((DWORD)function + curr_summ);
 		}
 
-		USHORT w = MAKEWORD(*(BYTE*)((DWORD)trampoline + curr_summ +1),*(BYTE*)((DWORD)trampoline + curr_summ));
-		if ((w&0xfff0) == 0xf80){ // jz/jnz/jb/jg etc found
-		
-			*(DWORD*)((DWORD)trampoline + curr_summ + 2)-=
-				(DWORD)((DWORD)trampoline + curr_summ)-
+		USHORT w = MAKEWORD(*(BYTE*)((DWORD)trampoline + curr_summ + 1), *(BYTE*)((DWORD)trampoline + curr_summ));
+		if ((w & 0xfff0) == 0xf80) { // jz/jnz/jb/jg etc found
+
+			*(DWORD*)((DWORD)trampoline + curr_summ + 2) -=
+				(DWORD)((DWORD)trampoline + curr_summ) -
 				(DWORD)((DWORD)function + curr_summ);
 		}
 		curr_summ += dwlen;
@@ -49,7 +50,7 @@ SPLICE_ENTRY* SpliceHookFunction(LPVOID function, LPVOID handler)
 	psplice->repair_code_size = curr_summ;
 	psplice->trampoline = trampoline;
 	psplice->original_addr = function;
-	
+
 	utilsCreateJMP((DWORD)trampoline + curr_summ, (DWORD)function + curr_summ);
 	utilsCreateJMP((DWORD)function, (DWORD)handler);
 
@@ -59,7 +60,7 @@ SPLICE_ENTRY* SpliceHookFunction(LPVOID function, LPVOID handler)
 //////////////////////////////////////////////////////////////////////////
 void SpliceUnHookFunction(SPLICE_ENTRY* pse)
 {
-	if(!pse) return;
+	if (!pse) return;
 
 	DWORD prot;
 
@@ -72,7 +73,7 @@ void SpliceUnHookFunction(SPLICE_ENTRY* pse)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void	utilsGetInstructionLength(LPVOID address, DWORD* osizeptr)
+void utilsGetInstructionLength(LPVOID address, DWORD* osizeptr)
 {
 	BYTE* iptr0 = (BYTE*)address;
 	DWORD f = 0;
@@ -151,17 +152,15 @@ prefix:
 }
 
 //////////////////////////////////////////////////////////////////////////
-DWORD	utilsGetInstructionLength(LPVOID addr)
+DWORD utilsGetInstructionLength(LPVOID addr)
 {
 	DWORD len;
-
 	utilsGetInstructionLength((DWORD*)addr, &len);
-
 	return len;
 }
 
 //////////////////////////////////////////////////////////////////////////
-DWORD	utilsGetWholeCodeSize(LPVOID start)
+DWORD utilsGetWholeCodeSize(LPVOID start)
 {
 	DWORD size = 0, totalsize = 0;
 
@@ -182,18 +181,18 @@ DWORD	utilsGetWholeCodeSize(LPVOID start)
 	return totalsize;
 }
 
-
 //////////////////////////////////////////////////////////////////////////
 BOOL utilsCompareData(const BYTE* pData, const BYTE* bMask, const char* pszMask)
 {
 	for (; *pszMask; ++pszMask, ++pData, ++bMask)
 		if (*pszMask == 'x' && *pData != *bMask)
 			return FALSE;
+
 	return (*pszMask) == 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
-DWORD utilsFindPattern(DWORD dwAddress, DWORD dwLen, BYTE *bMask, char * pszMask)
+DWORD utilsFindPattern(DWORD dwAddress, DWORD dwLen, BYTE* bMask, char* pszMask)
 {
 	for (DWORD i = 0; i < dwLen; i++)
 		if (utilsCompareData((BYTE*)(dwAddress + i), bMask, pszMask))
@@ -213,7 +212,7 @@ DWORD utilsReconstructJMP(DWORD dwAddress)
 //////////////////////////////////////////////////////////////////////////
 void utilsCreateJMP(DWORD at, DWORD to)
 {
-	DWORD		dwOldProtect = 0;
+	DWORD dwOldProtect = 0;
 
 	VirtualProtect((DWORD*)at, 5, 0x40, &dwOldProtect);
 	*(BYTE*)(at) = 0xE9;
@@ -247,7 +246,7 @@ DWORD utilsCopyRange(DWORD dwFrom, DWORD dwTo)
 	DWORD dwLen = dwTo - dwFrom;
 	VirtualProtect((DWORD*)dwFrom, dwLen, PAGE_EXECUTE_READWRITE, &dwOldProtect);
 
-	void *pCopy = VirtualAlloc(0, dwLen, 0x1000 | 0x2000, 0x40);
+	void* pCopy = VirtualAlloc(0, dwLen, 0x1000 | 0x2000, 0x40);
 	utilsWrapMemory(dwFrom, (DWORD)pCopy, dwLen); //fix calls/jmps
 	VirtualProtect((DWORD*)dwFrom, dwLen, dwOldProtect, &dwOldProtect);
 	return (DWORD)pCopy;
@@ -275,7 +274,7 @@ void utilsWrapMemory(DWORD dwAddress, DWORD dwNew, DWORD dwMinLen)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void utilsDPrint(char *fmt, ...)
+void utilsDPrint(char* fmt, ...)
 {
 	va_list vl;
 	char msg[1024], total[1024];

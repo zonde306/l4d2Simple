@@ -26,10 +26,12 @@
 // Obfuscate function call with a finite state machine (FSM).
 // In this example, the execution of the FSM is combined with the checking of a predicate (is a debugger present or not).
 
-namespace andrivet {
-	namespace ADVobfuscator {
-		namespace Machine2 {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
+		namespace Machine2
+		{
 			// Finite State Machine
 			// E: Event associated with target
 			// P: Predicate
@@ -136,10 +138,10 @@ namespace andrivet {
 						// Important: This has to be an odd number to detect if the predicate is true or not
 						// This is computed at Compile-Time
 						Unroller<19 + 2 * MetaRandom<__COUNTER__, 40>::value>{}([&]()
-						{
-							machine.process_event(event1{});
-							machine.process_event(event1{});
-						});
+							{
+								machine.process_event(event1{});
+								machine.process_event(event1{});
+							});
 
 						machine.process_event(event2{});
 
@@ -159,7 +161,6 @@ namespace andrivet {
 				static const int predicateCounterInit_ = 100 + MetaRandom<__COUNTER__, 999>::value;
 				int predicateCounter_ = predicateCounterInit_;
 			};
-
 		}
 	}
 }
@@ -179,6 +180,5 @@ namespace andrivet {
 
 #pragma clang diagnostic pop
 #pragma warning(pop)
-
 
 #endif

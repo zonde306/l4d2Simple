@@ -27,9 +27,10 @@
 
 #include <random>
 
-namespace andrivet {
-	namespace ADVobfuscator {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
 		namespace
 		{
 			// I use current (compile time) as a seed
@@ -84,7 +85,6 @@ namespace andrivet {
 		{
 			static const int value = MetaRandomGenerator<N + 1>::value % M;
 		};
-
 	}
 }
 

@@ -1,5 +1,5 @@
 EXPORTS
-	HookProc  	@1
+	HookProc @1
 	InstallHook @2
 	ReleaseHook @3
 SECTIONS

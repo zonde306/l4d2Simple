@@ -1,6 +1,6 @@
 #include "detourxs.h"
 
-#include <iostream> // tmp
+#include <iostream>
 
 DetourXS::DetourXS()
 {

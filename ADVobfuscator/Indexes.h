@@ -23,9 +23,10 @@
 // std::index_sequence will be available with C++14 (C++1y). For the moment, implement a (very) simplified and partial version. You can find more complete versions on the Internet
 // MakeIndex<N>::type generates Indexes<0, 1, 2, 3, ..., N>
 
-namespace andrivet {
-	namespace ADVobfuscator {
-
+namespace andrivet 
+{
+	namespace ADVobfuscator 
+	{
 		template<int... I>
 		struct Indexes { using type = Indexes<I..., sizeof...(I)>; };
 
@@ -34,7 +35,6 @@ namespace andrivet {
 
 		template<>
 		struct Make_Indexes<0> { using type = Indexes<>; };
-
 	}
 }
 

@@ -28,10 +28,12 @@
 // In this example, the target is called at the end of the FSM so it can be located.
 // In production, it would be better to put it in the middle of the FSM with some computing triggering it.
 
-namespace andrivet {
-	namespace ADVobfuscator {
-		namespace Machine1 {
-
+namespace andrivet
+{
+	namespace ADVobfuscator
+	{
+		namespace Machine1
+		{
 			// Finite State Machine
 			// E: Event associated with target
 			// R: Type of return value
@@ -97,11 +99,11 @@ namespace andrivet {
 
 						// Generate a lot of transitions (at least 55, at most 98)
 						Unroller<55 + MetaRandom<__COUNTER__, 44>::value>{}([&]()
-						{
-							machine.process_event(event5{});
-							machine.process_event(event2{});
-							machine.process_event(event4{});
-						});
+							{
+								machine.process_event(event5{});
+								machine.process_event(event2{});
+								machine.process_event(event4{});
+							});
 
 						machine.process_event(event5{});
 						machine.process_event(event2{});
@@ -114,11 +116,9 @@ namespace andrivet {
 				// Result of the target
 				R result_;
 			};
-
 		}
 	}
 }
-
 
 #pragma warning(push)
 #pragma warning(disable : 4068)
@@ -133,6 +133,5 @@ namespace andrivet {
 
 #pragma clang diagnostic pop
 #pragma warning(pop)
-
 
 #endif
