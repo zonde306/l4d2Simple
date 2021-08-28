@@ -1,19 +1,46 @@
 ﻿#pragma once
+
 #include "baseentity.h"
+
+#define MAX_SHOOT_SOUNDS 16
+#define MAX_WEAPON_STRING 80
+#define MAX_WEAPON_PREFIX 16
+#define MAX_WEAPON_AMMO_NAME 32
+
+typedef enum 
+{
+	EMPTY,
+	SINGLE,
+	SINGLE_NPC,
+	WPN_DOUBLE,
+	DOUBLE_NPC,
+	BURST,
+	RELOAD,
+	RELOAD_NPC,
+	MELEE_MISS,
+	MELEE_HIT,
+	MELEE_HIT_WORLD,
+	SPECIAL1,
+	SPECIAL2,
+	SPECIAL3,
+	TAUNT,
+	DEPLOY,
+	NUM_SHOOT_SOUND_TYPES
+} WeaponSound_t;
 
 struct FileWeaponInfo_t
 {
 private:
-	byte pad_0x0000[0x4];		// 0x0000 - VTable
+	byte pad_0x0000[0x4];
 
 public:
 	bool bParsedScript;
 	bool bLoadedHudElements;
-	char szClassName[80];
-	char szPrintName[80];
-	char szViewModel[80];
-	char szWorldModel[80];
-	char szAnimationPrefix[16];
+	char szClassName[MAX_WEAPON_STRING];
+	char szPrintName[MAX_WEAPON_STRING];
+	char szViewModel[MAX_WEAPON_STRING];
+	char szWorldModel[MAX_WEAPON_STRING];
+	char szAnimationPrefix[MAX_WEAPON_PREFIX];
 	std::int16_t pad1;
 	std::int32_t iSlot;
 	std::int32_t iPosition;
@@ -26,6 +53,15 @@ public:
 	bool bAutoSwitchTo;
 	bool bAutoSwitchFrom;
 	std::int32_t iFlags;
+	char szAmmo1[MAX_WEAPON_AMMO_NAME];
+	char szAmmo2[MAX_WEAPON_AMMO_NAME];
+	char aShootSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
+	int iAmmoType;
+	int iAmmo2Type;
+	bool m_bMeleeWeapon;
+	bool m_bBuiltRightHanded;
+	bool m_bAllowFlipping;
+	int iSpriteCount;
 };
 
 class CBasePlayer;
@@ -41,42 +77,22 @@ public:
 	int GetWeaponId();
 	void UpdateSpread();
 
-	// 武器持有人
 	CBasePlayer* GetOwner();
-
-	// 弹夹子弹数量
 	int GetClip();
 
-	// 是否正在填装
 	bool IsReloading();
 
-	// 弹药类型
 	int GetAmmoType();
-
-	// 备用弹药数量
 	int GetAmmo();
 
-	// 下一次可以开枪的时间
 	float GetNextPrimaryAttack();
-
-	// 距离下一次可以开枪的间隔
 	float GetPrimaryAttackDelay();
-
-	// 下一次可以推的时间
 	float GetNextSecondryAttack();
-
-	// 距离下一次可以推的间隔
 	float GetSecondryAttackDelay();
 
-	// 现在是否可以开枪
 	bool CanFire();
-
-	// 是否为枪械
 	bool IsFireGun();
-
-	// 现在是否可以推(或者抓)
 	bool CanShove();
-	
-	// 获取近战武器前摇时间(伤害造成的延迟)
+
 	float GetMeleeDelay();
 };
