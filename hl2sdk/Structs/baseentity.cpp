@@ -4,15 +4,17 @@
 #include "../indexes.h"
 
 std::map<std::string, int> g_mPropOffset;
-#define SIG_SET_MOVETYPE	XorStr("55 8B EC 8A 45 08 8A 55 0C 88 81")
-#define SIG_GET_CLASSNAME	XorStr("57 8B F9 C6 05")
 
-int CBaseEntity::GetNetPropOffset(const std::string & table, const std::string & prop, bool cache)
+#define SIG_SET_MOVETYPE XorStr("55 8B EC 8A 45 08 8A 55 0C 88 81")
+#define SIG_GET_CLASSNAME XorStr("57 8B F9 C6 05")
+
+int CBaseEntity::GetNetPropOffset(const std::string& table, const std::string& prop, bool cache)
 {
 	if (!cache)
 		return g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str());
-	
+
 	auto it = g_mPropOffset.find(prop);
+
 	if (it == g_mPropOffset.end())
 		g_mPropOffset.emplace(prop, g_pInterface->NetProp->GetOffset(table.c_str(), prop.c_str()));
 	else
@@ -31,14 +33,16 @@ bool CBaseEntity::IsValid()
 		return false;
 
 	IClientNetworkable* net = GetNetworkable();
+
 	if (net == nullptr)
 		return false;
 
-	// 检查虚函数表(client.dll)
 	static auto moduleInfo = Utils::GetModuleSize(XorStr("client.dll"));
+
 	if (moduleInfo.first > moduleInfo.second)
 	{
 		DWORD address = reinterpret_cast<DWORD>(Utils::GetVirtualFunction(net, indexes::IsDormant));
+
 		if (address < moduleInfo.first || address > moduleInfo.second)
 			return false;
 	}
@@ -47,8 +51,9 @@ bool CBaseEntity::IsValid()
 	{
 		return (!IsDormant() && GetIndex() > 0);
 	}
-	catch (...)
+	catch (...) 
 	{
+	
 	}
 
 	return false;
@@ -62,7 +67,7 @@ bool CBaseEntity::IsDormant()
 	}
 	catch (...)
 	{
-
+	
 	}
 
 	return true;
@@ -73,9 +78,8 @@ int CBaseEntity::GetIndex()
 	return GetNetworkable()->entindex();
 }
 
-bool CBaseEntity::SetupBones(matrix3x4_t * pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime)
+bool CBaseEntity::SetupBones(matrix3x4_t* pBoneToWorldOut, int nMaxBones, int boneMask, float currentTime)
 {
-	
 	return GetRenderable()->SetupBones(pBoneToWorldOut, nMaxBones, boneMask, currentTime);
 }
 
@@ -84,7 +88,7 @@ int CBaseEntity::DrawModel(int flags, float alpha)
 	return GetRenderable()->DrawModel(flags, alpha);
 }
 
-model_t * CBaseEntity::GetModel()
+model_t* CBaseEntity::GetModel()
 {
 	return const_cast<model_t*>(GetRenderable()->GetModel());
 }
@@ -161,13 +165,13 @@ Vector CBaseEntity::GetBoneOrigin(int bone)
 
 Vector& CBaseEntity::GetAbsOrigin()
 {
-	using Fn = Vector&(__thiscall*)(CBaseEntity*);
+	using Fn = Vector& (__thiscall*)(CBaseEntity*);
 	return Utils::GetVTableFunction<Fn>(this, indexes::GetAbsOrigin)(this);
 }
 
 QAngle& CBaseEntity::GetAbsAngles()
 {
-	using Fn = QAngle&(__thiscall*)(CBaseEntity*);
+	using Fn = QAngle& (__thiscall*)(CBaseEntity*);
 	return Utils::GetVTableFunction<Fn>(this, indexes::GetAbsAngles)(this);
 }
 
@@ -179,6 +183,7 @@ ClientClass * CBaseEntity::GetClientClass()
 int CBaseEntity::GetClassID()
 {
 	ClientClass* cc = GetClientClass();
+
 	if (cc == nullptr)
 		return ET_INVALID;
 
@@ -217,12 +222,6 @@ int CBaseEntity::GetTeam()
 
 bool CBaseEntity::IsPlayer()
 {
-	/*
-	int index = GetIndex();
-	if(index <= 0 || index > 32)
-		return false;
-	*/
-
 	using FnIsPlayer = bool(__thiscall*)(CBaseEntity*);
 	FnIsPlayer fn = Utils::GetVTableFunction<FnIsPlayer>(this, indexes::IsPlayer);
 	return fn(this);
@@ -237,8 +236,6 @@ bool CBaseEntity::IsNPC()
 
 MoveType_t CBaseEntity::GetMoveType()
 {
-	// 在 C_BaseEntity::SetMoveType 里
-	// this 后的第一个参数
 	return static_cast<MoveType_t>(*reinterpret_cast<PBYTE>(reinterpret_cast<DWORD>(this) + indexes::MoveType));
 
 	// static int offset = GetNetPropOffset(XorStr("DT_BaseEntity"), XorStr("movetype"));
@@ -246,9 +243,9 @@ MoveType_t CBaseEntity::GetMoveType()
 	// return static_cast<MoveType_t>(DECL_NETPROP_GET(byte));
 }
 
-const char * CBaseEntity::GetClassname()
+const char* CBaseEntity::GetClassname()
 {
-	using FnGetClassname = const char*(__thiscall*)(CBaseEntity*);
+	using FnGetClassname = const char* (__thiscall*)(CBaseEntity*);
 	static FnGetClassname fn = reinterpret_cast<FnGetClassname>(Utils::FindPattern(XorStr("client.dll"), SIG_GET_CLASSNAME));
 	return fn(this);
 }
@@ -281,7 +278,7 @@ Vector CBaseEntity::GetEyePosition()
 
 QAngle CBaseEntity::GetEyeAngles()
 {
-	using FnEyeAngles = const QAngle&(__thiscall*)(CBaseEntity*);
+	using FnEyeAngles = const QAngle& (__thiscall*)(CBaseEntity*);
 	FnEyeAngles fn = Utils::GetVTableFunction<FnEyeAngles>(this, indexes::EyeAngles);
 
 	try
@@ -298,7 +295,7 @@ QAngle CBaseEntity::GetEyeAngles()
 
 ICollideable* CBaseEntity::GetCollideable()
 {
-	using FnGetCollideable = ICollideable*(__thiscall*)(CBaseEntity*);
+	using FnGetCollideable = ICollideable* (__thiscall*)(CBaseEntity*);
 	FnGetCollideable fn = Utils::GetVTableFunction<FnGetCollideable>(this, indexes::GetCollideable);
 	return fn(this);
 }
