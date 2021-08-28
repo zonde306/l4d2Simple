@@ -4,14 +4,16 @@
 #include "../../l4d2Simple2/utils.h"
 #include "../interfaces.h"
 
-ConCommandBase*		ConCommandBase::s_pConCommandBases = nullptr;
-static int			s_nCVarFlag = 0;
-static int			s_nDLLIdentifier = -1;
-static bool			s_bRegistered = false;
+ConCommandBase* ConCommandBase::s_pConCommandBases = nullptr;
+
+static int s_nCVarFlag = 0;
+static int s_nDLLIdentifier = -1;
+static bool s_bRegistered = false;
+
 static CDefaultAccessor s_DefaultAccessor;
 IConCommandBaseAccessor	*ConCommandBase::s_pAccessor = &s_DefaultAccessor;
 
-bool CDefaultAccessor::RegisterConCommandBase(ConCommandBase * pVar)
+bool CDefaultAccessor::RegisterConCommandBase(ConCommandBase* pVar)
 {
 #ifdef _DEBUG
 	Utils::log("Register ConVar: %s", pVar->GetName());
@@ -20,7 +22,7 @@ bool CDefaultAccessor::RegisterConCommandBase(ConCommandBase * pVar)
 	return true;
 }
 
-void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
+void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor* pAccessor)
 {
 	if (!g_pInterface->Cvar || s_bRegistered)
 		return;
@@ -29,7 +31,7 @@ void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 	s_nCVarFlag = nCVarFlag;
 	s_nDLLIdentifier = g_pInterface->Cvar->AllocateDLLIdentifier();
 
-	ConCommandBase *pCur = ConCommandBase::s_pConCommandBases, *pNext = nullptr;
+	ConCommandBase* pCur = ConCommandBase::s_pConCommandBases, * pNext = nullptr;
 	ConCommandBase::s_pAccessor = pAccessor ? pAccessor : &s_DefaultAccessor;
 
 	while (pCur)
@@ -43,31 +45,27 @@ void ConVar_Register(int nCVarFlag, IConCommandBaseAccessor *pAccessor)
 	ConCommandBase::s_pConCommandBases = nullptr;
 }
 
-
-//-------------------------------------------------------------
-// ConVar methods
-//-------------------------------------------------------------
-ConVar::ConVar(const char *pName, const char *pDefaultValue, int flags)
+ConVar::ConVar(const char* pName, const char* pDefaultValue, int flags)
 {
 	Create(pName, pDefaultValue, flags, "");
 }
 
-ConVar::ConVar(const char *pName, const char *pDefaultValue, int flags, const char *pHelpString)
+ConVar::ConVar(const char* pName, const char* pDefaultValue, int flags, const char* pHelpString)
 {
 	Create(pName, pDefaultValue, flags, pHelpString);
 }
 
-ConVar::ConVar(const char *pName, const char *pDefaultValue, int flags, const char *pHelpString, bool bMin, float fMin, bool bMax, float fMax)
+ConVar::ConVar(const char* pName, const char* pDefaultValue, int flags, const char* pHelpString, bool bMin, float fMin, bool bMax, float fMax)
 {
 	Create(pName, pDefaultValue, flags, pHelpString, bMin, fMin, bMax, fMax);
 }
 
-ConVar::ConVar(const char *pName, const char *pDefaultValue, int flags, const char *pHelpString, FnChangeCallback_t callback)
+ConVar::ConVar(const char* pName, const char* pDefaultValue, int flags, const char* pHelpString, FnChangeCallback_t callback)
 {
 	Create(pName, pDefaultValue, flags, pHelpString, false, 0.0, false, 0.0, callback);
 }
 
-ConVar::ConVar(const char *pName, const char *pDefaultValue, int flags, const char *pHelpString, bool bMin, float fMin, bool bMax, float fMax, FnChangeCallback_t callback)
+ConVar::ConVar(const char* pName, const char* pDefaultValue, int flags, const char* pHelpString, bool bMin, float fMin, bool bMax, float fMax, FnChangeCallback_t callback)
 {
 	Create(pName, pDefaultValue, flags, pHelpString, bMin, fMin, bMax, fMax, callback);
 }
@@ -82,6 +80,7 @@ ConVar::~ConVar(void)
 
 	ConCommandBase::~ConCommandBase();
 }
+
 bool ConVar::IsFlagSet(int flag) const
 {
 	return (flag & m_pParent->m_nFlags) ? true : false;
@@ -115,35 +114,28 @@ const char *ConVar::GetName(void) const
 {
 	return m_pParent->m_pszName;
 }
-/*
-const char* ConVar::GetBaseName(void) const
-{
-return m_pParent->m_pszName;
-}
-*/
+
 float ConVar::GetFloat(void) const
 {
 	return m_pParent->m_fValue;
 }
+
 int ConVar::GetInt(void) const
 {
 	return m_pParent->m_nValue;
 }
+
 const char* ConVar::GetString(void) const
 {
 	return m_pParent->m_pszString;
 }
-/*
-int ConVar::GetSplitScreenPlayerSlot(void) const
-{
-return 0;
-}
-*/
+
 DWORD ConVar::GetColor(void) const
 {
 	unsigned char *pColorElement = ((unsigned char *)&m_pParent->m_nValue);
 	return COLORCODE(pColorElement[0], pColorElement[1], pColorElement[2], pColorElement[3]);
 }
+
 void ConVar::InternalSetValue(const char *value)
 {
 	float fNewValue;
@@ -160,7 +152,6 @@ void ConVar::InternalSetValue(const char *value)
 		val = tempVal;
 	}
 
-	// Redetermine value
 	m_fValue = fNewValue;
 	m_nValue = (int)(fNewValue);
 
@@ -169,6 +160,7 @@ void ConVar::InternalSetValue(const char *value)
 		ChangeStringValue(val, flOldValue);
 	}
 }
+
 void ConVar::ChangeStringValue(const char *tempVal, float flOldValue)
 {
 	UNREFERENCED_PARAMETER(flOldValue);
@@ -186,8 +178,8 @@ void ConVar::ChangeStringValue(const char *tempVal, float flOldValue)
 	}
 
 	memcpy(m_pszString, tempVal, len);
-
 }
+
 bool ConVar::ClampValue(float& value)
 {
 	if (m_bHasMin && (value < m_fMinVal))
@@ -204,15 +196,16 @@ bool ConVar::ClampValue(float& value)
 
 	return false;
 }
+
 void ConVar::InternalSetFloatValue(float fNewValue)
 {
 	if (fNewValue == m_fValue)
 		return;
-	// Check bounds
+
 	ClampValue(fNewValue);
 
-	// Redetermine value
 	float flOldValue = m_fValue;
+
 	m_fValue = fNewValue;
 	m_nValue = (int)fNewValue;
 
@@ -222,18 +215,21 @@ void ConVar::InternalSetFloatValue(float fNewValue)
 		ChangeStringValue(tempVal, flOldValue);
 	}
 }
+
 void ConVar::InternalSetIntValue(int nValue)
 {
 	if (nValue == m_nValue)
 		return;
 
 	float fValue = (float)nValue;
+
 	if (ClampValue(fValue))
 	{
 		nValue = (int)(fValue);
 	}
 
 	float flOldValue = m_fValue;
+
 	m_fValue = fValue;
 	m_nValue = nValue;
 
@@ -258,7 +254,6 @@ void ConVar::Create(const char *pName, const char *pDefaultValue,
 
 	m_pParent = this;
 
-	// Name should be static data
 	m_pszDefaultValue = pDefaultValue ? pDefaultValue : empty_string;
 
 	m_StringLength = strlen(m_pszDefaultValue) + 1;
@@ -276,14 +271,17 @@ void ConVar::Create(const char *pName, const char *pDefaultValue,
 
 	BaseClass::Create(pName, pHelpString, flags);
 }
-void ConVar::SetValue(const char *value)
+
+void ConVar::SetValue(const char* value)
 {
 	m_pParent->InternalSetValue(value);
 }
+
 void ConVar::SetValue(float value)
 {
 	m_pParent->InternalSetFloatValue(value);
 }
+
 void ConVar::SetValue(int value)
 {
 	m_pParent->InternalSetIntValue(value);
@@ -304,9 +302,6 @@ inline void ConVar::Init()
 	ConCommandBase::Init();
 }
 
-//-------------------------------------------------------------
-// ConCommandBase methods
-//-------------------------------------------------------------
 ConCommandBase::ConCommandBase(void)
 {
 	m_bRegistered = false;
@@ -317,10 +312,11 @@ ConCommandBase::ConCommandBase(void)
 	m_pNext = NULL;
 }
 
-ConCommandBase::ConCommandBase(const char *pName, const char *pHelpString, int flags)
+ConCommandBase::ConCommandBase(const char* pName, const char* pHelpString, int flags)
 {
 	Create(pName, pHelpString, flags);
 }
+
 ConCommandBase::~ConCommandBase(void)
 {
 	if (s_pAccessor)
@@ -333,11 +329,13 @@ bool ConCommandBase::IsCommand(void) const
 {
 	return true;
 }
+
 int ConCommandBase::GetDLLIdentifier() const
 {
 	return s_nDLLIdentifier;
 }
-void ConCommandBase::Create(const char *pName, const char *pHelpString, int flags)
+
+void ConCommandBase::Create(const char* pName, const char* pHelpString, int flags)
 {
 	static const char* empty_string = "";
 
@@ -360,6 +358,7 @@ void ConCommandBase::Create(const char *pName, const char *pHelpString, int flag
 
 	Init();
 }
+
 void ConCommandBase::Init()
 {
 	if (s_pAccessor)
@@ -367,111 +366,91 @@ void ConCommandBase::Init()
 		s_pAccessor->RegisterConCommandBase(this);
 	}
 }
+
 const char* ConCommandBase::GetName(void) const
 {
 	return m_pszName;
 }
+
 bool ConCommandBase::IsFlagSet(int flag) const
 {
 	return (flag & m_nFlags) ? true : false;
 }
+
 void ConCommandBase::AddFlags(int flags)
 {
 	m_nFlags |= flags;
 }
+
 void ConCommandBase::RemoveFlags(int flags)
 {
 	m_nFlags &= ~flags;
 }
+
 int ConCommandBase::GetFlags(void) const
 {
 	return m_nFlags;
 }
+
 const char* ConCommandBase::GetHelpText(void) const
 {
 	return m_pszHelpString;
 }
+
 bool ConCommandBase::IsRegistered(void) const
 {
 	return m_bRegistered;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Constructs a console command
-//-----------------------------------------------------------------------------
-//ConCommand::ConCommand()
-//{
-//	m_bIsNewConCommand = true;
-//}
-
-//-----------------------------------------------------------------------------
-// Default console command autocompletion function 
-//-----------------------------------------------------------------------------
-int DefaultCompletionFunc(const char *partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
+int DefaultCompletionFunc(const char* partial, char commands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH])
 {
 	return 0;
 }
 
-ConCommand::ConCommand(const char *pName, FnCommandCallbackVoid_t callback, const char *pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/)
+ConCommand::ConCommand(const char* pName, FnCommandCallbackVoid_t callback, const char* pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/)
 {
-	// Set the callback
 	m_fnCommandCallbackV1 = callback;
 	m_bUsingNewCommandCallback = false;
 	m_bUsingCommandCallbackInterface = false;
 	m_fnCompletionCallback = completionFunc ? completionFunc : DefaultCompletionFunc;
 	m_bHasCompletionCallback = completionFunc != 0 ? true : false;
 
-	// Setup the rest
 	BaseClass::Create(pName, pHelpString, flags);
 }
 
-ConCommand::ConCommand(const char *pName, FnCommandCallback_t callback, const char *pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/)
+ConCommand::ConCommand(const char* pName, FnCommandCallback_t callback, const char* pHelpString /*= 0*/, int flags /*= 0*/, FnCommandCompletionCallback completionFunc /*= 0*/)
 {
-	// Set the callback
 	m_fnCommandCallback = callback;
 	m_bUsingNewCommandCallback = true;
 	m_fnCompletionCallback = completionFunc ? completionFunc : DefaultCompletionFunc;
 	m_bHasCompletionCallback = completionFunc != 0 ? true : false;
 	m_bUsingCommandCallbackInterface = false;
 
-	// Setup the rest
 	BaseClass::Create(pName, pHelpString, flags);
 }
 
-ConCommand::ConCommand(const char *pName, ICommandCallback *pCallback, const char *pHelpString /*= 0*/, int flags /*= 0*/, ICommandCompletionCallback *pCompletionCallback /*= 0*/)
+ConCommand::ConCommand(const char* pName, ICommandCallback* pCallback, const char* pHelpString /*= 0*/, int flags /*= 0*/, ICommandCompletionCallback* pCompletionCallback /*= 0*/)
 {
-	// Set the callback
 	m_pCommandCallback = pCallback;
 	m_bUsingNewCommandCallback = false;
 	m_pCommandCompletionCallback = pCompletionCallback;
 	m_bHasCompletionCallback = (pCompletionCallback != 0);
 	m_bUsingCommandCallbackInterface = true;
 
-	// Setup the rest
 	BaseClass::Create(pName, pHelpString, flags);
 }
 
-//-----------------------------------------------------------------------------
-// Destructor
-//-----------------------------------------------------------------------------
 ConCommand::~ConCommand(void)
 {
+
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns true if this is a command 
-//-----------------------------------------------------------------------------
 bool ConCommand::IsCommand(void) const
 {
 	return true;
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: Invoke the function if there is one
-//-----------------------------------------------------------------------------
-void ConCommand::Dispatch(const CCommand &command)
+void ConCommand::Dispatch(const CCommand& command)
 {
 	if (m_bUsingNewCommandCallback)
 	{
@@ -497,16 +476,9 @@ void ConCommand::Dispatch(const CCommand &command)
 			return;
 		}
 	}
-
-	// Command without callback!!!
-	// AssertMsg(0, "Encountered ConCommand '%s' without a callback!\n", GetName());
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: Calls the autocompletion method to get autocompletion suggestions
-//-----------------------------------------------------------------------------
-int	ConCommand::AutoCompleteSuggest(const char *partial, CUtlVector< CUtlString > &commands)
+int	ConCommand::AutoCompleteSuggest(const char* partial, CUtlVector< CUtlString >& commands)
 {
 	if (m_bUsingCommandCallbackInterface)
 	{
@@ -516,89 +488,72 @@ int	ConCommand::AutoCompleteSuggest(const char *partial, CUtlVector< CUtlString 
 	}
 
 	Assert(m_fnCompletionCallback);
+
 	if (!m_fnCompletionCallback)
 		return 0;
 
 	char rgpchCommands[COMMAND_COMPLETION_MAXITEMS][COMMAND_COMPLETION_ITEM_LENGTH];
 	int iret = (m_fnCompletionCallback)(partial, rgpchCommands);
+
 	for (int i = 0; i < iret; ++i)
 	{
 		CUtlString str = rgpchCommands[i];
 		commands.AddToTail(str);
 	}
+
 	return iret;
 }
 
-//-----------------------------------------------------------------------------
-// Returns true if the console command can autocomplete 
-//-----------------------------------------------------------------------------
 bool ConCommand::CanAutoComplete(void)
 {
 	return m_bHasCompletionCallback;
 }
 
 SpoofedConvar::SpoofedConvar()
-{}
+{
+
+}
 
 SpoofedConvar::SpoofedConvar(const char* szCVar)
 {
 	m_pOriginalCVar = g_pInterface->Cvar->FindVar(szCVar);
 	Spoof();
 }
+
 SpoofedConvar::SpoofedConvar(ConVar* pCVar)
 {
 	m_pOriginalCVar = pCVar;
 	Spoof();
 }
+
 SpoofedConvar::~SpoofedConvar()
 {
 	Unspoof();
 }
+
 bool SpoofedConvar::IsSpoofed()
 {
 	return m_pDummyCVar != nullptr;
 }
+
 void SpoofedConvar::Spoof()
 {
 	if (!IsSpoofed() && m_pOriginalCVar)
 	{
-		//Save old name value and flags so we can restore the cvar lates if needed
 		m_iOriginalFlags = m_pOriginalCVar->m_nFlags;
+
 		strcpy_s(m_szOriginalName, m_pOriginalCVar->m_pszName);
 		strcpy_s(m_szOriginalValue, m_pOriginalCVar->m_pszDefaultValue);
 
 		sprintf_s(m_szDummyName, XorStr("dmy_%s"), m_szOriginalName);
 
 		m_pDummyCVar = new ConVar(m_szOriginalName, m_pOriginalCVar->GetDefault(), m_pOriginalCVar->GetFlags());
-		/*
-		//Create the dummy cvar
-		m_pDummyCVar = (ConVar*)malloc(sizeof(ConVar));
-		if (!m_pDummyCVar) return;
-
-		memcpy_s(m_pDummyCVar, sizeof(ConVar), m_pOriginalCVar, sizeof(ConVar));
-
-		m_pDummyCVar->m_pNext = nullptr;
-
-		//Register it
-		g_pInterface->Cvar->RegisterConCommand(m_pDummyCVar);
-		*/
-
-		/*
-		//Fix "write access violation" bullshit
-		DWORD dwOld = 0;
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
-
-		//Rename the cvar
-		// 我们真的不知道这玩意有多大...
-		strcpy((char*)m_pOriginalCVar->m_pszName, m_szDummyName);
-
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
-		*/
 		m_pOriginalCVar->m_pszName = m_szDummyName;
 
 		SetFlags(FCVAR_NONE);
 	}
 }
+
 void SpoofedConvar::Unspoof()
 {
 	if (IsSpoofed())
@@ -606,26 +561,13 @@ void SpoofedConvar::Unspoof()
 		SetFlags(m_iOriginalFlags);
 		SetString(m_szOriginalValue);
 
-		/*
-		DWORD dwOld = 0;
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, PAGE_READWRITE, &dwOld);
-		strcpy((char*)m_pOriginalCVar->m_pszName, m_szOriginalName);
-		VirtualProtect((LPVOID)m_pOriginalCVar->m_pszName, 128, dwOld, &dwOld);
-		*/
 		m_pOriginalCVar->m_pszName = m_pDummyCVar->m_pszName;
-
-		/*
-		//Unregister dummy cvar
-		g_pInterface->Cvar->UnregisterConCommand(m_pDummyCVar);
-
-		free(m_pDummyCVar);
-		m_pDummyCVar = nullptr;
-		*/
 
 		delete m_pDummyCVar;
 		m_pDummyCVar = nullptr;
 	}
 }
+
 void SpoofedConvar::SetFlags(int flags)
 {
 	if (IsSpoofed())
@@ -633,10 +575,12 @@ void SpoofedConvar::SetFlags(int flags)
 		m_pOriginalCVar->m_nFlags = flags;
 	}
 }
+
 int SpoofedConvar::GetFlags()
 {
 	return m_pOriginalCVar->m_nFlags;
 }
+
 void SpoofedConvar::SetInt(int iValue)
 {
 	if (IsSpoofed())
@@ -644,6 +588,7 @@ void SpoofedConvar::SetInt(int iValue)
 		m_pOriginalCVar->SetValue(iValue);
 	}
 }
+
 void SpoofedConvar::SetBool(bool bValue)
 {
 	if (IsSpoofed())
@@ -651,6 +596,7 @@ void SpoofedConvar::SetBool(bool bValue)
 		m_pOriginalCVar->SetValue(bValue);
 	}
 }
+
 void SpoofedConvar::SetFloat(float flValue)
 {
 	if (IsSpoofed())
@@ -658,6 +604,7 @@ void SpoofedConvar::SetFloat(float flValue)
 		m_pOriginalCVar->SetValue(flValue);
 	}
 }
+
 void SpoofedConvar::SetString(const char* szValue)
 {
 	if (IsSpoofed())
@@ -666,12 +613,12 @@ void SpoofedConvar::SetString(const char* szValue)
 	}
 }
 
-ConVar * SpoofedConvar::GetOriginal() const
+ConVar* SpoofedConvar::GetOriginal() const
 {
 	return m_pOriginalCVar;
 }
 
-ConVar * SpoofedConvar::GetDummy() const
+ConVar* SpoofedConvar::GetDummy() const
 {
 	return m_pDummyCVar;
 }

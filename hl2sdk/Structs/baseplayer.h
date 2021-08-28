@@ -24,7 +24,6 @@ public:
 	Vector GetVelocity();
 	int GetHealth();
 	bool IsAlive();
-	int GetMoveType();
 	Vector& GetPunch();
 	int& GetTickBase();
 	int& GetFlags();

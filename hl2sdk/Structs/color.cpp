@@ -1,12 +1,5 @@
 ﻿#include "color.h"
 
-
-// set the color
-// r - red component (0-255)
-// g - green component (0-255)
-// b - blue component (0-255)
-// a - alpha component, controls transparency (0 - transparent, 255 - opaque);
-
 void Color::SetColor(int _r, int _g, int _b, int _a)
 {
 	_color[0] = (unsigned char)_r;
@@ -25,7 +18,6 @@ void Color::GetColor(int & _r, int & _g, int & _b, int & _a) const
 
 void Color::getFloatArray(float * arr) const
 {
-
 	arr[0] = (float)r() / (float)255;
 	arr[1] = (float)g() / (float)255;
 	arr[2] = (float)b() / (float)255;
@@ -56,8 +48,7 @@ float Color::Hue() const
 	float g = _color[1] / 255.0f;
 	float b = _color[2] / 255.0f;
 
-	float max = r > g ? r : g > b ? g : b,
-		min = r < g ? r : g < b ? g : b;
+	float max = r > g ? r : g > b ? g : b, min = r < g ? r : g < b ? g : b;
 	float delta = max - min;
 	float hue = 0.0f;
 
@@ -73,12 +64,14 @@ float Color::Hue() const
 	{
 		hue = 4 + (r - g) / delta;
 	}
+
 	hue *= 60;
 
 	if (hue < 0.0f)
 	{
 		hue += 360.0f;
 	}
+
 	return hue;
 }
 
@@ -88,18 +81,19 @@ float Color::Saturation() const
 	float g = _color[1] / 255.0f;
 	float b = _color[2] / 255.0f;
 
-	float max = r > g ? r : g > b ? g : b,
-		min = r < g ? r : g < b ? g : b;
+	float max = r > g ? r : g > b ? g : b, min = r < g ? r : g < b ? g : b;
 	float l, s = 0;
 
 	if (max != min)
 	{
 		l = (max + min) / 2;
+
 		if (l <= 0.5f)
 			s = (max - min) / (max + min);
 		else
 			s = (max - min) / (2 - max - min);
 	}
+
 	return s;
 }
 
@@ -109,8 +103,7 @@ float Color::Brightness() const
 	float g = _color[1] / 255.0f;
 	float b = _color[2] / 255.0f;
 
-	float max = r > g ? r : g > b ? g : b,
-		min = r < g ? r : g < b ? g : b;
+	float max = r > g ? r : g > b ? g : b, min = r < g ? r : g < b ? g : b;
 	return (max + min) / 2;
 }
 
@@ -124,50 +117,26 @@ Color Color::FromHSB(float hue, float saturation, float brightness)
 
 	if (h < 1)
 	{
-		return Color(
-			(unsigned char)(brightness * 255),
-			(unsigned char)(t * 255),
-			(unsigned char)(p * 255)
-		);
+		return Color((unsigned char)(brightness * 255), (unsigned char)(t * 255), (unsigned char)(p * 255));
 	}
 	else if (h < 2)
 	{
-		return Color(
-			(unsigned char)(q * 255),
-			(unsigned char)(brightness * 255),
-			(unsigned char)(p * 255)
-		);
+		return Color((unsigned char)(q * 255), (unsigned char)(brightness * 255), (unsigned char)(p * 255));
 	}
 	else if (h < 3)
 	{
-		return Color(
-			(unsigned char)(p * 255),
-			(unsigned char)(brightness * 255),
-			(unsigned char)(t * 255)
-		);
+		return Color((unsigned char)(p * 255), (unsigned char)(brightness * 255), (unsigned char)(t * 255));
 	}
 	else if (h < 4)
 	{
-		return Color(
-			(unsigned char)(p * 255),
-			(unsigned char)(q * 255),
-			(unsigned char)(brightness * 255)
-		);
+		return Color((unsigned char)(p * 255), (unsigned char)(q * 255), (unsigned char)(brightness * 255));
 	}
 	else if (h < 5)
 	{
-		return Color(
-			(unsigned char)(t * 255),
-			(unsigned char)(p * 255),
-			(unsigned char)(brightness * 255)
-		);
+		return Color((unsigned char)(t * 255), (unsigned char)(p * 255), (unsigned char)(brightness * 255));
 	}
 	else
 	{
-		return Color(
-			(unsigned char)(brightness * 255),
-			(unsigned char)(p * 255),
-			(unsigned char)(q * 255)
-		);
+		return Color((unsigned char)(brightness * 255), (unsigned char)(p * 255), (unsigned char)(q * 255));
 	}
 }

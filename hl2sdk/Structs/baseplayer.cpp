@@ -528,13 +528,6 @@ bool CBasePlayer::IsAlive()
 	return false;
 }
 
-int CBasePlayer::GetMoveType()
-{
-	static int offset = GetNetPropOffset(XorStr("DT_BasePlayer"), XorStr("movetype"));
-	Assert_NetProp(offset);
-	return DECL_NETPROP_GET(int);
-}
-
 Vector& CBasePlayer::GetPunch()
 {
 	return DECL_NETPROP_GET_EX(indexes::GetPunch, Vector);
