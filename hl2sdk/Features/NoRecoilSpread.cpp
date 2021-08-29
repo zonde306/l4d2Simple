@@ -112,15 +112,19 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	if (m_pEventListener->m_bShotgunSound)
 	{
-		static bool fired = false;
+		static CBaseWeapon* fired = nullptr;
 		if ((cmd->buttons & IN_ATTACK) && weapon->CanFire())
 		{
-			fired = true;
+			fired = weapon;
 		}
-		else if (fired)
+		else if (fired == weapon)
 		{
-			fired = false;
+			fired = nullptr;
 			PlayShotgunSound();
+		}
+		else if (fired && fired != weapon)
+		{
+			fired = nullptr;
 		}
 	}
 }
