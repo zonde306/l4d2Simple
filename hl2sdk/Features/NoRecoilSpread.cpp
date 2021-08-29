@@ -65,13 +65,17 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		cmd->buttons |= IN_ATTACK;
 		m_bLastFired = false;
 		
-		if (m_pEventListener->m_bShotgunSound)
+		if (m_pEventListener->m_bShotgunSound && !m_pEventListener->m_bIsGameTick)
+		{
 			PlayShotgunSound();
+			m_pEventListener->m_bIsGameTick = true;
+		}
 	}
-	else if (isGun && !canFire && m_bLastFired && m_pEventListener->m_bShotgunSound)
+	else if (isGun && !canFire && m_bLastFired && m_pEventListener->m_bShotgunSound && !m_pEventListener->m_bIsGameTick)
 	{
 		PlayShotgunSound();
 		m_bLastFired = false;
+		m_pEventListener->m_bIsGameTick = true;
 	}
 
 	m_bHasSilent = !(*bSendPacket);
@@ -492,12 +496,6 @@ bool CViewManager::IsUsingMinigun(CBasePlayer * player)
 
 void CViewManager::PlayShotgunSound()
 {
-	static time_t timestamp = 0;
-	time_t current = time(nullptr);
-	if (current <= timestamp)
-		return;
-	timestamp = current;
-
 	static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
 	if (thirdMode->GetInt() == 0)
 		return;
