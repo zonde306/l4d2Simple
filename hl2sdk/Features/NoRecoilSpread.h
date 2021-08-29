@@ -37,7 +37,6 @@ public:
 	void RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFire);
 
 	bool IsUsingMinigun(CBasePlayer* player);
-	void PlayShotgunSound();
 
 private:
 	bool m_bNoSpread = true;

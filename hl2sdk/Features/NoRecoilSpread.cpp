@@ -69,14 +69,6 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		SmoothAngles(cmd, bSendPacket);
 		cmd->buttons |= IN_ATTACK;
 		m_bLastFired = false;
-
-		if (m_pEventListener->m_bShotgunSound)
-			PlayShotgunSound();
-	}
-	else if (isGun && !canFire && m_bLastFired && m_pEventListener->m_bShotgunSound)
-	{
-		PlayShotgunSound();
-		m_bLastFired = false;
 	}
 
 	m_bHasSilent = !(*bSendPacket);
@@ -494,67 +486,6 @@ bool CViewManager::IsUsingMinigun(CBasePlayer* player)
 	return false;
 }
 
-void CViewManager::PlayShotgunSound()
-{
-	static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
-
-	if (thirdMode->GetInt() == 0)
-		return;
-
-	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-
-	if (!local->IsAlive())
-		return;
-
-	CBaseWeapon* weapon = local->GetActiveWeapon();
-
-	if (weapon == nullptr)
-		return;
-
-	int weaponId = weapon->GetWeaponID();
-	int upgrade = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec"));
-	int numAmmo = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded"));
-
-	MRecipientFilter filter;
-	filter.AddRecipient(local->GetIndex());
-
-	switch (weaponId)
-	{
-	case WeaponId_PumpShotgun:
-	{
-		if ((upgrade & 1) && numAmmo > 0)
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-		else
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-		break;
-	}
-	case WeaponId_Chrome:
-	{
-		if ((upgrade & 1) && numAmmo > 0)
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-		else
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-		break;
-	}
-	case WeaponId_AutoShotgun:
-	{
-		if ((upgrade & 1) && numAmmo > 0)
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-		else
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-		break;
-	}
-	case WeaponId_SPAS:
-	{
-		if ((upgrade & 1) && numAmmo > 0)
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-		else
-			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-		break;
-	}
-	}
-}
-
 void CVM_ShotgunSound::FireGameEvent(IGameEvent* event)
 {
 	if (!m_bShotgunSound)
@@ -564,11 +495,66 @@ void CVM_ShotgunSound::FireGameEvent(IGameEvent* event)
 
 	if (!_stricmp(eventName, XorStr("weapon_fire")) || !_stricmp(eventName, XorStr("bullet_impact")))
 	{
-		if (!m_bIsGameTick)
+		static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
+		if (m_bIsGameTick || thirdMode->GetInt() == 0)
+			return;
+
+		int attacker = g_pInterface->Engine->GetPlayerForUserID(event->GetInt(XorStr("userid")));
+		if (attacker < 1 || attacker > 32)
+			return;
+
+		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+		if (g_pInterface->EntList->GetClientEntity(attacker) != local || !local->IsAlive())
+			return;
+
+		CBaseWeapon* weapon = local->GetActiveWeapon();
+		if (weapon == nullptr)
+			return;
+
+		int weaponId = weapon->GetWeaponID();
+		int upgrade = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec"));
+		int numAmmo = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded"));
+
+		MRecipientFilter filter;
+		filter.AddRecipient(attacker);
+
+		switch (weaponId) 
 		{
-			g_pViewManager->PlayShotgunSound();
-			m_bIsGameTick = true;
+		case WeaponId_PumpShotgun:
+		{
+			if ((upgrade & 1) && numAmmo > 0)
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+			else
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+			break;
 		}
+		case WeaponId_Chrome:
+		{
+			if ((upgrade & 1) && numAmmo > 0)
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+			else
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+			break;
+		}
+		case WeaponId_AutoShotgun:
+		{
+			if ((upgrade & 1) && numAmmo > 0)
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+			else
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+			break;
+		}
+		case WeaponId_SPAS:
+		{
+			if ((upgrade & 1) && numAmmo > 0)
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+			else
+				g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+			break;
+		}
+		}
+
+		m_bIsGameTick = true;
 	}
 }
 
