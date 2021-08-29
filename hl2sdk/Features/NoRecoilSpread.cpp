@@ -492,6 +492,12 @@ bool CViewManager::IsUsingMinigun(CBasePlayer * player)
 
 void CViewManager::PlayShotgunSound()
 {
+	static time_t timestamp = 0;
+	time_t current = time(nullptr);
+	if (current <= timestamp)
+		return;
+	timestamp = current;
+
 	static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
 	if (thirdMode->GetInt() == 0)
 		return;
