@@ -47,7 +47,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (m_bRapidFire)
 		RunRapidFire(cmd, local, weapon);
 
-	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
+	bool canFire = ((cmd->buttons & IN_ATTACK2) ? local->CanShove() : weapon->CanFire());
 	bool isGun = weapon->IsFireGun();
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
@@ -64,18 +64,6 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		SmoothAngles(cmd, bSendPacket);
 		cmd->buttons |= IN_ATTACK;
 		m_bLastFired = false;
-		
-		if (m_pEventListener->m_bShotgunSound && !m_pEventListener->m_bIsGameTick)
-		{
-			PlayShotgunSound();
-			m_pEventListener->m_bIsGameTick = true;
-		}
-	}
-	else if (isGun && !canFire && m_bLastFired && m_pEventListener->m_bShotgunSound && !m_pEventListener->m_bIsGameTick)
-	{
-		PlayShotgunSound();
-		m_bLastFired = false;
-		m_pEventListener->m_bIsGameTick = true;
 	}
 
 	m_bHasSilent = !(*bSendPacket);
@@ -119,6 +107,20 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 			*bSendPacket = false;
 			lastChocked += 1;
 			cmd->viewangles.x = cmd->viewangles.y = NAN;
+		}
+	}
+
+	if (m_pEventListener->m_bShotgunSound)
+	{
+		static bool fired = false;
+		if ((cmd->buttons & IN_ATTACK) && weapon->CanFire())
+		{
+			fired = true;
+		}
+		else if (fired)
+		{
+			fired = false;
+			PlayShotgunSound();
 		}
 	}
 }
