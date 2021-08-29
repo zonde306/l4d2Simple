@@ -6,10 +6,12 @@
 
 CViewManager* g_pViewManager = nullptr;
 
-#define IsSingleWeapon(_id)			(_id == Weapon_Pistol || _id == Weapon_ShotgunPump || _id == Weapon_ShotgunAuto || _id == Weapon_SniperHunting || _id == Weapon_ShotgunChrome || _id == Weapon_SniperMilitary || _id == Weapon_ShotgunSpas || _id == Weapon_PistolMagnum || _id == Weapon_SniperAWP || _id == Weapon_SniperScout)
-#define NUM_NEW_COMMAND_BITS		4
-#define MAX_NEW_COMMANDS			((1 << NUM_NEW_COMMAND_BITS)-1)
-#define IsShotgun(_id)				(_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
+#define IsSingleWeapon(_id) (_id == Weapon_Pistol || _id == Weapon_ShotgunPump || _id == Weapon_ShotgunAuto || _id == Weapon_SniperHunting || _id == Weapon_ShotgunChrome || _id == Weapon_SniperMilitary || _id == Weapon_ShotgunSpas || _id == Weapon_PistolMagnum || _id == Weapon_SniperAWP || _id == Weapon_SniperScout)
+
+#define NUM_NEW_COMMAND_BITS 4
+#define MAX_NEW_COMMANDS ((1 << NUM_NEW_COMMAND_BITS)-1)
+
+#define IsShotgun(_id) (_id == WeaponId_PumpShotgun || _id == WeaponId_Chrome || _id == WeaponId_AutoShotgun || _id == WeaponId_SPAS)
 
 CViewManager::CViewManager() : CBaseFeatures::CBaseFeatures()
 {
@@ -35,12 +37,14 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+
 	if (local == nullptr || !local->IsAlive() || local->IsHangingFromLedge() ||
 		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
 		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
 		return;
 
 	CBaseWeapon* weapon = local->GetActiveWeapon();
+
 	if (weapon == nullptr)
 		return;
 
@@ -49,6 +53,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 
 	bool canFire = ((cmd->buttons & IN_ATTACK2) ? weapon->CanShove() : weapon->CanFire());
 	bool isGun = weapon->IsFireGun();
+
 	m_bHasFiring = ((cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2));
 	RunSilentAngles(cmd, bSendPacket, canFire);
 
@@ -64,6 +69,14 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		SmoothAngles(cmd, bSendPacket);
 		cmd->buttons |= IN_ATTACK;
 		m_bLastFired = false;
+
+		if (m_pEventListener->m_bShotgunSound)
+			PlayShotgunSound();
+	}
+	else if (isGun && !canFire && m_bLastFired && m_pEventListener->m_bShotgunSound)
+	{
+		PlayShotgunSound();
+		m_bLastFired = false;
 	}
 
 	m_bHasSilent = !(*bSendPacket);
@@ -73,13 +86,11 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	{
 		++m_iPacketBlocked;
 
-		// 修复命令被丢弃的问题
-		// bSendPacket 设置为 false 超过上限会导致命令被丢弃
 		if (m_iPacketBlocked > MAX_NEW_COMMANDS)
 		{
 			*bSendPacket = true;
 			m_iPacketBlocked = 0;
-			Utils::log(XorStr("Warring: choked commands out of range"));
+			Utils::log(XorStr("Warning: choked commands out of range"));
 		}
 	}
 
@@ -89,14 +100,15 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 	if (*bSendPacket && m_iPacketBlocked != 0)
 		m_iPacketBlocked = 0;
 
-	// 修复移动不正确
 	QAngle viewAngles;
 	g_pInterface->Engine->GetViewAngles(viewAngles);
+
 	math::CorrectMovement(viewAngles, cmd, cmd->forwardmove, cmd->sidemove);
 
 	if (m_bFakeAngleBug && canFire && m_bHasFiring)
 	{
 		static int lastChocked = 0;
+
 		if (lastChocked >= 5)
 		{
 			*bSendPacket = true;
@@ -117,22 +129,19 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+
 	if (local == nullptr || !local->IsAlive())
 		return;
 
 	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 	{
-		//Vector& ViewPunch = local->GetPunch();
 		Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
 		Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
 
-		// m_vecPunchAngle or m_vecPunchAngleVel
 		m_vecPunch = m_vecPunchAngle + m_vecPunchAngleVel;
 
 		if (m_bNoVisRecoil)
 		{
-			//ViewPunch.x = 0.0f;
-			//ViewPunch.y = 0.0f;
 			m_vecPunchAngle.x = 0.0f;
 			m_vecPunchAngle.y = 0.0f;
 			m_vecPunchAngleVel.x = 0.0f;
@@ -144,6 +153,7 @@ void CViewManager::OnFrameStageNotify(ClientFrameStage_t stage)
 	{
 		Vector eyeOrigin = local->GetEyePosition();
 		Vector aimOrigin = eyeOrigin + m_vecViewAngles.Forward().Scale(1000.0f);
+
 		g_pInterface->DebugOverlay->AddLineOverlay(eyeOrigin, aimOrigin, 255, 255, 255, false, 1.0f);
 	}
 }
@@ -239,6 +249,7 @@ void CViewManager::OnDisconnect()
 void CViewManager::OnGameEventClient(IGameEvent* event)
 {
 	std::string_view name = event->GetName();
+
 	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
 		m_pEventListener->FireGameEvent(event);
 }
@@ -246,6 +257,7 @@ void CViewManager::OnGameEventClient(IGameEvent* event)
 void CViewManager::OnGameEvent(IGameEvent* event, bool dontBroadcast)
 {
 	std::string_view name = event->GetName();
+
 	if (name == XorStr("weapon_fire") || name == XorStr("bullet_impact"))
 		m_pEventListener->FireGameEvent(event);
 }
@@ -256,25 +268,30 @@ void CViewManager::OnEnginePaint(PaintMode_t mode)
 		return;
 
 	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+
 	if (local == nullptr || !local->IsAlive())
 		return;
 
 	Vector screen;
 	Vector aimOrigin = local->GetEyePosition() + m_vecViewAngles.Forward().Scale(100.0f);
+
 	if (!math::WorldToScreenEx(aimOrigin, screen))
 		return;
 
 	D3DCOLOR color = CDrawing::ORANGE;
+
 	if (m_bHasSilent)
 		color = CDrawing::GREEN;
 
 	g_pDrawing->DrawLine(static_cast<int>(screen.x - 10), static_cast<int>(screen.y - 10),
 		static_cast<int>(screen.x + 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
+
 	g_pDrawing->DrawLine(static_cast<int>(screen.x + 10), static_cast<int>(screen.y - 10),
 		static_cast<int>(screen.x - 10), static_cast<int>(screen.y + 10), CDrawing::YELLOW);
 
 	Vector& m_vecPunchAngle = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
 	Vector& m_vecPunchAngleVel = local->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+
 	g_pDrawing->DrawText(screen.x / 2, screen.y / 3, CDrawing::RED, true, XorStr("m_vecPunchAngle = %.2f, %.2f, %.2f"), m_vecPunchAngle.x, m_vecPunchAngle.y, m_vecPunchAngle.z);
 	g_pDrawing->DrawText(screen.x / 2, screen.y / 3 + 16, CDrawing::RED, true, XorStr("m_vecPunchAngleVel = %.2f, %.2f, %.2f"), m_vecPunchAngleVel.x, m_vecPunchAngleVel.y, m_vecPunchAngleVel.z);
 }
@@ -286,6 +303,7 @@ bool CViewManager::ApplySilentAngles(const QAngle& viewAngles, int ticks)
 
 	m_iSilentTicks = ticks;
 	m_vecSilentAngles = viewAngles;
+
 	return true;
 }
 
@@ -296,21 +314,19 @@ bool CViewManager::ApplySilentFire(const QAngle& viewAngles)
 
 	m_bSilentFire = true;
 	m_vecSilentAngles = viewAngles;
+
 	return true;
 }
 
-void CViewManager::RunNoRecoilSpread(CUserCmd * cmd, CBaseWeapon* weapon, bool* bSendPacket)
+void CViewManager::RunNoRecoilSpread(CUserCmd* cmd, CBaseWeapon* weapon, bool* bSendPacket)
 {
 	auto spread = g_pClientPrediction->GetWeaponSpread(cmd->random_seed, weapon);
 	m_vecSpread.x = spread.first;
 	m_vecSpread.y = spread.second;
-	// m_vecSpread.z = 0.0f;
 
-	// 被普感锤也算是后坐力
 	if (m_bNoRecoil)
 		RemoveRecoil(cmd);
 
-	// 射击才有扩散
 	if (m_bNoSpread && (cmd->buttons & IN_ATTACK))
 		RemoveSpread(cmd);
 
@@ -318,7 +334,7 @@ void CViewManager::RunNoRecoilSpread(CUserCmd * cmd, CBaseWeapon* weapon, bool* 
 		*bSendPacket = false;
 }
 
-bool CViewManager::StartSilent(CUserCmd * cmd)
+bool CViewManager::StartSilent(CUserCmd* cmd)
 {
 	if (m_vecAngles.IsValid())
 		return false;
@@ -331,7 +347,7 @@ bool CViewManager::StartSilent(CUserCmd * cmd)
 	return true;
 }
 
-bool CViewManager::FinishSilent(CUserCmd * cmd)
+bool CViewManager::FinishSilent(CUserCmd* cmd)
 {
 	if (!m_vecAngles.IsValid())
 		return false;
@@ -345,40 +361,37 @@ bool CViewManager::FinishSilent(CUserCmd * cmd)
 	return true;
 }
 
-void CViewManager::RemoveSpread(CUserCmd * cmd)
+void CViewManager::RemoveSpread(CUserCmd* cmd)
 {
 	if (!(cmd->buttons & IN_ATTACK))
 		return;
-	
+
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
+
 	if (player == nullptr || !player->IsAlive())
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
-	if (weapon == nullptr/* || !weapon->CanFire()*/)
+
+	if (weapon == nullptr)
 		return;
 
 	cmd->viewangles.x -= m_vecSpread.x * m_fSpreadFactor;
 	cmd->viewangles.y -= m_vecSpread.y * m_fSpreadFactor;
 }
 
-void CViewManager::RemoveRecoil(CUserCmd * cmd)
+void CViewManager::RemoveRecoil(CUserCmd* cmd)
 {
 	if (!(cmd->buttons & IN_ATTACK))
 		return;
-	
+
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
+
 	if (player == nullptr || !player->IsAlive())
 		return;
 
-	/*
-	Vector punch = player->GetPunch();
-	cmd->viewangles.x -= punch.x;
-	cmd->viewangles.y -= punch.y;
-	*/
-
 	m_vecPunchAngle = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngle"));
-	// Vector& m_vecPunchAngleVel = player->GetNetProp<Vector>(XorStr("DT_TerrorPlayer"), XorStr("m_vecPunchAngleVel"));
+
 	cmd->viewangles.x -= m_vecPunchAngle.x * m_fRecoilFactor;
 	cmd->viewangles.y -= m_vecPunchAngle.y * m_fRecoilFactor;
 }
@@ -408,7 +421,7 @@ void CViewManager::SmoothAngles(CUserCmd* cmd, bool* bSendPacket)
 
 void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* weapon)
 {
-	if (!(cmd->buttons & IN_ATTACK)/* || IsUsingMinigun(local)*/)
+	if (!(cmd->buttons & IN_ATTACK))
 		return;
 
 	if (weapon->IsReloading())
@@ -417,11 +430,10 @@ void CViewManager::RunRapidFire(CUserCmd* cmd, CBasePlayer* local, CBaseWeapon* 
 	if (weapon->GetNetProp<float>(XorStr("DT_BaseCombatWeapon"), XorStr("m_flCycle")) > 0.0f)
 		return;
 
-	// weapon->GetNetProp<BYTE>(XorStr("DT_BaseCombatWeapon"), XorStr("m_isHoldingFireButton")) = 0;
 
 	int weaponId = weapon->GetWeaponID();
-	if ((local->GetTeam() == 3 || IsSingleWeapon(weaponId)) &&
-		!m_bRapidIgnore && weapon->GetPrimaryAttackDelay() <= 0.0f)
+
+	if ((local->GetTeam() == 3 || IsSingleWeapon(weaponId)) && !m_bRapidIgnore && weapon->GetPrimaryAttackDelay() <= 0.0f)
 	{
 		cmd->buttons &= ~IN_ATTACK;
 		m_bRapidIgnore = true;
@@ -471,85 +483,92 @@ void CViewManager::RunSilentAngles(CUserCmd* cmd, bool* bSendPacket, bool canFir
 	}
 }
 
-bool CViewManager::IsUsingMinigun(CBasePlayer * player)
+bool CViewManager::IsUsingMinigun(CBasePlayer* player)
 {
 	if (player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMinigun")) > 0)
 		return true;
 
 	if (player->GetNetProp<BYTE>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")) > 0)
 		return true;
-	
+
 	return false;
+}
+
+void CViewManager::PlayShotgunSound()
+{
+	static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
+
+	if (thirdMode->GetInt() == 0)
+		return;
+
+	CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
+
+	if (!local->IsAlive())
+		return;
+
+	CBaseWeapon* weapon = local->GetActiveWeapon();
+
+	if (weapon == nullptr)
+		return;
+
+	int weaponId = weapon->GetWeaponID();
+	int upgrade = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec"));
+	int numAmmo = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded"));
+
+	MRecipientFilter filter;
+	filter.AddRecipient(local->GetIndex());
+
+	switch (weaponId)
+	{
+	case WeaponId_PumpShotgun:
+	{
+		if ((upgrade & 1) && numAmmo > 0)
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+		else
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+		break;
+	}
+	case WeaponId_Chrome:
+	{
+		if ((upgrade & 1) && numAmmo > 0)
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+		else
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+		break;
+	}
+	case WeaponId_AutoShotgun:
+	{
+		if ((upgrade & 1) && numAmmo > 0)
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+		else
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+		break;
+	}
+	case WeaponId_SPAS:
+	{
+		if ((upgrade & 1) && numAmmo > 0)
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
+		else
+			g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
+		break;
+	}
+	}
 }
 
 void CVM_ShotgunSound::FireGameEvent(IGameEvent* event)
 {
 	if (!m_bShotgunSound)
 		return;
-	
+
 	const char* eventName = event->GetName();
+
 	if (!_stricmp(eventName, XorStr("weapon_fire")) || !_stricmp(eventName, XorStr("bullet_impact")))
 	{
-		static ConVar* thirdMode = g_pInterface->Cvar->FindVar(XorStr("c_thirdpersonshoulder"));
-		if (m_bIsGameTick || thirdMode->GetInt() == 0)
-			return;
-		
-		int attacker = g_pInterface->Engine->GetPlayerForUserID(event->GetInt(XorStr("userid")));
-		if (attacker < 1 || attacker > 32)
-			return;
-		
-		CBasePlayer* local = g_pClientPrediction->GetLocalPlayer();
-		if (g_pInterface->EntList->GetClientEntity(attacker) != local || !local->IsAlive())
-			return;
-
-		CBaseWeapon* weapon = local->GetActiveWeapon();
-		if (weapon == nullptr)
-			return;
-
-		int weaponId = weapon->GetWeaponID();
-		int upgrade = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_upgradeBitVec"));
-		int numAmmo = weapon->GetNetProp<byte>(XorStr("DT_TerrorGun"), XorStr("m_nUpgradedPrimaryAmmoLoaded"));
-
-		MRecipientFilter filter;
-		filter.AddRecipient(attacker);
-
-		switch (weaponId)
+		if (!m_bIsGameTick)
 		{
-			case WeaponId_PumpShotgun:
-			{
-				if((upgrade & 1) && numAmmo > 0)
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-				else
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-				break;
-			}
-			case WeaponId_Chrome:
-			{
-				if ((upgrade & 1) && numAmmo > 0)
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-				else
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/shotgun_chrome/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-				break;
-			}
-			case WeaponId_AutoShotgun:
-			{
-				if ((upgrade & 1) && numAmmo > 0)
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-				else
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun/gunfire/auto_shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-				break;
-			}
-			case WeaponId_SPAS:
-			{
-				if ((upgrade & 1) && numAmmo > 0)
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1_incendiary.wav"), 1.0f, SNDLEVEL_NONE);
-				else
-					g_pInterface->Sound->EmitSound(filter, -1, SNDCHAN_WEAPON, XorStr("weapons/auto_shotgun_spas/gunfire/shotgun_fire_1.wav"), 1.0f, SNDLEVEL_NONE);
-				break;
-			}
+			g_pViewManager->PlayShotgunSound();
+			m_bIsGameTick = true;
 		}
-
-		m_bIsGameTick = true;
 	}
 }
 

@@ -1,10 +1,17 @@
 #include "recvprop.h"
 
-inline DVariant::DVariant() { m_Type = DPT_Float; }
+inline DVariant::DVariant() 
+{
+	m_Type = DPT_Float; 
+}
 
-inline DVariant::DVariant(float val) { m_Type = DPT_Float; m_Float = val; }
+inline DVariant::DVariant(float val) 
+{
+	m_Type = DPT_Float;
+	m_Float = val; 
+}
 
-inline const char * DVariant::ToString()
+inline const char* DVariant::ToString()
 {
 	static char text[128];
 
@@ -24,7 +31,7 @@ inline const char * DVariant::ToString()
 		_snprintf(text, sizeof(text), "(%.3f,%.3f)",
 			m_Vector[0], m_Vector[1]);
 		break;
-#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
+#if 0
 	case DPT_Quaternion:
 		Q_snprintf(text, sizeof(text), "(%.3f,%.3f,%.3f %.3f)",
 			m_Vector[0], m_Vector[1], m_Vector[2], m_Vector[3]);

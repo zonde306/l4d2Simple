@@ -1,15 +1,21 @@
 #pragma once
+
+#include "../Utils/checksum_crc.h"
+
 #include <cstdint>
 #include <Windows.h>
 
 struct player_info_t
 {
 public:
-	byte __pad00[0x08];		// 0x00
-	char name[32];			// 0x08
-	int32_t userId;			// 0x28
-	char steamId[33];		// 0x2C
-	byte __pad01[0x27];		// 0x4D
-	bool isBot;				// 0x74
-	byte __pad02[0x1B];		// 0x75
-};	// sizeof 0x90
+	uint64_t networkId;
+	char name[MAX_PLAYER_NAME_LENGTH];
+	int32_t userId;
+	char steamId[SIGNED_GUID_LEN + 1];
+	uint32_t friendsId;
+	char friendsName[MAX_PLAYER_NAME_LENGTH];
+	bool isBot;
+	bool isHltv;
+	CRC32_t customFiles[MAX_CUSTOM_FILES];
+	unsigned char filesDownloaded;
+};
