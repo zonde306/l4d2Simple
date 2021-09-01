@@ -110,7 +110,7 @@ void CViewManager::OnCreateMove(CUserCmd * cmd, bool * bSendPacket)
 		}
 	}
 
-	if (m_pEventListener->m_bShotgunSound)
+	if (m_pEventListener->m_bShotgunSound && !local->IsStaggering() && !local->IsGettingUp() && !local->GetCurrentAttacker())
 	{
 		static CBaseWeapon* fired = nullptr;
 		if ((cmd->buttons & IN_ATTACK) && weapon->CanFire())

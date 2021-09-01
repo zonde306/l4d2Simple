@@ -660,7 +660,8 @@ bool CAimBot::CanRunAimbot(CBasePlayer * entity)
 	if (entity == nullptr || !entity->IsAlive() || entity->IsGhost() ||
 		entity->IsHangingFromLedge() || entity->GetCurrentAttacker() != nullptr ||
 		entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
-		entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
+		entity->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")) ||
+		entity->IsStaggering() || entity->IsGettingUp())
 		return false;
 
 	if (entity->GetTeam() == 3)

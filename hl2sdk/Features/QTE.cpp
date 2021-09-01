@@ -38,7 +38,8 @@ void CQuickTriggerEvent::OnCreateMove(CUserCmd * cmd, bool*)
 	if (local == nullptr || local->GetTeam() != 2 || !local->IsAlive() ||
 		local->IsIncapacitated() || local->IsHangingFromLedge() ||
 		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
-		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
+		local->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")) ||
+		local->IsStaggering() || local->IsGettingUp())
 		return;
 
 	/*

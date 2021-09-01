@@ -38,7 +38,8 @@ void CKnifeBot::OnCreateMove(CUserCmd * cmd, bool *)
 		player->IsIncapacitated() || player->IsHangingFromLedge() ||
 		player->GetCurrentAttacker() != nullptr ||
 		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedGun")) ||
-		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")))
+		player->GetNetProp<byte>(XorStr("DT_TerrorPlayer"), XorStr("m_usingMountedWeapon")) ||
+		player->IsStaggering() || player->IsGettingUp())
 		return;
 
 	CBaseWeapon* weapon = player->GetActiveWeapon();
