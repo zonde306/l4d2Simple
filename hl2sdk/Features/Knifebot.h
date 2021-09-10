@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "BaseFeatures.h"
+#include <set>
 
 class CKnifeBot : public CBaseFeatures
 {
@@ -34,6 +35,7 @@ private:
 
 	bool m_bDebug = false;
 	int m_iSequence = -1;
+	std::set<int> m_CommonStaggering;
 
 private:
 	enum FastMeleeStage_t

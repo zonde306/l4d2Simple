@@ -20,6 +20,13 @@ CKnifeBot* g_pKnifeBot = nullptr;
 
 CKnifeBot::CKnifeBot() : CBaseFeatures::CBaseFeatures()
 {
+	m_CommonStaggering = {
+		122, 123, 126, 127, 128, 133, 134,							// Stagger
+		128, 129, 130, 131,											// Down Stagger
+		182, 183, 184, 185,											// Object Climb (Very Low)
+		190, 191, 192, 193, 194, 195, 196, 197, 198, 199,			// Object Climb (Low)
+		206, 207, 208, 209, 210, 211, 218, 219, 220, 221, 222, 223,	// Object Climb (High)
+	};
 }
 
 CKnifeBot::~CKnifeBot()
@@ -361,7 +368,8 @@ bool CKnifeBot::CheckMeleeAttack(const QAngle& myEyeAngles)
 			dist <= swingRange && fov <= m_fShoveFOV &&
 			classId != ET_TANK && classId != ET_WITCH &&
 			(classId != ET_CHARGER || canShoveCharger) &&
-			(!entity->IsPlayer() || !entity->IsStaggering()))
+			(!entity->IsPlayer() || !entity->IsStaggering()) &&
+			(classId != ET_INFECTED || m_CommonStaggering.find(entity->GetSequence()) == m_CommonStaggering.end()))
 		{
 			// 推 (右键)
 			m_bCanShoveAttack = true;
