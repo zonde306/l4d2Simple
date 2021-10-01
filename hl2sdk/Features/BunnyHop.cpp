@@ -37,16 +37,14 @@ void CBunnyHop::OnCreateMove(CUserCmd* pCmd, bool* bSendPacket)
 	CBasePlayer* player = g_pClientPrediction->GetLocalPlayer();
 	if (player == nullptr || !player->IsAlive() || player->IsIncapacitated() || player->IsHangingFromLedge() ||
 		player->GetMoveType() != MOVETYPE_WALK || player->GetWaterLevel() > 2 || player->GetCurrentAttacker() != nullptr ||
-		player->IsStaggering() || player->IsGettingUp())
+		player->IsStaggering() || player->IsGettingUp() || player->GetNetProp<BYTE>(XorStr("DT_BasePlayer"), XorStr("m_nWaterLevel")) > 2)
 		return;
 
 	// int flags = player->GetFlags();
 	int flags = g_pClientPrediction->GetFlags();
 
-	/*
 	if (!(flags & FL_ONGROUND) && IsOnLadder(player))
 		return;
-	*/
 
 	// 空格键连跳
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000)
@@ -489,27 +487,65 @@ void CBunnyHop::DoEdgeJump(CUserCmd * pCmd, int flags)
 
 bool CBunnyHop::IsOnLadder(CBasePlayer* player)
 {
-	Ray_t ray;
-	Vector origin = player->GetAbsOrigin();
-	ray.Init(origin, origin + Vector(0, 0, -32));
-
-	CTraceFilter filter;
-	filter.pSkip1 = player;
-
-	trace_t trace;
-
-	try
+	int anim = player->GetSequence();
+	ZombieClass_t zclass = player->GetZombieType();
+	switch (zclass)
 	{
-		g_pInterface->Trace->TraceRay(ray, CONTENTS_LADDER, &filter, &trace);
+	case ZC_SMOKER:
+		return (anim == 34 || anim == 35);
+	case ZC_BOOMER:
+		return (anim == 34 || anim == 35 || anim == 36);
+	case ZC_HUNTER:
+		return (anim == 77 || anim == 78);
+	case ZC_SPITTER:
+		return (anim == 14 || anim == 15);
+	case ZC_JOCKEY:
+		return (anim == 12 || anim == 13);
+	case ZC_CHARGER:
+		return (anim == 37 || anim == 38);
+	case ZC_TANK:
+		return (anim == 25 || anim == 26);
 	}
-	catch (...)
-	{
-		Utils::log(XorStr("CBunnyHop.IsOnLadder.TraceRay Error."));
+
+	const model_t* model = player->GetModel();
+	if (model->name[0] != 'm' || model->name[7] != 's' || model->name[17] != 's')
 		return false;
-	}
 
-	if (trace.DidHit())
-		return true;
+	if (model->name[26] == 'g')				// models/survivors/survivor_gambler.mdl
+	{
+		return (anim == 605 || anim == 606);
+	}
+	else if (model->name[26] == 'p')		// models/survivors/survivor_producer.mdl
+	{
+		return (anim == 614 || anim == 615);
+	}
+	else if (model->name[26] == 'c')		// models/survivors/survivor_coach.mdl
+	{
+		return (anim == 606 || anim == 607);
+	}
+	else if (model->name[26] == 'n')		// models/survivors/survivor_namvet.mdl
+	{
+		return (anim == 514 || anim == 515);
+	}
+	else if (model->name[26] == 't')		// models/survivors/survivor_teenangst.mdl
+	{
+		return (anim == 514 || anim == 515);
+	}
+	else if (model->name[26] == 'b')		// models/survivors/survivor_biker.mdl
+	{
+		return (anim == 517 || anim == 518);
+	}
+	else if (model->name[26] == 'm')
+	{
+		if (model->name[27] == 'e')		// models/survivors/survivor_mechanic.mdl
+		{
+			return (anim == 610 || anim == 611);
+		}
+		else if (model->name[27] == 'a')	// models/survivors/survivor_manager.mdl
+		{
+			return (anim == 514 || anim == 515);
+		}
+	}
 
 	return false;
 }
