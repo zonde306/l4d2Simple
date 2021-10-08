@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BaseFeatures.h"
 
 class CHackVSHack : public CBaseFeatures
@@ -9,6 +9,8 @@ public:
 
 	virtual void OnCreateMove(CUserCmd*, bool*) override;
 	virtual void OnMenuDrawing() override;
+
+	virtual void OnDisconnect() override;
 
 	void RunLegitAntiAim(CUserCmd* cmd, bool* bSendPacket);
 	void RunAirStuck(CUserCmd* cmd);

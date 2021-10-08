@@ -141,6 +141,8 @@ bool CClientHook::Init()
 		oDispatchUserMessage = reinterpret_cast<FnDispatchUserMessage>(g_pHookClient->HookFunction(indexes::DispatchUserMessage, Hooked_DispatchUserMessage));
 		// oWriteUsercmdDeltaToBuffer = reinterpret_cast<FnWriteUsercmdDeltaToBuffer>(g_pHookClient->HookFunction(indexes::WriteUsercmdDeltaToBuffer, Hooked_WriteUsercmdDeltaToBuffer));
 		// oRenderView = reinterpret_cast<FnRenderView>(g_pHookClient->HookFunction(indexes::RenderView, Hooked_RenderView));
+		oLevelInitPostEntity = reinterpret_cast<FnLevelInitPostEntity>(g_pHookClient->HookFunction(indexes::LevelInitPostEntity, Hooked_LevelInitPostEntity));
+		oLevelShutdown = reinterpret_cast<FnLevelShutdown>(g_pHookClient->HookFunction(indexes::LevelShutdown, Hooked_LevelShutdown));
 		g_pHookClient->InstallHook();
 	}
 
@@ -776,68 +778,6 @@ void __fastcall CClientHook::Hooked_FrameStageNotify(IBaseClientDll* _ecx, LPVOI
 	for (auto inst : g_pClientHook->_GameHook)
 		if (inst)
 			inst->OnFrameStageNotify(stage);
-
-	if (stage == FRAME_NET_UPDATE_END)
-	{
-		static time_t nextUpdate = 0;
-		time_t currentTime = time(NULL);
-		if (nextUpdate <= currentTime)
-		{
-			// 计时，用于每隔 1 秒触发一次
-			nextUpdate = currentTime + 1;
-
-			static bool isConnected = false;
-			if (g_pInterface->Engine->IsConnected())
-			{
-				if (!isConnected)
-				{
-					isConnected = true;
-					g_tpPlayingTimer = time(nullptr);
-					// g_ServerConVar.clear();
-					g_pPlayerResource = nullptr;
-					g_pGameRulesProxy = nullptr;
-
-					for (auto inst : g_pClientHook->_GameHook)
-						if (inst)
-							inst->OnConnect();
-
-
-#ifdef _DEBUG
-					static bool isClassUpdated = false;
-					if (!isClassUpdated)
-					{
-						std::fstream fs(Utils::BuildPath(XorStr("classid.txt")), std::ios::out | std::ios::beg | std::ios::trunc);
-						if (fs.good() && fs.is_open())
-						{
-							g_pInterface->NetProp->DumpClassID(fs);
-							fs.close();
-						}
-						isClassUpdated = true;
-					}
-#endif
-				}
-			}
-			else if (!g_pInterface->Engine->IsInGame())
-			{
-				if (isConnected)
-				{
-					isConnected = false;
-					g_tpPlayingTimer = 0;
-					g_ServerConVar.clear();
-					g_pPlayerResource = nullptr;
-					g_pGameRulesProxy = nullptr;
-
-					for (auto inst : g_pClientHook->_GameHook)
-					{
-						if (inst)
-							inst->OnDisconnect();
-
-						g_pClientHook->SaveConfig();
-					}
-				}
-			}
-		}
-	}
 }
 
 void CClientHook::InstallClientStateHook(CBaseClientState* pointer)
@@ -1553,6 +1493,72 @@ void __fastcall CClientHook::Hooked_OnEntityDeleted(LPVOID _ecx, LPVOID, CBaseEn
 	g_pClientHook->oOnEntityDeleted(_ecx, entity);
 }
 
+void __fastcall CClientHook::Hooked_LevelInitPostEntity(IBaseClientDll* _ecx, LPVOID)
+{
+	g_pClientHook->oLevelInitPostEntity(_ecx);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if(hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook LevelInitPostEntity Success."));
+	}
+#endif
+
+	g_tpPlayingTimer = time(nullptr);
+	// g_ServerConVar.clear();
+	g_pPlayerResource = nullptr;
+	g_pGameRulesProxy = nullptr;
+	g_pClientPrediction->SetInGame(true);
+
+	for(auto inst : g_pClientHook->_GameHook)
+		if(inst)
+			inst->OnConnect();
+
+#ifdef _DEBUG
+	static bool isClassUpdated = false;
+	if(!isClassUpdated)
+	{
+		std::fstream fs(Utils::BuildPath(XorStr("classid.txt")), std::ios::out | std::ios::beg | std::ios::trunc);
+		if(fs.good() && fs.is_open())
+		{
+			g_pInterface->NetProp->DumpClassID(fs);
+			fs.close();
+		}
+		isClassUpdated = true;
+	}
+#endif
+}
+
+void __fastcall CClientHook::Hooked_LevelShutdown(IBaseClientDll* _ecx, LPVOID)
+{
+	g_tpPlayingTimer = 0;
+	g_ServerConVar.clear();
+	g_pPlayerResource = nullptr;
+	g_pGameRulesProxy = nullptr;
+	g_pClientPrediction->SetInGame(false);
+
+	for(auto inst : g_pClientHook->_GameHook)
+	{
+		if(inst)
+			inst->OnDisconnect();
+
+		g_pClientHook->SaveConfig();
+	}
+
+	g_pClientHook->oLevelShutdown(_ecx);
+
+#ifdef _DEBUG
+	static bool hasFirstEnter = true;
+	if(hasFirstEnter)
+	{
+		hasFirstEnter = false;
+		Utils::log(XorStr("Hook LevelShutdown Success."));
+	}
+#endif
+}
+
 void CClientPrediction::Init()
 {
 	m_pSpreadRandomSeed = *reinterpret_cast<int**>(reinterpret_cast<DWORD>(g_pInterface->SharedRandomFloat) + 0x7);
@@ -1639,11 +1645,17 @@ bool CClientPrediction::FinishPrediction()
 
 float CClientPrediction::GetServerTime()
 {
+	if(!IsInGame())
+		return 0.0f;
+
 	return (g_pInterface->GlobalVars->interval_per_tick * GetLocalPlayer()->GetTickBase());
 }
 
 CBasePlayer * CClientPrediction::GetLocalPlayer()
 {
+	if(!IsInGame())
+		return nullptr;
+
 	return (reinterpret_cast<CBasePlayer*>(g_pInterface->EntList->GetClientEntity(g_pInterface->Engine->GetLocalPlayer())));
 }
 

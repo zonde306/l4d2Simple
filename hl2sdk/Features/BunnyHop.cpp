@@ -250,6 +250,12 @@ void CBunnyHop::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("bunnyhop_no_falldamage"), m_bNoFallDamage);
 }
 
+void CBunnyHop::OnDisconnect()
+{
+	m_bLastJump = false;
+	m_bShouldFake = false;
+}
+
 void CBunnyHop::DoNormalAutoBhop(CBasePlayer* player, CUserCmd * pCmd, int flags)
 {
 	if (player == nullptr || !player->IsAlive())

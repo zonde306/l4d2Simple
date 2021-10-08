@@ -15,6 +15,8 @@ public:
 	virtual void OnConfigSave(CProfile& cfg) override;
 	virtual void OnEnginePaint(PaintMode_t) override;
 
+	virtual void OnDisconnect() override;
+
 	bool CheckMeleeAttack(const QAngle& myEyeAngles);
 	bool RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime);
 	bool HasEnemyVisible(CBasePlayer* entity, const Vector& position);

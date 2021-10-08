@@ -13,6 +13,8 @@ public:
 	virtual void OnConfigLoading(CProfile& cfg) override;
 	virtual void OnConfigSave(CProfile& cfg) override;
 
+	virtual void OnDisconnect() override;
+
 protected:
 	void DoNormalAutoBhop(CBasePlayer*, CUserCmd* pCmd, int flags);
 	void DoSafeAutoBhop(CUserCmd* pCmd, int flags);

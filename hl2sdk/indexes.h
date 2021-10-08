@@ -14,6 +14,8 @@ namespace indexes
 	constexpr int WriteUsercmdDeltaToBuffer = 22;
 	constexpr int RenderView = 26;
 	constexpr int bSendPacket = 0x1D;
+	constexpr int LevelInitPostEntity = 5;
+	constexpr int LevelShutdown = 6;
 
 	// Engine
 	constexpr int GetScreenSize = 5;

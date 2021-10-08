@@ -247,6 +247,12 @@ void CSpeedHacker::RunForwardtrack(CUserCmd * cmd, bool bSendPacket)
 	m_iTickCount = cmd->tick_count += TIME_TO_TICKS(netChan->GetLatency(NetFlow_Incoming) + netChan->GetLatency(NetFlow_Outgoing));
 }
 
+void CSpeedHacker::OnDisconnect()
+{
+	for(auto& c : m_Backtracking)
+		c.clear();
+}
+
 CSpeedHacker::_Backtrack::_Backtrack(int tickCount, const Vector & origin) :
 	m_iTickCount(tickCount), m_vecOrigin(origin)
 {

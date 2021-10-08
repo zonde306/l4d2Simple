@@ -568,6 +568,11 @@ bool CQuickTriggerEvent::OnEmitSound(std::string& sample, int& entity, int& chan
 	return true;
 }
 
+void CQuickTriggerEvent::OnDisconnect()
+{
+	m_pLastTarget = nullptr;
+}
+
 void CQuickTriggerEvent::HandleShotSelfClear(CBasePlayer * self,
 	CBasePlayer * enemy, CUserCmd * cmd, float distance)
 {

@@ -38,6 +38,8 @@ public:
 	virtual void OnConfigLoading(CProfile&) override;
 	virtual void OnConfigSave(CProfile&) override;
 
+	virtual void OnDisconnect() override;
+
 	CBasePlayer* FindTarget(const QAngle& myEyeAngles, Vector* aimPos = nullptr);
 	CBasePlayer* GetAimTarget(CBasePlayer* player, const QAngle& viewAngles);
 

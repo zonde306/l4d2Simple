@@ -22,6 +22,8 @@ public:
 		SoundLevel_t& level, int& flags, int& pitch, Vector& origin, Vector& direction,
 		bool& updatePosition, float& soundTime) override;
 
+	virtual void OnDisconnect() override;
+
 private:
 	void HandleShotSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f);
 	void HandleMeleeSelfClear(CBasePlayer* self, CBasePlayer* enemy, CUserCmd* cmd, float distance = -1.0f, CBaseWeapon* weapon = nullptr);

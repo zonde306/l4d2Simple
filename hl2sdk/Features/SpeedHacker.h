@@ -21,6 +21,8 @@ public:
 	void RecordBacktracking(CUserCmd* cmd);
 	void RunForwardtrack(CUserCmd* cmd, bool bSendPacket);
 
+	virtual void OnDisconnect() override;
+
 private:
 	float m_fOriginSpeed = 1.0f;
 	float m_fUseSpeed = 1.0f;

@@ -15,6 +15,8 @@ public:
 	virtual void OnConfigSave(CProfile& cfg) override;
 	virtual void OnEntityDeleted(CBaseEntity*) override;
 
+	virtual void OnDisconnect() override;
+
 	CBasePlayer* GetAimTarget(const QAngle& eyeAngles);
 	static bool IsValidTarget(CBasePlayer* entity);
 	bool HasValidWeapon(CBaseWeapon* weapon);

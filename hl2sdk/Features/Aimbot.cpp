@@ -255,6 +255,11 @@ void CAimBot::OnConfigSave(CProfile& cfg)
 	cfg.SetValue(mainKeys, XorStr("autoaim_remember"), m_bRemeberChoose);
 }
 
+void CAimBot::OnDisconnect()
+{
+	m_pAimTarget = nullptr;
+}
+
 void CAimBot::OnEnginePaint(PaintMode_t mode)
 {
 	if (!m_bActive)

@@ -320,6 +320,11 @@ void CTriggerBot::OnEntityDeleted(CBaseEntity* entity)
 		m_pAimTarget = nullptr;
 }
 
+void CTriggerBot::OnDisconnect()
+{
+	m_pAimTarget = nullptr;
+}
+
 void CTriggerBot::OnEnginePaint(PaintMode_t mode)
 {
 	if (!m_bActive)

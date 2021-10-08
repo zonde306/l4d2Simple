@@ -251,7 +251,7 @@ void CViewManager::OnConnect()
 
 void CViewManager::OnDisconnect()
 {
-	m_bFakeAngleBug = false;
+	m_bLastFired = false;
 }
 
 void CViewManager::OnGameEventClient(IGameEvent* event)

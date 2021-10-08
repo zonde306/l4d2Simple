@@ -44,6 +44,12 @@ void CHackVSHack::OnMenuDrawing()
 	ImGui::TreePop();
 }
 
+void CHackVSHack::OnDisconnect()
+{
+	m_bFlip = false;
+	m_iChockedPacket = -1;
+}
+
 void CHackVSHack::RunLegitAntiAim(CUserCmd * cmd, bool * bSendPacket)
 {
 	if ((cmd->buttons & IN_USE) || (cmd->buttons & IN_ATTACK) || (cmd->buttons & IN_ATTACK2))

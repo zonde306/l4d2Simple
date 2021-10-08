@@ -39,6 +39,8 @@ using FnOverrideView = void(__thiscall*)(IClientMode*, CViewSetup*);
 using FnGetViewModelFOV = float(__thiscall*)(IClientMode*);
 using FnOnEntityCreated = void(__thiscall*)(LPVOID, CBaseEntity*);
 using FnOnEntityDeleted = void(__thiscall*)(LPVOID, CBaseEntity*);
+using FnLevelInitPostEntity = void(__thiscall*)(IBaseClientDll*);
+using FnLevelShutdown = void(__thiscall*)(IBaseClientDll*);
 
 // 非虚函数
 using FnCL_SendMove = void(__cdecl*)();
@@ -90,6 +92,8 @@ protected:
 	static void __fastcall Hooked_EmitSoundInternal(IEngineSound*, LPVOID, IRecipientFilter&, int, int, const char*, float, SoundLevel_t, int, int, const Vector*, const Vector*, CUtlVector<Vector>*, bool, float, int);
 	static void __fastcall Hooked_OnEntityCreated(LPVOID, LPVOID, CBaseEntity*);
 	static void __fastcall Hooked_OnEntityDeleted(LPVOID, LPVOID, CBaseEntity*);
+	static void __fastcall Hooked_LevelInitPostEntity(IBaseClientDll*, LPVOID);
+	static void __fastcall Hooked_LevelShutdown(IBaseClientDll*, LPVOID);
 
 public:
 	std::vector<std::shared_ptr<CBaseFeatures>> _GameHook;
@@ -136,6 +140,8 @@ private:
 	FnMD5PseudoRandom oMD5PseudoRandom = nullptr;
 	FnOnEntityCreated oOnEntityCreated = nullptr;
 	FnOnEntityDeleted oOnEntityDeleted = nullptr;
+	FnLevelInitPostEntity oLevelInitPostEntity = nullptr;
+	FnLevelShutdown oLevelShutdown = nullptr;
 
 public:
 	bool* bSendPacket;
@@ -171,6 +177,8 @@ public:
 	void SetName(const char* name, ...);
 
 	inline int GetFlags() { return m_iFlags; };
+	inline bool IsInGame() { return m_bIsInGame; }
+	inline void SetInGame(bool v) { m_bIsInGame = v; }
 
 private:
 	CMoveData m_MoveData;
@@ -181,6 +189,7 @@ private:
 	int* m_pPredictionRandomSeed = nullptr;
 	int m_iTickBase = 0;
 	bool m_bInPrediction = false;
+	bool m_bIsInGame = false;
 };
 
 extern std::unique_ptr<CClientPrediction> g_pClientPrediction;

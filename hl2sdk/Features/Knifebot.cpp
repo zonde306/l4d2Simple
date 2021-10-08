@@ -183,6 +183,11 @@ void CKnifeBot::OnEnginePaint(PaintMode_t)
 	g_pDrawing->DrawText(width/2, height/2, CDrawing::WHITE, true, XorStr("m_iSequence=%d"), m_iSequence);
 }
 
+void CKnifeBot::OnDisconnect()
+{
+	m_eMeleeStage = FMS_None;
+}
+
 bool CKnifeBot::RunFastMelee(CUserCmd* cmd, int weaponId, float nextAttack, float serverTime)
 {
 	switch (m_eMeleeStage)
