@@ -530,6 +530,7 @@ void CAntiAntiCheat::OnConnect()
 
 	static ConVar* sv_consistency = g_pInterface->Cvar->FindVar(XorStr("sv_consistency"));
 	static ConVar* sv_pure = g_pInterface->Cvar->FindVar(XorStr("sv_pure"));
+	static ConVar* ui_lobby_start_enabled = g_pInterface->Cvar->FindVar(XorStr("ui_lobby_start_enabled"));
 	if (sv_consistency != nullptr)
 	{
 		if (sv_consistency->IsFlagSet(FCVAR_REMOVE))
@@ -543,6 +544,12 @@ void CAntiAntiCheat::OnConnect()
 			sv_pure->RemoveFlags(FCVAR_REMOVE);
 		
 		sv_pure->SetValue(0);
+	}
+	if(ui_lobby_start_enabled != nullptr)
+	{
+		if(ui_lobby_start_enabled->IsFlagSet(FCVAR_REMOVE))
+			ui_lobby_start_enabled->RemoveFlags(FCVAR_REMOVE);
+		ui_lobby_start_enabled->SetValue(true);
 	}
 }
 

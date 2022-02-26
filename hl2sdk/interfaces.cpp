@@ -19,7 +19,7 @@ std::unique_ptr<CClientInterface> g_pInterface;
 #define SIG_START_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 83 EC 14 56 57 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 8B F9 80 3D")
 #define SIG_FINISH_DRAWING			XorStr("55 8B EC 6A FF 68 ? ? ? ? 64 A1 ? ? ? ? 50 51 56 A1 ? ? ? ? 33 C5 50 8D 45 F4 64 A3 ? ? ? ? 6A 00")
 #define SIG_SHARED_RANDOM_FLOAT_OLD	XorStr("55 8B EC 83 EC 08 A1 ? ? ? ? 53 56 57 8B 7D 14 8D 4D 14 51 89 7D F8 89 45 FC E8 ? ? ? ? 6A 04 8D 55 FC 52 8D 45 14 50 E8 ? ? ? ? 6A 04 8D 4D F8 51 8D 55 14 52 E8 ? ? ? ? 8B 75 08 56 E8 ? ? ? ? 50 8D 45 14 56 50 E8 ? ? ? ? 8D 4D 14 51 E8 ? ? ? ? 8B 15 ? ? ? ? 8B 5D 14 83 C4 30 83 7A 30 00 74 26 57 53 56 68 ? ? ? ? 68 ? ? ? ? 8D 45 14 68 ? ? ? ? 50 C7 45 ? ? ? ? ? FF 15 ? ? ? ? 83 C4 1C 53 B9 ? ? ? ? FF 15 ? ? ? ? D9 45 10")
-#define SIG_SHARED_RANDOM_FLOAT		XorStr("E8 ? ? ? ? DC C0 8D 55 FC")
+#define SIG_SHARED_RANDOM_FLOAT		XorStr("E8 ? ? ? ? D9 5D A8 D9 05 ? ? ? ? 83 C4 10 57")
 #define SIG_SET_RANDOM_SEED			XorStr("55 8B EC 8B 45 08 85 C0 75 0C")
 #define SIG_GET_WEAPON_INFO			XorStr("55 8B EC 66 8B 45 08 66 3B 05")
 #define SIG_UPDATE_WEAPON_SPREAD	XorStr("53 8B DC 83 EC ? 83 E4 ? 83 C4 ? 55 8B 6B ? 89 6C ? ? 8B EC 83 EC ? 56 57 8B F9 E8")
@@ -180,10 +180,10 @@ void CClientInterface::Init()
 	FinishDrawing = reinterpret_cast<FnFinishDrawing>(Utils::FindPattern(XorStr("vguimatsurface.dll"), SIG_FINISH_DRAWING));
 	PRINT_OFFSET(XorStr("FinishDrawing"), FinishDrawing);
 
-	FnSharedRandomFloat SharedRandomFloatOld = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT_OLD));
+	//FnSharedRandomFloat SharedRandomFloatOld = reinterpret_cast<FnSharedRandomFloat>(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT_OLD));
 	SharedRandomFloat = reinterpret_cast<FnSharedRandomFloat>(Utils::CalcInstAddress(Utils::FindPattern(XorStr("client.dll"), SIG_SHARED_RANDOM_FLOAT)));
 	PRINT_OFFSET(XorStr("SharedRandomFloat"), SharedRandomFloat);
-	PRINT_OFFSET(XorStr("SharedRandomFloatOld"), SharedRandomFloatOld);
+	//PRINT_OFFSET(XorStr("SharedRandomFloatOld"), SharedRandomFloatOld);
 
 	SetPredictionRandomSeed = reinterpret_cast<FnSetPredictionRandomSeed>(Utils::FindPattern(XorStr("client.dll"), SIG_SET_RANDOM_SEED));
 	PRINT_OFFSET(XorStr("SetPredictionRandomSeed"), SetPredictionRandomSeed);

@@ -1132,6 +1132,9 @@ std::pair<DWORD, DWORD> Utils::GetModuleSize(const std::string& pszModuleName)
 
 DWORD Utils::CalcInstAddress(DWORD inst)
 {
+	if(!inst)
+		return 0;
+
 	switch (*reinterpret_cast<BYTE*>(inst))
 	{
 		// call ?? ?? ?? ??

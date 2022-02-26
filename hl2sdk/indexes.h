@@ -154,7 +154,7 @@ namespace indexes
 	constexpr int MoveType = 0x144; // 在 C_BaseEntity::SetMoveType 里，this 后的第一个参数 8A 8E ? ? ? ? 80 F9 08
 
 	// Entity Offset
-	constexpr int GetSpread = 0xD0C;		// 搜索 (%.1f) spread %.1f ( avg %.1f ) ( max %.1f )，最末尾那个 this 赋值
+	constexpr int GetSpread = 0x0D0C;		// 搜索 (%.1f) spread %.1f ( avg %.1f ) ( max %.1f )，最末尾那个 this 赋值
 	constexpr int GetPunch = 0x1230;		// 在 C_BasePlayer::ViewPunch 里，float 最小的那个偏移量
 	constexpr int GetPunchAngle = 0x1224;	// 搜索 HorizKickDir，末尾的 call，第一个 this 取值
 	constexpr int GetCrosshairsId = 0x19D8;
